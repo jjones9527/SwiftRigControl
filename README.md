@@ -22,11 +22,32 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **IC-7100** - HF/VHF/UHF all-mode transceiver (19200 baud, CI-V: 0x88)
 - **IC-705** - Portable HF/VHF/UHF transceiver (19200 baud, CI-V: 0xA4)
 
-### Coming Soon
+### Elecraft (Text-Based Protocol) ✅
 
-- Elecraft (K2, K3, K3S, K4, KX2, KX3)
-- Yaesu (FTDX-10, FT-991A, FT-710, FT-891)
-- Kenwood (TS-890S, TS-990S, TS-590SG)
+- **K2** - HF transceiver (4800 baud, 15W)
+- **K3** - HF/6m transceiver (38400 baud, 100W)
+- **K3S** - HF/6m transceiver enhanced (38400 baud, 100W)
+- **K4** - HF/6m SDR transceiver (38400 baud, 100W)
+- **KX2** - Portable HF transceiver (38400 baud, 12W)
+- **KX3** - Portable HF/6m transceiver (38400 baud, 15W)
+
+### Yaesu (CAT Protocol) ✅
+
+- **FTDX-10** - HF/6m transceiver (38400 baud, 100W)
+- **FT-991A** - HF/VHF/UHF all-mode transceiver (38400 baud, 100W)
+- **FT-710** - HF/6m all-mode transceiver (38400 baud, 100W)
+- **FT-891** - HF/6m all-mode transceiver (38400 baud, 100W)
+- **FT-817** - Portable QRP HF/VHF/UHF transceiver (38400 baud, 5W)
+- **FTDX-101D** - HF/6m transceiver with dual receiver (38400 baud, 100W)
+
+### Kenwood (Text-Based Protocol) ✅
+
+- **TS-890S** - HF/6m transceiver with dual receiver (115200 baud, 100W)
+- **TS-990S** - HF/6m flagship transceiver with dual receiver (115200 baud, 200W)
+- **TS-590SG** - HF/6m all-mode transceiver (115200 baud, 100W)
+- **TM-D710** - VHF/UHF dual-band transceiver (57600 baud, 50W)
+- **TS-480SAT** - HF/6m all-mode transceiver (57600 baud, 100W)
+- **TS-2000** - HF/VHF/UHF all-mode transceiver (57600 baud, 100W)
 
 ## Installation
 
@@ -114,6 +135,32 @@ do {
 }
 ```
 
+### Mac App Store / Sandboxed Apps
+
+For Mac App Store applications, use the XPC helper:
+
+```swift
+import RigControlXPC
+
+// Connect to the XPC helper
+let client = XPCClient.shared
+try await client.connect()
+
+// Connect to radio through helper
+try await client.connectToRadio(radio: "IC-9700", port: "/dev/cu.IC9700")
+
+// Use same API as RigControl
+try await client.setFrequency(14_230_000, vfo: .a)
+try await client.setMode(.usb, vfo: .a)
+try await client.setPTT(true)
+
+// Disconnect
+await client.disconnectRadio()
+await client.disconnect()
+```
+
+**Note:** The XPC helper must be installed once (requires admin password). See [XPC Helper Guide](Documentation/XPC_HELPER_GUIDE.md) for complete details.
+
 ## Finding Serial Ports
 
 On macOS, Icom radios typically appear as:
@@ -126,6 +173,95 @@ Common patterns:
 - `/dev/cu.SLAB_USBtoUART` - Silicon Labs USB-to-serial
 - `/dev/cu.usbserial-*` - Generic USB serial
 - `/dev/cu.IC9700` - Direct Icom naming (if driver installed)
+
+## Quick Reference
+
+### Radio Specifications
+
+#### Icom Radios (CI-V Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| IC-9700 | 115200 | 100W | 144 MHz - 1.3 GHz | Yes | No | Yes |
+| IC-7610 | 115200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7300 | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| IC-7600 | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7100 | 19200 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| IC-705 | 19200 | 10W | 30 kHz - 500 MHz | No | Yes | Yes |
+
+#### Elecraft Radios (Text Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| K4 | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| K3S | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| K3 | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| KX3 | 38400 | 15W | 30 kHz - 60 MHz | No | Yes | Yes |
+| KX2 | 38400 | 12W | 30 kHz - 60 MHz | No | Yes | Yes |
+| K2 | 4800 | 15W | 30 kHz - 30 MHz | No | Yes | Yes |
+
+#### Yaesu Radios (CAT Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| FTDX-101D | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| FTDX-10 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-991A | 38400 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| FT-710 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-891 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-817 | 38400 | 5W | 30 kHz - 500 MHz | No | No | Yes |
+
+#### Kenwood Radios (Text Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| TS-990S | 115200 | 200W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| TS-890S | 115200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| TS-590SG | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| TS-2000 | 57600 | 100W | 30 kHz - 1.3 GHz | No | Yes | Yes |
+| TS-480SAT | 57600 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| TM-D710 | 57600 | 50W | 118 - 524 MHz | Yes | No | No |
+
+### Protocol Command Comparison
+
+| Feature | Icom CI-V | Elecraft | Yaesu CAT | Kenwood |
+|---------|-----------|----------|-----------|---------|
+| **Protocol Type** | Binary | Text (ASCII) | Text (ASCII) | Text (ASCII) |
+| **Terminator** | 0xFD | ; (semicolon) | ; (semicolon) | ; (semicolon) |
+| **Set Frequency** | Binary BCD | `FA14230000;` | `FA14230000;` | `FA14230000;` |
+| **Get Frequency** | Cmd 0x03 | `FA;` | `FA;` | `FA;` |
+| **Set Mode** | Cmd 0x06 | `MD2;` (USB) | `MD2;` (USB) | `MD2;` (USB) |
+| **PTT On** | Cmd 0x1C 0x00 0x01 | `TX;` | `TX1;` | `TX1;` |
+| **PTT Off** | Cmd 0x1C 0x00 0x00 | `RX;` | `TX0;` | `TX0;` |
+| **VFO Select** | Cmd 0x07 | `FT0;`/`FT1;` | `FT0;`/`FT1;` | `FR0;`/`FR1;` |
+| **Split On** | Cmd 0x0F 0x01 | `FT1;` | `FT1;` | `FT1;` |
+| **Response** | Echo + ACK/NAK | Echo command | Echo command | Echo command |
+
+### Supported Modes by Manufacturer
+
+| Mode | Icom | Elecraft | Yaesu | Kenwood |
+|------|------|----------|-------|---------|
+| LSB | ✅ | ✅ | ✅ | ✅ |
+| USB | ✅ | ✅ | ✅ | ✅ |
+| CW | ✅ | ✅ | ✅ | ✅ |
+| CW-R | ✅ | ✅ | ✅ | ✅ |
+| AM | ✅ | ✅ | ✅ | ✅ |
+| FM | ✅ | ✅ | ✅ | ✅ |
+| FM-N | ✅ | ❌ | ✅ | ❌ |
+| RTTY | ✅ | ❌ | ✅ | ✅ |
+| DATA-LSB | ✅ | ❌ | ✅ | ✅ |
+| DATA-USB | ✅ | ✅ | ✅ | ❌ |
+
+### Common Use Cases
+
+| Task | Command |
+|------|---------|
+| **Set 20m SSTV frequency** | `try await rig.setFrequency(14_230_000, vfo: .a)` |
+| **Set USB mode** | `try await rig.setMode(.usb, vfo: .a)` |
+| **Enable split (+5kHz)** | `try await rig.setFrequency(14_195_000, vfo: .a)`<br>`try await rig.setFrequency(14_200_000, vfo: .b)`<br>`try await rig.setSplit(true)` |
+| **Set QRP power (5W)** | `try await rig.setPower(5)` |
+| **Read current frequency** | `let freq = try await rig.frequency()` |
+| **Check if transmitting** | `let isTX = try await rig.isPTTEnabled()` |
 
 ## Architecture
 
@@ -163,9 +299,9 @@ public protocol CATProtocol: Actor {
 
 Current implementations:
 - ✅ **IcomCIVProtocol** - Icom CI-V binary protocol
-- 🚧 **ElecraftProtocol** - Coming soon
-- 🚧 **YaesuCATProtocol** - Coming soon
-- 🚧 **KenwoodProtocol** - Coming soon
+- ✅ **ElecraftProtocol** - Elecraft text-based protocol
+- ✅ **YaesuCATProtocol** - Yaesu CAT text-based protocol
+- ✅ **KenwoodProtocol** - Kenwood text-based protocol
 
 ## Development Status
 
@@ -181,20 +317,50 @@ Current implementations:
 - [x] RigController API
 - [x] Unit tests (BCD encoding, CI-V frames, protocol)
 
-### Next Steps
+### Week 2 & 3 ✅ COMPLETE
 
-**Week 2** - Complete Icom implementation
-- [ ] Finish frequency/mode control testing on real hardware
-- [ ] Add VFO control
-- [ ] Add power control
-- [ ] Integration tests with IC-9700, IC-7600, IC-7100
+- [x] Split operation support
+- [x] Integration tests for real hardware
+- [x] Elecraft protocol implementation
+- [x] 6 Elecraft radio definitions (K2, K3, K3S, K4, KX2, KX3)
+- [x] Unit tests for Elecraft protocol
 
-**Week 3** - Elecraft protocol
-**Week 4-5** - XPC helper for Mac App Store
-**Week 6** - Yaesu protocol
-**Week 7** - Kenwood protocol
-**Week 8** - Documentation
-**Week 9** - v1.0.0 release
+### Week 4 & 5 ✅ COMPLETE
+
+- [x] XPC protocol definition
+- [x] XPCClient (async/await interface)
+- [x] XPCServer (bridges to RigControl)
+- [x] RigControlHelper executable
+- [x] XPC Helper documentation
+
+### Week 6 & 7 ✅ COMPLETE
+
+- [x] Yaesu CAT protocol implementation
+- [x] 6 Yaesu radio definitions (FTDX-10, FT-991A, FT-710, FT-891, FT-817, FTDX-101D)
+- [x] Kenwood protocol implementation
+- [x] 6 Kenwood radio definitions (TS-890S, TS-990S, TS-590SG, TM-D710, TS-480SAT, TS-2000)
+- [x] Unit tests for Yaesu protocol
+- [x] Unit tests for Kenwood protocol
+- [x] XPC server support for all new radios
+
+### Week 8 ✅ COMPLETE
+
+- [x] Comprehensive usage examples (615 lines)
+- [x] Troubleshooting guide (580 lines)
+- [x] Serial port configuration guide (645 lines)
+- [x] Hamlib migration guide (570 lines)
+- [x] Quick reference tables in README
+- [x] Error message clarity review
+- [x] Code consistency review
+
+### Week 9 - v1.0.0 Release 🚀
+
+- [ ] Release notes complete
+- [ ] CHANGELOG.md complete
+- [ ] CONTRIBUTING.md complete
+- [ ] Final testing verification
+- [ ] Version 1.0.0 tag
+- [ ] GitHub release
 
 ## Testing
 
