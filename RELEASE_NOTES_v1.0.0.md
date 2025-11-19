@@ -136,7 +136,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/SwiftRigControl.git", from: "1.0.0")
+    .package(url: "https://github.com/jjones9527/SwiftRigControl.git", from: "1.0.0")
 ]
 ```
 
@@ -380,8 +380,9 @@ MIT License - See [LICENSE](LICENSE) file for details.
 ## Support
 
 - **Documentation**: [Complete guide collection](Documentation/)
-- **Issues**: https://github.com/yourusername/SwiftRigControl/issues
-- **Discussions**: https://github.com/yourusername/SwiftRigControl/discussions
+- **Issues**: https://github.com/jjones9527/SwiftRigControl/issues
+- **Discussions**: https://github.com/jjones9527/SwiftRigControl/discussions
+- **Email**: va3ztf@gmail.com
 
 ## Roadmap
 
@@ -440,7 +441,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 Thank you to everyone who contributed to making SwiftRigControl v1.0.0 a reality. This library represents months of careful design, implementation, and testing to provide the amateur radio community with a modern, native Swift solution for radio control on macOS.
 
-**73 de SwiftRigControl Team!**
+**73 de VA3ZTF**
 
 ---
 

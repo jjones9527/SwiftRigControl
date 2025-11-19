@@ -58,7 +58,7 @@ In your app's `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/SwiftRigControl.git", from: "1.0.0")
+    .package(url: "https://github.com/jjones9527/SwiftRigControl.git", from: "1.0.0")
 ],
 targets: [
     .target(

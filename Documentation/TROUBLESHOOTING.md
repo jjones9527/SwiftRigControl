@@ -675,7 +675,7 @@ The package automatically links IOKit, but if you have issues:
 
 If you're still experiencing issues:
 
-1. **Check GitHub Issues:** https://github.com/yourusername/SwiftRigControl/issues
+1. **Check GitHub Issues:** https://github.com/jjones9527/SwiftRigControl/issues
 2. **Enable Debug Logging:**
    ```swift
    import os.log
@@ -712,4 +712,4 @@ Before filing an issue, verify:
 - [ ] Latest radio firmware
 - [ ] Latest SwiftRigControl version
 
-**73 and good luck!**
+**73 de VA3ZTF and good luck!**

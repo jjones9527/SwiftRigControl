@@ -624,4 +624,4 @@ let rig = RigController(
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
 - See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for complete API reference
 
-**73!**
+**73 de VA3ZTF**

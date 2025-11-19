@@ -119,7 +119,7 @@ Areas where contributions are particularly welcome:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/SwiftRigControl.git
+git clone https://github.com/jjones9527/SwiftRigControl.git
 cd SwiftRigControl
 
 # Build the project
@@ -577,7 +577,7 @@ When adding features:
 
 - **GitHub Issues**: For bugs and features
 - **GitHub Discussions**: For questions and discussions
-- **Email**: [project email if available]
+- **Email**: va3ztf@gmail.com
 
 ## Recognition
 
@@ -594,4 +594,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 **Thank you for contributing to SwiftRigControl!**
 
-**73!**
+**73 de VA3ZTF**

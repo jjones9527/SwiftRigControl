@@ -418,4 +418,4 @@ This positions SwiftRigControl as a comprehensive solution for macOS amateur rad
 - Build Status: ✅ Clean
 - Test Status: ✅ All Pass
 
-**73!**
+**73 de VA3ZTF**

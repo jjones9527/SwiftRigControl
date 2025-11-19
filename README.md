@@ -57,7 +57,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/SwiftRigControl.git", from: "1.0.0")
+    .package(url: "https://github.com/jjones9527/SwiftRigControl.git", from: "1.0.0")
 ]
 ```
 
@@ -418,7 +418,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Authors
 
-- Your Name (@yourusername)
+- VA3ZTF (Jeremy Jones)
 
 ## Acknowledgments
 
@@ -428,9 +428,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- Issues: https://github.com/yourusername/SwiftRigControl/issues
-- Discussions: https://github.com/yourusername/SwiftRigControl/discussions
-- Email: your.email@example.com
+- Issues: https://github.com/jjones9527/SwiftRigControl/issues
+- Discussions: https://github.com/jjones9527/SwiftRigControl/discussions
+- Email: va3ztf@gmail.com
 
 ## Roadmap
 
