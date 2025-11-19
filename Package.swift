@@ -5,22 +5,54 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftRigControl",
+    platforms: [
+        .macOS(.v13)  // Minimum macOS 13 for modern async/await and actor features
+    ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
+        // Core library for rig control
         .library(
-            name: "SwiftRigControl",
-            targets: ["SwiftRigControl"]
+            name: "RigControl",
+            targets: ["RigControl"]
+        ),
+        // XPC client library for sandboxed apps
+        .library(
+            name: "RigControlXPC",
+            targets: ["RigControlXPC"]
+        ),
+        // XPC helper executable
+        .executable(
+            name: "RigControlHelper",
+            targets: ["RigControlHelper"]
         ),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
+        // Core rig control library
         .target(
-            name: "SwiftRigControl"
+            name: "RigControl",
+            dependencies: [],
+            path: "Sources/RigControl"
         ),
+
+        // XPC client library
+        .target(
+            name: "RigControlXPC",
+            dependencies: ["RigControl"],
+            path: "Sources/RigControlXPC"
+        ),
+
+        // XPC helper executable
+        .executableTarget(
+            name: "RigControlHelper",
+            dependencies: ["RigControl", "RigControlXPC"],
+            path: "Sources/RigControlHelper"
+        ),
+
+        // Tests
         .testTarget(
-            name: "SwiftRigControlTests",
-            dependencies: ["SwiftRigControl"]
+            name: "RigControlTests",
+            dependencies: ["RigControl"],
+            path: "Tests/RigControlTests"
         ),
-    ]
+    ],
+    swiftLanguageVersions: [.v5]
 )

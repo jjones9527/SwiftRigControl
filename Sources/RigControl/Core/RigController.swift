@@ -1,0 +1,252 @@
+import Foundation
+
+/// Main controller for amateur radio transceiver operations.
+///
+/// RigController provides a high-level interface for controlling amateur radio transceivers.
+/// It abstracts the underlying protocol details and provides a consistent API across different
+/// radio manufacturers and models.
+///
+/// Example usage:
+/// ```swift
+/// let rig = RigController(
+///     radio: .icomIC9700,
+///     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
+/// )
+///
+/// try await rig.connect()
+/// try await rig.setFrequency(14_230_000, vfo: .a)
+/// try await rig.setMode(.usb, vfo: .a)
+/// try await rig.setPTT(true)
+/// ```
+public actor RigController {
+    /// The radio being controlled
+    public let radio: RadioDefinition
+
+    /// The underlying CAT protocol implementation
+    private let proto: any CATProtocol
+
+    /// Whether the controller is currently connected
+    private var connected: Bool = false
+
+    /// Initializes a new rig controller.
+    ///
+    /// - Parameters:
+    ///   - radio: The radio definition (e.g., .icomIC9700)
+    ///   - connection: How to connect to the radio
+    public init(radio: RadioDefinition, connection: ConnectionType) {
+        self.radio = radio
+
+        // Create the appropriate transport
+        let transport: any SerialTransport
+        switch connection {
+        case .serial(let path, let baudRate):
+            let actualBaudRate = baudRate ?? radio.defaultBaudRate
+            let config = SerialConfiguration(path: path, baudRate: actualBaudRate)
+            transport = IOKitSerialPort(configuration: config)
+
+        case .mock:
+            // For testing - would need a mock transport implementation
+            fatalError("Mock transport not yet implemented")
+        }
+
+        // Create the protocol instance
+        self.proto = radio.createProtocol(transport: transport)
+    }
+
+    // MARK: - Connection Management
+
+    /// Connects to the radio.
+    ///
+    /// This opens the serial port connection and performs any necessary initialization.
+    ///
+    /// - Throws: `RigError` if connection fails
+    public func connect() async throws {
+        guard !connected else { return }
+        try await proto.connect()
+        connected = true
+    }
+
+    /// Disconnects from the radio.
+    public func disconnect() async {
+        guard connected else { return }
+        await proto.disconnect()
+        connected = false
+    }
+
+    /// Checks if the controller is connected.
+    public var isConnected: Bool {
+        connected
+    }
+
+    // MARK: - Frequency Control
+
+    /// Sets the operating frequency of the specified VFO.
+    ///
+    /// - Parameters:
+    ///   - hz: The desired frequency in Hertz (e.g., 14230000 for 14.230 MHz)
+    ///   - vfo: The VFO to set (defaults to VFO A)
+    ///
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.commandFailed` if radio rejects the frequency
+    ///   - `RigError.timeout` if radio doesn't respond
+    ///
+    /// - Example:
+    /// ```swift
+    /// try await rig.setFrequency(14_230_000, vfo: .a)  // 20m SSTV calling frequency
+    /// ```
+    public func setFrequency(_ hz: UInt64, vfo: VFO = .a) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setFrequency(hz, vfo: vfo)
+    }
+
+    /// Gets the current operating frequency of the specified VFO.
+    ///
+    /// - Parameter vfo: The VFO to query (defaults to VFO A)
+    /// - Returns: The current frequency in Hertz
+    /// - Throws: `RigError` if operation fails
+    public func frequency(vfo: VFO = .a) async throws -> UInt64 {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        return try await proto.getFrequency(vfo: vfo)
+    }
+
+    // MARK: - Mode Control
+
+    /// Sets the operating mode of the specified VFO.
+    ///
+    /// - Parameters:
+    ///   - mode: The desired operating mode
+    ///   - vfo: The VFO to set (defaults to VFO A)
+    ///
+    /// - Throws: `RigError` if operation fails
+    ///
+    /// - Example:
+    /// ```swift
+    /// try await rig.setMode(.usb, vfo: .a)  // USB for SSTV on 20m
+    /// ```
+    public func setMode(_ mode: Mode, vfo: VFO = .a) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setMode(mode, vfo: vfo)
+    }
+
+    /// Gets the current operating mode of the specified VFO.
+    ///
+    /// - Parameter vfo: The VFO to query (defaults to VFO A)
+    /// - Returns: The current operating mode
+    /// - Throws: `RigError` if operation fails
+    public func mode(vfo: VFO = .a) async throws -> Mode {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        return try await proto.getMode(vfo: vfo)
+    }
+
+    // MARK: - PTT Control
+
+    /// Sets the Push-To-Talk (PTT) state.
+    ///
+    /// When PTT is enabled, the radio will transmit. When disabled, it will receive.
+    ///
+    /// - Parameter enabled: True to transmit, false to receive
+    /// - Throws: `RigError` if operation fails
+    ///
+    /// - Important: Always disable PTT when finished transmitting to avoid
+    ///   accidentally transmitting when not intended.
+    ///
+    /// - Example:
+    /// ```swift
+    /// try await rig.setPTT(true)   // Start transmitting
+    /// // ... transmit audio ...
+    /// try await rig.setPTT(false)  // Stop transmitting
+    /// ```
+    public func setPTT(_ enabled: Bool) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setPTT(enabled)
+    }
+
+    /// Gets the current PTT state.
+    ///
+    /// - Returns: True if transmitting, false if receiving
+    /// - Throws: `RigError` if operation fails
+    public func isPTTEnabled() async throws -> Bool {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        return try await proto.getPTT()
+    }
+
+    // MARK: - VFO Control
+
+    /// Selects which VFO is active.
+    ///
+    /// - Parameter vfo: The VFO to select
+    /// - Throws: `RigError` if operation fails
+    public func selectVFO(_ vfo: VFO) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.selectVFO(vfo)
+    }
+
+    // MARK: - Power Control
+
+    /// Sets the RF power level.
+    ///
+    /// - Parameter watts: Power level in watts (0 to radio's maximum power)
+    /// - Throws:
+    ///   - `RigError.unsupportedOperation` if radio doesn't support power control
+    ///   - `RigError.invalidParameter` if watts exceeds radio's maximum
+    ///
+    /// - Example:
+    /// ```swift
+    /// try await rig.setPower(50)  // Set to 50 watts
+    /// ```
+    public func setPower(_ watts: Int) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+
+        guard radio.capabilities.powerControl else {
+            throw RigError.unsupportedOperation("Power control not supported by \(radio.fullName)")
+        }
+
+        guard watts >= 0 && watts <= radio.capabilities.maxPower else {
+            throw RigError.invalidParameter(
+                "Power must be between 0 and \(radio.capabilities.maxPower) watts"
+            )
+        }
+
+        try await proto.setPower(watts)
+    }
+
+    /// Gets the current RF power level.
+    ///
+    /// - Returns: Power level in watts
+    /// - Throws: `RigError` if operation fails
+    public func power() async throws -> Int {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        return try await proto.getPower()
+    }
+
+    // MARK: - Radio Information
+
+    /// Gets the capabilities of the connected radio.
+    public var capabilities: RigCapabilities {
+        radio.capabilities
+    }
+
+    /// Gets the full name of the radio (manufacturer + model).
+    public var radioName: String {
+        radio.fullName
+    }
+}
