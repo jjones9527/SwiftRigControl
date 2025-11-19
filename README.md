@@ -418,7 +418,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Authors
 
-- VA3ZTF (Jeff Jones)
+- VA3ZTF (Jeremy Jones)
 
 ## Acknowledgments
 
