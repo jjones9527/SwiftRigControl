@@ -174,6 +174,95 @@ Common patterns:
 - `/dev/cu.usbserial-*` - Generic USB serial
 - `/dev/cu.IC9700` - Direct Icom naming (if driver installed)
 
+## Quick Reference
+
+### Radio Specifications
+
+#### Icom Radios (CI-V Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| IC-9700 | 115200 | 100W | 144 MHz - 1.3 GHz | Yes | No | Yes |
+| IC-7610 | 115200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7300 | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| IC-7600 | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7100 | 19200 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| IC-705 | 19200 | 10W | 30 kHz - 500 MHz | No | Yes | Yes |
+
+#### Elecraft Radios (Text Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| K4 | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| K3S | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| K3 | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| KX3 | 38400 | 15W | 30 kHz - 60 MHz | No | Yes | Yes |
+| KX2 | 38400 | 12W | 30 kHz - 60 MHz | No | Yes | Yes |
+| K2 | 4800 | 15W | 30 kHz - 30 MHz | No | Yes | Yes |
+
+#### Yaesu Radios (CAT Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| FTDX-101D | 38400 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| FTDX-10 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-991A | 38400 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| FT-710 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-891 | 38400 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| FT-817 | 38400 | 5W | 30 kHz - 500 MHz | No | No | Yes |
+
+#### Kenwood Radios (Text Protocol)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| TS-990S | 115200 | 200W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| TS-890S | 115200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| TS-590SG | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| TS-2000 | 57600 | 100W | 30 kHz - 1.3 GHz | No | Yes | Yes |
+| TS-480SAT | 57600 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| TM-D710 | 57600 | 50W | 118 - 524 MHz | Yes | No | No |
+
+### Protocol Command Comparison
+
+| Feature | Icom CI-V | Elecraft | Yaesu CAT | Kenwood |
+|---------|-----------|----------|-----------|---------|
+| **Protocol Type** | Binary | Text (ASCII) | Text (ASCII) | Text (ASCII) |
+| **Terminator** | 0xFD | ; (semicolon) | ; (semicolon) | ; (semicolon) |
+| **Set Frequency** | Binary BCD | `FA14230000;` | `FA14230000;` | `FA14230000;` |
+| **Get Frequency** | Cmd 0x03 | `FA;` | `FA;` | `FA;` |
+| **Set Mode** | Cmd 0x06 | `MD2;` (USB) | `MD2;` (USB) | `MD2;` (USB) |
+| **PTT On** | Cmd 0x1C 0x00 0x01 | `TX;` | `TX1;` | `TX1;` |
+| **PTT Off** | Cmd 0x1C 0x00 0x00 | `RX;` | `TX0;` | `TX0;` |
+| **VFO Select** | Cmd 0x07 | `FT0;`/`FT1;` | `FT0;`/`FT1;` | `FR0;`/`FR1;` |
+| **Split On** | Cmd 0x0F 0x01 | `FT1;` | `FT1;` | `FT1;` |
+| **Response** | Echo + ACK/NAK | Echo command | Echo command | Echo command |
+
+### Supported Modes by Manufacturer
+
+| Mode | Icom | Elecraft | Yaesu | Kenwood |
+|------|------|----------|-------|---------|
+| LSB | ✅ | ✅ | ✅ | ✅ |
+| USB | ✅ | ✅ | ✅ | ✅ |
+| CW | ✅ | ✅ | ✅ | ✅ |
+| CW-R | ✅ | ✅ | ✅ | ✅ |
+| AM | ✅ | ✅ | ✅ | ✅ |
+| FM | ✅ | ✅ | ✅ | ✅ |
+| FM-N | ✅ | ❌ | ✅ | ❌ |
+| RTTY | ✅ | ❌ | ✅ | ✅ |
+| DATA-LSB | ✅ | ❌ | ✅ | ✅ |
+| DATA-USB | ✅ | ✅ | ✅ | ❌ |
+
+### Common Use Cases
+
+| Task | Command |
+|------|---------|
+| **Set 20m SSTV frequency** | `try await rig.setFrequency(14_230_000, vfo: .a)` |
+| **Set USB mode** | `try await rig.setMode(.usb, vfo: .a)` |
+| **Enable split (+5kHz)** | `try await rig.setFrequency(14_195_000, vfo: .a)`<br>`try await rig.setFrequency(14_200_000, vfo: .b)`<br>`try await rig.setSplit(true)` |
+| **Set QRP power (5W)** | `try await rig.setPower(5)` |
+| **Read current frequency** | `let freq = try await rig.frequency()` |
+| **Check if transmitting** | `let isTX = try await rig.isPTTEnabled()` |
+
 ## Architecture
 
 ### Module Structure
