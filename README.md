@@ -355,11 +355,11 @@ Current implementations:
 
 ### Week 9 - v1.0.0 Release 🚀
 
-- [ ] Release notes complete
-- [ ] CHANGELOG.md complete
-- [ ] CONTRIBUTING.md complete
+- [x] Release notes complete
+- [x] CHANGELOG.md complete
+- [x] CONTRIBUTING.md complete
 - [ ] Final testing verification
-- [ ] Version 1.0.0 tag
+- [x] Version 1.0.0 tag
 - [ ] GitHub release
 
 ## Testing
@@ -438,4 +438,4 @@ See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for the complete 9-week implement
 
 ---
 
-**73 de [YOUR_CALLSIGN]**
+**73 de VA3ZTF**
