@@ -22,9 +22,17 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **IC-7100** - HF/VHF/UHF all-mode transceiver (19200 baud, CI-V: 0x88)
 - **IC-705** - Portable HF/VHF/UHF transceiver (19200 baud, CI-V: 0xA4)
 
+### Elecraft (Text-Based Protocol) ✅
+
+- **K2** - HF transceiver (4800 baud, 15W)
+- **K3** - HF/6m transceiver (38400 baud, 100W)
+- **K3S** - HF/6m transceiver enhanced (38400 baud, 100W)
+- **K4** - HF/6m SDR transceiver (38400 baud, 100W)
+- **KX2** - Portable HF transceiver (38400 baud, 12W)
+- **KX3** - Portable HF/6m transceiver (38400 baud, 15W)
+
 ### Coming Soon
 
-- Elecraft (K2, K3, K3S, K4, KX2, KX3)
 - Yaesu (FTDX-10, FT-991A, FT-710, FT-891)
 - Kenwood (TS-890S, TS-990S, TS-590SG)
 

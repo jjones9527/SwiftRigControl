@@ -97,6 +97,23 @@ public protocol CATProtocol: Actor {
     /// - Returns: Power level in watts
     /// - Throws: `RigError.unsupportedOperation` if radio doesn't support power control
     func getPower() async throws -> Int
+
+    // MARK: - Split Operation
+
+    /// Enables or disables split operation.
+    ///
+    /// In split mode, the radio transmits on one VFO while receiving on another.
+    /// Typically, receive on VFO A and transmit on VFO B.
+    ///
+    /// - Parameter enabled: True to enable split, false to disable
+    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support split
+    func setSplit(_ enabled: Bool) async throws
+
+    /// Gets the current split operation state.
+    ///
+    /// - Returns: True if split is enabled, false otherwise
+    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support split
+    func getSplit() async throws -> Bool
 }
 
 /// Extension providing default implementations for optional operations
@@ -109,6 +126,16 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getPower() async throws -> Int {
         throw RigError.unsupportedOperation("Power control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setSplit(_ enabled: Bool) async throws {
+        throw RigError.unsupportedOperation("Split operation not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getSplit() async throws -> Bool {
+        throw RigError.unsupportedOperation("Split operation not supported")
     }
 
     /// Default connect implementation just opens the transport

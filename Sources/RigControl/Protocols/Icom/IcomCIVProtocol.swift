@@ -257,6 +257,51 @@ public actor IcomCIVProtocol: CATProtocol {
         return (percentage * capabilities.maxPower) / 255
     }
 
+    // MARK: - Split Operation
+
+    public func setSplit(_ enabled: Bool) async throws {
+        guard capabilities.hasSplit else {
+            throw RigError.unsupportedOperation("Split operation not supported")
+        }
+
+        // Build and send command
+        // Command 0x0F, data 0x01 for split on, 0x00 for split off
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.split],
+            data: [enabled ? 0x01 : 0x00]
+        )
+
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        guard response.isAck else {
+            throw RigError.commandFailed("Radio rejected split \(enabled ? "on" : "off")")
+        }
+    }
+
+    public func getSplit() async throws -> Bool {
+        guard capabilities.hasSplit else {
+            throw RigError.unsupportedOperation("Split operation not supported")
+        }
+
+        // Build and send query command
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.split]
+        )
+
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        guard response.command[0] == CIVFrame.Command.split,
+              !response.data.isEmpty else {
+            throw RigError.invalidResponse
+        }
+
+        return response.data[0] == 0x01
+    }
+
     // MARK: - Private Methods
 
     /// Sends a CI-V frame to the radio.
