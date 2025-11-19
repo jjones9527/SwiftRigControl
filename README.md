@@ -122,6 +122,32 @@ do {
 }
 ```
 
+### Mac App Store / Sandboxed Apps
+
+For Mac App Store applications, use the XPC helper:
+
+```swift
+import RigControlXPC
+
+// Connect to the XPC helper
+let client = XPCClient.shared
+try await client.connect()
+
+// Connect to radio through helper
+try await client.connectToRadio(radio: "IC-9700", port: "/dev/cu.IC9700")
+
+// Use same API as RigControl
+try await client.setFrequency(14_230_000, vfo: .a)
+try await client.setMode(.usb, vfo: .a)
+try await client.setPTT(true)
+
+// Disconnect
+await client.disconnectRadio()
+await client.disconnect()
+```
+
+**Note:** The XPC helper must be installed once (requires admin password). See [XPC Helper Guide](Documentation/XPC_HELPER_GUIDE.md) for complete details.
+
 ## Finding Serial Ports
 
 On macOS, Icom radios typically appear as:
