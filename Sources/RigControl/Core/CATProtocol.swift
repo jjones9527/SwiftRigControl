@@ -114,6 +114,24 @@ public protocol CATProtocol: Actor {
     /// - Returns: True if split is enabled, false otherwise
     /// - Throws: `RigError.unsupportedOperation` if radio doesn't support split
     func getSplit() async throws -> Bool
+
+    // MARK: - Signal Strength
+
+    /// Reads the current signal strength from the radio's S-meter.
+    ///
+    /// S-meter readings provide real-time signal strength information:
+    /// - S0 to S9 represent standard signal levels
+    /// - Above S9, readings are expressed as "S9 plus decibels" (e.g., S9+20)
+    ///
+    /// # Example
+    /// ```swift
+    /// let signal = try await protocol.getSignalStrength()
+    /// print("Signal: \(signal.description)")  // "S7" or "S9+20"
+    /// ```
+    ///
+    /// - Returns: Current signal strength reading
+    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support S-meter reading
+    func getSignalStrength() async throws -> SignalStrength
 }
 
 /// Extension providing default implementations for optional operations
@@ -136,6 +154,11 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getSplit() async throws -> Bool {
         throw RigError.unsupportedOperation("Split operation not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getSignalStrength() async throws -> SignalStrength {
+        throw RigError.unsupportedOperation("Signal strength reading not supported")
     }
 
     /// Default connect implementation just opens the transport

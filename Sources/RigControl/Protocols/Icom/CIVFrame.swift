@@ -102,8 +102,23 @@ public struct CIVFrame {
             throw RigError.invalidResponse
         }
 
-        let command = [commandAndData[0]]
-        let frameData = commandAndData.count > 1 ? Array(commandAndData[1...]) : []
+        // Some commands have sub-commands (second byte)
+        // Commands 0x14 (settings) and 0x15 (read level) use sub-commands
+        let firstByte = commandAndData[0]
+        let hasSubCommand = (firstByte == 0x14 || firstByte == 0x15) && commandAndData.count > 1
+
+        let command: [UInt8]
+        let frameData: [UInt8]
+
+        if hasSubCommand {
+            // Multi-byte command (e.g., 0x14 0x0A or 0x15 0x02)
+            command = [commandAndData[0], commandAndData[1]]
+            frameData = commandAndData.count > 2 ? Array(commandAndData[2...]) : []
+        } else {
+            // Single-byte command
+            command = [commandAndData[0]]
+            frameData = commandAndData.count > 1 ? Array(commandAndData[1...]) : []
+        }
 
         return CIVFrame(to: to, from: from, command: command, data: frameData)
     }
@@ -145,6 +160,9 @@ extension CIVFrame {
         /// Set/get various settings (0x14)
         public static let settings: UInt8 = 0x14
 
+        /// Read levels (S-meter, squelch, etc.) (0x15)
+        public static let readLevel: UInt8 = 0x15
+
         /// PTT control (0x1C)
         public static let ptt: UInt8 = 0x1C
     }
@@ -175,5 +193,17 @@ extension CIVFrame {
         public static let wfm: UInt8 = 0x06
         public static let cwR: UInt8 = 0x07
         public static let rttyR: UInt8 = 0x08
+    }
+
+    /// Level reading sub-commands (used with Command.readLevel)
+    public enum LevelRead {
+        /// Read S-meter (0x02)
+        public static let sMeter: UInt8 = 0x02
+
+        /// Read squelch level (0x01)
+        public static let squelch: UInt8 = 0x01
+
+        /// Read RF power meter (0x11)
+        public static let rfPowerMeter: UInt8 = 0x11
     }
 }

@@ -302,6 +302,42 @@ public actor IcomCIVProtocol: CATProtocol {
         return response.data[0] == 0x01
     }
 
+    // MARK: - Signal Strength
+
+    public func getSignalStrength() async throws -> SignalStrength {
+        // Build and send query command
+        // Command 0x15 (read level), sub-command 0x02 (S-meter)
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.readLevel, CIVFrame.LevelRead.sMeter]
+        )
+
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        // Response should contain command echo and BCD data
+        guard response.command.count >= 2,
+              response.command[0] == CIVFrame.Command.readLevel,
+              response.command[1] == CIVFrame.LevelRead.sMeter,
+              response.data.count >= 2 else {
+            throw RigError.invalidResponse
+        }
+
+        // Decode BCD value (2 bytes, little-endian)
+        // Range: 0x0000 to 0x0255 (0-241 in decimal)
+        let rawValue = BCDEncoding.decodePower(response.data)
+
+        // Convert to S-units
+        // Roughly 24 units per S-unit (0-241 range / 10 S-units ≈ 24)
+        // S0-S8: every 24 units
+        // S9: at 216 units (9 × 24)
+        // S9+: above 216, each 4 units = 1 dB
+        let sUnits = min(rawValue / 24, 9)
+        let overS9 = sUnits >= 9 ? min((rawValue - 216) / 4, 60) : 0
+
+        return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
+    }
+
     // MARK: - Private Methods
 
     /// Sends a CI-V frame to the radio.

@@ -29,6 +29,9 @@ public struct RigCapabilities: Sendable, Codable {
     /// Radio supports antenna tuner control
     public let hasATU: Bool
 
+    /// Radio supports S-meter signal strength reading
+    public let supportsSignalStrength: Bool
+
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,
@@ -37,7 +40,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportedModes: Set<Mode> = Set(Mode.allCases),
         frequencyRange: (min: UInt64, max: UInt64)? = nil,
         hasDualReceiver: Bool = false,
-        hasATU: Bool = false
+        hasATU: Bool = false,
+        supportsSignalStrength: Bool = true
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -47,6 +51,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.frequencyRange = frequencyRange
         self.hasDualReceiver = hasDualReceiver
         self.hasATU = hasATU
+        self.supportsSignalStrength = supportsSignalStrength
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)
@@ -58,7 +63,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportedModes: Set(Mode.allCases),
         frequencyRange: (min: 30_000, max: 470_000_000),
         hasDualReceiver: true,
-        hasATU: true
+        hasATU: true,
+        supportsSignalStrength: true
     )
 
     /// Basic radio capabilities (for simple transceivers)
@@ -70,6 +76,7 @@ public struct RigCapabilities: Sendable, Codable {
         supportedModes: [.lsb, .usb, .cw, .fm],
         frequencyRange: nil,
         hasDualReceiver: false,
-        hasATU: false
+        hasATU: false,
+        supportsSignalStrength: false
     )
 }

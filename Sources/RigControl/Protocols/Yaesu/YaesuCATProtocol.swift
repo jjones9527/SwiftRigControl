@@ -211,6 +211,37 @@ public actor YaesuCATProtocol: CATProtocol {
         return (percentage * capabilities.maxPower) / 100
     }
 
+    // MARK: - Signal Strength
+
+    public func getSignalStrength() async throws -> SignalStrength {
+        // Yaesu FT-991A and similar use RM5; to read main S-meter
+        // Note: Command may vary by model (RM1-RM9 for different meters)
+        try await sendCommand("RM5")
+        let response = try await receiveResponse()
+
+        // Response format: "RM5nnn" where nnn is 000-255
+        guard response.hasPrefix("RM5"),
+              response.count >= 6 else {
+            throw RigError.invalidResponse
+        }
+
+        let startIndex = response.index(response.startIndex, offsetBy: 3)
+        let endIndex = response.index(startIndex, offsetBy: 3)
+        let valueString = String(response[startIndex..<endIndex])
+
+        guard let rawValue = Int(valueString) else {
+            throw RigError.invalidResponse
+        }
+
+        // Yaesu: 0-255 scale
+        // Roughly: 0-120 = S0-S9 (about 13 units per S-unit)
+        // 121-255 = S9+1 to S9+60 (about 2 units per dB)
+        let sUnits = min(rawValue / 13, 9)
+        let overS9 = sUnits >= 9 ? max((rawValue - 117) / 2, 0) : 0
+
+        return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
+    }
+
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {
