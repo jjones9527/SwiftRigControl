@@ -389,6 +389,34 @@ public class XPCServer: NSObject, RigControlXPCProtocol {
         case "KX3":
             return .elecraftKX3
 
+        // Yaesu
+        case "FTDX-10", "FTDX10", "FTDX 10":
+            return .yaesuFTDX10
+        case "FT-991A", "FT991A", "991A":
+            return .yaesuFT991A
+        case "FT-710", "FT710":
+            return .yaesuFT710
+        case "FT-891", "FT891":
+            return .yaesuFT891
+        case "FT-817", "FT817":
+            return .yaesuFT817
+        case "FTDX-101D", "FTDX101D":
+            return .yaesuFTDX101D
+
+        // Kenwood
+        case "TS-890S", "TS890S":
+            return .kenwoodTS890S
+        case "TS-990S", "TS990S":
+            return .kenwoodTS990S
+        case "TS-590SG", "TS590SG":
+            return .kenwoodTS590SG
+        case "TM-D710", "TMD710", "TM-D710GA":
+            return .kenwoodTMD710
+        case "TS-480SAT", "TS480SAT":
+            return .kenwoodTS480SAT
+        case "TS-2000", "TS2000":
+            return .kenwoodTS2000
+
         default:
             return nil
         }

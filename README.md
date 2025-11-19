@@ -31,10 +31,23 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **KX2** - Portable HF transceiver (38400 baud, 12W)
 - **KX3** - Portable HF/6m transceiver (38400 baud, 15W)
 
-### Coming Soon
+### Yaesu (CAT Protocol) ✅
 
-- Yaesu (FTDX-10, FT-991A, FT-710, FT-891)
-- Kenwood (TS-890S, TS-990S, TS-590SG)
+- **FTDX-10** - HF/6m transceiver (38400 baud, 100W)
+- **FT-991A** - HF/VHF/UHF all-mode transceiver (38400 baud, 100W)
+- **FT-710** - HF/6m all-mode transceiver (38400 baud, 100W)
+- **FT-891** - HF/6m all-mode transceiver (38400 baud, 100W)
+- **FT-817** - Portable QRP HF/VHF/UHF transceiver (38400 baud, 5W)
+- **FTDX-101D** - HF/6m transceiver with dual receiver (38400 baud, 100W)
+
+### Kenwood (Text-Based Protocol) ✅
+
+- **TS-890S** - HF/6m transceiver with dual receiver (115200 baud, 100W)
+- **TS-990S** - HF/6m flagship transceiver with dual receiver (115200 baud, 200W)
+- **TS-590SG** - HF/6m all-mode transceiver (115200 baud, 100W)
+- **TM-D710** - VHF/UHF dual-band transceiver (57600 baud, 50W)
+- **TS-480SAT** - HF/6m all-mode transceiver (57600 baud, 100W)
+- **TS-2000** - HF/VHF/UHF all-mode transceiver (57600 baud, 100W)
 
 ## Installation
 
@@ -197,9 +210,9 @@ public protocol CATProtocol: Actor {
 
 Current implementations:
 - ✅ **IcomCIVProtocol** - Icom CI-V binary protocol
-- 🚧 **ElecraftProtocol** - Coming soon
-- 🚧 **YaesuCATProtocol** - Coming soon
-- 🚧 **KenwoodProtocol** - Coming soon
+- ✅ **ElecraftProtocol** - Elecraft text-based protocol
+- ✅ **YaesuCATProtocol** - Yaesu CAT text-based protocol
+- ✅ **KenwoodProtocol** - Kenwood text-based protocol
 
 ## Development Status
 
@@ -215,19 +228,35 @@ Current implementations:
 - [x] RigController API
 - [x] Unit tests (BCD encoding, CI-V frames, protocol)
 
+### Week 2 & 3 ✅ COMPLETE
+
+- [x] Split operation support
+- [x] Integration tests for real hardware
+- [x] Elecraft protocol implementation
+- [x] 6 Elecraft radio definitions (K2, K3, K3S, K4, KX2, KX3)
+- [x] Unit tests for Elecraft protocol
+
+### Week 4 & 5 ✅ COMPLETE
+
+- [x] XPC protocol definition
+- [x] XPCClient (async/await interface)
+- [x] XPCServer (bridges to RigControl)
+- [x] RigControlHelper executable
+- [x] XPC Helper documentation
+
+### Week 6 & 7 ✅ COMPLETE
+
+- [x] Yaesu CAT protocol implementation
+- [x] 6 Yaesu radio definitions (FTDX-10, FT-991A, FT-710, FT-891, FT-817, FTDX-101D)
+- [x] Kenwood protocol implementation
+- [x] 6 Kenwood radio definitions (TS-890S, TS-990S, TS-590SG, TM-D710, TS-480SAT, TS-2000)
+- [x] Unit tests for Yaesu protocol
+- [x] Unit tests for Kenwood protocol
+- [x] XPC server support for all new radios
+
 ### Next Steps
 
-**Week 2** - Complete Icom implementation
-- [ ] Finish frequency/mode control testing on real hardware
-- [ ] Add VFO control
-- [ ] Add power control
-- [ ] Integration tests with IC-9700, IC-7600, IC-7100
-
-**Week 3** - Elecraft protocol
-**Week 4-5** - XPC helper for Mac App Store
-**Week 6** - Yaesu protocol
-**Week 7** - Kenwood protocol
-**Week 8** - Documentation
+**Week 8** - Documentation refinement
 **Week 9** - v1.0.0 release
 
 ## Testing
