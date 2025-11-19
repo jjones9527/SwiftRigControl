@@ -430,6 +430,6 @@ SwiftRigControl v1.0.0 represents a modern, native Swift solution for amateur ra
 
 ---
 
-**73 de SwiftRigControl Team!**
+**73 de VA3ZTF**
 
 *"Modern Swift for Amateur Radio Control on macOS"*

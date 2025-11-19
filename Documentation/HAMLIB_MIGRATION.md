@@ -663,7 +663,8 @@ await rig.disconnect()  // Optional explicit cleanup
 
 ## Getting Help
 
-- GitHub Issues: https://github.com/yourusername/SwiftRigControl/issues
+- GitHub Issues: https://github.com/jjones9527/SwiftRigControl/issues
+- Email: va3ztf@gmail.com
 - Hamlib compatibility questions welcome
 
-**73 and happy migrating!**
+**73 de VA3ZTF and happy migrating!**
