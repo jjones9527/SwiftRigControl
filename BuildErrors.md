@@ -194,31 +194,120 @@ public actor RigController {
 
 ---
 
+### 3. Symbol Visibility Error in main.swift
+
+**File:** `main.swift` (XPC Helper entry point)  
+**Related:** `XPCProtocol.swift`
+
+#### Error:
+- **Error:** Cannot find 'RigControlXPCProtocol' in scope
+
+#### Problematic Code - Line ~15:
+
+```swift
+import Foundation
+import RigControlXPC
+
+class HelperDelegate: NSObject, NSXPCListenerDelegate {
+    func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
+        // Configure the connection
+        newConnection.exportedInterface = NSXPCInterface(with: RigControlXPCProtocol.self)  // ❌ Error
+        newConnection.exportedObject = XPCServer()
+        
+        newConnection.resume()
+        return true
+    }
+}
+```
+
+#### Root Cause:
+
+The protocol `RigControlXPCProtocol` is defined in `XPCProtocol.swift` but lacks a `public` access modifier:
+
+```swift
+// Current (internal visibility):
+@objc protocol RigControlXPCProtocol {
+    // ...
+}
+```
+
+In Swift, declarations without an explicit access modifier default to `internal`, which means:
+- ✅ Visible within the same module
+- ❌ **Not visible** when importing the module from another target
+
+Since `main.swift` imports the protocol via `import RigControlXPC`, it cannot see the internal protocol.
+
+#### Resolution:
+
+**Option 1: Mark the protocol as public** (Recommended)
+
+In `XPCProtocol.swift`, change line 10:
+```swift
+// ✅ Fixed version:
+@objc public protocol RigControlXPCProtocol {
+    // MARK: - Connection Management
+    // ...
+}
+```
+
+**Option 2: Move main.swift to the same module**
+
+If `main.swift` is in a different target, move it to the same module as `XPCProtocol.swift`. However, this is less flexible for XPC helper architecture.
+
+**Option 3: Use a type alias or wrapper**
+
+Create a public type alias in the module, though this is unnecessary complexity:
+```swift
+public typealias PublicXPCProtocol = RigControlXPCProtocol
+```
+
+#### Note on XPC Architecture:
+
+The XPC helper typically runs as a separate executable, which may be in a different module/target than the protocol definition. To support this architecture, the protocol **must be public**.
+
+Also verify that `XPCServer` is also `public` since it's referenced in the same location:
+```swift
+public class XPCServer: NSObject, RigControlXPCProtocol {
+    // ...
+}
+```
+
+**Recommendation:** Add `public` to the `@objc protocol RigControlXPCProtocol` declaration.
+
+---
+
 ## Summary
 
-- **Total Active Errors:** 8 (2 Codable + 6 Actor Isolation)
+- **Total Active Errors:** 9 (2 Codable + 6 Actor Isolation + 1 Visibility)
 - **Affected Files:** 
   - `RigCapabilities.swift` (2 errors)
   - `XPCServer.swift` (6 errors in 3 methods)
+  - `main.swift` (1 error)
+  - `XPCProtocol.swift` (needs fix)
 - **Error Categories:** 
   - Protocol Conformance (2 errors)
   - Actor Isolation (6 errors)
+  - Symbol Visibility (1 error)
 - **Priority:** High (blocks compilation)
 
 ## Next Steps
 
-1. **Fix Codable conformance in RigCapabilities.swift:**
+1. **Fix Symbol Visibility in XPCProtocol.swift:**
+   - Add `public` modifier to `RigControlXPCProtocol` (line 10)
+   - Verify `XPCServer` is also public
+   
+2. **Fix Codable conformance in RigCapabilities.swift:**
    - Check if `Mode` type conforms to `Codable`
    - Replace the tuple `frequencyRange` with a proper `Codable` struct
    
-2. **Fix Actor Isolation in XPCServer.swift:**
+3. **Fix Actor Isolation in XPCServer.swift:**
    - Wrap property accesses in `Task` blocks for:
      - `getCapabilities(withReply:)` - line ~325
      - `getRadioName(withReply:)` - line ~342
      - `isConnected(withReply:)` - line ~352
    - Add `await` when accessing `rigController` properties
    
-3. Recompile to verify fixes
+4. Recompile to verify fixes
 
 ## Pattern Observed
 
