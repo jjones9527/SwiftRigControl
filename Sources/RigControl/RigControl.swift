@@ -47,20 +47,3 @@
 
 // Re-export all public types
 @_exported import struct Foundation.Data
-
-// Core types
-public typealias VFO = VFO
-public typealias Mode = Mode
-public typealias RigError = RigError
-public typealias RigCapabilities = RigCapabilities
-public typealias RigController = RigController
-public typealias RadioDefinition = RadioDefinition
-public typealias ConnectionType = ConnectionType
-
-// Protocols
-public typealias CATProtocol = CATProtocol
-public typealias SerialTransport = SerialTransport
-public typealias SerialConfiguration = SerialConfiguration
-
-// Transport implementations
-public typealias IOKitSerialPort = IOKitSerialPort
