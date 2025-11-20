@@ -64,103 +64,162 @@ If serialization is not needed, remove the `Codable` conformance.
 
 ---
 
-### 2. Actor Isolation Errors
+### 2. Actor Isolation Errors in XPCServer
 
-**Location:** Unknown file (likely in XPC or controller code)
+**File:** `XPCServer.swift`  
+**Related:** `RigController.swift` (actor)
 
-#### Errors:
-- **Error:** Actor-isolated property 'radioName' can not be referenced from a nonisolated context
-- **Error:** Actor-isolated property 'isConnected' can not be referenced from a nonisolated context
-- **Error:** Actor-isolated property 'capabilities' can not be referenced from a nonisolated context
+#### Errors (6 occurrences):
+- **Error:** Actor-isolated property 'capabilities' can not be referenced from a nonisolated context (2×)
+- **Error:** Actor-isolated property 'radioName' can not be referenced from a nonisolated context (2×)
+- **Error:** Actor-isolated property 'isConnected' can not be referenced from a nonisolated context (2×)
+
+#### Problematic Code Locations:
+
+**1. `getCapabilities(withReply:)` - Line ~325**
+```swift
+public func getCapabilities(
+    withReply reply: @escaping ([String: Any]?, NSError?) -> Void
+) {
+    guard let rig = rigController else { ... }
+    
+    let caps = rig.capabilities  // ❌ Error - accessing actor property synchronously
+    let dict: [String: Any] = [
+        "hasVFOB": caps.hasVFOB,
+        // ...
+    ]
+    reply(dict, nil)
+}
+```
+
+**2. `getRadioName(withReply:)` - Line ~342**
+```swift
+public func getRadioName(
+    withReply reply: @escaping (String?, NSError?) -> Void
+) {
+    guard let rig = rigController else { ... }
+    
+    reply(rig.radioName, nil)  // ❌ Error - accessing actor property synchronously
+}
+```
+
+**3. `isConnected(withReply:)` - Line ~352**
+```swift
+public func isConnected(
+    withReply reply: @escaping (Bool) -> Void
+) {
+    reply(rigController?.isConnected ?? false)  // ❌ Error - accessing actor property synchronously
+}
+```
 
 #### Root Cause:
 
-These errors occur when trying to access actor-isolated properties from outside the actor's isolation domain. In Swift Concurrency:
-
-- Properties on an actor are isolated to that actor by default
-- Accessing them from non-actor code (nonisolated context) requires `await`
-- Synchronous access to actor properties is not allowed from outside the actor
-
-#### Common Scenarios:
-
-1. **Accessing actor properties synchronously:**
-   ```swift
-   let name = rigController.radioName  // ❌ Error
-   ```
-
-2. **Using actor properties in computed properties:**
-   ```swift
-   var description: String {
-       return rigController.radioName  // ❌ Error - computed property is nonisolated
-   }
-   ```
-
-3. **Passing actor properties to non-async functions:**
-   ```swift
-   updateUI(rigController.isConnected)  // ❌ Error
-   ```
-
-#### Resolution Options:
-
-**Option 1: Use async/await**
+`RigController` is defined as an `actor`:
 ```swift
-let name = await rigController.radioName  // ✅ Correct
-```
-
-**Option 2: Mark properties as nonisolated**
-If the property doesn't need actor isolation (e.g., immutable or thread-safe):
-```swift
-actor RigController {
-    nonisolated let radioName: String  // ✅ Can be accessed synchronously
+public actor RigController {
+    // These computed properties are actor-isolated:
+    public var isConnected: Bool { connected }
+    public var capabilities: RigCapabilities { radio.capabilities }
+    public var radioName: String { radio.fullName }
 }
 ```
 
-**Option 3: Mark properties with @MainActor if UI-related**
-For properties that need to be accessed from the main thread:
-```swift
-@MainActor
-class RigController {
-    var radioName: String  // ✅ Main actor isolated
-}
-```
+The three XPCServer methods are **non-async** functions trying to access actor-isolated properties **synchronously**, which violates Swift Concurrency's isolation rules.
 
-**Option 4: Create async getter methods**
+#### Resolution:
+
+**Wrap the property accesses in `Task` blocks** (like the other methods do):
+
 ```swift
-actor RigController {
-    private var _radioName: String
-    
-    func getRadioName() async -> String {
-        return _radioName
+// ✅ Fixed version of getCapabilities
+public func getCapabilities(
+    withReply reply: @escaping ([String: Any]?, NSError?) -> Void
+) {
+    Task {
+        guard let rig = rigController else {
+            reply(nil, createError(.notConnected, message: "Radio not connected"))
+            return
+        }
+        
+        let caps = await rig.capabilities
+        let dict: [String: Any] = [
+            "hasVFOB": caps.hasVFOB,
+            "hasSplit": caps.hasSplit,
+            "powerControl": caps.powerControl,
+            "maxPower": caps.maxPower,
+            "hasDualReceiver": caps.hasDualReceiver,
+            "hasATU": caps.hasATU
+        ]
+        
+        reply(dict, nil)
+    }
+}
+
+// ✅ Fixed version of getRadioName
+public func getRadioName(
+    withReply reply: @escaping (String?, NSError?) -> Void
+) {
+    Task {
+        guard let rig = rigController else {
+            reply(nil, createError(.notConnected, message: "Radio not connected"))
+            return
+        }
+        
+        reply(await rig.radioName, nil)
+    }
+}
+
+// ✅ Fixed version of isConnected
+public func isConnected(
+    withReply reply: @escaping (Bool) -> Void
+) {
+    Task {
+        reply(await rigController?.isConnected ?? false)
     }
 }
 ```
 
-#### Additional Considerations:
+#### Alternative (if properties don't need actor isolation):
 
-- If these properties are frequently accessed together, consider creating a struct that combines them
-- Use `nonisolated` carefully - only for truly thread-safe properties
-- Consider using `@Published` with `@MainActor` for SwiftUI integration
+Mark the properties as `nonisolated` in RigController.swift:
+```swift
+public actor RigController {
+    nonisolated public var capabilities: RigCapabilities { radio.capabilities }
+    nonisolated public var radioName: String { radio.fullName }
+    // Note: isConnected accesses mutable state, so should remain isolated
+}
+```
+
+**Recommendation:** Use the `Task` wrapper approach to maintain proper actor isolation.
 
 ---
 
 ## Summary
 
-- **Total Active Errors:** 5 (2 Codable + 3 Actor Isolation)
-- **Affected Files:** 2+ (`RigCapabilities.swift` + unknown actor/controller file)
+- **Total Active Errors:** 8 (2 Codable + 6 Actor Isolation)
+- **Affected Files:** 
+  - `RigCapabilities.swift` (2 errors)
+  - `XPCServer.swift` (6 errors in 3 methods)
 - **Error Categories:** 
   - Protocol Conformance (2 errors)
-  - Actor Isolation (3 errors)
+  - Actor Isolation (6 errors)
 - **Priority:** High (blocks compilation)
 
 ## Next Steps
 
-1. **Fix Codable conformance:**
+1. **Fix Codable conformance in RigCapabilities.swift:**
    - Check if `Mode` type conforms to `Codable`
    - Replace the tuple `frequencyRange` with a proper `Codable` struct
    
-2. **Fix Actor Isolation:**
-   - Locate where `radioName`, `isConnected`, and `capabilities` are being accessed
-   - Add `await` to async contexts or mark properties as `nonisolated` if appropriate
-   - Consider the concurrency model for the affected actor
+2. **Fix Actor Isolation in XPCServer.swift:**
+   - Wrap property accesses in `Task` blocks for:
+     - `getCapabilities(withReply:)` - line ~325
+     - `getRadioName(withReply:)` - line ~342
+     - `isConnected(withReply:)` - line ~352
+   - Add `await` when accessing `rigController` properties
    
 3. Recompile to verify fixes
+
+## Pattern Observed
+
+Note that most XPCServer methods already use the correct pattern (wrapping in `Task` and using `await`). The three problematic methods need to be updated to match this pattern.
