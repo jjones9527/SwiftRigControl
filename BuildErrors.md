@@ -1,46 +1,78 @@
 # Build Errors Summary
 
-**Date:** Thursday, November 20, 2025
+**Date:** Thursday, November 20, 2025  
+**Last Updated:** After resolving type alias errors
 
-## Error Type: Type Alias Self-Reference
+---
 
-All errors are of the same type: **Type alias references itself**
+## ✅ RESOLVED: Type Alias Self-Reference Errors
 
-This occurs when a type alias declaration creates a circular reference by referring to itself in its definition.
+~~Previously had 11 type alias self-reference errors - these have been fixed.~~
 
-### Affected Type Aliases (11 total)
+---
 
-1. **RigController** - Type alias references itself
-2. **CATProtocol** - Type alias references itself
-3. **Mode** - Type alias references itself
-4. **SerialTransport** - Type alias references itself
-5. **RigError** - Type alias references itself
-6. **RigCapabilities** - Type alias references itself
-7. **IOKitSerialPort** - Type alias references itself
-8. **ConnectionType** - Type alias references itself
-9. **SerialConfiguration** - Type alias references itself
-10. **RadioDefinition** - Type alias references itself
-11. **VFO** - Type alias references itself
+## ❌ CURRENT ERRORS
 
-## Root Cause
+### 1. RigCapabilities Codable Conformance Issues
 
-Type aliases in Swift cannot reference themselves. This typically happens when:
-- A `typealias` declaration inadvertently uses its own name in the definition
-- Copy-paste errors create circular references
-- Refactoring leaves behind conflicting type declarations
+**File:** `RigCapabilities.swift`
 
-## Resolution Strategy
+#### Errors:
+- **Error:** Type 'RigCapabilities' does not conform to protocol 'Decodable'
+- **Error:** Type 'RigCapabilities' does not conform to protocol 'Encodable'
 
-To fix these errors, you need to:
-1. Locate each type alias declaration
-2. Check if the type alias is defining itself (e.g., `typealias Foo = Foo`)
-3. Either:
-   - Remove the type alias if it's redundant
-   - Change the type alias to reference the correct underlying type
-   - Convert the type alias to a proper type declaration (struct, class, enum, protocol)
+#### Root Cause:
+
+The `RigCapabilities` struct declares conformance to `Codable`, but contains properties that are not automatically `Codable`:
+
+1. **Tuple property is not Codable:**
+   ```swift
+   public let frequencyRange: (min: UInt64, max: UInt64)?
+   ```
+   - Swift tuples do not conform to `Codable`
+   - This prevents automatic synthesis of `Codable` conformance
+
+2. **Set<Mode> may not be Codable:**
+   ```swift
+   public let supportedModes: Set<Mode>
+   ```
+   - Requires that `Mode` conforms to `Codable` and `Hashable`
+   - If `Mode` doesn't conform to `Codable`, this will fail
+
+#### Resolution Options:
+
+**Option 1: Replace tuple with a Codable struct**
+```swift
+public struct FrequencyRange: Codable, Sendable {
+    public let min: UInt64
+    public let max: UInt64
+}
+
+public let frequencyRange: FrequencyRange?
+```
+
+**Option 2: Manually implement Codable**
+Provide custom `encode(to:)` and `init(from:)` methods to handle the tuple encoding/decoding.
+
+**Option 3: Remove Codable conformance**
+If serialization is not needed, remove the `Codable` conformance.
+
+#### Additional Requirements:
+
+- Ensure `Mode` type conforms to `Codable` and `Hashable`
+- Verify all other properties are `Codable`-compatible
+
+---
+
+## Summary
+
+- **Total Active Errors:** 2
+- **Affected Files:** 1 (`RigCapabilities.swift`)
+- **Error Category:** Protocol Conformance
+- **Priority:** High (blocks compilation)
 
 ## Next Steps
 
-1. Search for each type alias in the codebase
-2. Identify the intended purpose of each type alias
-3. Apply the appropriate fix based on the context
+1. Check if `Mode` type conforms to `Codable`
+2. Replace the tuple `frequencyRange` with a proper `Codable` struct
+3. Recompile to verify fixes
