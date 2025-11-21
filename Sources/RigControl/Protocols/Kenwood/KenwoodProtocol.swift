@@ -211,6 +211,36 @@ public actor KenwoodProtocol: CATProtocol {
         return (percentage * capabilities.maxPower) / 100
     }
 
+    // MARK: - Signal Strength
+
+    public func getSignalStrength() async throws -> SignalStrength {
+        // Kenwood uses SM0; for main receiver S-meter
+        try await sendCommand("SM0")
+        let response = try await receiveResponse()
+
+        // Response format: "SM0nnnn" where nnnn is 0000-0030
+        guard response.hasPrefix("SM0"),
+              response.count >= 7 else {
+            throw RigError.invalidResponse
+        }
+
+        let startIndex = response.index(response.startIndex, offsetBy: 3)
+        let endIndex = response.index(startIndex, offsetBy: 4)
+        let valueString = String(response[startIndex..<endIndex])
+
+        guard let rawValue = Int(valueString) else {
+            throw RigError.invalidResponse
+        }
+
+        // Kenwood: Similar to Elecraft (0-30 scale)
+        // 0-30 represents signal level, approximately 3 units per S-unit
+        // S9 is at about 27, above that is S9+ in dB
+        let sUnits = min(rawValue / 3, 9)
+        let overS9 = sUnits >= 9 ? max((rawValue - 27) * 2, 0) : 0
+
+        return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
+    }
+
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {

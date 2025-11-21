@@ -249,6 +249,36 @@ public actor ElecraftProtocol: CATProtocol {
         return codeChar == "1"
     }
 
+    // MARK: - Signal Strength
+
+    public func getSignalStrength() async throws -> SignalStrength {
+        // Send SM0; for main receiver (some models also support SM; for current RX)
+        try await sendCommand("SM0")
+        let response = try await receiveResponse()
+
+        // Response format: "SM0nnnn" where nnnn is 0000-0030 (dB over S0)
+        guard response.hasPrefix("SM0"),
+              response.count >= 7 else {
+            throw RigError.invalidResponse
+        }
+
+        let startIndex = response.index(response.startIndex, offsetBy: 3)
+        let endIndex = response.index(startIndex, offsetBy: 4)
+        let valueString = String(response[startIndex..<endIndex])
+
+        guard let rawValue = Int(valueString) else {
+            throw RigError.invalidResponse
+        }
+
+        // Elecraft: 0-30 represents dB over S0
+        // S0 to S9 = 54 dB (6 dB per S-unit)
+        // So: S1 = 6 dB, S2 = 12 dB, ..., S9 = 54 dB
+        let sUnits = min(rawValue / 6, 9)
+        let overS9 = sUnits >= 9 ? max(rawValue - 54, 0) : 0
+
+        return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
+    }
+
     // MARK: - Private Methods
 
     /// Sends a command to the radio.

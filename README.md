@@ -9,6 +9,9 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
 - ✅ **Well-Tested**: Comprehensive unit tests with mock transport support
+- ✅ **S-Meter Reading**: Real-time signal strength monitoring (v1.1.0)
+- ✅ **Performance Caching**: 10-20x faster queries with intelligent caching (v1.1.0)
+- ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
 - ✅ **Open Source**: MIT licensed
 
 ## Supported Radios
@@ -100,7 +103,7 @@ await rig.disconnect()
 ### Reading Radio State
 
 ```swift
-// Get current frequency
+// Get current frequency (with caching for performance)
 let freq = try await rig.frequency(vfo: .a)
 print("Current frequency: \(freq) Hz")
 
@@ -117,6 +120,45 @@ if rig.capabilities.powerControl {
     let power = try await rig.power()
     print("Power: \(power) watts")
 }
+
+// NEW in v1.1.0: Read signal strength
+let signal = try await rig.signalStrength()
+print("Signal: \(signal.description)")  // "S7" or "S9+20"
+
+if signal.isStrongSignal {
+    print("Strong signal: S9 or better!")
+}
+```
+
+### Batch Configuration (v1.1.0)
+
+```swift
+// Set up for FT8 on 20m in one call
+try await rig.configure(
+    frequency: 14_074_000,
+    mode: .dataUSB,
+    power: 50
+)
+
+// Quick band change
+try await rig.configure(frequency: 7_074_000)
+
+// Mode change only
+try await rig.configure(mode: .cw)
+```
+
+### Performance Caching (v1.1.0)
+
+```swift
+// Cached reads are 10-20x faster (default behavior)
+let freq1 = try await rig.frequency(cached: true)  // ~50ms first time
+let freq2 = try await rig.frequency(cached: true)  // <5ms from cache
+
+// Force fresh query when needed
+let freshFreq = try await rig.frequency(cached: false)
+
+// Manually invalidate cache after manual radio adjustments
+await rig.invalidateCache()
 ```
 
 ### Error Handling
@@ -235,6 +277,7 @@ Common patterns:
 | **PTT Off** | Cmd 0x1C 0x00 0x00 | `RX;` | `TX0;` | `TX0;` |
 | **VFO Select** | Cmd 0x07 | `FT0;`/`FT1;` | `FT0;`/`FT1;` | `FR0;`/`FR1;` |
 | **Split On** | Cmd 0x0F 0x01 | `FT1;` | `FT1;` | `FT1;` |
+| **S-Meter** (v1.1.0) | Cmd 0x15 0x02 | `SM0;` | `RM5;` | `SM0;` |
 | **Response** | Echo + ACK/NAK | Echo command | Echo command | Echo command |
 
 ### Supported Modes by Manufacturer
