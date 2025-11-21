@@ -1,5 +1,19 @@
 import Foundation
 
+/// Represents a frequency range for a radio transceiver.
+public struct FrequencyRange: Sendable, Codable, Equatable {
+    /// Minimum frequency in Hz
+    public let min: UInt64
+
+    /// Maximum frequency in Hz
+    public let max: UInt64
+
+    public init(min: UInt64, max: UInt64) {
+        self.min = min
+        self.max = max
+    }
+}
+
 /// Describes the capabilities of a specific radio model.
 ///
 /// Different radios support different features. This structure allows the library
@@ -21,7 +35,7 @@ public struct RigCapabilities: Sendable, Codable {
     public let supportedModes: Set<Mode>
 
     /// Frequency range in Hz (min, max)
-    public let frequencyRange: (min: UInt64, max: UInt64)?
+    public let frequencyRange: FrequencyRange?
 
     /// Radio has dual receivers (main/sub)
     public let hasDualReceiver: Bool
@@ -38,7 +52,7 @@ public struct RigCapabilities: Sendable, Codable {
         powerControl: Bool = true,
         maxPower: Int = 100,
         supportedModes: Set<Mode> = Set(Mode.allCases),
-        frequencyRange: (min: UInt64, max: UInt64)? = nil,
+        frequencyRange: FrequencyRange? = nil,
         hasDualReceiver: Bool = false,
         hasATU: Bool = false,
         supportsSignalStrength: Bool = true
@@ -61,7 +75,7 @@ public struct RigCapabilities: Sendable, Codable {
         powerControl: true,
         maxPower: 100,
         supportedModes: Set(Mode.allCases),
-        frequencyRange: (min: 30_000, max: 470_000_000),
+        frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true

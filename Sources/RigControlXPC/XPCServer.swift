@@ -314,39 +314,45 @@ public class XPCServer: NSObject, RigControlXPCProtocol {
     public func getCapabilities(
         withReply reply: @escaping ([String: Any]?, NSError?) -> Void
     ) {
-        guard let rig = rigController else {
-            reply(nil, createError(.notConnected, message: "Radio not connected"))
-            return
+        Task {
+            guard let rig = rigController else {
+                reply(nil, createError(.notConnected, message: "Radio not connected"))
+                return
+            }
+
+            let caps = await rig.capabilities
+            let dict: [String: Any] = [
+                "hasVFOB": caps.hasVFOB,
+                "hasSplit": caps.hasSplit,
+                "powerControl": caps.powerControl,
+                "maxPower": caps.maxPower,
+                "hasDualReceiver": caps.hasDualReceiver,
+                "hasATU": caps.hasATU
+            ]
+
+            reply(dict, nil)
         }
-
-        let caps = rig.capabilities
-        let dict: [String: Any] = [
-            "hasVFOB": caps.hasVFOB,
-            "hasSplit": caps.hasSplit,
-            "powerControl": caps.powerControl,
-            "maxPower": caps.maxPower,
-            "hasDualReceiver": caps.hasDualReceiver,
-            "hasATU": caps.hasATU
-        ]
-
-        reply(dict, nil)
     }
 
     public func getRadioName(
         withReply reply: @escaping (String?, NSError?) -> Void
     ) {
-        guard let rig = rigController else {
-            reply(nil, createError(.notConnected, message: "Radio not connected"))
-            return
-        }
+        Task {
+            guard let rig = rigController else {
+                reply(nil, createError(.notConnected, message: "Radio not connected"))
+                return
+            }
 
-        reply(rig.radioName, nil)
+            reply(await rig.radioName, nil)
+        }
     }
 
     public func isConnected(
         withReply reply: @escaping (Bool) -> Void
     ) {
-        reply(rigController?.isConnected ?? false)
+        Task {
+            reply(await rigController?.isConnected ?? false)
+        }
     }
 
     // MARK: - Private Methods

@@ -8,7 +8,7 @@ import Foundation
 ///
 /// The XPC helper architecture:
 /// - Sandboxed App → XPCClient → XPC Connection → XPCServer (in helper) → RigControl
-@objc protocol RigControlXPCProtocol {
+@objc public protocol RigControlXPCProtocol {
     // MARK: - Connection Management
 
     /// Connects to a radio via serial port.

@@ -13,7 +13,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 15,  // 15 watts (100W with optional PA)
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB],
-            frequencyRange: (min: 500_000, max: 30_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 30_000_000),
             hasDualReceiver: false,
             hasATU: true
         ),
@@ -26,7 +26,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 15,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB],
-                    frequencyRange: (min: 500_000, max: 30_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 30_000_000),
                     hasDualReceiver: false,
                     hasATU: true
                 )
@@ -45,7 +45,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 100,
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-            frequencyRange: (min: 500_000, max: 54_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
             hasDualReceiver: true,
             hasATU: true
         ),
@@ -58,7 +58,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 100,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-                    frequencyRange: (min: 500_000, max: 54_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
                     hasDualReceiver: true,
                     hasATU: true
                 )
@@ -77,7 +77,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 100,
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-            frequencyRange: (min: 500_000, max: 54_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
             hasDualReceiver: true,
             hasATU: true
         ),
@@ -90,7 +90,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 100,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-                    frequencyRange: (min: 500_000, max: 54_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
                     hasDualReceiver: true,
                     hasATU: true
                 )
@@ -109,7 +109,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 100,
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-            frequencyRange: (min: 500_000, max: 54_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
             hasDualReceiver: true,
             hasATU: true
         ),
@@ -122,7 +122,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 100,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-                    frequencyRange: (min: 500_000, max: 54_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
                     hasDualReceiver: true,
                     hasATU: true
                 )
@@ -141,7 +141,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 12,  // 12 watts internal, 15W with optional batteries
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB],
-            frequencyRange: (min: 500_000, max: 30_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 30_000_000),
             hasDualReceiver: false,
             hasATU: true
         ),
@@ -154,7 +154,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 12,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB],
-                    frequencyRange: (min: 500_000, max: 30_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 30_000_000),
                     hasDualReceiver: false,
                     hasATU: true
                 )
@@ -173,7 +173,7 @@ extension RadioDefinition {
             powerControl: true,
             maxPower: 15,  // 15 watts internal (can upgrade to 100W with external PA)
             supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-            frequencyRange: (min: 500_000, max: 54_000_000),
+            frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
             hasDualReceiver: true,
             hasATU: true
         ),
@@ -186,7 +186,7 @@ extension RadioDefinition {
                     powerControl: true,
                     maxPower: 15,
                     supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .dataUSB, .dataLSB],
-                    frequencyRange: (min: 500_000, max: 54_000_000),
+                    frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
                     hasDualReceiver: true,
                     hasATU: true
                 )
