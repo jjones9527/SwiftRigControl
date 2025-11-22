@@ -157,19 +157,30 @@ public actor ElecraftProtocol: CATProtocol {
     // MARK: - VFO Control
 
     public func selectVFO(_ vfo: VFO) async throws {
-        let command: String
+        let frCommand: String
+        let ftCommand: String
+
         switch vfo {
         case .a, .main:
-            command = "FT0"  // Select VFO A
+            frCommand = "FR0"  // Receive on VFO A
+            ftCommand = "FT0"  // Transmit on VFO A
         case .b, .sub:
-            command = "FT1"  // Select VFO B
+            frCommand = "FR1"  // Receive on VFO B
+            ftCommand = "FT1"  // Transmit on VFO B
         }
 
-        try await sendCommand(command)
-        let response = try await receiveResponse()
+        // Set receive VFO
+        try await sendCommand(frCommand)
+        let frResponse = try await receiveResponse()
+        guard frResponse.hasPrefix(frCommand) else {
+            throw RigError.commandFailed("VFO RX selection failed")
+        }
 
-        guard response.hasPrefix(command) else {
-            throw RigError.commandFailed("VFO selection failed")
+        // Set transmit VFO
+        try await sendCommand(ftCommand)
+        let ftResponse = try await receiveResponse()
+        guard ftResponse.hasPrefix(ftCommand) else {
+            throw RigError.commandFailed("VFO TX selection failed")
         }
     }
 
@@ -224,12 +235,32 @@ public actor ElecraftProtocol: CATProtocol {
             throw RigError.unsupportedOperation("Split operation not supported")
         }
 
-        let command = enabled ? "FT1" : "FT0"  // FT1 enables split
-        try await sendCommand(command)
-        let response = try await receiveResponse()
+        if enabled {
+            // Split: RX on VFO A, TX on VFO B
+            try await sendCommand("FR0")
+            let frResponse = try await receiveResponse()
+            guard frResponse.hasPrefix("FR0") else {
+                throw RigError.commandFailed("Split RX VFO selection failed")
+            }
 
-        guard response.hasPrefix(command) else {
-            throw RigError.commandFailed("Split operation failed")
+            try await sendCommand("FT1")
+            let ftResponse = try await receiveResponse()
+            guard ftResponse.hasPrefix("FT1") else {
+                throw RigError.commandFailed("Split TX VFO selection failed")
+            }
+        } else {
+            // Normal: RX and TX on VFO A
+            try await sendCommand("FR0")
+            let frResponse = try await receiveResponse()
+            guard frResponse.hasPrefix("FR0") else {
+                throw RigError.commandFailed("Normal RX VFO selection failed")
+            }
+
+            try await sendCommand("FT0")
+            let ftResponse = try await receiveResponse()
+            guard ftResponse.hasPrefix("FT0") else {
+                throw RigError.commandFailed("Normal TX VFO selection failed")
+            }
         }
     }
 
@@ -321,6 +352,7 @@ public actor ElecraftProtocol: CATProtocol {
         case .am: return 5
         case .dataUSB: return 6  // FSK-D (data)
         case .cwR: return 7
+        case .rtty: return 8  // RTTY
         case .dataLSB: return 9  // DATA-A (data on LSB)
         default:
             throw RigError.unsupportedOperation("Mode \(mode) not supported by Elecraft protocol")
@@ -337,6 +369,7 @@ public actor ElecraftProtocol: CATProtocol {
         case 5: return .am
         case 6: return .dataUSB
         case 7: return .cwR
+        case 8: return .rtty
         case 9: return .dataLSB
         default:
             throw RigError.invalidResponse

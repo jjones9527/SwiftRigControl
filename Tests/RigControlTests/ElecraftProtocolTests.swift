@@ -135,6 +135,8 @@ final class ElecraftProtocolTests: XCTestCase {
             (.am, "MD5;"),
             (.dataUSB, "MD6;"),
             (.cwR, "MD7;"),
+            (.rtty, "MD8;"),
+            (.dataLSB, "MD9;"),
         ]
 
         for (mode, expectedCmd) in modeMappings {
@@ -195,18 +197,23 @@ final class ElecraftProtocolTests: XCTestCase {
         try await protocol.connect()
         await mockTransport.reset()
 
-        // Select VFO A (FT0)
-        let expectedCommand = "FT0;".data(using: .ascii)!
-        let response = "FT0;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        // Select VFO A (FR0 and FT0)
+        let frCommand = "FR0;".data(using: .ascii)!
+        let frResponse = "FR0;".data(using: .ascii)!
+        let ftCommand = "FT0;".data(using: .ascii)!
+        let ftResponse = "FT0;".data(using: .ascii)!
+        await mockTransport.setResponse(for: frCommand, response: frResponse)
+        await mockTransport.setResponse(for: ftCommand, response: ftResponse)
 
         try await protocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        XCTAssertEqual(writes.count, 2)
 
-        let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FT0;")
+        let cmd1 = String(data: writes[0], encoding: .ascii)
+        let cmd2 = String(data: writes[1], encoding: .ascii)
+        XCTAssertEqual(cmd1, "FR0;")
+        XCTAssertEqual(cmd2, "FT0;")
     }
 
     // MARK: - Power Control Tests
@@ -251,17 +258,23 @@ final class ElecraftProtocolTests: XCTestCase {
         try await protocol.connect()
         await mockTransport.reset()
 
-        let expectedCommand = "FT1;".data(using: .ascii)!
-        let response = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        // Split: FR0 (RX on VFO A) and FT1 (TX on VFO B)
+        let frCommand = "FR0;".data(using: .ascii)!
+        let frResponse = "FR0;".data(using: .ascii)!
+        let ftCommand = "FT1;".data(using: .ascii)!
+        let ftResponse = "FT1;".data(using: .ascii)!
+        await mockTransport.setResponse(for: frCommand, response: frResponse)
+        await mockTransport.setResponse(for: ftCommand, response: ftResponse)
 
         try await protocol.setSplit(true)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        XCTAssertEqual(writes.count, 2)
 
-        let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FT1;")
+        let cmd1 = String(data: writes[0], encoding: .ascii)
+        let cmd2 = String(data: writes[1], encoding: .ascii)
+        XCTAssertEqual(cmd1, "FR0;")
+        XCTAssertEqual(cmd2, "FT1;")
     }
 
     func testGetSplit() async throws {
