@@ -1,13 +1,20 @@
 import Foundation
 
-/// Amateur radio band allocations for Region 2 (Americas).
+/// Amateur radio band allocations for ITU Region 3 (Asia-Pacific).
 ///
-/// These bands represent the frequency allocations defined by the FCC and international
-/// regulations for amateur radio operations in the United States and Region 2.
+/// These bands represent the frequency allocations defined by IARU Region 3 and international
+/// regulations for amateur radio operations in the Asia-Pacific region.
 ///
-/// Reference: https://www.arrl.org/band-plan
-/// Reference: https://www.fcc.gov/amateur-radio-service
-public enum AmateurBand: String, CaseIterable, Sendable {
+/// Region 3 includes: Asia (excluding Middle East and Northern Asia), Australia, New Zealand,
+/// and Pacific Islands
+///
+/// Key differences from Region 2:
+/// - 80m: 3.5-3.9 MHz (narrower than Region 2)
+/// - 40m: 7.0-7.3 MHz (same as Region 2 for most countries)
+/// - 60m: Varies by country, often not allocated
+///
+/// Reference: https://www.iaru-r3.org/
+public enum Region3AmateurBand: String, CaseIterable, Sendable, AmateurBandProtocol {
     case band2200m = "2200m"
     case band630m = "630m"
     case band160m = "160m"
@@ -22,15 +29,13 @@ public enum AmateurBand: String, CaseIterable, Sendable {
     case band10m = "10m"
     case band6m = "6m"
     case band2m = "2m"
-    case band1_25m = "1.25m"
     case band70cm = "70cm"
-    case band33cm = "33cm"
     case band23cm = "23cm"
 
     /// Frequency range for this band in Hz
     ///
-    /// These ranges represent the legal amateur radio allocations in Region 2.
-    /// Note: Transmit privileges may vary based on license class.
+    /// These ranges represent the legal amateur radio allocations in Region 3.
+    /// Note: Transmit privileges may vary based on license class and country.
     public var frequencyRange: ClosedRange<UInt64> {
         switch self {
         case .band2200m:
@@ -40,11 +45,11 @@ public enum AmateurBand: String, CaseIterable, Sendable {
         case .band160m:
             return 1_800_000...2_000_000
         case .band80m:
-            return 3_500_000...4_000_000
+            return 3_500_000...3_900_000  // Between Region 1 and Region 2
         case .band60m:
-            return 5_330_500...5_405_000
+            return 5_351_500...5_366_500  // Limited availability in Region 3
         case .band40m:
-            return 7_000_000...7_300_000
+            return 7_000_000...7_300_000  // Same as Region 2 for most countries
         case .band30m:
             return 10_100_000...10_150_000
         case .band20m:
@@ -61,12 +66,8 @@ public enum AmateurBand: String, CaseIterable, Sendable {
             return 50_000_000...54_000_000
         case .band2m:
             return 144_000_000...148_000_000
-        case .band1_25m:
-            return 222_000_000...225_000_000
         case .band70cm:
-            return 420_000_000...450_000_000
-        case .band33cm:
-            return 902_000_000...928_000_000
+            return 430_000_000...450_000_000
         case .band23cm:
             return 1_240_000_000...1_300_000_000
         }
@@ -87,7 +88,7 @@ public enum AmateurBand: String, CaseIterable, Sendable {
             return [.lsb, .cw, .rtty, .usb, .am]
 
         case .band60m:
-            // 60m - USB only, limited channels
+            // 60m - USB only, limited availability
             return [.usb, .cw]
 
         case .band40m:
@@ -110,7 +111,7 @@ public enum AmateurBand: String, CaseIterable, Sendable {
             // 6m - USB, CW, FM (similar to 10m)
             return [.usb, .cw, .fm]
 
-        case .band2m, .band1_25m, .band70cm, .band33cm, .band23cm:
+        case .band2m, .band70cm, .band23cm:
             // VHF/UHF bands - primarily FM, with SSB and CW
             return [.fm, .usb, .cw]
         }
@@ -130,9 +131,9 @@ public enum AmateurBand: String, CaseIterable, Sendable {
 
     /// Get the amateur band for a given frequency
     /// - Parameter frequency: Frequency in Hz
-    /// - Returns: The `AmateurBand` containing this frequency, or `nil` if not in an amateur band
-    public static func band(for frequency: UInt64) -> AmateurBand? {
-        return AmateurBand.allCases.first { $0.contains(frequency) }
+    /// - Returns: The `Region3AmateurBand` containing this frequency, or `nil` if not in an amateur band
+    public static func band(for frequency: UInt64) -> Region3AmateurBand? {
+        return Region3AmateurBand.allCases.first { $0.contains(frequency) }
     }
 
     /// Get the wavelength designation for display

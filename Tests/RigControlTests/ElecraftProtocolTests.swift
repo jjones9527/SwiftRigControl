@@ -3,20 +3,20 @@ import XCTest
 
 final class ElecraftProtocolTests: XCTestCase {
     var mockTransport: MockTransport!
-    var protocol: ElecraftProtocol!
+    var elecraftProtocol: ElecraftProtocol!
 
     override func setUp() async throws {
         mockTransport = MockTransport()
-        protocol = ElecraftProtocol(
+        elecraftProtocol = ElecraftProtocol(
             transport: mockTransport,
             capabilities: .full
         )
     }
 
     override func tearDown() async throws {
-        await protocol.disconnect()
+        await elecraftProtocol.disconnect()
         mockTransport = nil
-        protocol = nil
+        elecraftProtocol = nil
     }
 
     // MARK: - Connection Tests
@@ -27,7 +27,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let aiResponse = "AI0;".data(using: .ascii)!
         await mockTransport.setResponse(for: aiCommand, response: aiResponse)
 
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -39,7 +39,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - Frequency Tests
 
     func testSetFrequency() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Expected command: FA00014230000; (14.230 MHz)
@@ -47,7 +47,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await elecraftProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -57,7 +57,7 @@ final class ElecraftProtocolTests: XCTestCase {
     }
 
     func testGetFrequency() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Query: FA;
@@ -66,13 +66,13 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let freq = try await protocol.getFrequency(vfo: .a)
+        let freq = try await elecraftProtocol.getFrequency(vfo: .a)
 
         XCTAssertEqual(freq, 14_230_000)
     }
 
     func testSetFrequencyVFOB() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Expected command: FB00007100000; (7.100 MHz)
@@ -80,7 +80,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "FB00007100000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setFrequency(7_100_000, vfo: .b)
+        try await elecraftProtocol.setFrequency(7_100_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -92,7 +92,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - Mode Tests
 
     func testSetMode() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Set mode to USB (code 2)
@@ -100,7 +100,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setMode(.usb, vfo: .a)
+        try await elecraftProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -110,7 +110,7 @@ final class ElecraftProtocolTests: XCTestCase {
     }
 
     func testGetMode() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Query: MD;
@@ -119,13 +119,13 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let mode = try await protocol.getMode(vfo: .a)
+        let mode = try await elecraftProtocol.getMode(vfo: .a)
 
         XCTAssertEqual(mode, .usb)
     }
 
     func testModeMappings() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
             (.lsb, "MD1;"),
@@ -146,7 +146,7 @@ final class ElecraftProtocolTests: XCTestCase {
             let response = expectedCmd.data(using: .ascii)!
             await mockTransport.setResponse(for: expectedCommand, response: response)
 
-            try await protocol.setMode(mode, vfo: .a)
+            try await elecraftProtocol.setMode(mode, vfo: .a)
 
             let writes = await mockTransport.recordedWrites
             XCTAssertEqual(writes.count, 1, "Mode \(mode) failed")
@@ -159,14 +159,14 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - PTT Tests
 
     func testSetPTTOn() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // PTT commands may not get a response
         let expectedCommand = "TX;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
-        try await protocol.setPTT(true)
+        try await elecraftProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -176,13 +176,13 @@ final class ElecraftProtocolTests: XCTestCase {
     }
 
     func testSetPTTOff() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         let expectedCommand = "RX;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
-        try await protocol.setPTT(false)
+        try await elecraftProtocol.setPTT(false)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -194,7 +194,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - VFO Tests
 
     func testSelectVFO() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Select VFO A (FR0 and FT0)
@@ -205,7 +205,7 @@ final class ElecraftProtocolTests: XCTestCase {
         await mockTransport.setResponse(for: frCommand, response: frResponse)
         await mockTransport.setResponse(for: ftCommand, response: ftResponse)
 
-        try await protocol.selectVFO(.a)
+        try await elecraftProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 2)
@@ -219,7 +219,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - Power Control Tests
 
     func testSetPower() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Set power to 50W (50%)
@@ -227,7 +227,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setPower(50)
+        try await elecraftProtocol.setPower(50)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -237,7 +237,7 @@ final class ElecraftProtocolTests: XCTestCase {
     }
 
     func testGetPower() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Query: PC;
@@ -246,7 +246,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let power = try await protocol.getPower()
+        let power = try await elecraftProtocol.getPower()
 
         // Full scale is 100W, so 50% = 50W
         XCTAssertEqual(power, 50)
@@ -255,7 +255,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - Split Operation Tests
 
     func testSetSplitOn() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Split: FR0 (RX on VFO A) and FT1 (TX on VFO B)
@@ -266,7 +266,7 @@ final class ElecraftProtocolTests: XCTestCase {
         await mockTransport.setResponse(for: frCommand, response: frResponse)
         await mockTransport.setResponse(for: ftCommand, response: ftResponse)
 
-        try await protocol.setSplit(true)
+        try await elecraftProtocol.setSplit(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 2)
@@ -278,7 +278,7 @@ final class ElecraftProtocolTests: XCTestCase {
     }
 
     func testGetSplit() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Query: FT;
@@ -287,7 +287,7 @@ final class ElecraftProtocolTests: XCTestCase {
         let response = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let splitEnabled = try await protocol.getSplit()
+        let splitEnabled = try await elecraftProtocol.getSplit()
 
         XCTAssertTrue(splitEnabled)
     }
@@ -295,7 +295,7 @@ final class ElecraftProtocolTests: XCTestCase {
     // MARK: - Integration Tests
 
     func testCompleteWorkflow() async throws {
-        try await protocol.connect()
+        try await elecraftProtocol.connect()
         await mockTransport.reset()
 
         // Simulate a complete workflow: Set frequency, mode, and PTT
@@ -303,17 +303,17 @@ final class ElecraftProtocolTests: XCTestCase {
         // 1. Set frequency
         let freqCmd = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: freqCmd, response: freqCmd)
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await elecraftProtocol.setFrequency(14_230_000, vfo: .a)
 
         // 2. Set mode to USB
         let modeCmd = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: modeCmd, response: modeCmd)
-        try await protocol.setMode(.usb, vfo: .a)
+        try await elecraftProtocol.setMode(.usb, vfo: .a)
 
         // 3. Enable PTT
         let pttCmd = "TX;".data(using: .ascii)!
         await mockTransport.setResponse(for: pttCmd, response: Data())
-        try await protocol.setPTT(true)
+        try await elecraftProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 3)
@@ -325,15 +325,5 @@ final class ElecraftProtocolTests: XCTestCase {
         XCTAssertEqual(cmd1, "FA00014230000;")
         XCTAssertEqual(cmd2, "MD2;")
         XCTAssertEqual(cmd3, "TX;")
-    }
-}
-
-// Helper extension to reset MockTransport properly
-extension MockTransport {
-    func reset() {
-        recordedWrites.removeAll()
-        mockResponses.removeAll()
-        shouldThrowOnWrite = false
-        shouldThrowOnRead = false
     }
 }

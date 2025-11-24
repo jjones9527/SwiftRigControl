@@ -6,7 +6,7 @@ final class RadioCapabilitiesTests: XCTestCase {
     // MARK: - Amateur Band Tests
 
     func testAmateurBand20mContainsFrequency() {
-        let band20m = AmateurBand.band20m
+        let band20m = Region2AmateurBand.band20m
         XCTAssertTrue(band20m.contains(14_200_000), "14.200 MHz should be in the 20m band")
         XCTAssertTrue(band20m.contains(14_000_000), "14.000 MHz should be at the start of 20m")
         XCTAssertTrue(band20m.contains(14_350_000), "14.350 MHz should be at the end of 20m")
@@ -15,31 +15,31 @@ final class RadioCapabilitiesTests: XCTestCase {
 
     func testAmateurBandLookup() {
         // Test 20m band
-        let band20m = AmateurBand.band(for: 14_200_000)
+        let band20m = Region2AmateurBand.band(for: 14_200_000)
         XCTAssertEqual(band20m, .band20m, "14.200 MHz should resolve to 20m band")
 
         // Test 40m band
-        let band40m = AmateurBand.band(for: 7_100_000)
+        let band40m = Region2AmateurBand.band(for: 7_100_000)
         XCTAssertEqual(band40m, .band40m, "7.100 MHz should resolve to 40m band")
 
         // Test non-amateur frequency
-        let noband = AmateurBand.band(for: 5_000_000)
+        let noband = Region2AmateurBand.band(for: 5_000_000)
         XCTAssertNil(noband, "5.000 MHz is not in an amateur band")
     }
 
     func testAmateurBandCommonModes() {
         // 20m should have USB
-        XCTAssertTrue(AmateurBand.band20m.commonModes.contains(.usb))
+        XCTAssertTrue(Region2AmateurBand.band20m.commonModes.contains(.usb))
 
         // 80m should have LSB
-        XCTAssertTrue(AmateurBand.band80m.commonModes.contains(.lsb))
+        XCTAssertTrue(Region2AmateurBand.band80m.commonModes.contains(.lsb))
 
         // 30m should have CW and USB (digital) but not voice modes
-        XCTAssertTrue(AmateurBand.band30m.commonModes.contains(.cw))
-        XCTAssertTrue(AmateurBand.band30m.commonModes.contains(.usb))
+        XCTAssertTrue(Region2AmateurBand.band30m.commonModes.contains(.cw))
+        XCTAssertTrue(Region2AmateurBand.band30m.commonModes.contains(.usb))
 
         // 2m should have FM
-        XCTAssertTrue(AmateurBand.band2m.commonModes.contains(.fm))
+        XCTAssertTrue(Region2AmateurBand.band2m.commonModes.contains(.fm))
     }
 
     // MARK: - IC-7300 Capability Tests
@@ -290,7 +290,7 @@ final class RadioCapabilitiesTests: XCTestCase {
     func testBandLookupPerformance() {
         measure {
             for _ in 0..<1000 {
-                _ = AmateurBand.band(for: 14_200_000)
+                _ = Region2AmateurBand.band(for: 14_200_000)
             }
         }
     }

@@ -81,6 +81,9 @@ public struct RigCapabilities: Sendable, Codable {
     /// Radio supports S-meter signal strength reading
     public let supportsSignalStrength: Bool
 
+    /// ITU region for amateur band validation (defaults to Region 2)
+    public let region: AmateurRadioRegion
+
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,
@@ -91,7 +94,8 @@ public struct RigCapabilities: Sendable, Codable {
         detailedFrequencyRanges: [DetailedFrequencyRange] = [],
         hasDualReceiver: Bool = false,
         hasATU: Bool = false,
-        supportsSignalStrength: Bool = true
+        supportsSignalStrength: Bool = true,
+        region: AmateurRadioRegion = .region2
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -103,6 +107,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.hasDualReceiver = hasDualReceiver
         self.hasATU = hasATU
         self.supportsSignalStrength = supportsSignalStrength
+        self.region = region
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)
@@ -183,5 +188,40 @@ public extension RigCapabilities {
     /// - Returns: The `DetailedFrequencyRange` containing this frequency, or `nil` if not found
     func frequencyRange(containing frequency: UInt64) -> DetailedFrequencyRange? {
         return detailedFrequencyRanges.first { $0.contains(frequency) }
+    }
+
+    /// Check if a frequency is within an amateur radio band for this radio's region
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: `true` if the frequency is within an amateur band for the configured region
+    func isInAmateurBand(_ frequency: UInt64) -> Bool {
+        switch region {
+        case .region1:
+            return Region1AmateurBand.band(for: frequency) != nil
+        case .region2:
+            return Region2AmateurBand.band(for: frequency) != nil
+        case .region3:
+            return Region3AmateurBand.band(for: frequency) != nil
+        }
+    }
+
+    /// Get the amateur band name for a frequency based on this radio's region
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: Amateur band name (e.g., "20m", "40m") or `nil` if not in an amateur band
+    func amateurBandName(for frequency: UInt64) -> String? {
+        switch region {
+        case .region1:
+            return Region1AmateurBand.band(for: frequency)?.displayName
+        case .region2:
+            return Region2AmateurBand.band(for: frequency)?.displayName
+        case .region3:
+            return Region3AmateurBand.band(for: frequency)?.displayName
+        }
+    }
+
+    /// Check if both the radio supports the frequency AND it's within amateur band allocations
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: `true` if the frequency is both valid for the radio and within amateur bands
+    func isValidAmateurFrequency(_ frequency: UInt64) -> Bool {
+        return isFrequencyValid(frequency) && isInAmateurBand(frequency)
     }
 }

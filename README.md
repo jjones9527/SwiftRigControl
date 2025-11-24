@@ -192,10 +192,31 @@ if let band = capabilities.bandName(for: 14_200_000) {
 }
 
 // Look up amateur band allocations
-if let band = AmateurBand.band(for: 14_200_000) {
+// Region 2 (Americas - default)
+if let band = Region2AmateurBand.band(for: 14_200_000) {
     print("Amateur band: \(band.displayName)")  // "20m"
     print("Band range: \(band.frequencyRange)")
     print("Common modes: \(band.commonModes)")
+}
+
+// Region 1 (Europe/Africa/Middle East)
+if let band40m = Region1AmateurBand.band(for: 7_100_000) {
+    print("\(band40m.displayName): \(band40m.frequencyRange)")  // "40m: 7000000...7200000"
+}
+
+// Region 3 (Asia-Pacific)
+if let band40m = Region3AmateurBand.band(for: 7_100_000) {
+    print("\(band40m.displayName): \(band40m.frequencyRange)")  // "40m: 7000000...7300000"
+}
+
+// Check if frequency is in amateur band for configured region
+if capabilities.isInAmateurBand(14_200_000) {
+    print("Frequency is within amateur allocation")
+}
+
+// Get amateur band name based on radio's region
+if let amateurBand = capabilities.amateurBandName(for: 14_200_000) {
+    print("Amateur band: \(amateurBand)")  // "20m"
 }
 ```
 
@@ -203,8 +224,25 @@ if let band = AmateurBand.band(for: 14_200_000) {
 - Prevents transmitting outside radio capabilities (protects hardware)
 - Identifies receive-only frequency ranges
 - Validates modes for specific frequency ranges
-- Includes US amateur band allocations (Region 2)
+- Supports all 3 ITU regions (Region 1: Europe/Africa, Region 2: Americas, Region 3: Asia-Pacific)
+- Regional amateur band validation (configurable per radio)
 - Comprehensive error messages with recovery suggestions
+
+**Regional Band Differences:**
+
+Amateur radio frequency allocations vary by ITU region. Key differences:
+- **40m**: Region 1 (7.0-7.2 MHz), Region 2 (7.0-7.3 MHz), Region 3 (7.0-7.3 MHz)
+- **80m**: Region 1 (3.5-3.8 MHz), Region 2 (3.5-4.0 MHz), Region 3 (3.5-3.9 MHz)
+- **6m**: Region 1 (50-52 MHz), Region 2 (50-54 MHz), Region 3 (50-54 MHz)
+
+Configure radio region during initialization (defaults to Region 2):
+
+```swift
+let caps = RigCapabilities(
+    region: .region1,  // Europe/Africa/Middle East
+    // ... other properties
+)
+```
 
 ```swift
 do {

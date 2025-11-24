@@ -17,17 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `supportedModes(for:)` - Get modes available at specific frequency
   - `bandName(for:)` - Get amateur band name (e.g., "20m", "40m")
   - `frequencyRange(containing:)` - Retrieve detailed range information
-- **`AmateurBand` enum** with US Region 2 amateur radio band allocations:
-  - Frequency ranges for all amateur bands (2200m through 23cm)
-  - Common modes per band
-  - Band name lookup by frequency
-  - 18 amateur bands supported
-- **`RadioCapabilitiesDatabase`** with detailed specifications for major radios:
+- **ITU Regional Band Support** with three regional band types:
+  - `Region2AmateurBand` (Americas - 50-54 MHz 6m, 7.0-7.3 MHz 40m)
+  - `Region1AmateurBand` (Europe/Africa/Middle East - 50-52 MHz 6m, 7.0-7.2 MHz 40m)
+  - `Region3AmateurBand` (Asia-Pacific - 50-54 MHz 6m, 7.0-7.3 MHz 40m)
+  - All regions support 2200m through 23cm bands
+  - Common modes per band based on regional band plans
+  - Band name lookup by frequency for each region
+- **Regional Validation in `RigCapabilities`**:
+  - `region` property (defaults to Region 2 - Americas)
+  - `isInAmateurBand(_:)` - Check if frequency is in amateur allocation for configured region
+  - `amateurBandName(for:)` - Get amateur band name based on radio's region
+  - `isValidAmateurFrequency(_:)` - Validates both radio capability and amateur band allocation
+- **`RadioCapabilitiesDatabase`** with complete specifications for 24+ radios:
   - Icom: IC-9700, IC-7610, IC-7300, IC-7600, IC-7100, IC-705
-  - Yaesu: FTDX-10, FT-991A
-  - Kenwood: TS-590SG
-  - Elecraft: K3
-  - Includes transmit/receive ranges, supported modes per range, and band names
+  - Yaesu: FTDX-10, FT-991A, FT-710, FT-891, FT-817, FTDX-101D
+  - Kenwood: TS-590SG, TS-890S, TS-990S, TM-D710, TS-480SAT, TS-2000
+  - Elecraft: K3, K2, K3S, K4, KX2, KX3
+  - Each radio includes: transmit/receive ranges, supported modes per range, band names, power specs, dual receiver support, ATU support
 - **New `RigError` cases** for frequency validation:
   - `frequencyOutOfRange(_:model:)` - Frequency outside radio capabilities
   - `transmitNotAllowed(_:reason:)` - Transmit not allowed on frequency
@@ -53,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Safety Features
 - **Hardware protection** by preventing transmit outside radio capabilities
-- **Legal compliance** support with amateur band validation
+- **Global compliance** support with ITU regional band validation (Region 1, 2, and 3)
+- **Regional frequency allocation** awareness for legal operation worldwide
 - **Receive-only range identification** for general coverage receivers
 - **Mode validation** per frequency range
 
