@@ -71,29 +71,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-590SG",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG
             )
         }
     )

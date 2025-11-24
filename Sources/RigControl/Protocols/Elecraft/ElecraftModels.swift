@@ -39,29 +39,11 @@ extension RadioDefinition {
         manufacturer: .elecraft,
         model: "K3",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .rtty, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.elecraftK3,
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .am, .rtty, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.elecraftK3
             )
         }
     )

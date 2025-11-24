@@ -14,6 +14,37 @@ public struct FrequencyRange: Sendable, Codable, Equatable {
     }
 }
 
+/// Represents a detailed frequency range with mode and transmit capability information.
+public struct DetailedFrequencyRange: Sendable, Codable, Equatable {
+    /// Minimum frequency in Hz
+    public let min: UInt64
+
+    /// Maximum frequency in Hz
+    public let max: UInt64
+
+    /// Operating modes supported in this frequency range
+    public let modes: Set<Mode>
+
+    /// Whether the radio can transmit in this frequency range
+    public let canTransmit: Bool
+
+    /// Band name (e.g., "160m", "80m", "40m", "20m")
+    public let bandName: String?
+
+    public init(min: UInt64, max: UInt64, modes: Set<Mode>, canTransmit: Bool, bandName: String? = nil) {
+        self.min = min
+        self.max = max
+        self.modes = modes
+        self.canTransmit = canTransmit
+        self.bandName = bandName
+    }
+
+    /// Check if a frequency is within this range
+    public func contains(_ frequency: UInt64) -> Bool {
+        return frequency >= min && frequency <= max
+    }
+}
+
 /// Describes the capabilities of a specific radio model.
 ///
 /// Different radios support different features. This structure allows the library
@@ -35,7 +66,11 @@ public struct RigCapabilities: Sendable, Codable {
     public let supportedModes: Set<Mode>
 
     /// Frequency range in Hz (min, max)
+    /// - Note: For detailed frequency ranges with transmit capabilities, use `detailedFrequencyRanges`
     public let frequencyRange: FrequencyRange?
+
+    /// Detailed frequency ranges with mode and transmit capability information
+    public let detailedFrequencyRanges: [DetailedFrequencyRange]
 
     /// Radio has dual receivers (main/sub)
     public let hasDualReceiver: Bool
@@ -53,6 +88,7 @@ public struct RigCapabilities: Sendable, Codable {
         maxPower: Int = 100,
         supportedModes: Set<Mode> = Set(Mode.allCases),
         frequencyRange: FrequencyRange? = nil,
+        detailedFrequencyRanges: [DetailedFrequencyRange] = [],
         hasDualReceiver: Bool = false,
         hasATU: Bool = false,
         supportsSignalStrength: Bool = true
@@ -63,6 +99,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.maxPower = maxPower
         self.supportedModes = supportedModes
         self.frequencyRange = frequencyRange
+        self.detailedFrequencyRanges = detailedFrequencyRanges
         self.hasDualReceiver = hasDualReceiver
         self.hasATU = hasATU
         self.supportsSignalStrength = supportsSignalStrength
@@ -93,4 +130,58 @@ public struct RigCapabilities: Sendable, Codable {
         hasATU: false,
         supportsSignalStrength: false
     )
+}
+
+// MARK: - Frequency Validation
+
+public extension RigCapabilities {
+    /// Check if a frequency is valid for this radio (within any receive or transmit range)
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: `true` if the frequency is within the radio's capabilities
+    func isFrequencyValid(_ frequency: UInt64) -> Bool {
+        // If no detailed ranges, fall back to basic frequencyRange check
+        if detailedFrequencyRanges.isEmpty {
+            return frequencyRange?.min ?? 0 <= frequency && frequency <= frequencyRange?.max ?? UInt64.max
+        }
+
+        return detailedFrequencyRanges.contains { $0.contains(frequency) }
+    }
+
+    /// Check if the radio can transmit on a given frequency
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: `true` if the radio can transmit on this frequency
+    func canTransmit(on frequency: UInt64) -> Bool {
+        // If no detailed ranges, assume can transmit if frequency is valid
+        if detailedFrequencyRanges.isEmpty {
+            return isFrequencyValid(frequency)
+        }
+
+        return detailedFrequencyRanges.first { $0.contains(frequency) }?.canTransmit ?? false
+    }
+
+    /// Get supported modes for a specific frequency
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: Set of modes supported at this frequency, or all supported modes if not specified
+    func supportedModes(for frequency: UInt64) -> Set<Mode> {
+        // If no detailed ranges, return all supported modes
+        if detailedFrequencyRanges.isEmpty {
+            return supportedModes
+        }
+
+        return detailedFrequencyRanges.first { $0.contains(frequency) }?.modes ?? []
+    }
+
+    /// Get band name for a frequency (e.g., "40m", "20m")
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: Band name if available, otherwise `nil`
+    func bandName(for frequency: UInt64) -> String? {
+        return detailedFrequencyRanges.first { $0.contains(frequency) }?.bandName
+    }
+
+    /// Get the detailed frequency range that contains the given frequency
+    /// - Parameter frequency: Frequency in Hz
+    /// - Returns: The `DetailedFrequencyRange` containing this frequency, or `nil` if not found
+    func frequencyRange(containing frequency: UInt64) -> DetailedFrequencyRange? {
+        return detailedFrequencyRanges.first { $0.contains(frequency) }
+    }
 }

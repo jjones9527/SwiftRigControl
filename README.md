@@ -9,6 +9,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
 - ✅ **Well-Tested**: Comprehensive unit tests with mock transport support
+- ✅ **Frequency Validation**: Safety-critical validation with amateur band support (v1.0.2)
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring (v1.1.0)
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching (v1.1.0)
 - ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
@@ -159,6 +160,59 @@ let freshFreq = try await rig.frequency(cached: false)
 
 // Manually invalidate cache after manual radio adjustments
 await rig.invalidateCache()
+```
+
+### Frequency Validation (v1.0.2)
+
+SwiftRigControl includes comprehensive frequency validation to prevent invalid commands and ensure safe operation:
+
+```swift
+// Access radio capabilities
+let capabilities = rig.capabilities
+
+// Check if a frequency is valid for the radio
+if capabilities.isFrequencyValid(14_200_000) {
+    try await rig.setFrequency(14_200_000)
+}
+
+// Check if radio can transmit on a frequency
+if capabilities.canTransmit(on: 14_200_000) {
+    print("Can transmit on 20m")
+} else {
+    print("Receive only on this frequency")
+}
+
+// Get supported modes for a specific frequency
+let modes = capabilities.supportedModes(for: 14_200_000)
+print("Supported modes: \(modes)")  // [.usb, .cw, .rtty, .dataUSB]
+
+// Get band name for a frequency
+if let band = capabilities.bandName(for: 14_200_000) {
+    print("Frequency is in \(band) band")  // "20m"
+}
+
+// Look up amateur band allocations
+if let band = AmateurBand.band(for: 14_200_000) {
+    print("Amateur band: \(band.displayName)")  // "20m"
+    print("Band range: \(band.frequencyRange)")
+    print("Common modes: \(band.commonModes)")
+}
+```
+
+**Safety Features:**
+- Prevents transmitting outside radio capabilities (protects hardware)
+- Identifies receive-only frequency ranges
+- Validates modes for specific frequency ranges
+- Includes US amateur band allocations (Region 2)
+- Comprehensive error messages with recovery suggestions
+
+```swift
+do {
+    try await rig.setFrequency(150_000_000)  // Outside IC-7300 range
+} catch RigError.frequencyOutOfRange(let freq, let model) {
+    print("Frequency \(freq) Hz is outside \(model) capabilities")
+    // Check error.recoverySuggestion for guidance
+}
 ```
 
 ### Error Handling

@@ -7,31 +7,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-9700",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .fm, .fmN, .am, .dataUSB, .dataLSB, .dataFM],
-            frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
-            hasDualReceiver: true,
-            hasATU: false
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC9700,
         civAddress: 0xA2,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0xA2,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .fm, .fmN, .am, .dataUSB, .dataLSB, .dataFM],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
-                    hasDualReceiver: true,
-                    hasATU: false
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC9700
             )
         }
     )
@@ -41,31 +23,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-7300",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC7300,
         civAddress: 0x94,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0x94,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC7300
             )
         }
     )
@@ -75,31 +39,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-7600",
         defaultBaudRate: 19200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC7600,
         civAddress: 0x7A,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0x7A,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC7600
             )
         }
     )
@@ -109,31 +55,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-7100",
         defaultBaudRate: 19200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
-            frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC7100,
         civAddress: 0x88,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0x88,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC7100
             )
         }
     )
@@ -143,31 +71,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-7610",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC7610,
         civAddress: 0x98,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0x98,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC7610
             )
         }
     )
@@ -177,31 +87,13 @@ extension RadioDefinition {
         manufacturer: .icom,
         model: "IC-705",
         defaultBaudRate: 19200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 10,  // 10 watts max
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
-            frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.icomIC705,
         civAddress: 0xA4,
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
                 civAddress: 0xA4,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 10,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.icomIC705
             )
         }
     )
