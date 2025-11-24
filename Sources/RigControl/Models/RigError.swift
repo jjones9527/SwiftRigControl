@@ -29,6 +29,15 @@ public enum RigError: Error, LocalizedError, Sendable {
     /// Invalid parameter provided.
     case invalidParameter(String)
 
+    /// Frequency is outside the radio's capabilities.
+    case frequencyOutOfRange(UInt64, model: String)
+
+    /// Transmit is not allowed on this frequency.
+    case transmitNotAllowed(UInt64, reason: String)
+
+    /// Operating mode is not supported at this frequency.
+    case modeNotSupported(Mode, frequency: UInt64)
+
     public var errorDescription: String? {
         switch self {
         case .notConnected:
@@ -49,6 +58,28 @@ public enum RigError: Error, LocalizedError, Sendable {
             return "Operation '\(operation)' is not supported by this radio."
         case .invalidParameter(let message):
             return "Invalid parameter: \(message)"
+        case .frequencyOutOfRange(let freq, let model):
+            let mhz = Double(freq) / 1_000_000.0
+            return String(format: "Frequency %.3f MHz is outside %@ capabilities", mhz, model)
+        case .transmitNotAllowed(let freq, let reason):
+            let mhz = Double(freq) / 1_000_000.0
+            return String(format: "Transmit not allowed on %.3f MHz: %@", mhz, reason)
+        case .modeNotSupported(let mode, let freq):
+            let mhz = Double(freq) / 1_000_000.0
+            return String(format: "Mode %@ not supported at %.3f MHz", mode.rawValue, mhz)
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .frequencyOutOfRange:
+            return "Check the radio's manual for valid frequency ranges"
+        case .transmitNotAllowed:
+            return "This frequency is receive-only or outside amateur bands"
+        case .modeNotSupported:
+            return "Use a different mode for this frequency"
+        default:
+            return nil
         }
     }
 }

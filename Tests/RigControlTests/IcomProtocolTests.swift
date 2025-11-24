@@ -3,22 +3,22 @@ import XCTest
 
 final class IcomProtocolTests: XCTestCase {
     var mockTransport: MockTransport!
-    var protocol: IcomCIVProtocol!
+    var icomProtocol: IcomCIVProtocol!
 
     override func setUp() async throws {
         mockTransport = MockTransport()
-        protocol = IcomCIVProtocol(
+        icomProtocol = IcomCIVProtocol(
             transport: mockTransport,
             civAddress: 0xA2,
             capabilities: .full
         )
-        try await protocol.connect()
+        try await icomProtocol.connect()
     }
 
     override func tearDown() async throws {
-        await protocol.disconnect()
+        await icomProtocol.disconnect()
         mockTransport = nil
-        protocol = nil
+        icomProtocol = nil
     }
 
     // MARK: - PTT Tests
@@ -31,7 +31,7 @@ final class IcomProtocolTests: XCTestCase {
         let ackResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
         await mockTransport.setResponse(for: expectedCommand, response: ackResponse)
 
-        try await protocol.setPTT(true)
+        try await icomProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -46,7 +46,7 @@ final class IcomProtocolTests: XCTestCase {
         let ackResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
         await mockTransport.setResponse(for: expectedCommand, response: ackResponse)
 
-        try await protocol.setPTT(false)
+        try await icomProtocol.setPTT(false)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -61,7 +61,7 @@ final class IcomProtocolTests: XCTestCase {
         let response = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x1C, 0x01, 0xFD])
         await mockTransport.setResponse(for: expectedQuery, response: response)
 
-        let result = try await protocol.getPTT()
+        let result = try await icomProtocol.getPTT()
 
         XCTAssertTrue(result)
     }
@@ -78,7 +78,7 @@ final class IcomProtocolTests: XCTestCase {
         let freqCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x05, 0x00, 0x00, 0x23, 0x14, 0x00, 0xFD])
         await mockTransport.setResponse(for: freqCommand, response: vfoAck)
 
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await icomProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 2)
@@ -98,7 +98,7 @@ final class IcomProtocolTests: XCTestCase {
         let freqResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x03, 0x00, 0x00, 0x23, 0x14, 0x00, 0xFD])
         await mockTransport.setResponse(for: freqQuery, response: freqResponse)
 
-        let result = try await protocol.getFrequency(vfo: .a)
+        let result = try await icomProtocol.getFrequency(vfo: .a)
 
         XCTAssertEqual(result, 14_230_000)
     }
@@ -115,7 +115,7 @@ final class IcomProtocolTests: XCTestCase {
         let modeCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x06, 0x01, 0x00, 0xFD])
         await mockTransport.setResponse(for: modeCommand, response: vfoAck)
 
-        try await protocol.setMode(.usb, vfo: .a)
+        try await icomProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 2)
@@ -135,7 +135,7 @@ final class IcomProtocolTests: XCTestCase {
         let modeResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x04, 0x01, 0xFD])
         await mockTransport.setResponse(for: modeQuery, response: modeResponse)
 
-        let result = try await protocol.getMode(vfo: .a)
+        let result = try await icomProtocol.getMode(vfo: .a)
 
         XCTAssertEqual(result, .usb)
     }
@@ -149,7 +149,7 @@ final class IcomProtocolTests: XCTestCase {
         await mockTransport.setResponse(for: pttCommand, response: nakResponse)
 
         do {
-            try await protocol.setPTT(true)
+            try await icomProtocol.setPTT(true)
             XCTFail("Expected commandFailed error")
         } catch RigError.commandFailed {
             // Expected
@@ -163,7 +163,7 @@ final class IcomProtocolTests: XCTestCase {
         await mockTransport.setProperty(\.shouldThrowOnRead, to: true)
 
         do {
-            try await protocol.setPTT(true)
+            try await icomProtocol.setPTT(true)
             XCTFail("Expected timeout error")
         } catch RigError.timeout {
             // Expected
