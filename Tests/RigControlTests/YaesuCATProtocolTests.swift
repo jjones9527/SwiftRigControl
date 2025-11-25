@@ -3,20 +3,20 @@ import XCTest
 
 final class YaesuCATProtocolTests: XCTestCase {
     var mockTransport: MockTransport!
-    var protocol: YaesuCATProtocol!
+    var yaesuProtocol: YaesuCATProtocol!
 
     override func setUp() async throws {
         mockTransport = MockTransport()
-        protocol = YaesuCATProtocol(
+        yaesuProtocol = YaesuCATProtocol(
             transport: mockTransport,
             capabilities: .full
         )
     }
 
     override func tearDown() async throws {
-        await protocol.disconnect()
+        await yaesuProtocol.disconnect()
         mockTransport = nil
-        protocol = nil
+        yaesuProtocol = nil
     }
 
     // MARK: - Connection Tests
@@ -27,7 +27,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let aiResponse = "AI0;".data(using: .ascii)!
         await mockTransport.setResponse(for: aiCommand, response: aiResponse)
 
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -39,7 +39,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - Frequency Tests
 
     func testSetFrequency() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Expected command: FA00014230000; (14.230 MHz)
@@ -47,7 +47,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -57,7 +57,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testGetFrequency() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Query: FA;
@@ -66,13 +66,13 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let freq = try await protocol.getFrequency(vfo: .a)
+        let freq = try await yaesuProtocol.getFrequency(vfo: .a)
 
         XCTAssertEqual(freq, 14_230_000)
     }
 
     func testSetFrequencyVFOB() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Expected command: FB00007100000; (7.100 MHz)
@@ -80,7 +80,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FB00007100000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setFrequency(7_100_000, vfo: .b)
+        try await yaesuProtocol.setFrequency(7_100_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -92,7 +92,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - Mode Tests
 
     func testSetMode() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Set mode to USB (code 2)
@@ -100,7 +100,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setMode(.usb, vfo: .a)
+        try await yaesuProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -110,7 +110,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testGetMode() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Query: MD;
@@ -119,13 +119,13 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let mode = try await protocol.getMode(vfo: .a)
+        let mode = try await yaesuProtocol.getMode(vfo: .a)
 
         XCTAssertEqual(mode, .usb)
     }
 
     func testModeMappings() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
             (.lsb, "MD1;"),
@@ -146,7 +146,7 @@ final class YaesuCATProtocolTests: XCTestCase {
             let response = expectedCmd.data(using: .ascii)!
             await mockTransport.setResponse(for: expectedCommand, response: response)
 
-            try await protocol.setMode(mode, vfo: .a)
+            try await yaesuProtocol.setMode(mode, vfo: .a)
 
             let writes = await mockTransport.recordedWrites
             XCTAssertEqual(writes.count, 1, "Mode \(mode) failed")
@@ -159,14 +159,14 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - PTT Tests
 
     func testSetPTTOn() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Yaesu uses TX1 for PTT on (different from Elecraft's TX)
         let expectedCommand = "TX1;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
-        try await protocol.setPTT(true)
+        try await yaesuProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -176,14 +176,14 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testSetPTTOff() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Yaesu uses TX0 for PTT off (different from Elecraft's RX)
         let expectedCommand = "TX0;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
-        try await protocol.setPTT(false)
+        try await yaesuProtocol.setPTT(false)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -193,7 +193,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testGetPTT() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Query: TX;
@@ -202,7 +202,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "TX1;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let enabled = try await protocol.getPTT()
+        let enabled = try await yaesuProtocol.getPTT()
 
         XCTAssertTrue(enabled)
     }
@@ -210,7 +210,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - VFO Tests
 
     func testSelectVFO() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Select VFO A (FT0)
@@ -218,7 +218,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FT0;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.selectVFO(.a)
+        try await yaesuProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -228,7 +228,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testSelectVFOB() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Select VFO B (FT1)
@@ -236,7 +236,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.selectVFO(.b)
+        try await yaesuProtocol.selectVFO(.b)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -248,7 +248,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - Power Control Tests
 
     func testSetPower() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Set power to 50W (50%)
@@ -256,7 +256,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setPower(50)
+        try await yaesuProtocol.setPower(50)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -266,7 +266,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testGetPower() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Query: PC;
@@ -275,7 +275,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let power = try await protocol.getPower()
+        let power = try await yaesuProtocol.getPower()
 
         // Full scale is 100W, so 50% = 50W
         XCTAssertEqual(power, 50)
@@ -284,14 +284,14 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - Split Operation Tests
 
     func testSetSplitOn() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         let expectedCommand = "FT1;".data(using: .ascii)!
         let response = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setSplit(true)
+        try await yaesuProtocol.setSplit(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -301,14 +301,14 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testSetSplitOff() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         let expectedCommand = "FT0;".data(using: .ascii)!
         let response = "FT0;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
-        try await protocol.setSplit(false)
+        try await yaesuProtocol.setSplit(false)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 1)
@@ -318,7 +318,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testGetSplit() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Query: FT;
@@ -327,7 +327,7 @@ final class YaesuCATProtocolTests: XCTestCase {
         let response = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
-        let splitEnabled = try await protocol.getSplit()
+        let splitEnabled = try await yaesuProtocol.getSplit()
 
         XCTAssertTrue(splitEnabled)
     }
@@ -335,7 +335,7 @@ final class YaesuCATProtocolTests: XCTestCase {
     // MARK: - Integration Tests
 
     func testCompleteWorkflow() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // Simulate a complete workflow: Set frequency, mode, and PTT
@@ -343,17 +343,17 @@ final class YaesuCATProtocolTests: XCTestCase {
         // 1. Set frequency
         let freqCmd = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: freqCmd, response: freqCmd)
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
 
         // 2. Set mode to USB
         let modeCmd = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: modeCmd, response: modeCmd)
-        try await protocol.setMode(.usb, vfo: .a)
+        try await yaesuProtocol.setMode(.usb, vfo: .a)
 
         // 3. Enable PTT
         let pttCmd = "TX1;".data(using: .ascii)!
         await mockTransport.setResponse(for: pttCmd, response: Data())
-        try await protocol.setPTT(true)
+        try await yaesuProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 3)
@@ -368,23 +368,23 @@ final class YaesuCATProtocolTests: XCTestCase {
     }
 
     func testSplitOperation() async throws {
-        try await protocol.connect()
+        try await yaesuProtocol.connect()
         await mockTransport.reset()
 
         // 1. Enable split
         let splitOnCmd = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: splitOnCmd, response: splitOnCmd)
-        try await protocol.setSplit(true)
+        try await yaesuProtocol.setSplit(true)
 
         // 2. Set VFO A frequency (RX)
         let vfoACmd = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: vfoACmd, response: vfoACmd)
-        try await protocol.setFrequency(14_230_000, vfo: .a)
+        try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
 
         // 3. Set VFO B frequency (TX)
         let vfoBCmd = "FB00014235000;".data(using: .ascii)!
         await mockTransport.setResponse(for: vfoBCmd, response: vfoBCmd)
-        try await protocol.setFrequency(14_235_000, vfo: .b)
+        try await yaesuProtocol.setFrequency(14_235_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
         XCTAssertEqual(writes.count, 3)

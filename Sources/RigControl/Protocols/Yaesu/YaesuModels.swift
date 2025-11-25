@@ -7,29 +7,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FTDX-10",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFTDX10,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFTDX10
             )
         }
     )
@@ -39,29 +21,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FT-991A",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .fmN, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 450_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFT991A,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .fmN, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 450_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFT991A
             )
         }
     )
@@ -71,29 +35,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FT-710",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFT710,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFT710
             )
         }
     )
@@ -103,29 +49,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FT-891",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFT891,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFT891
             )
         }
     )
@@ -135,29 +63,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FT-817",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 5,  // 5 watts QRP
-            supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .fmN, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 100_000, max: 470_000_000),
-            hasDualReceiver: false,
-            hasATU: false
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFT817,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 5,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .fmN, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 100_000, max: 470_000_000),
-                    hasDualReceiver: false,
-                    hasATU: false
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFT817
             )
         }
     )
@@ -167,29 +77,11 @@ extension RadioDefinition {
         manufacturer: .yaesu,
         model: "FTDX-101D",
         defaultBaudRate: 38400,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.yaesuFTDX101D,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataUSB, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.yaesuFTDX101D
             )
         }
     )

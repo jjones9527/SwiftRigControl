@@ -7,29 +7,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-890S",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS890S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS890S
             )
         }
     )
@@ -39,29 +21,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-990S",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 200,  // 200W
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: true,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS990S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 200,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: true,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS990S
             )
         }
     )
@@ -71,29 +35,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-590SG",
         defaultBaudRate: 115200,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG
             )
         }
     )
@@ -103,29 +49,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TM-D710",
         defaultBaudRate: 57600,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: false,
-            powerControl: true,
-            maxPower: 50,  // 50W VHF, 35W UHF
-            supportedModes: [.fm, .fmN],
-            frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
-            hasDualReceiver: true,
-            hasATU: false
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTMD710,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: false,
-                    powerControl: true,
-                    maxPower: 50,
-                    supportedModes: [.fm, .fmN],
-                    frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
-                    hasDualReceiver: true,
-                    hasATU: false
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTMD710
             )
         }
     )
@@ -135,29 +63,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-480SAT",
         defaultBaudRate: 57600,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS480SAT,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS480SAT
             )
         }
     )
@@ -167,29 +77,11 @@ extension RadioDefinition {
         manufacturer: .kenwood,
         model: "TS-2000",
         defaultBaudRate: 57600,
-        capabilities: RigCapabilities(
-            hasVFOB: true,
-            hasSplit: true,
-            powerControl: true,
-            maxPower: 100,
-            supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-            frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
-            hasDualReceiver: false,
-            hasATU: true
-        ),
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS2000,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RigCapabilities(
-                    hasVFOB: true,
-                    hasSplit: true,
-                    powerControl: true,
-                    maxPower: 100,
-                    supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .dataLSB],
-                    frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
-                    hasDualReceiver: false,
-                    hasATU: true
-                )
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS2000
             )
         }
     )

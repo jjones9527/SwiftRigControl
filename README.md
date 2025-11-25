@@ -9,6 +9,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
 - ✅ **Well-Tested**: Comprehensive unit tests with mock transport support
+- ✅ **Frequency Validation**: Safety-critical validation with amateur band support (v1.0.2)
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring (v1.1.0)
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching (v1.1.0)
 - ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
@@ -159,6 +160,97 @@ let freshFreq = try await rig.frequency(cached: false)
 
 // Manually invalidate cache after manual radio adjustments
 await rig.invalidateCache()
+```
+
+### Frequency Validation (v1.0.2)
+
+SwiftRigControl includes comprehensive frequency validation to prevent invalid commands and ensure safe operation:
+
+```swift
+// Access radio capabilities
+let capabilities = rig.capabilities
+
+// Check if a frequency is valid for the radio
+if capabilities.isFrequencyValid(14_200_000) {
+    try await rig.setFrequency(14_200_000)
+}
+
+// Check if radio can transmit on a frequency
+if capabilities.canTransmit(on: 14_200_000) {
+    print("Can transmit on 20m")
+} else {
+    print("Receive only on this frequency")
+}
+
+// Get supported modes for a specific frequency
+let modes = capabilities.supportedModes(for: 14_200_000)
+print("Supported modes: \(modes)")  // [.usb, .cw, .rtty, .dataUSB]
+
+// Get band name for a frequency
+if let band = capabilities.bandName(for: 14_200_000) {
+    print("Frequency is in \(band) band")  // "20m"
+}
+
+// Look up amateur band allocations
+// Region 2 (Americas - default)
+if let band = Region2AmateurBand.band(for: 14_200_000) {
+    print("Amateur band: \(band.displayName)")  // "20m"
+    print("Band range: \(band.frequencyRange)")
+    print("Common modes: \(band.commonModes)")
+}
+
+// Region 1 (Europe/Africa/Middle East)
+if let band40m = Region1AmateurBand.band(for: 7_100_000) {
+    print("\(band40m.displayName): \(band40m.frequencyRange)")  // "40m: 7000000...7200000"
+}
+
+// Region 3 (Asia-Pacific)
+if let band40m = Region3AmateurBand.band(for: 7_100_000) {
+    print("\(band40m.displayName): \(band40m.frequencyRange)")  // "40m: 7000000...7300000"
+}
+
+// Check if frequency is in amateur band for configured region
+if capabilities.isInAmateurBand(14_200_000) {
+    print("Frequency is within amateur allocation")
+}
+
+// Get amateur band name based on radio's region
+if let amateurBand = capabilities.amateurBandName(for: 14_200_000) {
+    print("Amateur band: \(amateurBand)")  // "20m"
+}
+```
+
+**Safety Features:**
+- Prevents transmitting outside radio capabilities (protects hardware)
+- Identifies receive-only frequency ranges
+- Validates modes for specific frequency ranges
+- Supports all 3 ITU regions (Region 1: Europe/Africa, Region 2: Americas, Region 3: Asia-Pacific)
+- Regional amateur band validation (configurable per radio)
+- Comprehensive error messages with recovery suggestions
+
+**Regional Band Differences:**
+
+Amateur radio frequency allocations vary by ITU region. Key differences:
+- **40m**: Region 1 (7.0-7.2 MHz), Region 2 (7.0-7.3 MHz), Region 3 (7.0-7.3 MHz)
+- **80m**: Region 1 (3.5-3.8 MHz), Region 2 (3.5-4.0 MHz), Region 3 (3.5-3.9 MHz)
+- **6m**: Region 1 (50-52 MHz), Region 2 (50-54 MHz), Region 3 (50-54 MHz)
+
+Configure radio region during initialization (defaults to Region 2):
+
+```swift
+let caps = RigCapabilities(
+    region: .region1,  // Europe/Africa/Middle East
+    // ... other properties
+)
+```
+
+```swift
+do {
+    try await rig.setFrequency(150_000_000)  // Outside IC-7300 range
+} catch RigError.frequencyOutOfRange(let freq, let model) {
+    print("Frequency \(freq) Hz is outside \(model) capabilities")
+    // Check error.recoverySuggestion for guidance
+}
 ```
 
 ### Error Handling
