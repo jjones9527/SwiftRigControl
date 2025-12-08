@@ -132,6 +132,14 @@ public struct CIVFrame {
     public var isNak: Bool {
         command.count == 1 && command[0] == CIVFrame.nak
     }
+
+    /// Checks if this frame is an echo (command from controller to radio).
+    /// Echo frames have 'from' address as controller (0xE0) and minimal/no data.
+    /// Some radios (IC-7100, IC-705) echo commands back before sending actual response.
+    public var isEcho: Bool {
+        // Echo is from controller (0xE0) to radio, with same command we sent
+        return from == CIVFrame.controllerAddress && to != CIVFrame.controllerAddress
+    }
 }
 
 // MARK: - CI-V Command Constants

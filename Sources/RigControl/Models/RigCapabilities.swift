@@ -81,6 +81,16 @@ public struct RigCapabilities: Sendable, Codable {
     /// Radio supports S-meter signal strength reading
     public let supportsSignalStrength: Bool
 
+    /// Radio requires explicit VFO selection before frequency/mode commands
+    /// Some radios (like IC-7100, IC-705) don't require/support the VFO select command (0x07)
+    /// and will NAK it. For these radios, set this to false.
+    public let requiresVFOSelection: Bool
+
+    /// Radio requires filter byte in mode set command (0x06)
+    /// Some radios (like IC-7100, IC-705) reject mode commands that include a filter byte.
+    /// For these radios, set this to false and only send the mode byte.
+    public let requiresModeFilter: Bool
+
     /// ITU region for amateur band validation (defaults to Region 2)
     public let region: AmateurRadioRegion
 
@@ -95,6 +105,8 @@ public struct RigCapabilities: Sendable, Codable {
         hasDualReceiver: Bool = false,
         hasATU: Bool = false,
         supportsSignalStrength: Bool = true,
+        requiresVFOSelection: Bool = true,
+        requiresModeFilter: Bool = true,
         region: AmateurRadioRegion = .region2
     ) {
         self.hasVFOB = hasVFOB
@@ -107,6 +119,8 @@ public struct RigCapabilities: Sendable, Codable {
         self.hasDualReceiver = hasDualReceiver
         self.hasATU = hasATU
         self.supportsSignalStrength = supportsSignalStrength
+        self.requiresVFOSelection = requiresVFOSelection
+        self.requiresModeFilter = requiresModeFilter
         self.region = region
     }
 
@@ -120,7 +134,8 @@ public struct RigCapabilities: Sendable, Codable {
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        requiresVFOSelection: true
     )
 
     /// Basic radio capabilities (for simple transceivers)
@@ -133,7 +148,8 @@ public struct RigCapabilities: Sendable, Codable {
         frequencyRange: nil,
         hasDualReceiver: false,
         hasATU: false,
-        supportsSignalStrength: false
+        supportsSignalStrength: false,
+        requiresVFOSelection: false
     )
 }
 

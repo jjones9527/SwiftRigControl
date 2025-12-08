@@ -276,7 +276,9 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,  // IC-7100 doesn't support/require VFO select command (0x07)
+        requiresModeFilter: false  // IC-7100 rejects mode commands with filter byte
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -341,7 +343,9 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,  // IC-705 doesn't support/require VFO select command (0x07)
+        requiresModeFilter: false  // IC-705 rejects mode commands with filter byte
     )
 
     // MARK: - Yaesu Radios

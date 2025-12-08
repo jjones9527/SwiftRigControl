@@ -49,8 +49,10 @@ public actor IcomCIVProtocol: CATProtocol {
     // MARK: - Frequency Control
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        // Select the appropriate VFO first
-        try await selectVFO(vfo)
+        // Select the appropriate VFO first (if radio requires it)
+        if capabilities.requiresVFOSelection {
+            try await selectVFO(vfo)
+        }
 
         // Encode frequency in BCD
         let freqData = BCDEncoding.encodeFrequency(hz)
@@ -71,8 +73,10 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
-        // Select the appropriate VFO first
-        try await selectVFO(vfo)
+        // Select the appropriate VFO first (if radio requires it)
+        if capabilities.requiresVFOSelection {
+            try await selectVFO(vfo)
+        }
 
         // Build and send query command
         let frame = CIVFrame(
@@ -95,18 +99,29 @@ public actor IcomCIVProtocol: CATProtocol {
     // MARK: - Mode Control
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        // Select the appropriate VFO first
-        try await selectVFO(vfo)
+        // Select the appropriate VFO first (if radio requires it)
+        if capabilities.requiresVFOSelection {
+            try await selectVFO(vfo)
+        }
 
         // Convert Mode enum to Icom mode code
         let modeCode = try modeToIcomCode(mode)
 
         // Build and send command
-        // Data format: [mode, filter] - filter 0x00 for default
+        // Some radios (IC-7100, IC-705) reject mode commands with filter byte
+        let modeData: [UInt8]
+        if capabilities.requiresModeFilter {
+            // Data format: [mode, filter] - filter 0x00 for default
+            modeData = [modeCode, 0x00]
+        } else {
+            // Data format: [mode] - no filter byte
+            modeData = [modeCode]
+        }
+
         let frame = CIVFrame(
             to: civAddress,
             command: [CIVFrame.Command.setMode],
-            data: [modeCode, 0x00]
+            data: modeData
         )
 
         try await sendFrame(frame)
@@ -118,8 +133,10 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
-        // Select the appropriate VFO first
-        try await selectVFO(vfo)
+        // Select the appropriate VFO first (if radio requires it)
+        if capabilities.requiresVFOSelection {
+            try await selectVFO(vfo)
+        }
 
         // Build and send query command
         let frame = CIVFrame(
@@ -144,9 +161,10 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func setPTT(_ enabled: Bool) async throws {
         // Build and send command
+        // Command 0x1C, sub-command 0x00, data 0x00=RX / 0x01=TX
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.ptt],
+            command: [CIVFrame.Command.ptt, 0x00],
             data: [enabled ? 0x01 : 0x00]
         )
 
@@ -160,15 +178,19 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getPTT() async throws -> Bool {
         // Build and send query command
+        // Command 0x1C, sub-command 0x00
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.ptt]
+            command: [CIVFrame.Command.ptt, 0x00]
         )
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        guard response.command[0] == CIVFrame.Command.ptt,
+        // Response format: command [0x1C 0x00] data [0x00 or 0x01]
+        guard response.command.count >= 2,
+              response.command[0] == CIVFrame.Command.ptt,
+              response.command[1] == 0x00,
               !response.data.isEmpty else {
             throw RigError.invalidResponse
         }
@@ -347,6 +369,7 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     /// Receives a CI-V frame from the radio.
+    /// Automatically skips echo frames (for radios like IC-7100, IC-705 that echo commands).
     private func receiveFrame() async throws -> CIVFrame {
         // Read until terminator (0xFD)
         let data = try await transport.readUntil(
@@ -354,7 +377,19 @@ public actor IcomCIVProtocol: CATProtocol {
             timeout: responseTimeout
         )
 
-        return try CIVFrame.parse(data)
+        let frame = try CIVFrame.parse(data)
+
+        // If this is an echo frame, read the next frame (actual response)
+        // Some radios (IC-7100, IC-705) echo commands before sending response
+        if frame.isEcho {
+            let nextData = try await transport.readUntil(
+                terminator: CIVFrame.terminator,
+                timeout: responseTimeout
+            )
+            return try CIVFrame.parse(nextData)
+        }
+
+        return frame
     }
 
     /// Converts a Mode enum to an Icom mode code.
