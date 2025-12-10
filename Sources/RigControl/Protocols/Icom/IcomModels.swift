@@ -12,7 +12,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0xA2,
+                commandSet: IC9700CommandSet(),
                 capabilities: RadioCapabilitiesDatabase.icomIC9700
             )
         }
@@ -28,7 +28,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0x94,
+                commandSet: StandardIcomCommandSet.ic7300,
                 capabilities: RadioCapabilitiesDatabase.icomIC7300
             )
         }
@@ -44,7 +44,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0x7A,
+                commandSet: StandardIcomCommandSet.ic7600,
                 capabilities: RadioCapabilitiesDatabase.icomIC7600
             )
         }
@@ -60,7 +60,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0x88,
+                commandSet: IC7100CommandSet(),
                 capabilities: RadioCapabilitiesDatabase.icomIC7100
             )
         }
@@ -76,7 +76,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0x98,
+                commandSet: StandardIcomCommandSet.ic7610,
                 capabilities: RadioCapabilitiesDatabase.icomIC7610
             )
         }
@@ -92,7 +92,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0xA4,
+                commandSet: StandardIcomCommandSet.ic705,
                 capabilities: RadioCapabilitiesDatabase.icomIC705
             )
         }

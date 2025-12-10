@@ -4,6 +4,10 @@ import Foundation
 ///
 /// The CI-V (Computer Interface V) protocol is used by Icom transceivers for CAT control.
 /// This implementation supports frequency, mode, PTT, VFO, and power control operations.
+///
+/// ## Architecture
+/// Uses the CIVCommandSet protocol for radio-specific command formatting, allowing
+/// clean separation between transport/framing logic and radio-specific quirks.
 public actor IcomCIVProtocol: CATProtocol {
     /// The serial transport for communication
     public let transport: any SerialTransport
@@ -14,24 +18,48 @@ public actor IcomCIVProtocol: CATProtocol {
     /// The capabilities of this radio
     public let capabilities: RigCapabilities
 
+    /// Radio-specific command set for formatting CI-V commands
+    private let commandSet: any CIVCommandSet
+
     /// Default timeout for radio responses
     private let responseTimeout: TimeInterval = 1.0
 
-    /// Initializes a new Icom CI-V protocol instance.
+    /// Initializes a new Icom CI-V protocol instance with a command set.
+    ///
+    /// - Parameters:
+    ///   - transport: The serial transport to use
+    ///   - commandSet: Radio-specific command set for formatting commands
+    ///   - capabilities: The capabilities of this radio model
+    public init(transport: any SerialTransport, commandSet: any CIVCommandSet, capabilities: RigCapabilities) {
+        self.transport = transport
+        self.commandSet = commandSet
+        self.civAddress = commandSet.civAddress
+        self.capabilities = capabilities
+    }
+
+    /// Initializes a new Icom CI-V protocol instance (legacy compatibility).
     ///
     /// - Parameters:
     ///   - transport: The serial transport to use
     ///   - civAddress: The CI-V address of the radio (e.g., 0xA2 for IC-9700)
     ///   - capabilities: The capabilities of this radio model
+    @available(*, deprecated, message: "Use init(transport:commandSet:capabilities:) for better radio-specific support")
     public init(transport: any SerialTransport, civAddress: UInt8, capabilities: RigCapabilities) {
         self.transport = transport
         self.civAddress = civAddress
         self.capabilities = capabilities
+
+        // Create a standard command set based on capabilities
+        self.commandSet = StandardIcomCommandSet(
+            civAddress: civAddress,
+            echoesCommands: false,  // Legacy default
+            requiresVFOSelection: capabilities.requiresVFOSelection
+        )
     }
 
     /// Required initializer from CATProtocol (throws since we need civAddress)
     public init(transport: any SerialTransport) {
-        fatalError("Use init(transport:civAddress:capabilities:) for Icom radios")
+        fatalError("Use init(transport:commandSet:capabilities:) for Icom radios")
     }
 
     // MARK: - Connection
@@ -50,18 +78,17 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
         // Select the appropriate VFO first (if radio requires it)
-        if capabilities.requiresVFOSelection {
+        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
             try await selectVFO(vfo)
         }
 
-        // Encode frequency in BCD
-        let freqData = BCDEncoding.encodeFrequency(hz)
+        // Get command formatting from command set
+        let (command, data) = commandSet.setFrequencyCommand(frequency: hz)
 
-        // Build and send command
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.setFrequency],
-            data: freqData
+            command: command,
+            data: data
         )
 
         try await sendFrame(frame)
@@ -74,54 +101,43 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
         // Select the appropriate VFO first (if radio requires it)
-        if capabilities.requiresVFOSelection {
+        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
             try await selectVFO(vfo)
         }
 
-        // Build and send query command
+        // Get command formatting from command set
+        let command = commandSet.readFrequencyCommand()
+
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.readFrequency]
+            command: command
         )
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // Response should contain frequency data
-        guard response.command[0] == CIVFrame.Command.readFrequency,
-              response.data.count == 5 else {
-            throw RigError.invalidResponse
-        }
-
-        return try BCDEncoding.decodeFrequency(response.data)
+        // Parse response using command set
+        return try commandSet.parseFrequencyResponse(response)
     }
 
     // MARK: - Mode Control
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         // Select the appropriate VFO first (if radio requires it)
-        if capabilities.requiresVFOSelection {
+        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
             try await selectVFO(vfo)
         }
 
         // Convert Mode enum to Icom mode code
         let modeCode = try modeToIcomCode(mode)
 
-        // Build and send command
-        // Some radios (IC-7100, IC-705) reject mode commands with filter byte
-        let modeData: [UInt8]
-        if capabilities.requiresModeFilter {
-            // Data format: [mode, filter] - filter 0x00 for default
-            modeData = [modeCode, 0x00]
-        } else {
-            // Data format: [mode] - no filter byte
-            modeData = [modeCode]
-        }
+        // Get command formatting from command set
+        let (command, data) = commandSet.setModeCommand(mode: modeCode)
 
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.setMode],
-            data: modeData
+            command: command,
+            data: data
         )
 
         try await sendFrame(frame)
@@ -134,38 +150,36 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getMode(vfo: VFO) async throws -> Mode {
         // Select the appropriate VFO first (if radio requires it)
-        if capabilities.requiresVFOSelection {
+        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
             try await selectVFO(vfo)
         }
 
-        // Build and send query command
+        // Get command formatting from command set
+        let command = commandSet.readModeCommand()
+
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.readMode]
+            command: command
         )
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // Response should contain mode data
-        guard response.command[0] == CIVFrame.Command.readMode,
-              !response.data.isEmpty else {
-            throw RigError.invalidResponse
-        }
-
-        let modeCode = response.data[0]
+        // Parse response using command set
+        let modeCode = try commandSet.parseModeResponse(response)
         return try icomCodeToMode(modeCode)
     }
 
     // MARK: - PTT Control
 
     public func setPTT(_ enabled: Bool) async throws {
-        // Build and send command
-        // Command 0x1C, sub-command 0x00, data 0x00=RX / 0x01=TX
+        // Get command formatting from command set
+        let (command, data) = commandSet.setPTTCommand(enabled: enabled)
+
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.ptt, 0x00],
-            data: [enabled ? 0x01 : 0x00]
+            command: command,
+            data: data
         )
 
         try await sendFrame(frame)
@@ -177,25 +191,19 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     public func getPTT() async throws -> Bool {
-        // Build and send query command
-        // Command 0x1C, sub-command 0x00
+        // Get command formatting from command set
+        let command = commandSet.readPTTCommand()
+
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.ptt, 0x00]
+            command: command
         )
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // Response format: command [0x1C 0x00] data [0x00 or 0x01]
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.ptt,
-              response.command[1] == 0x00,
-              !response.data.isEmpty else {
-            throw RigError.invalidResponse
-        }
-
-        return response.data[0] == 0x01
+        // Parse response using command set
+        return try commandSet.parsePTTResponse(response)
     }
 
     // MARK: - VFO Control
@@ -234,17 +242,13 @@ public actor IcomCIVProtocol: CATProtocol {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Convert user value (percentage or watts) to BCD scale (0-255) based on radio type
-        // All Icom radios use percentage, others may use watts
-        let scale = capabilities.powerUnits.toScale(value)
-        let powerData = BCDEncoding.encodePower(scale)
+        // Get command formatting from command set
+        let (command, data) = commandSet.setPowerCommand(value: value)
 
-        // Build and send command
-        // Command 0x14, sub-command 0x0A for RF power
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.settings, 0x0A],
-            data: powerData
+            command: command,
+            data: data
         )
 
         try await sendFrame(frame)
@@ -260,25 +264,19 @@ public actor IcomCIVProtocol: CATProtocol {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Build and send query command
+        // Get command formatting from command set
+        let command = commandSet.readPowerCommand()
+
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.settings, 0x0A]
+            command: command
         )
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.settings,
-              response.command[1] == 0x0A,
-              response.data.count >= 2 else {
-            throw RigError.invalidResponse
-        }
-
-        // Convert BCD scale (0-255) to user value (percentage or watts) based on radio type
-        let scale = BCDEncoding.decodePower(response.data)
-        return capabilities.powerUnits.fromScale(scale)
+        // Parse response using command set
+        return try commandSet.parsePowerResponse(response)
     }
 
     // MARK: - Split Operation
@@ -371,7 +369,7 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     /// Receives a CI-V frame from the radio.
-    /// Automatically skips echo frames (for radios like IC-7100, IC-705 that echo commands).
+    /// Automatically skips echo frames for radios that echo commands (determined by command set).
     private func receiveFrame() async throws -> CIVFrame {
         // Read until terminator (0xFD)
         let data = try await transport.readUntil(
@@ -381,9 +379,8 @@ public actor IcomCIVProtocol: CATProtocol {
 
         let frame = try CIVFrame.parse(data)
 
-        // If this is an echo frame, read the next frame (actual response)
-        // Some radios (IC-7100, IC-705) echo commands before sending response
-        if frame.isEcho {
+        // If this radio echoes commands and this is an echo frame, read the next frame (actual response)
+        if commandSet.echoesCommands && frame.isEcho {
             let nextData = try await transport.readUntil(
                 terminator: CIVFrame.terminator,
                 timeout: responseTimeout
