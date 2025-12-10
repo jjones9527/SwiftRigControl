@@ -32,7 +32,8 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        powerUnits: .percentage
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -93,7 +94,8 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        powerUnits: .percentage
     )
 
     /// Icom IC-7300 - HF/6m SDR transceiver
@@ -154,7 +156,8 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        powerUnits: .percentage
     )
 
     /// Icom IC-7600 - HF/6m transceiver
@@ -211,7 +214,8 @@ public struct RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        powerUnits: .percentage
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -278,7 +282,8 @@ public struct RadioCapabilitiesDatabase {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-7100 doesn't support/require VFO select command (0x07)
-        requiresModeFilter: false  // IC-7100 rejects mode commands with filter byte
+        requiresModeFilter: false,  // IC-7100 rejects mode commands with filter byte
+        powerUnits: .percentage
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -345,7 +350,8 @@ public struct RadioCapabilitiesDatabase {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-705 doesn't support/require VFO select command (0x07)
-        requiresModeFilter: false  // IC-705 rejects mode commands with filter byte
+        requiresModeFilter: false,  // IC-705 rejects mode commands with filter byte
+        powerUnits: .percentage
     )
 
     // MARK: - Yaesu Radios

@@ -103,9 +103,9 @@ public struct CIVFrame {
         }
 
         // Some commands have sub-commands (second byte)
-        // Commands 0x14 (settings) and 0x15 (read level) use sub-commands
+        // Commands 0x14 (settings), 0x15 (read level), and 0x1C (PTT) use sub-commands
         let firstByte = commandAndData[0]
-        let hasSubCommand = (firstByte == 0x14 || firstByte == 0x15) && commandAndData.count > 1
+        let hasSubCommand = (firstByte == 0x14 || firstByte == 0x15 || firstByte == 0x1C) && commandAndData.count > 1
 
         let command: [UInt8]
         let frameData: [UInt8]

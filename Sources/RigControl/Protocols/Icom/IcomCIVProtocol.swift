@@ -229,14 +229,15 @@ public actor IcomCIVProtocol: CATProtocol {
 
     // MARK: - Power Control
 
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ value: Int) async throws {
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Convert watts to percentage (0-255)
-        let percentage = min(max((watts * 255) / capabilities.maxPower, 0), 255)
-        let powerData = BCDEncoding.encodePower(percentage)
+        // Convert user value (percentage or watts) to BCD scale (0-255) based on radio type
+        // All Icom radios use percentage, others may use watts
+        let scale = capabilities.powerUnits.toScale(value)
+        let powerData = BCDEncoding.encodePower(scale)
 
         // Build and send command
         // Command 0x14, sub-command 0x0A for RF power
@@ -275,8 +276,9 @@ public actor IcomCIVProtocol: CATProtocol {
             throw RigError.invalidResponse
         }
 
-        let percentage = BCDEncoding.decodePower(response.data)
-        return (percentage * capabilities.maxPower) / 255
+        // Convert BCD scale (0-255) to user value (percentage or watts) based on radio type
+        let scale = BCDEncoding.decodePower(response.data)
+        return capabilities.powerUnits.fromScale(scale)
     }
 
     // MARK: - Split Operation

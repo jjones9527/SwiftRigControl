@@ -54,6 +54,26 @@ let package = Package(
             name: "IC7100ModeDebug",
             targets: ["IC7100ModeDebug"]
         ),
+        // IC-7100 power control test
+        .executable(
+            name: "IC7100PowerTest",
+            targets: ["IC7100PowerTest"]
+        ),
+        // IC-7100 power debug
+        .executable(
+            name: "IC7100PowerDebug",
+            targets: ["IC7100PowerDebug"]
+        ),
+        // IC-7100 PTT test
+        .executable(
+            name: "IC7100PTTTest",
+            targets: ["IC7100PTTTest"]
+        ),
+        // IC-7100 PTT debug
+        .executable(
+            name: "IC7100PTTDebug",
+            targets: ["IC7100PTTDebug"]
+        ),
     ],
     targets: [
         // Core rig control library
@@ -123,6 +143,38 @@ let package = Package(
             dependencies: ["RigControl"],
             path: "Tests",
             sources: ["IC7100ModeDebug.swift"]
+        ),
+
+        // IC-7100 power control test
+        .executableTarget(
+            name: "IC7100PowerTest",
+            dependencies: ["RigControl"],
+            path: "Tests",
+            sources: ["IC7100PowerTest.swift"]
+        ),
+
+        // IC-7100 power debug
+        .executableTarget(
+            name: "IC7100PowerDebug",
+            dependencies: ["RigControl"],
+            path: "Tests",
+            sources: ["IC7100PowerDebug.swift"]
+        ),
+
+        // IC-7100 PTT test
+        .executableTarget(
+            name: "IC7100PTTTest",
+            dependencies: ["RigControl"],
+            path: "Tests",
+            sources: ["IC7100PTTTest.swift"]
+        ),
+
+        // IC-7100 PTT debug
+        .executableTarget(
+            name: "IC7100PTTDebug",
+            dependencies: ["RigControl"],
+            path: "Tests",
+            sources: ["IC7100PTTDebug.swift"]
         ),
 
         // Tests

@@ -45,6 +45,63 @@ public struct DetailedFrequencyRange: Sendable, Codable, Equatable {
     }
 }
 
+/// Power control units used by different radio manufacturers.
+///
+/// **Research findings (2025-12-09):**
+/// - **All Icom radios use percentage (0-100%)** - Confirmed via Hamlib GitHub issue #533
+/// - IC-7100, IC-705, IC-9700, IC-7300, IC-7610 all display power as percentage
+/// - The CI-V command 0x14 0x0A uses BCD scale 0-255 representing 0-100%
+/// - This is independent of the radio's actual max power output
+public enum PowerUnits: Sendable, Codable, Equatable {
+    /// Power specified as percentage (0-100%)
+    /// Used by all Icom radios (IC-7100, IC-705, IC-9700, IC-7300, IC-7610, etc.)
+    case percentage
+
+    /// Power specified in watts (0 to max watts)
+    /// Used by some manufacturers (Yaesu, Kenwood, Elecraft)
+    case watts(max: Int)
+
+    /// Convert user input (percentage or watts) to BCD scale (0-255) for CI-V
+    /// - Parameter value: Power value in percentage (0-100) or watts depending on unit type
+    /// - Returns: BCD scale value (0-255)
+    public func toScale(_ value: Int) -> Int {
+        switch self {
+        case .percentage:
+            // For percentage radios: 0-100% maps to 0-255
+            let clamped = min(max(value, 0), 100)
+            return (clamped * 255) / 100
+        case .watts(let maxPower):
+            // For watt-based radios: 0-maxWatts maps to 0-255
+            let clamped = min(max(value, 0), maxPower)
+            return (clamped * 255) / maxPower
+        }
+    }
+
+    /// Convert BCD scale (0-255) from CI-V to user-facing value
+    /// - Parameter scale: BCD scale value (0-255)
+    /// - Returns: Power value in percentage (0-100) or watts depending on unit type
+    public func fromScale(_ scale: Int) -> Int {
+        switch self {
+        case .percentage:
+            // For percentage radios: 0-255 maps to 0-100%
+            return (scale * 100) / 255
+        case .watts(let maxPower):
+            // For watt-based radios: 0-255 maps to 0-maxWatts
+            return (scale * maxPower) / 255
+        }
+    }
+
+    /// Display unit suffix for UI
+    public var displayUnit: String {
+        switch self {
+        case .percentage:
+            return "%"
+        case .watts:
+            return "W"
+        }
+    }
+}
+
 /// Describes the capabilities of a specific radio model.
 ///
 /// Different radios support different features. This structure allows the library
@@ -91,6 +148,11 @@ public struct RigCapabilities: Sendable, Codable {
     /// For these radios, set this to false and only send the mode byte.
     public let requiresModeFilter: Bool
 
+    /// Power control units (percentage vs watts)
+    /// - All Icom radios use `.percentage`
+    /// - Other manufacturers may use `.watts(max: X)`
+    public let powerUnits: PowerUnits
+
     /// ITU region for amateur band validation (defaults to Region 2)
     public let region: AmateurRadioRegion
 
@@ -107,6 +169,7 @@ public struct RigCapabilities: Sendable, Codable {
         supportsSignalStrength: Bool = true,
         requiresVFOSelection: Bool = true,
         requiresModeFilter: Bool = true,
+        powerUnits: PowerUnits = .percentage,
         region: AmateurRadioRegion = .region2
     ) {
         self.hasVFOB = hasVFOB
@@ -121,6 +184,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsSignalStrength = supportsSignalStrength
         self.requiresVFOSelection = requiresVFOSelection
         self.requiresModeFilter = requiresModeFilter
+        self.powerUnits = powerUnits
         self.region = region
     }
 
