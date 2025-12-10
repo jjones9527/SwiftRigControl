@@ -170,8 +170,18 @@ extension StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x7A)
     }
 
-    /// IC-9100 HF/VHF/UHF all-mode transceiver
+    /// IC-9100 HF/VHF/UHF all-mode transceiver with dual receivers
     public static var ic9100: StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x7C)
+    }
+
+    /// IC-7200 HF/50MHz mid-range transceiver
+    public static var ic7200: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x76, echoesCommands: false, requiresVFOSelection: false)
+    }
+
+    /// IC-7410 HF/50MHz transceiver
+    public static var ic7410: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x80, echoesCommands: false, requiresVFOSelection: false)
     }
 }

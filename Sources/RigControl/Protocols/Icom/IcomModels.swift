@@ -97,4 +97,52 @@ extension RadioDefinition {
             )
         }
     )
+
+    /// Icom IC-9100 HF/VHF/UHF all-mode transceiver
+    public static let icomIC9100 = RadioDefinition(
+        manufacturer: .icom,
+        model: "IC-9100",
+        defaultBaudRate: 115200,
+        capabilities: RadioCapabilitiesDatabase.icomIC9100,
+        civAddress: 0x7C,
+        protocolFactory: { transport in
+            IcomCIVProtocol(
+                transport: transport,
+                commandSet: StandardIcomCommandSet.ic9100,
+                capabilities: RadioCapabilitiesDatabase.icomIC9100
+            )
+        }
+    )
+
+    /// Icom IC-7200 HF/6m all-mode transceiver
+    public static let icomIC7200 = RadioDefinition(
+        manufacturer: .icom,
+        model: "IC-7200",
+        defaultBaudRate: 19200,
+        capabilities: RadioCapabilitiesDatabase.icomIC7200,
+        civAddress: 0x76,
+        protocolFactory: { transport in
+            IcomCIVProtocol(
+                transport: transport,
+                commandSet: StandardIcomCommandSet.ic7200,
+                capabilities: RadioCapabilitiesDatabase.icomIC7200
+            )
+        }
+    )
+
+    /// Icom IC-7410 HF/6m all-mode transceiver
+    public static let icomIC7410 = RadioDefinition(
+        manufacturer: .icom,
+        model: "IC-7410",
+        defaultBaudRate: 19200,
+        capabilities: RadioCapabilitiesDatabase.icomIC7410,
+        civAddress: 0x80,
+        protocolFactory: { transport in
+            IcomCIVProtocol(
+                transport: transport,
+                commandSet: StandardIcomCommandSet.ic7410,
+                capabilities: RadioCapabilitiesDatabase.icomIC7410
+            )
+        }
+    )
 }
