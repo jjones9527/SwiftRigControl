@@ -7,13 +7,16 @@ import Foundation
 /// - **Power Display**: Percentage (0-100%), NOT watts
 /// - **Command Echo**: YES - Radio echoes commands before sending response
 /// - **Mode Filter**: NOT required - Rejects filter byte in mode commands
-/// - **VFO Selection**: NOT required - Commands work without explicit VFO selection
+/// - **VFO Operation**: Operates on "current" VFO - must switch VFO before operations
 ///
 /// ## Key Quirks
 /// 1. Power is displayed as percentage, independent of band
 /// 2. Echoes all commands back before sending actual response
 /// 3. Mode commands must NOT include filter byte (use 0x06 with mode only)
 /// 4. PTT uses sub-command format: 0x1C 0x00
+/// 5. VFO must be explicitly switched (0x07) before frequency/mode operations
+///    - Unlike IC-7300/IC-9700, frequency/mode commands operate on "current" VFO
+///    - To change VFO B frequency, first select VFO B (0x07 0x01), then set frequency
 ///
 /// ## Hardware Verification
 /// All commands hardware-verified on IC-7100 (December 2025)
@@ -93,8 +96,20 @@ public struct IC7100CommandSet: CIVCommandSet {
     // MARK: - VFO Commands
 
     public func selectVFOCommand(_ vfo: VFO) -> (command: [UInt8], data: [UInt8])? {
-        // IC-7100 doesn't require VFO selection
-        return nil
+        // IC-7100 supports VFO selection to switch the active VFO
+        // It operates on the "current" VFO, so we need to switch it when requested
+        let vfoCode: UInt8
+        switch vfo {
+        case .a:
+            vfoCode = CIVFrame.VFOSelect.vfoA
+        case .b:
+            vfoCode = CIVFrame.VFOSelect.vfoB
+        case .main:
+            vfoCode = CIVFrame.VFOSelect.main
+        case .sub:
+            vfoCode = CIVFrame.VFOSelect.sub
+        }
+        return ([0x07], [vfoCode])
     }
 
     // MARK: - Frequency Commands
