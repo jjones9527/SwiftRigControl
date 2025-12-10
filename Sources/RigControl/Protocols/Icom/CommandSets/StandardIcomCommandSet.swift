@@ -165,9 +165,10 @@ extension StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x98)
     }
 
-    /// IC-7600 HF/50MHz high-end transceiver
+    /// IC-7600 HF/50MHz high-end transceiver with dual receiver
+    /// Note: Uses Main/Sub bands (not VFO A/B), operates on currently selected band
     public static var ic7600: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x7A)
+        StandardIcomCommandSet(civAddress: 0x7A, echoesCommands: false, requiresVFOSelection: false)
     }
 
     /// IC-9100 HF/VHF/UHF all-mode transceiver with dual receivers
