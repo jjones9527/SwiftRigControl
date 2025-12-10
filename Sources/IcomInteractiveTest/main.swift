@@ -440,52 +440,67 @@ class IcomTestSuite {
             return true
         }
 
-        let testFreqA: UInt64 = 14_200_000  // 20m
-        let testFreqB: UInt64 = 7_100_000   // 40m
+        // Get two different test frequencies appropriate for this radio
+        let testFreqs = getVFOTestFrequencies()
+        guard testFreqs.count >= 2 else {
+            printInfo("Not enough bands available for VFO independence test - skipping")
+            return true
+        }
+
+        let (testFreq1, band1) = testFreqs[0]
+        let (testFreq2, band2) = testFreqs[1]
+
+        // Determine VFO names based on radio type
+        let isDualReceiver = radio.definition.capabilities.hasDualReceiver
+        let (vfo1, vfo2, vfo1Name, vfo2Name): (VFO, VFO, String, String) = if isDualReceiver {
+            (.main, .sub, "Main", "Sub")
+        } else {
+            (.a, .b, "VFO A", "VFO B")
+        }
 
         do {
-            // Set VFO A
-            printInfo("Setting VFO A to \(formatFrequency(testFreqA))...")
-            try await rig.setFrequency(testFreqA, vfo: .a)
+            // Set first VFO
+            printInfo("Setting \(vfo1Name) to \(formatFrequency(testFreq1)) (\(band1))...")
+            try await rig.setFrequency(testFreq1, vfo: vfo1)
             try await Task.sleep(for: .milliseconds(500))
 
-            printInfo("Check your radio: VFO A should show \(formatFrequency(testFreqA))")
-            let vfoAConfirmed = readYesNo(prompt: "Does VFO A show \(formatFrequency(testFreqA))?")
-            if !vfoAConfirmed {
-                let actual = readLine(prompt: "What does VFO A show?")
-                recordFailure("VFO A Selection", expected: formatFrequency(testFreqA), actual: actual)
+            printInfo("Check your radio: \(vfo1Name) should show \(formatFrequency(testFreq1))")
+            let vfo1Confirmed = readYesNo(prompt: "Does \(vfo1Name) show \(formatFrequency(testFreq1))?")
+            if !vfo1Confirmed {
+                let actual = readLine(prompt: "What does \(vfo1Name) show?")
+                recordFailure("\(vfo1Name) Selection", expected: formatFrequency(testFreq1), actual: actual)
                 return false
             }
 
-            // Set VFO B
-            printInfo("Setting VFO B to \(formatFrequency(testFreqB))...")
-            try await rig.setFrequency(testFreqB, vfo: .b)
+            // Set second VFO
+            printInfo("Setting \(vfo2Name) to \(formatFrequency(testFreq2)) (\(band2))...")
+            try await rig.setFrequency(testFreq2, vfo: vfo2)
             try await Task.sleep(for: .milliseconds(500))
 
-            printInfo("Check your radio: VFO B should show \(formatFrequency(testFreqB))")
-            let vfoBConfirmed = readYesNo(prompt: "Does VFO B show \(formatFrequency(testFreqB))?")
-            if !vfoBConfirmed {
-                let actual = readLine(prompt: "What does VFO B show?")
-                recordFailure("VFO B Selection", expected: formatFrequency(testFreqB), actual: actual)
+            printInfo("Check your radio: \(vfo2Name) should show \(formatFrequency(testFreq2))")
+            let vfo2Confirmed = readYesNo(prompt: "Does \(vfo2Name) show \(formatFrequency(testFreq2))?")
+            if !vfo2Confirmed {
+                let actual = readLine(prompt: "What does \(vfo2Name) show?")
+                recordFailure("\(vfo2Name) Selection", expected: formatFrequency(testFreq2), actual: actual)
                 return false
             }
 
             // Read back both VFOs
-            printInfo("Reading VFO A frequency...")
-            let readFreqA = try await rig.frequency(vfo: .a, cached: false)
-            printInfo("VFO A: \(formatFrequency(readFreqA))")
+            printInfo("Reading \(vfo1Name) frequency...")
+            let readFreq1 = try await rig.frequency(vfo: vfo1, cached: false)
+            printInfo("\(vfo1Name): \(formatFrequency(readFreq1))")
 
-            printInfo("Reading VFO B frequency...")
-            let readFreqB = try await rig.frequency(vfo: .b, cached: false)
-            printInfo("VFO B: \(formatFrequency(readFreqB))")
+            printInfo("Reading \(vfo2Name) frequency...")
+            let readFreq2 = try await rig.frequency(vfo: vfo2, cached: false)
+            printInfo("\(vfo2Name): \(formatFrequency(readFreq2))")
 
-            if readFreqA == testFreqA && readFreqB == testFreqB {
+            if readFreq1 == testFreq1 && readFreq2 == testFreq2 {
                 printSuccess("Both VFOs match expected frequencies")
             } else {
                 printFailure("VFO mismatch detected")
                 recordFailure("VFO Read Back",
-                            expected: "A=\(formatFrequency(testFreqA)), B=\(formatFrequency(testFreqB))",
-                            actual: "A=\(formatFrequency(readFreqA)), B=\(formatFrequency(readFreqB))")
+                            expected: "\(vfo1Name)=\(formatFrequency(testFreq1)), \(vfo2Name)=\(formatFrequency(testFreq2))",
+                            actual: "\(vfo1Name)=\(formatFrequency(readFreq1)), \(vfo2Name)=\(formatFrequency(readFreq2))")
                 return false
             }
 
@@ -721,9 +736,51 @@ class IcomTestSuite {
         let caps = radio.definition.capabilities
         var frequencies: [(UInt64, String)] = []
 
+        // Use detailed frequency ranges if available for better accuracy
+        if !caps.detailedFrequencyRanges.isEmpty {
+            // Pick the first transmittable band from each region
+            var foundHF = false
+            var foundVHF = false
+            var foundUHF = false
+
+            for range in caps.detailedFrequencyRanges where range.canTransmit {
+                // HF bands (< 30 MHz)
+                if !foundHF && range.min < 30_000_000 {
+                    if let bandName = range.bandName {
+                        frequencies.append((range.min + (range.max - range.min) / 2, bandName))
+                        foundHF = true
+                    }
+                }
+                // VHF (144-148 MHz)
+                else if !foundVHF && range.min >= 144_000_000 && range.max <= 148_000_000 {
+                    frequencies.append((145_000_000, range.bandName ?? "2m"))
+                    foundVHF = true
+                }
+                // UHF (430-450 MHz)
+                else if !foundUHF && range.min >= 430_000_000 && range.max <= 450_000_000 {
+                    frequencies.append((435_000_000, range.bandName ?? "70cm"))
+                    foundUHF = true
+                }
+                // 1.2 GHz (1240-1300 MHz)
+                else if range.min >= 1_240_000_000 && range.max <= 1_300_000_000 {
+                    frequencies.append((1_270_000_000, range.bandName ?? "23cm"))
+                }
+            }
+
+            if frequencies.isEmpty {
+                // No transmit bands found, use first receive-only range
+                if let firstRange = caps.detailedFrequencyRanges.first {
+                    let midFreq = firstRange.min + (firstRange.max - firstRange.min) / 2
+                    frequencies.append((midFreq, firstRange.bandName ?? "Receive"))
+                }
+            }
+
+            return frequencies
+        }
+
+        // Fall back to frequency range if detailed ranges not available
         guard let freqRange = caps.frequencyRange else {
-            // Default to 20m if no range specified
-            return [(14_200_000, "20m")]
+            return [(14_200_000, "20m")]  // Default
         }
 
         // HF bands (if supported)
@@ -744,6 +801,11 @@ class IcomTestSuite {
             frequencies.append((435_000_000, "70cm"))
         }
 
+        // 1.2 GHz (if supported)
+        if freqRange.min <= 1_240_000_000 && freqRange.max >= 1_300_000_000 {
+            frequencies.append((1_270_000_000, "23cm"))
+        }
+
         // If no standard bands found, use a frequency in the middle of the range
         if frequencies.isEmpty {
             let midFreq = (freqRange.min + freqRange.max) / 2
@@ -751,6 +813,24 @@ class IcomTestSuite {
         }
 
         return frequencies
+    }
+
+    func getVFOTestFrequencies() -> [(frequency: UInt64, band: String)] {
+        // Get all available test frequencies
+        let allFreqs = getTestFrequencies()
+
+        // For VFO independence testing, we want TWO different frequencies
+        // Prefer widely separated frequencies to make the test more obvious
+        if allFreqs.count >= 2 {
+            return Array(allFreqs.prefix(2))
+        } else if allFreqs.count == 1 {
+            // Only one band available - use two different frequencies in same band
+            let (freq, band) = allFreqs[0]
+            let offset: UInt64 = 100_000  // 100 kHz offset
+            return [(freq, band), (freq + offset, band)]
+        } else {
+            return []
+        }
     }
 
     func getTestModes() -> [(mode: Mode, name: String)] {
