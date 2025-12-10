@@ -1,0 +1,906 @@
+import Foundation
+import RigControl
+
+// MARK: - Terminal Colors
+
+enum TerminalColor: String {
+    case reset = "\u{001B}[0m"
+    case red = "\u{001B}[31m"
+    case green = "\u{001B}[32m"
+    case yellow = "\u{001B}[33m"
+    case blue = "\u{001B}[34m"
+    case magenta = "\u{001B}[35m"
+    case cyan = "\u{001B}[36m"
+    case bold = "\u{001B}[1m"
+}
+
+func colorize(_ text: String, _ color: TerminalColor) -> String {
+    return "\(color.rawValue)\(text)\(TerminalColor.reset.rawValue)"
+}
+
+// MARK: - User Input Helpers
+
+func readLine(prompt: String) -> String {
+    print(prompt, terminator: " ")
+    return Swift.readLine() ?? ""
+}
+
+func readYesNo(prompt: String) -> Bool {
+    while true {
+        let input = readLine(prompt: "\(prompt) [y/n]:").lowercased()
+        if input == "y" || input == "yes" {
+            return true
+        } else if input == "n" || input == "no" {
+            return false
+        }
+        print(colorize("Please enter 'y' or 'n'", .yellow))
+    }
+}
+
+func readInt(prompt: String, min: Int, max: Int) -> Int? {
+    let input = readLine(prompt: prompt)
+    guard let value = Int(input), value >= min, value <= max else {
+        return nil
+    }
+    return value
+}
+
+// MARK: - Available Radios
+
+struct TestRadio {
+    let definition: RadioDefinition
+    let name: String
+    let description: String
+}
+
+let availableRadios: [TestRadio] = [
+    TestRadio(
+        definition: .icomIC7100,
+        name: "IC-7100",
+        description: "HF/VHF/UHF All-Mode (Echoes commands, no filter byte)"
+    ),
+    TestRadio(
+        definition: .icomIC9700,
+        name: "IC-9700",
+        description: "VHF/UHF/1.2GHz All-Mode (Dual receiver)"
+    ),
+    TestRadio(
+        definition: .icomIC705,
+        name: "IC-705",
+        description: "HF/VHF/UHF Portable (Echoes commands, no filter byte)"
+    ),
+    TestRadio(
+        definition: .icomIC7300,
+        name: "IC-7300",
+        description: "HF/6m SDR Transceiver"
+    ),
+    TestRadio(
+        definition: .icomIC7610,
+        name: "IC-7610",
+        description: "HF/6m SDR Transceiver (Dual receiver)"
+    ),
+    TestRadio(
+        definition: .icomIC7600,
+        name: "IC-7600",
+        description: "HF/6m High-End Transceiver"
+    ),
+    TestRadio(
+        definition: .icomIC9100,
+        name: "IC-9100",
+        description: "HF/VHF/UHF All-Mode (Dual receiver)"
+    ),
+    TestRadio(
+        definition: .icomIC7200,
+        name: "IC-7200",
+        description: "HF/6m Mid-Range Transceiver"
+    ),
+    TestRadio(
+        definition: .icomIC7410,
+        name: "IC-7410",
+        description: "HF/6m Transceiver"
+    ),
+]
+
+// MARK: - Test Suite
+
+class IcomTestSuite {
+    let radio: TestRadio
+    let rig: RigController
+    let port: String
+    let baudRate: Int
+    var testsPassed = 0
+    var testsFailed = 0
+    var failureLog: [String] = []
+
+    init(radio: TestRadio, port: String, baudRate: Int) {
+        self.radio = radio
+        self.port = port
+        self.baudRate = baudRate
+        self.rig = RigController(
+            radio: radio.definition,
+            connection: .serial(path: port, baudRate: baudRate)
+        )
+    }
+
+    func printHeader(_ text: String) {
+        print("\n" + colorize(String(repeating: "=", count: 70), .cyan))
+        print(colorize(text, .bold))
+        print(colorize(String(repeating: "=", count: 70), .cyan))
+    }
+
+    func printTestStart(_ test: String) {
+        print("\n" + colorize("▶ TEST: \(test)", .blue))
+    }
+
+    func printSuccess(_ message: String) {
+        print(colorize("✓ \(message)", .green))
+    }
+
+    func printFailure(_ message: String) {
+        print(colorize("✗ \(message)", .red))
+    }
+
+    func printInfo(_ message: String) {
+        print(colorize("ℹ \(message)", .cyan))
+    }
+
+    func recordFailure(_ test: String, expected: String, actual: String) {
+        testsFailed += 1
+        let failure = """
+        Test: \(test)
+        Expected: \(expected)
+        Actual: \(actual)
+        """
+        failureLog.append(failure)
+        printFailure("Test failed")
+    }
+
+    func recordSuccess(_ test: String) {
+        testsPassed += 1
+        printSuccess("Test passed")
+    }
+
+    // MARK: - Connection Test
+
+    func testConnection() async -> Bool {
+        printTestStart("Connection Test")
+        printInfo("Attempting to connect to \(radio.name) on \(port)...")
+
+        do {
+            try await rig.connect()
+            printSuccess("Connected successfully")
+
+            // Give user time to observe
+            try await Task.sleep(for: .seconds(1))
+
+            let confirmed = readYesNo(prompt: "Did the radio respond (no error messages)?")
+            if confirmed {
+                recordSuccess("Connection")
+                return true
+            } else {
+                let actual = readLine(prompt: "What happened?")
+                recordFailure("Connection", expected: "Successful connection", actual: actual)
+                return false
+            }
+        } catch {
+            printFailure("Connection failed: \(error)")
+            recordFailure("Connection", expected: "Successful connection", actual: error.localizedDescription)
+            return false
+        }
+    }
+
+    // MARK: - Frequency Tests
+
+    func testFrequencyReadWrite() async -> Bool {
+        printTestStart("Frequency Read/Write Test")
+
+        // Determine appropriate test frequency based on radio
+        let testFrequencies: [(frequency: UInt64, band: String)] = getTestFrequencies()
+
+        for (frequency, band) in testFrequencies {
+            printInfo("Testing \(band) band: \(formatFrequency(frequency))")
+
+            do {
+                // Set frequency
+                printInfo("Setting VFO A to \(formatFrequency(frequency))...")
+                try await rig.setFrequency(frequency, vfo: .a)
+                try await Task.sleep(for: .milliseconds(500))
+
+                printInfo("Check your radio display:")
+                printInfo("  VFO A should show: \(formatFrequency(frequency))")
+
+                let setConfirmed = readYesNo(prompt: "Does VFO A show \(formatFrequency(frequency))?")
+                if !setConfirmed {
+                    let actual = readLine(prompt: "What frequency does VFO A show?")
+                    recordFailure("Set Frequency \(band)", expected: formatFrequency(frequency), actual: actual)
+                    return false
+                }
+
+                // Read frequency back
+                printInfo("Reading frequency from VFO A...")
+                let readFreq = try await rig.frequency(vfo: .a, cached: false)
+                printInfo("Read frequency: \(formatFrequency(readFreq))")
+
+                if readFreq == frequency {
+                    printSuccess("Frequency matches: \(formatFrequency(readFreq))")
+                } else {
+                    printFailure("Frequency mismatch: Expected \(formatFrequency(frequency)), got \(formatFrequency(readFreq))")
+                    recordFailure("Read Frequency \(band)", expected: formatFrequency(frequency), actual: formatFrequency(readFreq))
+                    return false
+                }
+
+            } catch {
+                printFailure("Frequency test failed: \(error)")
+                recordFailure("Frequency \(band)", expected: "Successful read/write", actual: error.localizedDescription)
+                return false
+            }
+        }
+
+        recordSuccess("Frequency Read/Write")
+        return true
+    }
+
+    // MARK: - Mode Tests
+
+    func testModeReadWrite() async -> Bool {
+        printTestStart("Mode Read/Write Test")
+
+        let testModes: [(mode: Mode, name: String)] = getTestModes()
+
+        for (mode, name) in testModes {
+            printInfo("Testing mode: \(name)")
+
+            do {
+                // Set mode
+                printInfo("Setting VFO A to \(name) mode...")
+                try await rig.setMode(mode, vfo: .a)
+                try await Task.sleep(for: .milliseconds(500))
+
+                printInfo("Check your radio display:")
+                printInfo("  VFO A mode should show: \(name)")
+
+                let setConfirmed = readYesNo(prompt: "Does VFO A show \(name) mode?")
+                if !setConfirmed {
+                    let actual = readLine(prompt: "What mode does VFO A show?")
+                    recordFailure("Set Mode \(name)", expected: name, actual: actual)
+                    return false
+                }
+
+                // Read mode back
+                printInfo("Reading mode from VFO A...")
+                let readMode = try await rig.mode(vfo: .a, cached: false)
+                printInfo("Read mode: \(readMode)")
+
+                if readMode == mode {
+                    printSuccess("Mode matches: \(readMode)")
+                } else {
+                    printFailure("Mode mismatch: Expected \(mode), got \(readMode)")
+                    recordFailure("Read Mode \(name)", expected: "\(mode)", actual: "\(readMode)")
+                    return false
+                }
+
+            } catch {
+                printFailure("Mode test failed: \(error)")
+                recordFailure("Mode \(name)", expected: "Successful read/write", actual: error.localizedDescription)
+                return false
+            }
+        }
+
+        recordSuccess("Mode Read/Write")
+        return true
+    }
+
+    // MARK: - PTT Tests
+
+    func testPTT() async -> Bool {
+        printTestStart("PTT (Push-To-Talk) Test")
+
+        printInfo(colorize("⚠️  WARNING: This test will key your transmitter!", .yellow))
+        printInfo(colorize("⚠️  Ensure antenna is connected or use a dummy load!", .yellow))
+
+        let proceed = readYesNo(prompt: "Ready to proceed with PTT test?")
+        if !proceed {
+            printInfo("Skipping PTT test")
+            return true
+        }
+
+        do {
+            // Test PTT ON
+            printInfo("Activating PTT (transmit)...")
+            try await rig.setPTT(true)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio:")
+            printInfo("  - TX indicator should be lit")
+            printInfo("  - You should see 'TX' or 'SEND' on the display")
+
+            let txConfirmed = readYesNo(prompt: "Is the radio transmitting?")
+            if !txConfirmed {
+                let actual = readLine(prompt: "What is the radio doing?")
+                try await rig.setPTT(false) // Safety: turn off PTT
+                recordFailure("PTT ON", expected: "Radio transmitting", actual: actual)
+                return false
+            }
+
+            // Verify PTT state
+            printInfo("Reading PTT state...")
+            let pttState = try await rig.isPTTEnabled()
+            if pttState {
+                printSuccess("PTT state is ON")
+            } else {
+                printFailure("PTT state is OFF (expected ON)")
+                try await rig.setPTT(false) // Safety
+                recordFailure("PTT State Read", expected: "ON", actual: "OFF")
+                return false
+            }
+
+            // Test PTT OFF
+            printInfo("Deactivating PTT (receive)...")
+            try await rig.setPTT(false)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio:")
+            printInfo("  - TX indicator should be off")
+            printInfo("  - Radio should be in receive mode")
+
+            let rxConfirmed = readYesNo(prompt: "Is the radio in receive mode?")
+            if !rxConfirmed {
+                let actual = readLine(prompt: "What is the radio doing?")
+                recordFailure("PTT OFF", expected: "Radio in receive mode", actual: actual)
+                return false
+            }
+
+            // Verify PTT state OFF
+            printInfo("Reading PTT state...")
+            let pttStateOff = try await rig.isPTTEnabled()
+            if !pttStateOff {
+                printSuccess("PTT state is OFF")
+            } else {
+                printFailure("PTT state is ON (expected OFF)")
+                recordFailure("PTT State Read OFF", expected: "OFF", actual: "ON")
+                return false
+            }
+
+        } catch {
+            printFailure("PTT test failed: \(error)")
+            // Safety: ensure PTT is off
+            try? await rig.setPTT(false)
+            recordFailure("PTT", expected: "Successful PTT control", actual: error.localizedDescription)
+            return false
+        }
+
+        recordSuccess("PTT Control")
+        return true
+    }
+
+    // MARK: - Power Tests
+
+    func testPower() async -> Bool {
+        printTestStart("Power Level Test")
+
+        guard radio.definition.capabilities.powerControl else {
+            printInfo("Power control not supported on this radio - skipping")
+            return true
+        }
+
+        let testPowers = [25, 50, 75, 100]
+
+        for power in testPowers {
+            printInfo("Testing power level: \(power)%")
+
+            do {
+                // Set power
+                printInfo("Setting power to \(power)%...")
+                try await rig.setPower(power)
+                try await Task.sleep(for: .milliseconds(500))
+
+                printInfo("Check your radio display:")
+                printInfo("  Power level should show: \(power)%")
+                printInfo("  (May be shown as 'RF PWR' or similar)")
+
+                let setConfirmed = readYesNo(prompt: "Does the radio show \(power)% power?")
+                if !setConfirmed {
+                    let actual = readLine(prompt: "What power level does the radio show?")
+                    recordFailure("Set Power \(power)%", expected: "\(power)%", actual: actual)
+                    return false
+                }
+
+                // Read power back
+                printInfo("Reading power level...")
+                let readPower = try await rig.power()
+                printInfo("Read power: \(readPower)%")
+
+                // Allow 1% tolerance for rounding
+                if abs(readPower - power) <= 1 {
+                    printSuccess("Power matches: \(readPower)%")
+                } else {
+                    printFailure("Power mismatch: Expected \(power)%, got \(readPower)%")
+                    recordFailure("Read Power \(power)%", expected: "\(power)%", actual: "\(readPower)%")
+                    return false
+                }
+
+            } catch {
+                printFailure("Power test failed: \(error)")
+                recordFailure("Power \(power)%", expected: "Successful read/write", actual: error.localizedDescription)
+                return false
+            }
+        }
+
+        recordSuccess("Power Control")
+        return true
+    }
+
+    // MARK: - VFO Tests
+
+    func testVFO() async -> Bool {
+        printTestStart("VFO Selection Test")
+
+        guard radio.definition.capabilities.hasVFOB else {
+            printInfo("VFO B not supported on this radio - skipping")
+            return true
+        }
+
+        let testFreqA: UInt64 = 14_200_000  // 20m
+        let testFreqB: UInt64 = 7_100_000   // 40m
+
+        do {
+            // Set VFO A
+            printInfo("Setting VFO A to \(formatFrequency(testFreqA))...")
+            try await rig.setFrequency(testFreqA, vfo: .a)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio: VFO A should show \(formatFrequency(testFreqA))")
+            let vfoAConfirmed = readYesNo(prompt: "Does VFO A show \(formatFrequency(testFreqA))?")
+            if !vfoAConfirmed {
+                let actual = readLine(prompt: "What does VFO A show?")
+                recordFailure("VFO A Selection", expected: formatFrequency(testFreqA), actual: actual)
+                return false
+            }
+
+            // Set VFO B
+            printInfo("Setting VFO B to \(formatFrequency(testFreqB))...")
+            try await rig.setFrequency(testFreqB, vfo: .b)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio: VFO B should show \(formatFrequency(testFreqB))")
+            let vfoBConfirmed = readYesNo(prompt: "Does VFO B show \(formatFrequency(testFreqB))?")
+            if !vfoBConfirmed {
+                let actual = readLine(prompt: "What does VFO B show?")
+                recordFailure("VFO B Selection", expected: formatFrequency(testFreqB), actual: actual)
+                return false
+            }
+
+            // Read back both VFOs
+            printInfo("Reading VFO A frequency...")
+            let readFreqA = try await rig.frequency(vfo: .a, cached: false)
+            printInfo("VFO A: \(formatFrequency(readFreqA))")
+
+            printInfo("Reading VFO B frequency...")
+            let readFreqB = try await rig.frequency(vfo: .b, cached: false)
+            printInfo("VFO B: \(formatFrequency(readFreqB))")
+
+            if readFreqA == testFreqA && readFreqB == testFreqB {
+                printSuccess("Both VFOs match expected frequencies")
+            } else {
+                printFailure("VFO mismatch detected")
+                recordFailure("VFO Read Back",
+                            expected: "A=\(formatFrequency(testFreqA)), B=\(formatFrequency(testFreqB))",
+                            actual: "A=\(formatFrequency(readFreqA)), B=\(formatFrequency(readFreqB))")
+                return false
+            }
+
+        } catch {
+            printFailure("VFO test failed: \(error)")
+            recordFailure("VFO", expected: "Successful VFO control", actual: error.localizedDescription)
+            return false
+        }
+
+        recordSuccess("VFO Selection")
+        return true
+    }
+
+    // MARK: - Split Operation Test
+
+    func testSplit() async -> Bool {
+        printTestStart("Split Operation Test")
+
+        guard radio.definition.capabilities.hasSplit else {
+            printInfo("Split operation not supported on this radio - skipping")
+            return true
+        }
+
+        do {
+            // Enable split
+            printInfo("Enabling split operation...")
+            try await rig.setSplit(true)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio:")
+            printInfo("  - Split indicator should be lit")
+            printInfo("  - Display may show 'SPLIT' or 'SPL'")
+
+            let splitOnConfirmed = readYesNo(prompt: "Is split mode enabled on the radio?")
+            if !splitOnConfirmed {
+                let actual = readLine(prompt: "What does the radio show?")
+                recordFailure("Split ON", expected: "Split enabled", actual: actual)
+                return false
+            }
+
+            // Read split state
+            printInfo("Reading split state...")
+            let splitState = try await rig.isSplitEnabled()
+            if splitState {
+                printSuccess("Split state is ON")
+            } else {
+                printFailure("Split state is OFF (expected ON)")
+                recordFailure("Split State Read", expected: "ON", actual: "OFF")
+                return false
+            }
+
+            // Disable split
+            printInfo("Disabling split operation...")
+            try await rig.setSplit(false)
+            try await Task.sleep(for: .milliseconds(500))
+
+            printInfo("Check your radio:")
+            printInfo("  - Split indicator should be off")
+
+            let splitOffConfirmed = readYesNo(prompt: "Is split mode disabled on the radio?")
+            if !splitOffConfirmed {
+                let actual = readLine(prompt: "What does the radio show?")
+                recordFailure("Split OFF", expected: "Split disabled", actual: actual)
+                return false
+            }
+
+            // Read split state OFF
+            printInfo("Reading split state...")
+            let splitStateOff = try await rig.isSplitEnabled()
+            if !splitStateOff {
+                printSuccess("Split state is OFF")
+            } else {
+                printFailure("Split state is ON (expected OFF)")
+                recordFailure("Split State Read OFF", expected: "OFF", actual: "ON")
+                return false
+            }
+
+        } catch {
+            printFailure("Split test failed: \(error)")
+            recordFailure("Split", expected: "Successful split control", actual: error.localizedDescription)
+            return false
+        }
+
+        recordSuccess("Split Operation")
+        return true
+    }
+
+    // MARK: - Signal Strength Test
+
+    func testSignalStrength() async -> Bool {
+        printTestStart("Signal Strength (S-Meter) Test")
+
+        guard radio.definition.capabilities.supportsSignalStrength else {
+            printInfo("Signal strength reading not supported on this radio - skipping")
+            return true
+        }
+
+        printInfo("This test will read the S-meter value from your radio")
+        printInfo("Tune to a frequency with a signal (or leave on an empty frequency)")
+
+        let proceed = readYesNo(prompt: "Ready to test S-meter?")
+        if !proceed {
+            printInfo("Skipping S-meter test")
+            return true
+        }
+
+        do {
+            printInfo("Reading signal strength...")
+            let signal = try await rig.signalStrength(cached: false)
+
+            printInfo("S-Meter reading:")
+            printInfo("  S-Units: S\(signal.sUnits)")
+            if signal.overS9 > 0 {
+                printInfo("  Over S9: +\(signal.overS9) dB")
+            }
+            printInfo("  Raw value: \(signal.raw)")
+
+            printInfo("Compare this with your radio's S-meter display")
+
+            let confirmed = readYesNo(prompt: "Does this reading match your radio's S-meter?")
+            if confirmed {
+                printSuccess("S-meter reading verified")
+                recordSuccess("Signal Strength")
+                return true
+            } else {
+                let actual = readLine(prompt: "What does your radio's S-meter show?")
+                recordFailure("Signal Strength", expected: "S\(signal.sUnits)", actual: actual)
+                return false
+            }
+
+        } catch {
+            printFailure("Signal strength test failed: \(error)")
+            recordFailure("Signal Strength", expected: "Successful read", actual: error.localizedDescription)
+            return false
+        }
+    }
+
+    // MARK: - Test Suite Runner
+
+    func runAllTests() async {
+        printHeader("Icom CI-V Comprehensive Test Suite")
+        print(colorize("Radio: \(radio.name) - \(radio.description)", .bold))
+        print(colorize("Port: \(port) @ \(baudRate) baud", .bold))
+
+        var continueTests = true
+
+        // Connection test
+        continueTests = await testConnection()
+
+        // Frequency test
+        if continueTests {
+            continueTests = await testFrequencyReadWrite()
+        }
+
+        // Mode test
+        if continueTests {
+            continueTests = await testModeReadWrite()
+        }
+
+        // VFO test
+        if continueTests {
+            continueTests = await testVFO()
+        }
+
+        // Split test
+        if continueTests {
+            continueTests = await testSplit()
+        }
+
+        // Power test
+        if continueTests {
+            continueTests = await testPower()
+        }
+
+        // PTT test
+        if continueTests {
+            continueTests = await testPTT()
+        }
+
+        // Signal strength test
+        if continueTests {
+            _ = await testSignalStrength()
+        }
+
+        // Disconnect
+        await rig.disconnect()
+
+        // Print results
+        printResults()
+    }
+
+    func printResults() {
+        printHeader("Test Results")
+
+        let total = testsPassed + testsFailed
+        let passRate = total > 0 ? (Double(testsPassed) / Double(total)) * 100 : 0
+
+        print("\nTotal Tests: \(total)")
+        print(colorize("Passed: \(testsPassed)", .green))
+        if testsFailed > 0 {
+            print(colorize("Failed: \(testsFailed)", .red))
+        }
+        print(colorize(String(format: "Pass Rate: %.1f%%", passRate), passRate == 100 ? .green : .yellow))
+
+        if !failureLog.isEmpty {
+            printHeader("Failure Details")
+            for (index, failure) in failureLog.enumerated() {
+                print("\n" + colorize("Failure #\(index + 1):", .red))
+                print(failure)
+            }
+
+            printHeader("Troubleshooting Suggestions")
+            print("""
+            If tests failed, try the following:
+
+            1. Verify cable connection between computer and radio
+            2. Check that the correct serial port was selected
+            3. Verify baud rate matches radio's CI-V settings
+            4. Ensure radio's CI-V transceive is OFF (some radios)
+            5. Check CI-V address matches radio's configuration
+            6. Try power cycling the radio
+            7. Verify no other software is using the serial port
+            8. Check radio firmware version (may need update)
+            """)
+        } else {
+            print("\n" + colorize("🎉 All tests passed! Your radio is working perfectly.", .green))
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    func getTestFrequencies() -> [(frequency: UInt64, band: String)] {
+        let caps = radio.definition.capabilities
+        var frequencies: [(UInt64, String)] = []
+
+        guard let freqRange = caps.frequencyRange else {
+            // Default to 20m if no range specified
+            return [(14_200_000, "20m")]
+        }
+
+        // HF bands (if supported)
+        if freqRange.min <= 14_000_000 && freqRange.max >= 14_350_000 {
+            frequencies.append((14_200_000, "20m"))
+        }
+        if freqRange.min <= 7_000_000 && freqRange.max >= 7_300_000 {
+            frequencies.append((7_100_000, "40m"))
+        }
+
+        // VHF (if supported)
+        if freqRange.min <= 144_000_000 && freqRange.max >= 148_000_000 {
+            frequencies.append((145_000_000, "2m"))
+        }
+
+        // UHF (if supported)
+        if freqRange.min <= 430_000_000 && freqRange.max >= 450_000_000 {
+            frequencies.append((435_000_000, "70cm"))
+        }
+
+        // If no standard bands found, use a frequency in the middle of the range
+        if frequencies.isEmpty {
+            let midFreq = (freqRange.min + freqRange.max) / 2
+            frequencies.append((midFreq, "Mid-Range"))
+        }
+
+        return frequencies
+    }
+
+    func getTestModes() -> [(mode: Mode, name: String)] {
+        let caps = radio.definition.capabilities
+        var modes: [(Mode, String)] = []
+
+        // Always test USB and LSB if supported
+        if caps.supportedModes.contains(.usb) {
+            modes.append((.usb, "USB"))
+        }
+        if caps.supportedModes.contains(.lsb) {
+            modes.append((.lsb, "LSB"))
+        }
+
+        // Add FM if supported
+        if caps.supportedModes.contains(.fm) {
+            modes.append((.fm, "FM"))
+        }
+
+        // Add CW if supported
+        if caps.supportedModes.contains(.cw) {
+            modes.append((.cw, "CW"))
+        }
+
+        return modes
+    }
+
+    func formatFrequency(_ hz: UInt64) -> String {
+        let mhz = Double(hz) / 1_000_000.0
+        return String(format: "%.3f MHz", mhz)
+    }
+}
+
+// MARK: - Serial Port Discovery
+
+func listSerialPorts() -> [String] {
+    let fileManager = FileManager.default
+    let devPath = "/dev"
+
+    guard let contents = try? fileManager.contentsOfDirectory(atPath: devPath) else {
+        return []
+    }
+
+    // Filter for cu.* devices (macOS/BSD style) and ttyUSB/ttyACM (Linux style)
+    let ports = contents.filter {
+        $0.hasPrefix("cu.") ||
+        $0.hasPrefix("ttyUSB") ||
+        $0.hasPrefix("ttyACM")
+    }.sorted().map { "/dev/\($0)" }
+
+    return ports
+}
+
+// MARK: - Main Program
+
+@main
+struct IcomInteractiveTester {
+    static func main() async {
+        print(colorize("""
+        ╔════════════════════════════════════════════════════════════════════╗
+        ║                                                                    ║
+        ║          Icom CI-V Comprehensive Interactive Test Suite           ║
+        ║                                                                    ║
+        ╚════════════════════════════════════════════════════════════════════╝
+        """, .bold))
+
+        print("\nThis test suite will verify complete CI-V functionality for your Icom radio.")
+        print("The tests will guide you through each step and ask for confirmation.\n")
+
+        // Select radio
+        print(colorize("Available Radios:", .bold))
+        for (index, radio) in availableRadios.enumerated() {
+            print("\(index + 1). \(radio.name) - \(radio.description)")
+        }
+
+        guard let radioChoice = readInt(prompt: "\nSelect radio (1-\(availableRadios.count)):", min: 1, max: availableRadios.count) else {
+            print(colorize("Invalid selection", .red))
+            return
+        }
+
+        let selectedRadio = availableRadios[radioChoice - 1]
+        print(colorize("\nSelected: \(selectedRadio.name)", .green))
+
+        // List serial ports
+        print("\n" + colorize("Available Serial Ports:", .bold))
+        let ports = listSerialPorts()
+
+        if ports.isEmpty {
+            print(colorize("No serial ports found!", .red))
+            print("Please check your USB connections and try again.")
+            return
+        }
+
+        for (index, port) in ports.enumerated() {
+            print("\(index + 1). \(port)")
+        }
+
+        guard let portChoice = readInt(prompt: "\nSelect port (1-\(ports.count)):", min: 1, max: ports.count) else {
+            print(colorize("Invalid selection", .red))
+            return
+        }
+
+        let selectedPort = ports[portChoice - 1]
+        print(colorize("\nSelected: \(selectedPort)", .green))
+
+        // Baud rate
+        let defaultBaud = selectedRadio.definition.defaultBaudRate
+        print("\nDefault baud rate for \(selectedRadio.name): \(defaultBaud)")
+        let useDefault = readYesNo(prompt: "Use default baud rate?")
+
+        let baudRate: Int
+        if useDefault {
+            baudRate = defaultBaud
+        } else {
+            print("Common baud rates: 4800, 9600, 19200, 38400, 57600, 115200")
+            guard let customBaud = readInt(prompt: "Enter baud rate:", min: 1200, max: 115200) else {
+                print(colorize("Invalid baud rate", .red))
+                return
+            }
+            baudRate = customBaud
+        }
+
+        print(colorize("\nBaud rate: \(baudRate)", .green))
+
+        // Create test suite
+        let testSuite = IcomTestSuite(radio: selectedRadio, port: selectedPort, baudRate: baudRate)
+
+        // Final confirmation
+        print("\n" + colorize("Test Configuration:", .bold))
+        print("  Radio: \(selectedRadio.name)")
+        print("  Port: \(selectedPort)")
+        print("  Baud Rate: \(baudRate)")
+        print("\nMake sure your radio is:")
+        print("  ✓ Powered on")
+        print("  ✓ Connected via CI-V cable")
+        if let addr = selectedRadio.definition.civAddress {
+            print("  ✓ CI-V address matches (0x\(String(format: "%02X", addr)))")
+        }
+        print("  ✓ CI-V baud rate matches (\(baudRate))")
+        print("  ✓ CI-V transceive is OFF (if applicable)")
+
+        let proceed = readYesNo(prompt: "\nReady to start testing?")
+        if !proceed {
+            print(colorize("\nTest cancelled", .yellow))
+            return
+        }
+
+        // Run tests
+        await testSuite.runAllTests()
+
+        print("\n" + colorize("Test suite complete!", .bold))
+    }
+}

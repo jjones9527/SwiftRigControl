@@ -74,6 +74,11 @@ let package = Package(
             name: "IC7100PTTDebug",
             targets: ["IC7100PTTDebug"]
         ),
+        // Comprehensive Icom test suite
+        .executable(
+            name: "IcomInteractiveTest",
+            targets: ["IcomInteractiveTest"]
+        ),
     ],
     targets: [
         // Core rig control library
@@ -175,6 +180,13 @@ let package = Package(
             dependencies: ["RigControl"],
             path: "Tests",
             sources: ["IC7100PTTDebug.swift"]
+        ),
+
+        // Comprehensive Icom interactive test suite
+        .executableTarget(
+            name: "IcomInteractiveTest",
+            dependencies: ["RigControl"],
+            path: "Sources/IcomInteractiveTest"
         ),
 
         // Tests
