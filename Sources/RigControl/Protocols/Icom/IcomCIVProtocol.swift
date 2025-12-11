@@ -79,8 +79,9 @@ public actor IcomCIVProtocol: CATProtocol {
     // MARK: - Frequency Control
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        // Select the appropriate VFO first (if radio requires it)
-        if commandSet.selectVFOCommand(vfo) != nil {
+        // Select the appropriate VFO first (if radio requires AND supports it)
+        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
+        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -102,8 +103,9 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
-        // Select the appropriate VFO first (if radio requires it)
-        if commandSet.selectVFOCommand(vfo) != nil {
+        // Select the appropriate VFO first (if radio requires AND supports it)
+        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
+        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -125,8 +127,9 @@ public actor IcomCIVProtocol: CATProtocol {
     // MARK: - Mode Control
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        // Select the appropriate VFO first (if radio requires it)
-        if commandSet.selectVFOCommand(vfo) != nil {
+        // Select the appropriate VFO first (if radio requires AND supports it)
+        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
+        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -151,8 +154,9 @@ public actor IcomCIVProtocol: CATProtocol {
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
-        // Select the appropriate VFO first (if radio requires it)
-        if commandSet.selectVFOCommand(vfo) != nil {
+        // Select the appropriate VFO first (if radio requires AND supports it)
+        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
+        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
