@@ -54,50 +54,123 @@ struct TestRadio {
 }
 
 let availableRadios: [TestRadio] = [
-    TestRadio(
-        definition: .icomIC7100,
-        name: "IC-7100",
-        description: "HF/VHF/UHF All-Mode (Echoes commands, no filter byte)"
-    ),
-    TestRadio(
-        definition: .icomIC9700,
-        name: "IC-9700",
-        description: "VHF/UHF/1.2GHz All-Mode (Dual receiver)"
-    ),
-    TestRadio(
-        definition: .icomIC705,
-        name: "IC-705",
-        description: "HF/VHF/UHF Portable (Echoes commands, no filter byte)"
-    ),
+    // Modern SDR Transceivers
     TestRadio(
         definition: .icomIC7300,
         name: "IC-7300",
-        description: "HF/6m SDR Transceiver"
+        description: "HF/6m SDR Transceiver (VFO A/B)"
     ),
     TestRadio(
         definition: .icomIC7610,
         name: "IC-7610",
-        description: "HF/6m SDR Transceiver (Dual receiver)"
+        description: "HF/6m SDR Transceiver (Dual RX, VFO A/B)"
     ),
     TestRadio(
-        definition: .icomIC7600,
-        name: "IC-7600",
-        description: "HF/6m High-End Transceiver"
+        definition: .icomIC9700,
+        name: "IC-9700",
+        description: "VHF/UHF/1.2GHz SDR (2m/70cm/23cm, Main/Sub)"
+    ),
+
+    // Multi-Band Transceivers
+    TestRadio(
+        definition: .icomIC7100,
+        name: "IC-7100",
+        description: "HF/VHF/UHF All-Mode (VFO A/B)"
+    ),
+    TestRadio(
+        definition: .icomIC705,
+        name: "IC-705",
+        description: "HF/VHF/UHF Portable (VFO A/B)"
     ),
     TestRadio(
         definition: .icomIC9100,
         name: "IC-9100",
-        description: "HF/VHF/UHF All-Mode (Dual receiver)"
+        description: "HF/VHF/UHF All-Mode (Main/Sub)"
+    ),
+
+    // HF Transceivers
+    TestRadio(
+        definition: .icomIC7600,
+        name: "IC-7600",
+        description: "HF/6m High-End (Main/Sub)"
     ),
     TestRadio(
         definition: .icomIC7200,
         name: "IC-7200",
-        description: "HF/6m Mid-Range Transceiver"
+        description: "HF/6m Mid-Range"
     ),
     TestRadio(
         definition: .icomIC7410,
         name: "IC-7410",
         description: "HF/6m Transceiver"
+    ),
+
+    // High-End Flagships
+    TestRadio(
+        definition: .icomIC7700,
+        name: "IC-7700",
+        description: "HF/6m 200W Flagship"
+    ),
+    TestRadio(
+        definition: .icomIC7800,
+        name: "IC-7800",
+        description: "HF/6m 200W Flagship (Dual RX)"
+    ),
+
+    // Legacy HF Transceivers
+    TestRadio(
+        definition: .icomIC7000,
+        name: "IC-7000",
+        description: "HF/VHF/UHF Mobile"
+    ),
+    TestRadio(
+        definition: .icomIC756PRO,
+        name: "IC-756PRO",
+        description: "HF/6m Classic"
+    ),
+    TestRadio(
+        definition: .icomIC756PROII,
+        name: "IC-756PROII",
+        description: "HF/6m Classic"
+    ),
+    TestRadio(
+        definition: .icomIC756PROIII,
+        name: "IC-756PROIII",
+        description: "HF/6m Classic"
+    ),
+    TestRadio(
+        definition: .icomIC746PRO,
+        name: "IC-746PRO",
+        description: "HF/VHF Transceiver"
+    ),
+
+    // D-STAR Mobiles
+    TestRadio(
+        definition: .icomID5100,
+        name: "ID-5100",
+        description: "VHF/UHF D-STAR Mobile"
+    ),
+    TestRadio(
+        definition: .icomID4100,
+        name: "ID-4100",
+        description: "VHF/UHF D-STAR Mobile"
+    ),
+
+    // Receivers
+    TestRadio(
+        definition: .icomICR8600,
+        name: "IC-R8600",
+        description: "Wideband Communications Receiver"
+    ),
+    TestRadio(
+        definition: .icomICR75,
+        name: "IC-R75",
+        description: "HF Communications Receiver"
+    ),
+    TestRadio(
+        definition: .icomICR9500,
+        name: "IC-R9500",
+        description: "Professional Communications Receiver"
     ),
 ]
 
@@ -451,8 +524,10 @@ class IcomTestSuite {
         let (testFreq2, band2) = testFreqs[1]
 
         // Determine VFO names based on radio type
-        let isDualReceiver = radio.definition.capabilities.hasDualReceiver
-        let (vfo1, vfo2, vfo1Name, vfo2Name): (VFO, VFO, String, String) = if isDualReceiver {
+        // IC-9700, IC-7600, IC-9100 use Main/Sub (dual receiver architecture)
+        // IC-7300, IC-7610, IC-7100, IC-705 use VFO A/B
+        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
+        let (vfo1, vfo2, vfo1Name, vfo2Name): (VFO, VFO, String, String) = if usesMainSub {
             (.main, .sub, "Main", "Sub")
         } else {
             (.a, .b, "VFO A", "VFO B")
@@ -742,12 +817,25 @@ class IcomTestSuite {
             var foundHF = false
             var foundVHF = false
             var foundUHF = false
+            var found23cm = false
 
             for range in caps.detailedFrequencyRanges where range.canTransmit {
-                // HF bands (< 30 MHz)
+                // HF bands (< 30 MHz) - prefer 20m for HF
                 if !foundHF && range.min < 30_000_000 {
                     if let bandName = range.bandName {
-                        frequencies.append((range.min + (range.max - range.min) / 2, bandName))
+                        // Use specific well-known frequencies instead of mid-range
+                        let testFreq: UInt64
+                        if bandName == "20m" {
+                            testFreq = 14_200_000  // 14.200 MHz (20m SSB)
+                        } else if bandName == "40m" {
+                            testFreq = 7_100_000   // 7.100 MHz (40m SSB)
+                        } else if bandName == "160m" {
+                            testFreq = 1_900_000   // 1.900 MHz (160m SSB)
+                        } else {
+                            // For other bands, use a frequency well within the range
+                            testFreq = range.min + (range.max - range.min) / 3
+                        }
+                        frequencies.append((testFreq, bandName))
                         foundHF = true
                     }
                 }
@@ -762,8 +850,9 @@ class IcomTestSuite {
                     foundUHF = true
                 }
                 // 1.2 GHz (1240-1300 MHz)
-                else if range.min >= 1_240_000_000 && range.max <= 1_300_000_000 {
+                else if !found23cm && range.min >= 1_240_000_000 && range.max <= 1_300_000_000 {
                     frequencies.append((1_270_000_000, range.bandName ?? "23cm"))
+                    found23cm = true
                 }
             }
 

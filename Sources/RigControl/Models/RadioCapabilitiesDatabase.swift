@@ -19,16 +19,18 @@ public struct RadioCapabilitiesDatabase {
         supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
         detailedFrequencyRanges: [
-            // HF General coverage receive only
-            DetailedFrequencyRange(min: 30_000, max: 74_799_999, modes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am], canTransmit: false),
-            // 6m band
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "6m"),
-            // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "2m"),
-            // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "70cm"),
-            // 23cm band
-            DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "23cm"),
+            // HF/VHF General coverage receive only (IC-9700 does NOT transmit on HF or 6m!)
+            DetailedFrequencyRange(min: 30_000, max: 143_999_999, modes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm], canTransmit: false),
+            // 2m band (144-148 MHz)
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "2m"),
+            // General coverage receive VHF/UHF
+            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .am], canTransmit: false),
+            // 70cm band (430-450 MHz)
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "70cm"),
+            // General coverage receive UHF
+            DetailedFrequencyRange(min: 450_000_001, max: 1_239_999_999, modes: [.fm, .am], canTransmit: false),
+            // 23cm band (1240-1300 MHz)
+            DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "23cm"),
         ],
         hasDualReceiver: true,
         hasATU: false,
