@@ -544,6 +544,323 @@ public struct RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
 
+    // MARK: - High-End Icom Flagships
+
+    /// Icom IC-7700 - HF/6m 200W flagship transceiver
+    public static let icomIC7700 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 200,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            // Standard HF bands with general coverage receive
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,  // IC-7700 can target VFO directly
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-7800 - HF/6m 200W flagship transceiver
+    public static let icomIC7800 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 200,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            // Standard HF bands with general coverage receive
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+        ],
+        hasDualReceiver: true,  // IC-7800 has dual receivers
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,  // IC-7800 can target VFO directly
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    // MARK: - Legacy Icom HF Transceivers
+
+    /// Icom IC-7000 - HF/VHF/UHF mobile transceiver
+    public static let icomIC7000 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
+        detailedFrequencyRanges: [
+            // HF general coverage
+            DetailedFrequencyRange(min: 30_000, max: 60_000_000, modes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm], canTransmit: true, bandName: "HF"),
+            // 6m
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            // 2m
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "2m"),
+            // 70cm
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "70cm"),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,  // IC-7000 operates on current VFO
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-756PRO - HF/6m transceiver
+    public static let icomIC756PRO = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm], canTransmit: true, bandName: "6m"),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-756PROII - HF/6m transceiver
+    public static let icomIC756PROII = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-756PROIII - HF/6m transceiver
+    public static let icomIC756PROIII = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+        ],
+        hasDualReceiver: true,  // IC-756PROIII has dual watch
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-746PRO - HF/VHF transceiver
+    public static let icomIC746PRO = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 30_000, max: 148_000_000),
+        detailedFrequencyRanges: [
+            // HF bands
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm], canTransmit: true, bandName: "6m"),
+            // 2m
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm], canTransmit: true, bandName: "2m"),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    // MARK: - Icom D-STAR Mobiles
+
+    /// Icom ID-5100 - VHF/UHF D-STAR mobile transceiver
+    public static let icomID5100 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 50,
+        supportedModes: [.fm, .fmN, .am, .usb, .dataFM],  // D-STAR digital voice (DV) via dataFM
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
+        detailedFrequencyRanges: [
+            // Airband receive only
+            DetailedFrequencyRange(min: 118_000_000, max: 136_000_000, modes: [.am], canTransmit: false, bandName: "Airband"),
+            // 2m
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .usb, .dataFM], canTransmit: true, bandName: "2m"),
+            // 70cm
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .usb, .dataFM], canTransmit: true, bandName: "70cm"),
+        ],
+        hasDualReceiver: true,  // Dual band dual watch
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom ID-4100 - VHF/UHF D-STAR mobile transceiver
+    public static let icomID4100 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 65,
+        supportedModes: [.fm, .fmN, .am, .usb, .dataFM],  // D-STAR digital voice (DV) via dataFM
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
+        detailedFrequencyRanges: [
+            // Airband receive only
+            DetailedFrequencyRange(min: 118_000_000, max: 136_000_000, modes: [.am], canTransmit: false, bandName: "Airband"),
+            // 2m
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .usb, .dataFM], canTransmit: true, bandName: "2m"),
+            // 70cm
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .usb, .dataFM], canTransmit: true, bandName: "70cm"),
+        ],
+        hasDualReceiver: true,  // Dual band dual watch
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    // MARK: - Icom Receivers
+
+    /// Icom IC-R8600 - Wideband communications receiver
+    public static let icomICR8600 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,  // Receiver only
+        powerControl: false,  // No transmit power
+        maxPower: 0,
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm],
+        frequencyRange: FrequencyRange(min: 10_000, max: 3_000_000_000),
+        detailedFrequencyRanges: [
+            // Wideband coverage
+            DetailedFrequencyRange(min: 10_000, max: 3_000_000_000, modes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm], canTransmit: false, bandName: "Wideband"),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-R75 - HF communications receiver
+    public static let icomICR75 = RigCapabilities(
+        hasVFOB: false,  // Single VFO
+        hasSplit: false,  // Receiver only
+        powerControl: false,  // No transmit power
+        maxPower: 0,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            // HF general coverage
+            DetailedFrequencyRange(min: 30_000, max: 60_000_000, modes: [.lsb, .usb, .cw, .rtty, .am, .fm], canTransmit: false, bandName: "HF"),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,  // Single VFO
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-R9500 - Professional communications receiver
+    public static let icomICR9500 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,  // Receiver only
+        powerControl: false,  // No transmit power
+        maxPower: 0,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .rttyR, .am, .fm, .fmN, .wfm],
+        frequencyRange: FrequencyRange(min: 5_000, max: 3_335_000_000),
+        detailedFrequencyRanges: [
+            // Wideband coverage
+            DetailedFrequencyRange(min: 5_000, max: 3_335_000_000, modes: [.lsb, .usb, .cw, .rtty, .rttyR, .am, .fm, .fmN, .wfm], canTransmit: false, bandName: "Wideband"),
+        ],
+        hasDualReceiver: true,  // Dual receiver
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
     // MARK: - Yaesu Radios
 
     /// Yaesu FTDX-10 - HF/6m transceiver
