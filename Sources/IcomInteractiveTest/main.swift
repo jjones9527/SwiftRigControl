@@ -270,33 +270,31 @@ class IcomTestSuite {
         // Determine appropriate test frequency based on radio
         let testFrequencies: [(frequency: UInt64, band: String)] = getTestFrequencies()
 
-        // Determine VFO to use based on radio architecture
-        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
-        let vfo: VFO = usesMainSub ? .main : .a
-        let vfoName = usesMainSub ? "Main" : "VFO A"
+        // Get VFO architecture for this radio
+        let vfoArch = getVFOArchitecture()
 
         for (frequency, band) in testFrequencies {
             printInfo("Testing \(band) band: \(formatFrequency(frequency))")
 
             do {
                 // Set frequency
-                printInfo("Setting \(vfoName) to \(formatFrequency(frequency))...")
-                try await rig.setFrequency(frequency, vfo: vfo)
+                printInfo("Setting \(vfoArch.primaryName) to \(formatFrequency(frequency))...")
+                try await rig.setFrequency(frequency, vfo: vfoArch.primaryVFO)
                 try await Task.sleep(for: .milliseconds(500))
 
                 printInfo("Check your radio display:")
-                printInfo("  \(vfoName) should show: \(formatFrequency(frequency))")
+                printInfo("  \(vfoArch.primaryName) should show: \(formatFrequency(frequency))")
 
-                let setConfirmed = readYesNo(prompt: "Does \(vfoName) show \(formatFrequency(frequency))?")
+                let setConfirmed = readYesNo(prompt: "Does \(vfoArch.primaryName) show \(formatFrequency(frequency))?")
                 if !setConfirmed {
-                    let actual = readLine(prompt: "What frequency does \(vfoName) show?")
+                    let actual = readLine(prompt: "What frequency does \(vfoArch.primaryName) show?")
                     recordFailure("Set Frequency \(band)", expected: formatFrequency(frequency), actual: actual)
                     return false
                 }
 
                 // Read frequency back
-                printInfo("Reading frequency from \(vfoName)...")
-                let readFreq = try await rig.frequency(vfo: vfo, cached: false)
+                printInfo("Reading frequency from \(vfoArch.primaryName)...")
+                let readFreq = try await rig.frequency(vfo: vfoArch.primaryVFO, cached: false)
                 printInfo("Read frequency: \(formatFrequency(readFreq))")
 
                 if readFreq == frequency {
@@ -325,33 +323,31 @@ class IcomTestSuite {
 
         let testModes: [(mode: Mode, name: String)] = getTestModes()
 
-        // Determine VFO to use based on radio architecture
-        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
-        let vfo: VFO = usesMainSub ? .main : .a
-        let vfoName = usesMainSub ? "Main" : "VFO A"
+        // Get VFO architecture for this radio
+        let vfoArch = getVFOArchitecture()
 
         for (mode, name) in testModes {
             printInfo("Testing mode: \(name)")
 
             do {
                 // Set mode
-                printInfo("Setting \(vfoName) to \(name) mode...")
-                try await rig.setMode(mode, vfo: vfo)
+                printInfo("Setting \(vfoArch.primaryName) to \(name) mode...")
+                try await rig.setMode(mode, vfo: vfoArch.primaryVFO)
                 try await Task.sleep(for: .milliseconds(500))
 
                 printInfo("Check your radio display:")
-                printInfo("  \(vfoName) mode should show: \(name)")
+                printInfo("  \(vfoArch.primaryName) mode should show: \(name)")
 
-                let setConfirmed = readYesNo(prompt: "Does \(vfoName) show \(name) mode?")
+                let setConfirmed = readYesNo(prompt: "Does \(vfoArch.primaryName) show \(name) mode?")
                 if !setConfirmed {
-                    let actual = readLine(prompt: "What mode does \(vfoName) show?")
+                    let actual = readLine(prompt: "What mode does \(vfoArch.primaryName) show?")
                     recordFailure("Set Mode \(name)", expected: name, actual: actual)
                     return false
                 }
 
                 // Read mode back
-                printInfo("Reading mode from \(vfoName)...")
-                let readMode = try await rig.mode(vfo: vfo, cached: false)
+                printInfo("Reading mode from \(vfoArch.primaryName)...")
+                let readMode = try await rig.mode(vfo: vfoArch.primaryVFO, cached: false)
                 printInfo("Read mode: \(readMode)")
 
                 if readMode == mode {
@@ -533,59 +529,52 @@ class IcomTestSuite {
         let (testFreq1, band1) = testFreqs[0]
         let (testFreq2, band2) = testFreqs[1]
 
-        // Determine VFO names based on radio type
-        // IC-9700, IC-7600, IC-9100 use Main/Sub (dual receiver architecture)
-        // IC-7300, IC-7610, IC-7100, IC-705 use VFO A/B
-        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
-        let (vfo1, vfo2, vfo1Name, vfo2Name): (VFO, VFO, String, String) = if usesMainSub {
-            (.main, .sub, "Main", "Sub")
-        } else {
-            (.a, .b, "VFO A", "VFO B")
-        }
+        // Get VFO architecture for this radio
+        let vfoArch = getVFOArchitecture()
 
         do {
             // Set first VFO
-            printInfo("Setting \(vfo1Name) to \(formatFrequency(testFreq1)) (\(band1))...")
-            try await rig.setFrequency(testFreq1, vfo: vfo1)
+            printInfo("Setting \(vfoArch.primaryName) to \(formatFrequency(testFreq1)) (\(band1))...")
+            try await rig.setFrequency(testFreq1, vfo: vfoArch.primaryVFO)
             try await Task.sleep(for: .milliseconds(500))
 
-            printInfo("Check your radio: \(vfo1Name) should show \(formatFrequency(testFreq1))")
-            let vfo1Confirmed = readYesNo(prompt: "Does \(vfo1Name) show \(formatFrequency(testFreq1))?")
+            printInfo("Check your radio: \(vfoArch.primaryName) should show \(formatFrequency(testFreq1))")
+            let vfo1Confirmed = readYesNo(prompt: "Does \(vfoArch.primaryName) show \(formatFrequency(testFreq1))?")
             if !vfo1Confirmed {
-                let actual = readLine(prompt: "What does \(vfo1Name) show?")
-                recordFailure("\(vfo1Name) Selection", expected: formatFrequency(testFreq1), actual: actual)
+                let actual = readLine(prompt: "What does \(vfoArch.primaryName) show?")
+                recordFailure("\(vfoArch.primaryName) Selection", expected: formatFrequency(testFreq1), actual: actual)
                 return false
             }
 
             // Set second VFO
-            printInfo("Setting \(vfo2Name) to \(formatFrequency(testFreq2)) (\(band2))...")
-            try await rig.setFrequency(testFreq2, vfo: vfo2)
+            printInfo("Setting \(vfoArch.secondaryName) to \(formatFrequency(testFreq2)) (\(band2))...")
+            try await rig.setFrequency(testFreq2, vfo: vfoArch.secondaryVFO)
             try await Task.sleep(for: .milliseconds(500))
 
-            printInfo("Check your radio: \(vfo2Name) should show \(formatFrequency(testFreq2))")
-            let vfo2Confirmed = readYesNo(prompt: "Does \(vfo2Name) show \(formatFrequency(testFreq2))?")
+            printInfo("Check your radio: \(vfoArch.secondaryName) should show \(formatFrequency(testFreq2))")
+            let vfo2Confirmed = readYesNo(prompt: "Does \(vfoArch.secondaryName) show \(formatFrequency(testFreq2))?")
             if !vfo2Confirmed {
-                let actual = readLine(prompt: "What does \(vfo2Name) show?")
-                recordFailure("\(vfo2Name) Selection", expected: formatFrequency(testFreq2), actual: actual)
+                let actual = readLine(prompt: "What does \(vfoArch.secondaryName) show?")
+                recordFailure("\(vfoArch.secondaryName) Selection", expected: formatFrequency(testFreq2), actual: actual)
                 return false
             }
 
             // Read back both VFOs
-            printInfo("Reading \(vfo1Name) frequency...")
-            let readFreq1 = try await rig.frequency(vfo: vfo1, cached: false)
-            printInfo("\(vfo1Name): \(formatFrequency(readFreq1))")
+            printInfo("Reading \(vfoArch.primaryName) frequency...")
+            let readFreq1 = try await rig.frequency(vfo: vfoArch.primaryVFO, cached: false)
+            printInfo("\(vfoArch.primaryName): \(formatFrequency(readFreq1))")
 
-            printInfo("Reading \(vfo2Name) frequency...")
-            let readFreq2 = try await rig.frequency(vfo: vfo2, cached: false)
-            printInfo("\(vfo2Name): \(formatFrequency(readFreq2))")
+            printInfo("Reading \(vfoArch.secondaryName) frequency...")
+            let readFreq2 = try await rig.frequency(vfo: vfoArch.secondaryVFO, cached: false)
+            printInfo("\(vfoArch.secondaryName): \(formatFrequency(readFreq2))")
 
             if readFreq1 == testFreq1 && readFreq2 == testFreq2 {
                 printSuccess("Both VFOs match expected frequencies")
             } else {
                 printFailure("VFO mismatch detected")
                 recordFailure("VFO Read Back",
-                            expected: "\(vfo1Name)=\(formatFrequency(testFreq1)), \(vfo2Name)=\(formatFrequency(testFreq2))",
-                            actual: "\(vfo1Name)=\(formatFrequency(readFreq1)), \(vfo2Name)=\(formatFrequency(readFreq2))")
+                            expected: "\(vfoArch.primaryName)=\(formatFrequency(testFreq1)), \(vfoArch.secondaryName)=\(formatFrequency(testFreq2))",
+                            actual: "\(vfoArch.primaryName)=\(formatFrequency(readFreq1)), \(vfoArch.secondaryName)=\(formatFrequency(readFreq2))")
                 return false
             }
 
@@ -816,6 +805,41 @@ class IcomTestSuite {
     }
 
     // MARK: - Helper Methods
+
+    /// VFO architecture information for this radio
+    struct VFOArchitecture {
+        let primaryVFO: VFO
+        let secondaryVFO: VFO
+        let primaryName: String
+        let secondaryName: String
+
+        /// Detect VFO architecture from radio capabilities and name
+        static func detect(for radio: TestRadio) -> VFOArchitecture {
+            // Main/Sub radios: IC-7600, IC-7610, IC-9700, IC-9100
+            let usesMainSub = ["IC-7600", "IC-7610", "IC-9700", "IC-9100"].contains(radio.name)
+
+            if usesMainSub {
+                return VFOArchitecture(
+                    primaryVFO: .main,
+                    secondaryVFO: .sub,
+                    primaryName: "Main",
+                    secondaryName: "Sub"
+                )
+            } else {
+                return VFOArchitecture(
+                    primaryVFO: .a,
+                    secondaryVFO: .b,
+                    primaryName: "VFO A",
+                    secondaryName: "VFO B"
+                )
+            }
+        }
+    }
+
+    /// Get VFO architecture for this radio
+    func getVFOArchitecture() -> VFOArchitecture {
+        return VFOArchitecture.detect(for: radio)
+    }
 
     func getTestFrequencies() -> [(frequency: UInt64, band: String)] {
         let caps = radio.definition.capabilities
