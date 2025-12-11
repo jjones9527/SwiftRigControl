@@ -270,28 +270,33 @@ class IcomTestSuite {
         // Determine appropriate test frequency based on radio
         let testFrequencies: [(frequency: UInt64, band: String)] = getTestFrequencies()
 
+        // Determine VFO to use based on radio architecture
+        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
+        let vfo: VFO = usesMainSub ? .main : .a
+        let vfoName = usesMainSub ? "Main" : "VFO A"
+
         for (frequency, band) in testFrequencies {
             printInfo("Testing \(band) band: \(formatFrequency(frequency))")
 
             do {
                 // Set frequency
-                printInfo("Setting VFO A to \(formatFrequency(frequency))...")
-                try await rig.setFrequency(frequency, vfo: .a)
+                printInfo("Setting \(vfoName) to \(formatFrequency(frequency))...")
+                try await rig.setFrequency(frequency, vfo: vfo)
                 try await Task.sleep(for: .milliseconds(500))
 
                 printInfo("Check your radio display:")
-                printInfo("  VFO A should show: \(formatFrequency(frequency))")
+                printInfo("  \(vfoName) should show: \(formatFrequency(frequency))")
 
-                let setConfirmed = readYesNo(prompt: "Does VFO A show \(formatFrequency(frequency))?")
+                let setConfirmed = readYesNo(prompt: "Does \(vfoName) show \(formatFrequency(frequency))?")
                 if !setConfirmed {
-                    let actual = readLine(prompt: "What frequency does VFO A show?")
+                    let actual = readLine(prompt: "What frequency does \(vfoName) show?")
                     recordFailure("Set Frequency \(band)", expected: formatFrequency(frequency), actual: actual)
                     return false
                 }
 
                 // Read frequency back
-                printInfo("Reading frequency from VFO A...")
-                let readFreq = try await rig.frequency(vfo: .a, cached: false)
+                printInfo("Reading frequency from \(vfoName)...")
+                let readFreq = try await rig.frequency(vfo: vfo, cached: false)
                 printInfo("Read frequency: \(formatFrequency(readFreq))")
 
                 if readFreq == frequency {
@@ -320,28 +325,33 @@ class IcomTestSuite {
 
         let testModes: [(mode: Mode, name: String)] = getTestModes()
 
+        // Determine VFO to use based on radio architecture
+        let usesMainSub = ["IC-9700", "IC-7600", "IC-9100"].contains(radio.name)
+        let vfo: VFO = usesMainSub ? .main : .a
+        let vfoName = usesMainSub ? "Main" : "VFO A"
+
         for (mode, name) in testModes {
             printInfo("Testing mode: \(name)")
 
             do {
                 // Set mode
-                printInfo("Setting VFO A to \(name) mode...")
-                try await rig.setMode(mode, vfo: .a)
+                printInfo("Setting \(vfoName) to \(name) mode...")
+                try await rig.setMode(mode, vfo: vfo)
                 try await Task.sleep(for: .milliseconds(500))
 
                 printInfo("Check your radio display:")
-                printInfo("  VFO A mode should show: \(name)")
+                printInfo("  \(vfoName) mode should show: \(name)")
 
-                let setConfirmed = readYesNo(prompt: "Does VFO A show \(name) mode?")
+                let setConfirmed = readYesNo(prompt: "Does \(vfoName) show \(name) mode?")
                 if !setConfirmed {
-                    let actual = readLine(prompt: "What mode does VFO A show?")
+                    let actual = readLine(prompt: "What mode does \(vfoName) show?")
                     recordFailure("Set Mode \(name)", expected: name, actual: actual)
                     return false
                 }
 
                 // Read mode back
-                printInfo("Reading mode from VFO A...")
-                let readMode = try await rig.mode(vfo: .a, cached: false)
+                printInfo("Reading mode from \(vfoName)...")
+                let readMode = try await rig.mode(vfo: vfo, cached: false)
                 printInfo("Read mode: \(readMode)")
 
                 if readMode == mode {
