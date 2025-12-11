@@ -1426,6 +1426,187 @@ public struct RadioCapabilitiesDatabase {
         supportsSignalStrength: true
     )
 
+    /// Kenwood TS-590S - HF/6m transceiver (earlier version of TS-590SG)
+    public static let kenwoodTS590S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 60_000_000, modes: [.usb, .fm, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-870S - HF/6m 100W transceiver (classic flagship)
+    public static let kenwoodTS870S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 100_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 60_000_000, modes: [.usb, .fm, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-480HX - HF/6m 200W transceiver (high power version of TS-480)
+    public static let kenwoodTS480HX = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 200,  // 200W version
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 60_000_000, modes: [.usb, .fm, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TM-V71A - VHF/UHF dual-band transceiver with EchoLink
+    public static let kenwoodTMV71 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 50,
+        supportedModes: [.fm, .fmN],
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
+        detailedFrequencyRanges: [
+            // Airband receive
+            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
+            // 2m band
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            // General receive
+            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
+            // 70cm band
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            // Upper UHF receive
+            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
+        ],
+        hasDualReceiver: true,  // Simultaneous VHF/UHF
+        hasATU: false,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TH-D74A - Tri-band handheld with D-STAR and APRS
+    public static let kenwoodTHD74 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 5,  // 5W handheld
+        supportedModes: [.fm, .fmN, .dataFM],  // D-STAR via dataFM
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
+        detailedFrequencyRanges: [
+            // Airband receive
+            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
+            // 2m band
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "2m"),
+            // General receive
+            DetailedFrequencyRange(min: 148_000_001, max: 219_999_999, modes: [.fm], canTransmit: false),
+            // 1.25m band (220 MHz)
+            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "1.25m"),
+            // More receive
+            DetailedFrequencyRange(min: 225_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
+            // 70cm band
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "70cm"),
+            // Upper UHF receive
+            DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm], canTransmit: false),
+        ],
+        hasDualReceiver: true,  // Full duplex capable
+        hasATU: false,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TH-D72A - Dual-band handheld with APRS and GPS
+    public static let kenwoodTHD72A = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 5,  // 5W handheld
+        supportedModes: [.fm, .fmN],
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
+        detailedFrequencyRanges: [
+            // Airband receive
+            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
+            // 2m band
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            // General receive
+            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
+            // 70cm band
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            // Upper UHF receive
+            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
+        ],
+        hasDualReceiver: true,  // Full duplex capable
+        hasATU: false,
+        supportsSignalStrength: true
+    )
+
     // MARK: - Remaining Elecraft Radios
 
     /// Elecraft K2 - HF transceiver
