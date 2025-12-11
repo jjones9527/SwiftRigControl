@@ -92,7 +92,7 @@ extension RadioDefinition {
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                commandSet: StandardIcomCommandSet.ic705,
+                commandSet: IC7100CommandSet.ic705,
                 capabilities: RadioCapabilitiesDatabase.icomIC705
             )
         }

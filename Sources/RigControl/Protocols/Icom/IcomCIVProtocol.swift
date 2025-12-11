@@ -50,10 +50,12 @@ public actor IcomCIVProtocol: CATProtocol {
         self.capabilities = capabilities
 
         // Create a standard command set based on capabilities
+        // Use targetable VFO model as legacy default
         self.commandSet = StandardIcomCommandSet(
             civAddress: civAddress,
-            echoesCommands: false,  // Legacy default
-            requiresVFOSelection: capabilities.requiresVFOSelection
+            vfoModel: capabilities.requiresVFOSelection ? .targetable : .none,
+            requiresModeFilter: capabilities.requiresModeFilter,
+            echoesCommands: false  // Legacy default
         )
     }
 
@@ -78,7 +80,7 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
         // Select the appropriate VFO first (if radio requires it)
-        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
+        if commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -101,7 +103,7 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
         // Select the appropriate VFO first (if radio requires it)
-        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
+        if commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -124,7 +126,7 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         // Select the appropriate VFO first (if radio requires it)
-        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
+        if commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
@@ -150,7 +152,7 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getMode(vfo: VFO) async throws -> Mode {
         // Select the appropriate VFO first (if radio requires it)
-        if let vfoCmd = commandSet.selectVFOCommand(vfo) {
+        if commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 

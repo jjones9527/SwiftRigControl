@@ -211,6 +211,9 @@ extension CIVFrame {
         /// Read squelch level (0x01)
         public static let squelch: UInt8 = 0x01
 
+        /// RF power level (used with Command.settings 0x14 for get/set) (0x0A)
+        public static let rfPower: UInt8 = 0x0A
+
         /// Read RF power meter (0x11)
         public static let rfPowerMeter: UInt8 = 0x11
     }

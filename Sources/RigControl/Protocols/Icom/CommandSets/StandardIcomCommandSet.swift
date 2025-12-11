@@ -2,187 +2,210 @@ import Foundation
 
 /// Standard CI-V command set for most Icom radios.
 ///
-/// This command set implements the "standard" CI-V protocol used by most Icom HF and VHF/UHF radios.
-/// It's suitable for radios like:
-/// - IC-7300, IC-7610, IC-7600 (HF transceivers)
-/// - IC-705 (portable HF/VHF/UHF)
-/// - IC-9100 (HF/VHF/UHF base station)
+/// This command set implements the "standard" CI-V protocol used by the majority of Icom radios.
+/// It uses the `IcomRadioCommandSet` protocol with sensible defaults that work for ~90% of radios.
 ///
 /// ## Standard CI-V Characteristics
 /// - **Mode Filter**: REQUIRED - Mode commands include filter byte
 /// - **Command Echo**: NO - Most radios don't echo commands
-/// - **VFO Selection**: REQUIRED - Explicit VFO selection needed
+/// - **VFO Model**: Configurable (targetable, currentOnly, or mainSub)
 /// - **Power Display**: Percentage (0-100%) for all Icom radios
+///
+/// ## Radios Using This Command Set
+/// This command set is suitable for:
+/// - **HF transceivers**: IC-7300, IC-7610, IC-7600, IC-7700, IC-7800, IC-7200, IC-7410
+/// - **HF/VHF transceivers**: IC-9100, IC-746PRO, IC-7000
+/// - **VHF/UHF mobiles**: ID-5100, ID-4100
+/// - **Receivers**: IC-R8600, IC-R75, IC-R9500
+///
+/// ## Exceptions (Don't Use This)
+/// - **IC-7100/IC-705**: Use `IC7100CommandSet` (no filter byte, echoes commands)
+/// - **IC-9700**: Use `IC9700CommandSet` (uses Main/Sub VFO model)
 ///
 /// ## Customization
 /// You can customize behavior by passing parameters to the initializer:
 /// ```swift
-/// // IC-705 (similar to IC-7100, but different address)
-/// let ic705 = StandardIcomCommandSet(
-///     civAddress: 0xA4,
-///     echoesCommands: true,
-///     requiresVFOSelection: false
+/// // IC-7200 (operates on current VFO, requires filter)
+/// let ic7200 = StandardIcomCommandSet(
+///     civAddress: 0x76,
+///     vfoModel: .currentOnly,
+///     echoesCommands: false
+/// )
+///
+/// // IC-7610 (can target VFO, dual receiver capable)
+/// let ic7610 = StandardIcomCommandSet(
+///     civAddress: 0x98,
+///     vfoModel: .mainSub,  // Has dual receiver
+///     echoesCommands: false
 /// )
 /// ```
-public struct StandardIcomCommandSet: CIVCommandSet {
+///
+/// ## Implementation
+/// Uses `IcomRadioCommandSet` protocol with all methods inherited from default implementations.
+/// Only properties need to be set - zero code duplication!
+public struct StandardIcomCommandSet: IcomRadioCommandSet {
     public let civAddress: UInt8
-    public let powerUnits: PowerUnits = .percentage
+    public let vfoModel: VFOOperationModel
+    public let requiresModeFilter: Bool
     public let echoesCommands: Bool
-    public let requiresVFOSelection: Bool
+    public let powerUnits: PowerUnits
 
     /// Initialize a standard Icom command set.
     /// - Parameters:
     ///   - civAddress: Radio's CI-V address
+    ///   - vfoModel: VFO operation model (default: .targetable)
+    ///   - requiresModeFilter: Whether mode commands need filter byte (default: true)
     ///   - echoesCommands: Whether radio echoes commands (default: false)
-    ///   - requiresVFOSelection: Whether radio requires VFO selection (default: true)
-    public init(civAddress: UInt8, echoesCommands: Bool = false, requiresVFOSelection: Bool = true) {
+    public init(
+        civAddress: UInt8,
+        vfoModel: VFOOperationModel = .targetable,
+        requiresModeFilter: Bool = true,
+        echoesCommands: Bool = false
+    ) {
         self.civAddress = civAddress
+        self.vfoModel = vfoModel
+        self.requiresModeFilter = requiresModeFilter
         self.echoesCommands = echoesCommands
-        self.requiresVFOSelection = requiresVFOSelection
+        self.powerUnits = .percentage  // All Icom radios use percentage
     }
 
-    // MARK: - Mode Commands
-
-    public func setModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
-        // Standard Icom radios require filter byte (0x00 = default filter)
-        return ([0x06], [mode, 0x00])
-    }
-
-    public func readModeCommand() -> [UInt8] {
-        return [0x04]
-    }
-
-    public func parseModeResponse(_ response: CIVFrame) throws -> UInt8 {
-        guard response.command.count == 1,
-              response.command[0] == 0x04,
-              !response.data.isEmpty else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
-    }
-
-    // MARK: - Power Commands
-
-    public func setPowerCommand(value: Int) -> (command: [UInt8], data: [UInt8]) {
-        // All Icom radios use percentage (0-100%)
-        let percentage = min(max(value, 0), 100)
-        let scale = (percentage * 255) / 100
-        let bcd = BCDEncoding.encodePower(scale)
-        return ([0x14, 0x0A], bcd)
-    }
-
-    public func readPowerCommand() -> [UInt8] {
-        return [0x14, 0x0A]
-    }
-
-    public func parsePowerResponse(_ response: CIVFrame) throws -> Int {
-        guard response.command.count >= 2,
-              response.command[0] == 0x14,
-              response.command[1] == 0x0A,
-              response.data.count >= 2 else {
-            throw RigError.invalidResponse
-        }
-        let scale = BCDEncoding.decodePower(response.data)
-        return (scale * 100) / 255  // Return percentage
-    }
-
-    // MARK: - PTT Commands
-
-    public func setPTTCommand(enabled: Bool) -> (command: [UInt8], data: [UInt8]) {
-        return ([0x1C, 0x00], [enabled ? 0x01 : 0x00])
-    }
-
-    public func readPTTCommand() -> [UInt8] {
-        return [0x1C, 0x00]
-    }
-
-    public func parsePTTResponse(_ response: CIVFrame) throws -> Bool {
-        guard response.command.count >= 2,
-              response.command[0] == 0x1C,
-              response.command[1] == 0x00,
-              !response.data.isEmpty else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
-    }
-
-    // MARK: - VFO Commands
-
-    public func selectVFOCommand(_ vfo: VFO) -> (command: [UInt8], data: [UInt8])? {
-        guard requiresVFOSelection else { return nil }
-
-        let vfoCode: UInt8
-        switch vfo {
-        case .a:
-            vfoCode = CIVFrame.VFOSelect.vfoA
-        case .b:
-            vfoCode = CIVFrame.VFOSelect.vfoB
-        case .main:
-            vfoCode = CIVFrame.VFOSelect.main
-        case .sub:
-            vfoCode = CIVFrame.VFOSelect.sub
-        }
-        return ([0x07], [vfoCode])
-    }
-
-    // MARK: - Frequency Commands
-
-    public func setFrequencyCommand(frequency: UInt64) -> (command: [UInt8], data: [UInt8]) {
-        let bcd = BCDEncoding.encodeFrequency(frequency)
-        return ([0x05], bcd)
-    }
-
-    public func readFrequencyCommand() -> [UInt8] {
-        return [0x03]
-    }
-
-    public func parseFrequencyResponse(_ response: CIVFrame) throws -> UInt64 {
-        guard response.command.count == 1,
-              response.command[0] == 0x03,
-              response.data.count == 5 else {
-            throw RigError.invalidResponse
-        }
-        return try BCDEncoding.decodeFrequency(response.data)
-    }
+    // All command methods inherited from IcomRadioCommandSet protocol extension!
+    // No need to implement:
+    // - selectVFOCommand() - automatic based on vfoModel
+    // - setModeCommand() - automatic based on requiresModeFilter
+    // - setPowerCommand() - standard percentage format
+    // - setPTTCommand() - standard PTT
+    // - setFrequencyCommand() - standard BCD encoding
+    // - All parse methods - standard CI-V response parsing
 }
 
 // MARK: - Convenience Initializers for Specific Radios
 
 extension StandardIcomCommandSet {
-    /// IC-705 portable HF/VHF/UHF transceiver
-    /// Similar to IC-7100: echoes commands, doesn't require VFO selection
-    public static var ic705: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0xA4, echoesCommands: true, requiresVFOSelection: false)
-    }
-
     /// IC-7300 HF/50MHz entry-level transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 115200 baud, 100W, requires mode filter
     public static var ic7300: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x94)
+        StandardIcomCommandSet(civAddress: 0x94, vfoModel: .targetable)
     }
 
     /// IC-7610 HF/50MHz SDR transceiver with dual receivers
+    /// - VFO Model: Main/Sub (dual receiver architecture)
+    /// - 115200 baud, 100W, requires mode filter
     public static var ic7610: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x98)
+        StandardIcomCommandSet(civAddress: 0x98, vfoModel: .mainSub)
     }
 
     /// IC-7600 HF/50MHz high-end transceiver with dual receiver
-    /// Note: Uses Main/Sub bands (not VFO A/B), operates on currently selected band
+    /// - VFO Model: Main/Sub (dual receiver, NOT VFO A/B)
+    /// - Note: Uses Main/Sub bands, operates on currently selected band
+    /// - 19200 baud, 100W, requires mode filter
     public static var ic7600: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x7A, echoesCommands: false, requiresVFOSelection: false)
+        StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .mainSub)
     }
 
     /// IC-9100 HF/VHF/UHF all-mode transceiver with dual receivers
+    /// - VFO Model: Main/Sub (dual receiver architecture)
+    /// - 115200 baud, 100W, requires mode filter
     public static var ic9100: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x7C)
+        StandardIcomCommandSet(civAddress: 0x7C, vfoModel: .mainSub)
     }
 
     /// IC-7200 HF/50MHz mid-range transceiver
+    /// - VFO Model: Current Only (operates on current VFO)
+    /// - 19200 baud, 100W, requires mode filter
     public static var ic7200: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x76, echoesCommands: false, requiresVFOSelection: false)
+        StandardIcomCommandSet(civAddress: 0x76, vfoModel: .currentOnly)
     }
 
     /// IC-7410 HF/50MHz transceiver
+    /// - VFO Model: Current Only (operates on current VFO)
+    /// - 19200 baud, 100W, requires mode filter
     public static var ic7410: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x80, echoesCommands: false, requiresVFOSelection: false)
+        StandardIcomCommandSet(civAddress: 0x80, vfoModel: .currentOnly)
+    }
+
+    /// IC-7700 HF/50MHz high-power flagship transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 200W, requires mode filter
+    public static var ic7700: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x74, vfoModel: .targetable)
+    }
+
+    /// IC-7800 HF/50MHz high-power flagship transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 200W, requires mode filter
+    public static var ic7800: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x6A, vfoModel: .targetable)
+    }
+
+    /// IC-7000 HF/VHF/UHF mobile transceiver
+    /// - VFO Model: Current Only (operates on current VFO)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic7000: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x70, vfoModel: .currentOnly)
+    }
+
+    /// IC-756PROIII HF/50MHz transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic756PROIII: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x6E, vfoModel: .targetable)
+    }
+
+    /// IC-756PROII HF/50MHz transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic756PROII: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x64, vfoModel: .targetable)
+    }
+
+    /// IC-756PRO HF/50MHz transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic756PRO: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x5C, vfoModel: .targetable)
+    }
+
+    /// IC-746PRO HF/VHF transceiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic746PRO: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x66, vfoModel: .targetable)
+    }
+
+    /// ID-5100 VHF/UHF mobile transceiver with D-STAR
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 50W, requires mode filter
+    public static var id5100: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x86, vfoModel: .targetable)
+    }
+
+    /// ID-4100 VHF/UHF mobile transceiver with D-STAR
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 65W, requires mode filter
+    public static var id4100: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x76, vfoModel: .targetable)
+    }
+
+    /// IC-R8600 wideband communications receiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 115200 baud, receiver only (no PTT/power control)
+    public static var icR8600: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x96, vfoModel: .targetable)
+    }
+
+    /// IC-R75 HF communications receiver
+    /// - VFO Model: None (single VFO receiver)
+    /// - 19200 baud, receiver only (no PTT/power control)
+    public static var icR75: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x5A, vfoModel: .none)
+    }
+
+    /// IC-R9500 professional communications receiver
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, receiver only (no PTT/power control)
+    public static var icR9500: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .targetable)
     }
 }
