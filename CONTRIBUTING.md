@@ -435,99 +435,57 @@ Brief description of changes
 
 ## Adding Radio Support
 
-### For Existing Protocol
+**Please see our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.md) for detailed instructions.**
 
-If adding a radio that uses an existing protocol (e.g., another Icom radio):
+The guide covers:
 
-1. **Create Radio Definition**
+- Determining if your radio uses an existing protocol
+- Step-by-step instructions for adding a radio
+- Testing requirements and procedures
+- Documentation requirements
+- Pull request checklist
 
-```swift
-// In Sources/RigControl/Protocols/Icom/IcomModels.swift
+### Quick Overview
 
-public static let icomICYourModel = RadioDefinition(
-    manufacturer: .icom,
-    model: "IC-YourModel",
-    defaultBaudRate: 115200,
-    capabilities: RigCapabilities(
-        hasVFOB: true,
-        hasSplit: true,
-        powerControl: true,
-        maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .fm, .am],
-        frequencyRange: (30_000, 60_000_000),
-        hasDualReceiver: false,
-        hasATU: true
-    ),
-    civAddress: 0xYY,  // From radio manual
-    protocolFactory: { transport in
-        IcomCIVProtocol(
-            transport: transport,
-            civAddress: 0xYY,
-            capabilities: /* capabilities from above */
-        )
-    }
-)
-```
+**For Existing Protocol (Most Common):**
 
-2. **Add to XPC Server** (if using XPC)
+1. Gather radio specifications from manual
+2. Add radio definition to appropriate `*Models.swift` file
+3. Define capabilities in `RadioCapabilitiesDatabase.swift`
+4. Configure command set (Icom radios)
+5. Add unit tests
+6. Test with real hardware
+7. Update documentation
+8. Submit PR
 
-```swift
-// In Sources/RigControlXPC/XPCServer.swift
-// Add to radioDefinitionFromString() method
+**Typical time:** 30-60 minutes for experienced contributors
 
-case "IC-YourModel", "ICYourModel":
-    return .icomICYourModel
-```
+**For New Protocol (Advanced):**
 
-3. **Add Unit Tests**
+1. Implement `CATProtocol` interface
+2. Create radio definitions
+3. Extensive testing required
+4. **Discuss in GitHub issue first**
 
-```swift
-// In Tests/RigControlTests/IcomCIVProtocolTests.swift
+### Resources
 
-func testYourModelCapabilities() {
-    let radio = RadioDefinition.icomICYourModel
-    XCTAssertEqual(radio.defaultBaudRate, 115200)
-    XCTAssertTrue(radio.capabilities.hasSplit)
-}
-```
+- **[Adding Radio Support Guide](Documentation/ADDING_RADIOS.md)** - Complete step-by-step guide
+- **[Icom Radio Architectures](ICOM_RADIO_ARCHITECTURES.md)** - Icom-specific VFO models and quirks
+- **[API Reference](Documentation/API_REFERENCE.md)** - Protocol interfaces and requirements
+- **Hamlib Source** - https://github.com/Hamlib/Hamlib (excellent reference)
 
-4. **Update Documentation**
+### Examples in Codebase
 
-- Add to README.md supported radios list
-- Add to SERIAL_PORT_GUIDE.md if configuration differs
-- Update CHANGELOG.md
+Study these files for examples:
 
-### For New Protocol
+**Icom Radios:**
+- `Sources/RigControl/Protocols/Icom/IcomModels.swift` - 21 radio examples
+- `Sources/RigControl/Protocols/Icom/CommandSets/StandardIcomCommandSet.swift` - Command set configurations
 
-If implementing a protocol for a new manufacturer:
-
-1. **Create Protocol Directory**
-```
-Sources/RigControl/Protocols/YourManufacturer/
-├── YourProtocol.swift
-└── YourModels.swift
-```
-
-2. **Implement CATProtocol**
-
-```swift
-public actor YourProtocol: CATProtocol {
-    public let transport: any SerialTransport
-    public let capabilities: RigCapabilities
-
-    public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        // Implementation
-    }
-
-    // Implement all CATProtocol requirements
-}
-```
-
-3. **Add Comprehensive Tests**
-
-4. **Update Documentation** extensively
-
-5. **Discuss in Issue First** - new protocols require design review
+**Other Manufacturers:**
+- `Sources/RigControl/Protocols/Elecraft/ElecraftModels.swift`
+- `Sources/RigControl/Protocols/Yaesu/YaesuModels.swift`
+- `Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift`
 
 ## Documentation
 

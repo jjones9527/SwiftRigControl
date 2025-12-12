@@ -17,41 +17,92 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 ## Supported Radios
 
-### Icom (CI-V Protocol) ✅
+**49 radio models across 4 manufacturers**
 
-- **IC-9700** - VHF/UHF/1.2GHz all-mode transceiver (115200 baud, CI-V: 0xA2)
-- **IC-7610** - HF/6m SDR transceiver (115200 baud, CI-V: 0x98)
-- **IC-7300** - HF/6m all-mode transceiver (115200 baud, CI-V: 0x94)
-- **IC-7600** - HF/6m all-mode transceiver (19200 baud, CI-V: 0x7A)
-- **IC-7100** - HF/VHF/UHF all-mode transceiver (19200 baud, CI-V: 0x88)
-- **IC-705** - Portable HF/VHF/UHF transceiver (19200 baud, CI-V: 0xA4)
+### Icom (CI-V Protocol) - 21 models ✅
 
-### Elecraft (Text-Based Protocol) ✅
+**Flagship & High-End HF:**
+- **IC-7800** - HF/6m flagship (200W, CI-V: 0x6A)
+- **IC-7700** - HF/6m high-end (200W, CI-V: 0x74)
+- **IC-7610** - HF/6m SDR with dual receiver (100W, CI-V: 0x98)
+- **IC-7600** - HF/6m high-performance dual receiver (100W, CI-V: 0x7A)
 
-- **K2** - HF transceiver (4800 baud, 15W)
-- **K3** - HF/6m transceiver (38400 baud, 100W)
-- **K3S** - HF/6m transceiver enhanced (38400 baud, 100W)
-- **K4** - HF/6m SDR transceiver (38400 baud, 100W)
-- **KX2** - Portable HF transceiver (38400 baud, 12W)
-- **KX3** - Portable HF/6m transceiver (38400 baud, 15W)
+**Popular HF Transceivers:**
+- **IC-7300** - HF/6m all-mode SDR (100W, CI-V: 0x94)
+- **IC-7410** - HF/6m all-mode (100W, CI-V: 0x80)
+- **IC-7200** - HF/6m mid-range (100W, CI-V: 0x76)
+- **IC-756PRO III** - HF/6m (100W, CI-V: 0x6E)
+- **IC-756PRO II** - HF/6m (100W, CI-V: 0x66)
+- **IC-756PRO** - HF/6m (100W, CI-V: 0x5C)
 
-### Yaesu (CAT Protocol) ✅
+**HF + VHF/UHF:**
+- **IC-9100** - HF/VHF/UHF dual receiver (100W, CI-V: 0x7C)
+- **IC-7100** - HF/VHF/UHF all-mode (100W, CI-V: 0x88)
+- **IC-705** - HF/VHF/UHF portable (10W, CI-V: 0xA4)
+- **IC-7000** - HF/VHF/UHF mobile (100W, CI-V: 0x70)
+- **IC-746PRO** - HF + 2m (100W, CI-V: 0x66)
 
-- **FTDX-10** - HF/6m transceiver (38400 baud, 100W)
-- **FT-991A** - HF/VHF/UHF all-mode transceiver (38400 baud, 100W)
-- **FT-710** - HF/6m all-mode transceiver (38400 baud, 100W)
-- **FT-891** - HF/6m all-mode transceiver (38400 baud, 100W)
-- **FT-817** - Portable QRP HF/VHF/UHF transceiver (38400 baud, 5W)
-- **FTDX-101D** - HF/6m transceiver with dual receiver (38400 baud, 100W)
+**VHF/UHF:**
+- **IC-9700** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
+- **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x86)
+- **ID-4100** - VHF/UHF D-STAR mobile (65W, CI-V: 0x82)
 
-### Kenwood (Text-Based Protocol) ✅
+**Receivers:**
+- **IC-R9500** - Professional wideband receiver (5kHz-3.3GHz, CI-V: 0x7A)
+- **IC-R8600** - Wideband receiver (25kHz-3GHz, CI-V: 0x96)
+- **IC-R75** - HF receiver (CI-V: 0x5A)
 
-- **TS-890S** - HF/6m transceiver with dual receiver (115200 baud, 100W)
-- **TS-990S** - HF/6m flagship transceiver with dual receiver (115200 baud, 200W)
-- **TS-590SG** - HF/6m all-mode transceiver (115200 baud, 100W)
-- **TM-D710** - VHF/UHF dual-band transceiver (57600 baud, 50W)
-- **TS-480SAT** - HF/6m all-mode transceiver (57600 baud, 100W)
-- **TS-2000** - HF/VHF/UHF all-mode transceiver (57600 baud, 100W)
+### Elecraft (Text-Based Protocol) - 6 models ✅
+
+**High-Performance:**
+- **K4** - HF/6m SDR transceiver (100W, 38400 baud)
+- **K3S** - HF/6m enhanced (100W, 38400 baud)
+- **K3** - HF/6m all-mode (100W, 38400 baud)
+
+**QRP/Portable:**
+- **KX3** - HF/6m portable (15W, 38400 baud)
+- **KX2** - HF portable (12W, 38400 baud)
+- **K2** - HF transceiver (15W, 4800 baud)
+
+### Yaesu (CAT Protocol) - 10 models ✅
+
+**High-End HF:**
+- **FTDX-101MP** - HF/6m flagship (200W, 38400 baud)
+- **FTDX-101D** - HF/6m with dual receiver (100W, 38400 baud)
+- **FTDX-10** - HF/6m all-mode (100W, 38400 baud)
+
+**Mid-Range HF:**
+- **FT-710** - HF/6m AESS (100W, 38400 baud)
+- **FT-891** - HF/6m field transceiver (100W, 38400 baud)
+- **FT-450D** - HF/6m budget (100W, 38400 baud)
+
+**HF + VHF/UHF:**
+- **FT-991A** - HF/VHF/UHF all-mode (100W, 38400 baud)
+- **FT-897D** - HF/VHF/UHF base/mobile (100W, 38400 baud)
+- **FT-857D** - HF/VHF/UHF mobile (100W, 38400 baud)
+- **FT-817** - HF/VHF/UHF portable QRP (5W, 38400 baud)
+
+### Kenwood (Text-Based Protocol) - 12 models ✅
+
+**HF Flagships:**
+- **TS-990S** - HF/6m flagship with dual receiver (200W, 115200 baud)
+- **TS-890S** - HF/6m with dual receiver (100W, 115200 baud)
+
+**HF Transceivers:**
+- **TS-590SG** - HF/6m all-mode (100W, 115200 baud)
+- **TS-590S** - HF/6m all-mode (100W, 115200 baud)
+- **TS-870S** - HF/6m all-mode (100W, 115200 baud)
+- **TS-480SAT** - HF/6m with antenna tuner (100W, 57600 baud)
+- **TS-480HX** - HF/6m high power (200W, 57600 baud)
+
+**HF + VHF/UHF:**
+- **TS-2000** - HF/VHF/UHF all-mode (100W, 57600 baud)
+
+**VHF/UHF:**
+- **TM-D710** - VHF/UHF dual-band mobile (50W, 57600 baud)
+- **TM-V71** - VHF/UHF dual-band mobile (50W, 57600 baud)
+- **TH-D74** - VHF/UHF handheld with D-STAR (5W, 57600 baud)
+- **TH-D72A** - VHF/UHF handheld with APRS (5W, 57600 baud)
 
 ## Installation
 
@@ -520,32 +571,48 @@ export RIG_SERIAL_PORT="/dev/cu.IC9700"
 swift test --filter IntegrationTests
 ```
 
+## Documentation
+
+### For App Developers
+
+- **[API Reference](Documentation/API_REFERENCE.md)** - Complete API documentation
+- **[Usage Examples](Documentation/USAGE_EXAMPLES.md)** - Common use cases and patterns
+- **[Troubleshooting Guide](Documentation/TROUBLESHOOTING.md)** - Problem solving
+- **[Serial Port Guide](Documentation/SERIAL_PORT_GUIDE.md)** - Connection setup
+- **[XPC Helper Guide](Documentation/XPC_HELPER_GUIDE.md)** - Mac App Store integration
+- **[Hamlib Migration](Documentation/HAMLIB_MIGRATION.md)** - Migrating from Hamlib
+
+### For Contributors
+
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- **[Adding Radio Support](Documentation/ADDING_RADIOS.md)** - Step-by-step guide for adding new radios
+- **[Icom Radio Architectures](ICOM_RADIO_ARCHITECTURES.md)** - Detailed Icom VFO models and quirks
+
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! We have extensive documentation to help you get started.
 
-### Adding a New Radio (Same Protocol)
+### Adding a New Radio
 
-Example: Adding IC-705
+See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.md) for step-by-step instructions.
 
-1. Add radio definition in `Sources/RigControl/Protocols/Icom/IcomModels.swift`:
+**Quick Start:**
 
-```swift
-public static let icomIC705 = RadioDefinition(
-    manufacturer: .icom,
-    model: "IC-705",
-    defaultBaudRate: 19200,
-    capabilities: RigCapabilities(/* ... */),
-    civAddress: 0xA4,
-    protocolFactory: { transport in
-        IcomCIVProtocol(transport: transport, civAddress: 0xA4, capabilities: /* ... */)
-    }
-)
-```
+1. Check the [Adding Radios Guide](Documentation/ADDING_RADIOS.md)
+2. Study similar radios in the codebase
+3. Reference official CAT command manual
+4. Add radio definition and capabilities
+5. Create tests
+6. Test with real hardware
+7. Submit PR
 
-2. Add tests
-3. Test with real hardware
-4. Submit PR
+**We currently support:**
+- Icom CI-V protocol (21 radios)
+- Elecraft text protocol (6 radios)
+- Yaesu CAT protocol (10 radios)
+- Kenwood text protocol (12 radios)
+
+Adding a radio using an existing protocol typically takes 30-60 minutes!
 
 ## License
 
