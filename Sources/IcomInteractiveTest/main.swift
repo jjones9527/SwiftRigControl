@@ -330,6 +330,14 @@ class IcomTestSuite {
             printInfo("Testing mode: \(name)")
 
             do {
+                // Set appropriate frequency for the mode being tested
+                let testFreq = getFrequencyForMode(mode)
+                if let freq = testFreq {
+                    printInfo("Setting frequency to \(Double(freq) / 1_000_000) MHz for \(name) test...")
+                    try await rig.setFrequency(freq, vfo: vfoArch.primaryVFO)
+                    try await Task.sleep(for: .milliseconds(300))
+                }
+
                 // Set mode
                 printInfo("Setting \(vfoArch.primaryName) to \(name) mode...")
                 try await rig.setMode(mode, vfo: vfoArch.primaryVFO)
@@ -954,6 +962,55 @@ class IcomTestSuite {
         } else {
             return []
         }
+    }
+
+    func getFrequencyForMode(_ mode: Mode) -> UInt64? {
+        let caps = radio.definition.capabilities
+
+        guard let freqRange = caps.frequencyRange else {
+            return nil
+        }
+
+        // Find an appropriate frequency for the mode
+        switch mode {
+        case .lsb:
+            // Use 160m, 80m, or 40m (lower HF bands use LSB)
+            if freqRange.min <= 1_900_000 && freqRange.max >= 1_900_000 {
+                return 1_900_000  // 160m
+            } else if freqRange.min <= 3_750_000 && freqRange.max >= 3_750_000 {
+                return 3_750_000  // 80m
+            } else if freqRange.min <= 7_100_000 && freqRange.max >= 7_100_000 {
+                return 7_100_000  // 40m
+            }
+        case .usb:
+            // Use 20m, 2m, or 70cm (upper HF and VHF/UHF use USB)
+            if freqRange.min <= 14_200_000 && freqRange.max >= 14_200_000 {
+                return 14_200_000  // 20m
+            } else if freqRange.min <= 145_000_000 && freqRange.max >= 145_000_000 {
+                return 145_000_000  // 2m
+            } else if freqRange.min <= 435_000_000 && freqRange.max >= 435_000_000 {
+                return 435_000_000  // 70cm
+            }
+        case .fm:
+            // FM is typically VHF/UHF
+            if freqRange.min <= 145_000_000 && freqRange.max >= 145_000_000 {
+                return 145_000_000  // 2m
+            } else if freqRange.min <= 435_000_000 && freqRange.max >= 435_000_000 {
+                return 435_000_000  // 70cm
+            }
+        case .cw:
+            // CW works on most bands, use 20m if available, else 2m
+            if freqRange.min <= 14_050_000 && freqRange.max >= 14_050_000 {
+                return 14_050_000  // 20m CW
+            } else if freqRange.min <= 145_000_000 && freqRange.max >= 145_000_000 {
+                return 145_000_000  // 2m
+            }
+        default:
+            // For other modes, don't change frequency
+            return nil
+        }
+
+        return nil  // No suitable frequency found
     }
 
     func getTestModes() -> [(mode: Mode, name: String)] {
