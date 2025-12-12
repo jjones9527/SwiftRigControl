@@ -100,8 +100,9 @@ extension StandardIcomCommandSet {
     /// - VFO Model: Main/Sub (dual receiver, NOT VFO A/B)
     /// - Note: Uses Main/Sub bands, operates on currently selected band
     /// - 19200 baud, 100W, requires mode filter
+    /// - IMPORTANT: Echoes commands over USB connection (Hamlib issue #583)
     public static var ic7600: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .mainSub)
+        StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .mainSub, echoesCommands: true)
     }
 
     /// IC-9100 HF/VHF/UHF all-mode transceiver with dual receivers

@@ -150,13 +150,19 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 **Most radios use this**
 - Mode command: [0x06, mode, filter_byte]
 - No command echo
-- Examples: IC-7300, IC-7610, IC-7600, IC-9700, IC-9100, IC-7700, IC-7800, etc.
+- Examples: IC-7300, IC-7610, IC-9700, IC-9100, IC-7700, IC-7800, etc.
 
 ### IC-7100 Family (requiresModeFilter = false, echoesCommands = true)
 **IC-7100 and IC-705 ONLY**
 - Mode command: [0x06, mode] (NO filter byte - radio NAKs if sent!)
 - Commands are echoed before response
 - Current VFO only operation
+
+### IC-7600 Special (requiresModeFilter = true, echoesCommands = true)
+**IC-7600 ONLY**
+- Mode command: [0x06, mode, filter_byte] (standard - requires filter byte)
+- Commands are echoed over USB connection (Hamlib issue #583)
+- Main/Sub architecture, operates on currently selected band
 
 ### IC-9700 Special
 **VHF/UHF/1.2GHz only, Main/Sub architecture**
