@@ -1,348 +1,203 @@
 import Foundation
 
-/// Pre-defined Icom radio models.
+/// Pre-defined Icom radio models with support for custom CI-V addresses.
+///
+/// ## Design Philosophy
+/// All Icom radio definitions are **functions** (not static properties) to support
+/// custom CI-V addresses. This is critical for users with multiple radios of the same
+/// model, where each radio must have a unique address on the CI-V bus.
+///
+/// ## Usage Examples
+///
+/// ### Single Radio (Default Address)
+/// ```swift
+/// let rig = RigController(
+///     radio: .icomIC7600(),  // Uses default 0x7A
+///     connection: .serial(path: "/dev/ttyUSB0", baudRate: 19200)
+/// )
+/// ```
+///
+/// ### Multiple Radios of Same Model (Custom Addresses)
+/// ```swift
+/// // First IC-7600 with default address
+/// let rig1 = RigController(
+///     radio: .icomIC7600(),  // Address 0x7A (default)
+///     connection: .serial(path: "/dev/ttyUSB0", baudRate: 19200)
+/// )
+///
+/// // Second IC-7600 with custom address (user changed on radio to 0x7B)
+/// let rig2 = RigController(
+///     radio: .icomIC7600(civAddress: 0x7B),  // Custom address
+///     connection: .serial(path: "/dev/ttyUSB1", baudRate: 19200)
+/// )
+/// ```
 extension RadioDefinition {
-    /// Icom IC-9700 VHF/UHF/1.2GHz all-mode transceiver
-    public static let icomIC9700 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-9700",
-        defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomIC9700,
-        civAddress: 0xA2,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: IC9700CommandSet(),
-                capabilities: RadioCapabilitiesDatabase.icomIC9700
-            )
-        }
-    )
+
+    // MARK: - HF Transceivers
+
+    /// Icom IC-7600 HF/6m all-mode transceiver with dual receiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x7A)
+    /// - Returns: RadioDefinition for IC-7600
+    public static func icomIC7600(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7600",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7600,
+            civAddress: civAddress ?? IcomRadioModel.ic7600.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7600,
+                    commandSet: StandardIcomCommandSet.ic7600,
+                    capabilities: RadioCapabilitiesDatabase.icomIC7600
+                )
+            }
+        )
+    }
 
     /// Icom IC-7300 HF/6m all-mode transceiver
-    public static let icomIC7300 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7300",
-        defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7300,
-        civAddress: 0x94,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7300,
-                capabilities: RadioCapabilitiesDatabase.icomIC7300
-            )
-        }
-    )
-
-    /// Icom IC-7600 HF/6m all-mode transceiver
-    public static let icomIC7600 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7600",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7600,
-        civAddress: 0x7A,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7600,
-                capabilities: RadioCapabilitiesDatabase.icomIC7600
-            )
-        }
-    )
-
-    /// Icom IC-7100 HF/VHF/UHF all-mode transceiver
-    public static let icomIC7100 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7100",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7100,
-        civAddress: 0x88,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: IC7100CommandSet(),
-                capabilities: RadioCapabilitiesDatabase.icomIC7100
-            )
-        }
-    )
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x94)
+    /// - Returns: RadioDefinition for IC-7300
+    public static func icomIC7300(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7300",
+            defaultBaudRate: 115200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7300,
+            civAddress: civAddress ?? IcomRadioModel.ic7300.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7300,
+                    commandSet: StandardIcomCommandSet.ic7300,
+                    capabilities: RadioCapabilitiesDatabase.icomIC7300
+                )
+            }
+        )
+    }
 
     /// Icom IC-7610 HF/6m SDR transceiver
-    public static let icomIC7610 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7610",
-        defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7610,
-        civAddress: 0x98,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7610,
-                capabilities: RadioCapabilitiesDatabase.icomIC7610
-            )
-        }
-    )
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x98)
+    /// - Returns: RadioDefinition for IC-7610
+    public static func icomIC7610(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7610",
+            defaultBaudRate: 115200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7610,
+            civAddress: civAddress ?? IcomRadioModel.ic7610.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7610,
+                    commandSet: StandardIcomCommandSet.ic7610,
+                    capabilities: RadioCapabilitiesDatabase.icomIC7610
+                )
+            }
+        )
+    }
 
-    /// Icom IC-705 portable HF/VHF/UHF transceiver
-    public static let icomIC705 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-705",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC705,
-        civAddress: 0xA4,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: IC7100CommandSet.ic705,
-                capabilities: RadioCapabilitiesDatabase.icomIC705
-            )
-        }
-    )
+    // MARK: - HF/VHF/UHF Multi-band Transceivers
 
-    /// Icom IC-9100 HF/VHF/UHF all-mode transceiver
-    public static let icomIC9100 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-9100",
-        defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomIC9100,
-        civAddress: 0x7C,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic9100,
-                capabilities: RadioCapabilitiesDatabase.icomIC9100
-            )
-        }
-    )
+    /// Icom IC-7100 HF/VHF/UHF all-mode transceiver with D-STAR
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x88)
+    /// - Returns: RadioDefinition for IC-7100
+    public static func icomIC7100(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7100",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7100,
+            civAddress: civAddress ?? IcomRadioModel.ic7100.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7100,
+                    commandSet: IC7100CommandSet(),
+                    capabilities: RadioCapabilitiesDatabase.icomIC7100
+                )
+            }
+        )
+    }
 
-    /// Icom IC-7200 HF/6m all-mode transceiver
-    public static let icomIC7200 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7200",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7200,
-        civAddress: 0x76,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7200,
-                capabilities: RadioCapabilitiesDatabase.icomIC7200
-            )
-        }
-    )
+    /// Icom IC-9700 VHF/UHF/1.2GHz all-mode transceiver with D-STAR and satellite mode
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xA2)
+    /// - Returns: RadioDefinition for IC-9700
+    public static func icomIC9700(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-9700",
+            defaultBaudRate: 115200,
+            capabilities: RadioCapabilitiesDatabase.icomIC9700,
+            civAddress: civAddress ?? IcomRadioModel.ic9700.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic9700,
+                    commandSet: IC9700CommandSet(),
+                    capabilities: RadioCapabilitiesDatabase.icomIC9700
+                )
+            }
+        )
+    }
 
-    /// Icom IC-7410 HF/6m all-mode transceiver
-    public static let icomIC7410 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7410",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7410,
-        civAddress: 0x80,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7410,
-                capabilities: RadioCapabilitiesDatabase.icomIC7410
-            )
-        }
-    )
+    /// Icom IC-705 portable HF/VHF/UHF transceiver with D-STAR
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xA4)
+    /// - Returns: RadioDefinition for IC-705
+    public static func icomIC705(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-705",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC705,
+            civAddress: civAddress ?? IcomRadioModel.ic705.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic705,
+                    commandSet: IC7100CommandSet.ic705,
+                    capabilities: RadioCapabilitiesDatabase.icomIC705
+                )
+            }
+        )
+    }
 
-    // MARK: - High-End Icom Flagships
+    // MARK: - Backward Compatibility
 
-    /// Icom IC-7700 HF/6m 200W flagship transceiver
-    public static let icomIC7700 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7700",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7700,
-        civAddress: 0x74,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7700,
-                capabilities: RadioCapabilitiesDatabase.icomIC7700
-            )
-        }
-    )
+    /// Legacy IC-9700 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC9700(civAddress:) function instead")
+    public static let icomIC9700 = icomIC9700()
 
-    /// Icom IC-7800 HF/6m 200W flagship transceiver
-    public static let icomIC7800 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7800",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7800,
-        civAddress: 0x6A,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7800,
-                capabilities: RadioCapabilitiesDatabase.icomIC7800
-            )
-        }
-    )
+    /// Legacy IC-7300 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC7300(civAddress:) function instead")
+    public static let icomIC7300 = icomIC7300()
 
-    // MARK: - Legacy Icom HF Transceivers
+    /// Legacy IC-7600 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC7600(civAddress:) function instead")
+    public static let icomIC7600 = icomIC7600()
 
-    /// Icom IC-7000 HF/VHF/UHF mobile transceiver
-    public static let icomIC7000 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-7000",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC7000,
-        civAddress: 0x70,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic7000,
-                capabilities: RadioCapabilitiesDatabase.icomIC7000
-            )
-        }
-    )
+    /// Legacy IC-7100 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC7100(civAddress:) function instead")
+    public static let icomIC7100 = icomIC7100()
 
-    /// Icom IC-756PRO HF/6m transceiver
-    public static let icomIC756PRO = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-756PRO",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC756PRO,
-        civAddress: 0x5C,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic756PRO,
-                capabilities: RadioCapabilitiesDatabase.icomIC756PRO
-            )
-        }
-    )
+    /// Legacy IC-7610 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC7610(civAddress:) function instead")
+    public static let icomIC7610 = icomIC7610()
 
-    /// Icom IC-756PROII HF/6m transceiver
-    public static let icomIC756PROII = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-756PROII",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC756PROII,
-        civAddress: 0x64,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic756PROII,
-                capabilities: RadioCapabilitiesDatabase.icomIC756PROII
-            )
-        }
-    )
-
-    /// Icom IC-756PROIII HF/6m transceiver
-    public static let icomIC756PROIII = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-756PROIII",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC756PROIII,
-        civAddress: 0x6E,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic756PROIII,
-                capabilities: RadioCapabilitiesDatabase.icomIC756PROIII
-            )
-        }
-    )
-
-    /// Icom IC-746PRO HF/VHF transceiver
-    public static let icomIC746PRO = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-746PRO",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomIC746PRO,
-        civAddress: 0x66,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.ic746PRO,
-                capabilities: RadioCapabilitiesDatabase.icomIC746PRO
-            )
-        }
-    )
-
-    // MARK: - Icom D-STAR Mobiles
-
-    /// Icom ID-5100 VHF/UHF D-STAR mobile transceiver
-    public static let icomID5100 = RadioDefinition(
-        manufacturer: .icom,
-        model: "ID-5100",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomID5100,
-        civAddress: 0x86,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.id5100,
-                capabilities: RadioCapabilitiesDatabase.icomID5100
-            )
-        }
-    )
-
-    /// Icom ID-4100 VHF/UHF D-STAR mobile transceiver
-    public static let icomID4100 = RadioDefinition(
-        manufacturer: .icom,
-        model: "ID-4100",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomID4100,
-        civAddress: 0x76,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.id4100,
-                capabilities: RadioCapabilitiesDatabase.icomID4100
-            )
-        }
-    )
-
-    // MARK: - Icom Receivers
-
-    /// Icom IC-R8600 wideband communications receiver
-    public static let icomICR8600 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-R8600",
-        defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomICR8600,
-        civAddress: 0x96,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.icR8600,
-                capabilities: RadioCapabilitiesDatabase.icomICR8600
-            )
-        }
-    )
-
-    /// Icom IC-R75 HF communications receiver
-    public static let icomICR75 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-R75",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomICR75,
-        civAddress: 0x5A,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.icR75,
-                capabilities: RadioCapabilitiesDatabase.icomICR75
-            )
-        }
-    )
-
-    /// Icom IC-R9500 professional communications receiver
-    public static let icomICR9500 = RadioDefinition(
-        manufacturer: .icom,
-        model: "IC-R9500",
-        defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.icomICR9500,
-        civAddress: 0x7A,
-        protocolFactory: { transport in
-            IcomCIVProtocol(
-                transport: transport,
-                commandSet: StandardIcomCommandSet.icR9500,
-                capabilities: RadioCapabilitiesDatabase.icomICR9500
-            )
-        }
-    )
+    /// Legacy IC-705 definition (static property for backward compatibility)
+    @available(*, deprecated, message: "Use icomIC705(civAddress:) function instead")
+    public static let icomIC705 = icomIC705()
 }

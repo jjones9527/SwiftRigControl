@@ -12,8 +12,11 @@ public actor IcomCIVProtocol: CATProtocol {
     /// The serial transport for communication
     public let transport: any SerialTransport
 
-    /// The CI-V address of the radio
-    private let civAddress: UInt8
+    /// The CI-V address of the radio (user-configurable, used for bus routing only)
+    internal let civAddress: UInt8
+
+    /// The radio model (determines command set, independent of CI-V address)
+    public let radioModel: IcomRadioModel
 
     /// The capabilities of this radio
     public let capabilities: RigCapabilities
@@ -28,12 +31,21 @@ public actor IcomCIVProtocol: CATProtocol {
     ///
     /// - Parameters:
     ///   - transport: The serial transport to use
+    ///   - civAddress: CI-V bus address (user-configurable, defaults to radio's default)
+    ///   - radioModel: The specific radio model (determines command set)
     ///   - commandSet: Radio-specific command set for formatting commands
     ///   - capabilities: The capabilities of this radio model
-    public init(transport: any SerialTransport, commandSet: any CIVCommandSet, capabilities: RigCapabilities) {
+    public init(
+        transport: any SerialTransport,
+        civAddress: UInt8? = nil,
+        radioModel: IcomRadioModel,
+        commandSet: any CIVCommandSet,
+        capabilities: RigCapabilities
+    ) {
         self.transport = transport
+        self.radioModel = radioModel
+        self.civAddress = civAddress ?? radioModel.defaultCIVAddress
         self.commandSet = commandSet
-        self.civAddress = commandSet.civAddress
         self.capabilities = capabilities
     }
 
@@ -43,11 +55,15 @@ public actor IcomCIVProtocol: CATProtocol {
     ///   - transport: The serial transport to use
     ///   - civAddress: The CI-V address of the radio (e.g., 0xA2 for IC-9700)
     ///   - capabilities: The capabilities of this radio model
-    @available(*, deprecated, message: "Use init(transport:commandSet:capabilities:) for better radio-specific support")
+    @available(*, deprecated, message: "Use init(transport:civAddress:radioModel:commandSet:capabilities:) for better radio-specific support")
     public init(transport: any SerialTransport, civAddress: UInt8, capabilities: RigCapabilities) {
         self.transport = transport
         self.civAddress = civAddress
         self.capabilities = capabilities
+
+        // Try to infer radio model from CI-V address (legacy behavior)
+        // This is imperfect since addresses are user-configurable
+        self.radioModel = IcomRadioModel.allCases.first { $0.defaultCIVAddress == civAddress } ?? .ic7300
 
         // Create a standard command set based on capabilities
         // Use targetable VFO model as legacy default
@@ -369,14 +385,14 @@ public actor IcomCIVProtocol: CATProtocol {
     // MARK: - Private Methods
 
     /// Sends a CI-V frame to the radio.
-    private func sendFrame(_ frame: CIVFrame) async throws {
+    internal func sendFrame(_ frame: CIVFrame) async throws {
         let data = Data(frame.bytes())
         try await transport.write(data)
     }
 
     /// Receives a CI-V frame from the radio.
     /// Automatically skips echo frames for radios that echo commands (determined by command set).
-    private func receiveFrame() async throws -> CIVFrame {
+    internal func receiveFrame() async throws -> CIVFrame {
         // Read until terminator (0xFD)
         let data = try await transport.readUntil(
             terminator: CIVFrame.terminator,
