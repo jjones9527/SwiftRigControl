@@ -210,7 +210,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getInnerPBTIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.innerPBT)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.innerPBT)
     }
 
     /// Set outer TWIN PBT (0-255) (IC-7600)
@@ -227,7 +227,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getOuterPBTIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.outerPBT)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.outerPBT)
     }
 
     /// Set notch position (0-255) (IC-7600)
@@ -244,7 +244,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getNotchPositionIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.notchPosition)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.notchPosition)
     }
 
     /// Set compression level (0-255) (IC-7600)
@@ -261,7 +261,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getCompLevelIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.compLevel)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.compLevel)
     }
 
     /// Set break-in delay (0-255) (IC-7600)
@@ -278,7 +278,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getBreakInDelayIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.breakInDelay)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.breakInDelay)
     }
 
     /// Set balance (0-255) (IC-7600)
@@ -295,7 +295,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getBalanceIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.balance)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.balance)
     }
 
     /// Set drive gain (0-255) (IC-7600)
@@ -312,7 +312,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getDriveGainIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.driveGain)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.driveGain)
     }
 
     /// Set brightness level (0-255) (IC-7600)
@@ -329,7 +329,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getBrightLevelIC7600 is only available on IC-7600")
         }
-        try await getLevelIC7600(CIVFrame.SettingsCode.brightLevel)
+        return try await getLevelIC7600(CIVFrame.SettingsCode.brightLevel)
     }
 
     // MARK: - Meter Readings (IC-7600 Specific)
@@ -372,7 +372,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getPreampIC7600 is only available on IC-7600")
         }
-        try await getFunctionIC7600(CIVFrame.FunctionCode.preamp)
+        return try await getFunctionIC7600(CIVFrame.FunctionCode.preamp)
     }
 
     /// Set AGC (IC-7600)
@@ -389,7 +389,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getAGCIC7600 is only available on IC-7600")
         }
-        try await getFunctionIC7600(CIVFrame.FunctionCode.agc)
+        return try await getFunctionIC7600(CIVFrame.FunctionCode.agc)
     }
 
     /// Set audio peak filter (IC-7600)
