@@ -49,6 +49,33 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-756 Pro HF/6m 100W transceiver
     case ic756pro = "IC-756 Pro"
 
+    /// IC-756 HF/6m 100W transceiver (original model)
+    case ic756 = "IC-756"
+
+    /// IC-746 Pro HF/6m/2m receive transceiver
+    case ic746pro = "IC-746 Pro"
+
+    /// IC-746 HF/6m/2m receive transceiver
+    case ic746 = "IC-746"
+
+    /// IC-7700 HF/6m 200W high-end transceiver
+    case ic7700 = "IC-7700"
+
+    /// IC-7410 HF/6m 100W transceiver
+    case ic7410 = "IC-7410"
+
+    /// IC-7200 HF/6m 100W transceiver
+    case ic7200 = "IC-7200"
+
+    /// IC-706MKIIG HF/VHF/UHF mobile transceiver
+    case ic706mkiig = "IC-706MKIIG"
+
+    /// IC-706MKII HF/VHF mobile transceiver
+    case ic706mkii = "IC-706MKII"
+
+    /// IC-706 HF/VHF mobile transceiver
+    case ic706 = "IC-706"
+
     // MARK: - HF/VHF/UHF Multi-band Transceivers
 
     /// IC-7100 HF/VHF/UHF 100W transceiver with D-STAR
@@ -94,10 +121,19 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7000 HF/VHF/UHF 100W mobile transceiver
     case ic7000 = "IC-7000"
 
-    // MARK: - Portable/Handheld
+    /// ID-5100 VHF/UHF dual-band mobile with D-STAR
+    case id5100 = "ID-5100"
+
+    /// ID-4100 VHF/UHF dual-band mobile with D-STAR
+    case id4100 = "ID-4100"
+
+    // MARK: - Receivers
 
     /// IC-R8600 Wideband communications receiver
     case icr8600 = "IC-R8600"
+
+    /// IC-R75 HF communications receiver
+    case icr75 = "IC-R75"
 
     /// IC-R30 Handheld wideband receiver
     case icr30 = "IC-R30"
@@ -119,9 +155,18 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7851: return 0x8E
         case .ic7850: return 0x8E
         case .ic7800: return 0x6A
+        case .ic7700: return 0x74
+        case .ic7410: return 0x80
+        case .ic7200: return 0x76
         case .ic756proIII: return 0x6E
         case .ic756proII: return 0x64
         case .ic756pro: return 0x5C
+        case .ic756: return 0x50
+        case .ic746pro: return 0x66
+        case .ic746: return 0x56
+        case .ic706mkiig: return 0x58
+        case .ic706mkii: return 0x4E
+        case .ic706: return 0x48
 
         // Multi-band
         case .ic7100: return 0x88
@@ -141,11 +186,14 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic2730: return 0x90
         case .ic2820h: return 0x42
         case .ic7000: return 0x70
+        case .id5100: return 0x8C
+        case .id4100: return 0x9A
 
         // Receivers
         case .icr8600: return 0x96
+        case .icr75: return 0x5A
         case .icr30: return 0x9C
-        case .icr9500: return 0x7A  // Same as IC-7600
+        case .icr9500: return 0x72
         }
     }
 
@@ -157,7 +205,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio supports D-STAR digital voice
     public var supportsDSTAR: Bool {
         switch self {
-        case .ic7100, .ic9700, .ic9100, .ic705, .ic2820h:
+        case .ic7100, .ic9700, .ic9100, .ic705, .ic2820h, .id4100, .id5100:
             return true
         default:
             return false
@@ -177,7 +225,8 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio has dual receivers
     public var hasDualReceiver: Bool {
         switch self {
-        case .ic7600, .ic7610, .ic7851, .ic7850, .ic7800, .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h:
+        case .ic7600, .ic7610, .ic7851, .ic7850, .ic7800, .ic756, .ic756pro, .ic756proII, .ic756proIII,
+             .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h, .id4100, .id5100:
             return true
         default:
             return false

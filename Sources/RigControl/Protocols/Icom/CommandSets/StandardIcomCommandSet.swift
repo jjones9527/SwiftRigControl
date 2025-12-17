@@ -134,79 +134,75 @@ extension StandardIcomCommandSet {
     }
 
     /// IC-7800 HF/50MHz high-power flagship transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - VFO Model: Main/Sub (dual receiver architecture)
     /// - 19200 baud, 200W, requires mode filter
     public static var ic7800: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x6A, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x6A, vfoModel: .mainSub)
+    }
+
+    /// IC-7850/IC-7851 HF/50MHz flagship with spectrum scope
+    /// - VFO Model: Main/Sub (dual receiver architecture with targetable spectrum)
+    /// - 19200 baud, 200W, requires mode filter
+    public static var ic7851: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x8E, vfoModel: .mainSub)
     }
 
     /// IC-7000 HF/VHF/UHF mobile transceiver
-    /// - VFO Model: Current Only (operates on current VFO)
-    /// - 19200 baud, 100W, requires mode filter
+    /// - VFO Model: Targetable (can target VFO A/B directly)
+    /// - 19200 baud, 100W HF/50W VHF/35W UHF, requires mode filter
     public static var ic7000: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x70, vfoModel: .currentOnly)
+        StandardIcomCommandSet(civAddress: 0x70, vfoModel: .targetable)
     }
 
-    /// IC-756PROIII HF/50MHz transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 100W, requires mode filter
-    public static var ic756PROIII: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x6E, vfoModel: .targetable)
+    /// IC-910H VHF/UHF satellite transceiver
+    /// - VFO Model: Main/Sub (satellite dual receiver with A/B per receiver)
+    /// - 19200 baud, 100W 2m/75W 70cm, requires mode filter
+    public static var ic910H: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x60, vfoModel: .mainSub)
     }
 
-    /// IC-756PROII HF/50MHz transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 100W, requires mode filter
-    public static var ic756PROII: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x64, vfoModel: .targetable)
-    }
-
-    /// IC-756PRO HF/50MHz transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 100W, requires mode filter
-    public static var ic756PRO: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x5C, vfoModel: .targetable)
-    }
-
-    /// IC-746PRO HF/VHF transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 100W, requires mode filter
-    public static var ic746PRO: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x66, vfoModel: .targetable)
+    /// IC-2730 VHF/UHF dual-band mobile transceiver
+    /// - VFO Model: Main/Sub (dual receiver, no VFO operations)
+    /// - 19200 baud, 25W/50W depending on region
+    /// - Note: No memory support via CI-V (clone mode only)
+    public static var ic2730: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x90, vfoModel: .mainSub)
     }
 
     /// ID-5100 VHF/UHF mobile transceiver with D-STAR
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 50W, requires mode filter
+    /// - VFO Model: Main/Sub (complex dual-watch architecture)
+    /// - 19200 baud, 25W/50W depending on region
+    /// - Note: Use SP2 port for rig control, not Data port
     public static var id5100: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x86, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x8C, vfoModel: .mainSub)
     }
 
     /// ID-4100 VHF/UHF mobile transceiver with D-STAR
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 65W, requires mode filter
+    /// - VFO Model: Main/Sub (dual receiver)
+    /// - 19200 baud, 25W/50W depending on region
+    /// - Note: Use SP2 port for rig control, not Data port
     public static var id4100: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x76, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x9A, vfoModel: .mainSub)
     }
 
     /// IC-R8600 wideband communications receiver
     /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 115200 baud, receiver only (no PTT/power control)
+    /// - 115200 baud (high speed!), receiver only (no PTT/power control)
     public static var icR8600: StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x96, vfoModel: .targetable)
     }
 
     /// IC-R75 HF communications receiver
-    /// - VFO Model: None (single VFO receiver)
-    /// - 19200 baud, receiver only (no PTT/power control)
-    public static var icR75: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x5A, vfoModel: .none)
-    }
-
-    /// IC-R9500 professional communications receiver
     /// - VFO Model: Targetable (can target VFO A/B directly)
     /// - 19200 baud, receiver only (no PTT/power control)
+    public static var icR75: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x5A, vfoModel: .targetable)
+    }
+
+    /// IC-R9500 professional wideband communications receiver
+    /// - VFO Model: Targetable (VFO A + Memory)
+    /// - 1200 baud (very slow!), receiver only (no PTT/power control)
     public static var icR9500: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x72, vfoModel: .targetable)
     }
 }
