@@ -97,4 +97,56 @@ public enum BCDEncoding {
 
         return hundreds * 100 + tens * 10 + ones
     }
+
+    /// Encodes a RIT/XIT offset to BCD format.
+    ///
+    /// Icom radios use 3-byte BCD encoding for RIT/XIT offsets (±9999 Hz):
+    /// - Byte 0: ones and tens digits (lower nibble = ones, upper nibble = tens)
+    /// - Byte 1: hundreds and thousands digits (lower nibble = hundreds, upper nibble = kHz)
+    /// - Byte 2: direction (0x00 = positive, 0x01 = negative)
+    ///
+    /// Example: +2500 Hz -> [0x00, 0x25, 0x00], -1234 Hz -> [0x34, 0x12, 0x01]
+    ///
+    /// - Parameter hz: Offset in Hz (-9999 to +9999)
+    /// - Returns: 3-byte BCD encoded offset
+    public static func encodeRITXITOffset(_ hz: Int) -> [UInt8] {
+        let absHz = abs(hz)
+        let direction: UInt8 = hz >= 0 ? 0x00 : 0x01
+
+        let ones = UInt8(absHz % 10)
+        let tens = UInt8((absHz / 10) % 10)
+        let hundreds = UInt8((absHz / 100) % 10)
+        let thousands = UInt8(absHz / 1000)
+
+        return [
+            ones | (tens << 4),           // Byte 0: ones in lower nibble, tens in upper nibble
+            hundreds | (thousands << 4),  // Byte 1: hundreds in lower nibble, kHz in upper nibble
+            direction                     // Byte 2: 0x00 = positive, 0x01 = negative
+        ]
+    }
+
+    /// Decodes a BCD-encoded RIT/XIT offset.
+    ///
+    /// - Parameter bcd: 3-byte BCD encoded offset
+    /// - Returns: Offset in Hz (-9999 to +9999)
+    /// - Throws: `RigError.invalidResponse` if BCD data is invalid
+    public static func decodeRITXITOffset(_ bcd: [UInt8]) throws -> Int {
+        guard bcd.count == 3 else {
+            throw RigError.invalidResponse
+        }
+
+        let ones = Int(bcd[0] & 0x0F)
+        let tens = Int((bcd[0] >> 4) & 0x0F)
+        let hundreds = Int(bcd[1] & 0x0F)
+        let thousands = Int((bcd[1] >> 4) & 0x0F)
+        let direction = bcd[2]
+
+        // Validate BCD digits
+        guard ones <= 9 && tens <= 9 && hundreds <= 9 && thousands <= 9 else {
+            throw RigError.invalidResponse
+        }
+
+        let absHz = thousands * 1000 + hundreds * 100 + tens * 10 + ones
+        return direction == 0x00 ? absHz : -absHz
+    }
 }

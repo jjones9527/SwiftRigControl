@@ -156,6 +156,14 @@ public struct RigCapabilities: Sendable, Codable {
     /// ITU region for amateur band validation (defaults to Region 2)
     public let region: AmateurRadioRegion
 
+    /// Radio supports RIT (Receiver Incremental Tuning)
+    /// Most modern transceivers support RIT
+    public let supportsRIT: Bool
+
+    /// Radio supports XIT (Transmitter Incremental Tuning)
+    /// Some radios only support RIT (affects both RX/TX), not separate XIT
+    public let supportsXIT: Bool
+
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,
@@ -170,7 +178,9 @@ public struct RigCapabilities: Sendable, Codable {
         requiresVFOSelection: Bool = true,
         requiresModeFilter: Bool = true,
         powerUnits: PowerUnits = .percentage,
-        region: AmateurRadioRegion = .region2
+        region: AmateurRadioRegion = .region2,
+        supportsRIT: Bool = true,
+        supportsXIT: Bool = true
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -186,6 +196,8 @@ public struct RigCapabilities: Sendable, Codable {
         self.requiresModeFilter = requiresModeFilter
         self.powerUnits = powerUnits
         self.region = region
+        self.supportsRIT = supportsRIT
+        self.supportsXIT = supportsXIT
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)
@@ -199,7 +211,9 @@ public struct RigCapabilities: Sendable, Codable {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        requiresVFOSelection: true
+        requiresVFOSelection: true,
+        supportsRIT: true,
+        supportsXIT: true
     )
 
     /// Basic radio capabilities (for simple transceivers)
@@ -213,7 +227,9 @@ public struct RigCapabilities: Sendable, Codable {
         hasDualReceiver: false,
         hasATU: false,
         supportsSignalStrength: false,
-        requiresVFOSelection: false
+        requiresVFOSelection: false,
+        supportsRIT: false,
+        supportsXIT: false
     )
 }
 

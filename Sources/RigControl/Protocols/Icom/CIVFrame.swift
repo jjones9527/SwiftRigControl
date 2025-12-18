@@ -223,6 +223,9 @@ extension CIVFrame {
 
         /// TX frequency band (0x1E)
         public static let txBand: UInt8 = 0x1E
+
+        /// RIT/XIT control (0x21)
+        public static let ritXit: UInt8 = 0x21
     }
 
     /// VFO selection sub-commands (used with Command.selectVFO 0x07)
@@ -250,6 +253,21 @@ extension CIVFrame {
 
         /// Select sub receiver (0xD1)
         public static let sub: UInt8 = 0xD1
+    }
+
+    /// RIT/XIT sub-commands (used with Command.ritXit 0x21)
+    public enum RITXITCode {
+        /// RIT frequency offset (0x00)
+        public static let ritFrequency: UInt8 = 0x00
+
+        /// RIT ON/OFF (0x01)
+        public static let ritOnOff: UInt8 = 0x01
+
+        /// XIT frequency offset (0x02) - Not supported by all radios
+        public static let xitFrequency: UInt8 = 0x02
+
+        /// XIT ON/OFF (0x03) - Not supported by all radios
+        public static let xitOnOff: UInt8 = 0x03
     }
 
     /// Mode codes (used with Command.setMode/readMode 0x06/0x04)
