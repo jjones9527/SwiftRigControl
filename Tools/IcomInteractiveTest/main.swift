@@ -56,119 +56,119 @@ struct TestRadio {
 let availableRadios: [TestRadio] = [
     // Modern SDR Transceivers
     TestRadio(
-        definition: .icomIC7300,
+        definition: .icomIC7300(),
         name: "IC-7300",
         description: "HF/6m SDR Transceiver (VFO A/B)"
     ),
     TestRadio(
-        definition: .icomIC7610,
+        definition: .icomIC7610(),
         name: "IC-7610",
         description: "HF/6m SDR Transceiver (Dual RX, VFO A/B)"
     ),
     TestRadio(
-        definition: .icomIC9700,
+        definition: .icomIC9700(),
         name: "IC-9700",
         description: "VHF/UHF/1.2GHz SDR (2m/70cm/23cm, Main/Sub)"
     ),
 
     // Multi-Band Transceivers
     TestRadio(
-        definition: .icomIC7100,
+        definition: .icomIC7100(),
         name: "IC-7100",
         description: "HF/VHF/UHF All-Mode (VFO A/B)"
     ),
     TestRadio(
-        definition: .icomIC705,
+        definition: .icomIC705(),
         name: "IC-705",
         description: "HF/VHF/UHF Portable (VFO A/B)"
     ),
     TestRadio(
-        definition: .icomIC9100,
+        definition: .icomIC9100(),
         name: "IC-9100",
         description: "HF/VHF/UHF All-Mode (Main/Sub)"
     ),
 
     // HF Transceivers
     TestRadio(
-        definition: .icomIC7600,
+        definition: .icomIC7600(),
         name: "IC-7600",
         description: "HF/6m High-End (Main/Sub)"
     ),
     TestRadio(
-        definition: .icomIC7200,
+        definition: .icomIC7200(),
         name: "IC-7200",
         description: "HF/6m Mid-Range"
     ),
     TestRadio(
-        definition: .icomIC7410,
+        definition: .icomIC7410(),
         name: "IC-7410",
         description: "HF/6m Transceiver"
     ),
 
     // High-End Flagships
     TestRadio(
-        definition: .icomIC7700,
+        definition: .icomIC7700(),
         name: "IC-7700",
         description: "HF/6m 200W Flagship"
     ),
     TestRadio(
-        definition: .icomIC7800,
+        definition: .icomIC7800(),
         name: "IC-7800",
         description: "HF/6m 200W Flagship (Dual RX)"
     ),
 
     // Legacy HF Transceivers
     TestRadio(
-        definition: .icomIC7000,
+        definition: .icomIC7000(),
         name: "IC-7000",
         description: "HF/VHF/UHF Mobile"
     ),
     TestRadio(
-        definition: .icomIC756PRO,
+        definition: .icomIC756PRO(),
         name: "IC-756PRO",
         description: "HF/6m Classic"
     ),
     TestRadio(
-        definition: .icomIC756PROII,
+        definition: .icomIC756PROII(),
         name: "IC-756PROII",
         description: "HF/6m Classic"
     ),
     TestRadio(
-        definition: .icomIC756PROIII,
+        definition: .icomIC756PROIII(),
         name: "IC-756PROIII",
         description: "HF/6m Classic"
     ),
     TestRadio(
-        definition: .icomIC746PRO,
+        definition: .icomIC746PRO(),
         name: "IC-746PRO",
         description: "HF/VHF Transceiver"
     ),
 
     // D-STAR Mobiles
     TestRadio(
-        definition: .icomID5100,
+        definition: .icomID5100(),
         name: "ID-5100",
         description: "VHF/UHF D-STAR Mobile"
     ),
     TestRadio(
-        definition: .icomID4100,
+        definition: .icomID4100(),
         name: "ID-4100",
         description: "VHF/UHF D-STAR Mobile"
     ),
 
     // Receivers
     TestRadio(
-        definition: .icomICR8600,
+        definition: .icomICR8600(),
         name: "IC-R8600",
         description: "Wideband Communications Receiver"
     ),
     TestRadio(
-        definition: .icomICR75,
+        definition: .icomICR75(),
         name: "IC-R75",
         description: "HF Communications Receiver"
     ),
     TestRadio(
-        definition: .icomICR9500,
+        definition: .icomICR9500(),
         name: "IC-R9500",
         description: "Professional Communications Receiver"
     ),

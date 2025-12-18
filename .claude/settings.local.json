@@ -4,7 +4,14 @@
       "Bash(find:*)",
       "WebSearch",
       "Bash(swift build:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.icomfrance.com)",
+      "WebFetch(domain:www2.icomcanada.com)",
+      "Bash(pdftotext:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(for dir in /Users/jeremyjones/Developer/XCode/SwiftRigControl/Sources/*)",
+      "Bash(do echo '=== $(basename $dir) ===' ls -1 $dir)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

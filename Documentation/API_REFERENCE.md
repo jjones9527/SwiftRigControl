@@ -421,30 +421,47 @@ print("Dual receiver: \(caps.hasDualReceiver)")
 
 All supported radios are available as static properties on `RadioDefinition`.
 
-### Icom Radios (21 models)
+### Icom Radios (25 models)
 
 ```swift
-.icomIC9700         // VHF/UHF/1.2GHz, 100W, dual RX
-.icomIC7300         // HF/6m, 100W
-.icomIC7600         // HF/6m, 100W, dual RX
-.icomIC7100         // HF/VHF/UHF, 100W
-.icomIC7610         // HF/6m, 100W, dual RX, SDR
+// Flagship & High-End HF
+.icomIC7851         // HF/6m flagship with spectrum scope, 200W
+.icomIC7800         // HF/6m flagship dual receiver, 200W
+.icomIC7700         // HF/6m high-end, 200W
+.icomIC7610         // HF/6m SDR with dual receiver, 100W
+.icomIC7600         // HF/6m high-performance dual receiver, 100W
+
+// Popular HF Transceivers
+.icomIC7300         // HF/6m all-mode SDR, 100W
+.icomIC7410         // HF/6m all-mode, 100W
+.icomIC7200         // HF/6m mid-range, 100W
+.icomIC756PROIII    // HF/6m dual receiver, 100W
+.icomIC756PROII     // HF/6m dual receiver, 100W
+.icomIC756PRO       // HF/6m dual receiver, 100W
+.icomIC756          // HF/6m dual receiver, 100W
+.icomIC746PRO       // HF/6m + 2m receive, 100W
+.icomIC746          // HF/6m + 2m receive, 100W
+
+// HF + VHF/UHF Multi-Band
+.icomIC9100         // HF/VHF/UHF dual receiver with satellite, 100W
+.icomIC7100         // HF/VHF/UHF all-mode, 100W
 .icomIC705          // HF/VHF/UHF portable, 10W
-.icomIC9100         // HF/VHF/UHF, 100W, dual RX
-.icomIC7200         // HF/6m, 100W
-.icomIC7410         // HF/6m, 100W
-.icomIC7700         // HF/6m, 200W
-.icomIC7800         // HF/6m, 200W flagship
 .icomIC7000         // HF/VHF/UHF mobile, 100W
-.icomIC756PRO       // HF/6m, 100W
-.icomIC756PROII     // HF/6m, 100W
-.icomIC756PROIII    // HF/6m, 100W
-.icomIC746PRO       // HF/2m, 100W
-.icomID5100         // VHF/UHF D-STAR, 50W
-.icomID4100         // VHF/UHF D-STAR, 65W
-.icomICR8600        // Wideband receiver, 25kHz-3GHz
-.icomICR75          // HF receiver
-.icomICR9500        // Professional receiver, 5kHz-3.3GHz
+.icomIC706MKIIG     // HF/VHF/UHF mobile, 100W
+.icomIC706MKII      // HF/VHF mobile, 100W
+.icomIC706          // HF/VHF mobile, 100W
+
+// VHF/UHF
+.icomIC9700         // VHF/UHF/1.2GHz all-mode dual receiver, 100W
+.icomIC910H         // VHF/UHF satellite transceiver, 100W
+.icomIC2730         // VHF/UHF dual-band FM mobile, 50W
+.icomID5100         // VHF/UHF D-STAR mobile, 50W
+.icomID4100         // VHF/UHF D-STAR mobile, 50W
+
+// Receivers
+.icomICR9500        // Professional wideband receiver, 1.2kHz-3.3GHz
+.icomICR8600        // Wideband receiver, 10kHz-3GHz
+.icomICR75          // HF receiver, 30kHz-60MHz
 ```
 
 ### Elecraft Radios (6 models)

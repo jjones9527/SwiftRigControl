@@ -91,12 +91,14 @@ extension IcomRadioCommandSet {
     /// Default mode set command implementation.
     ///
     /// Handles filter byte based on `requiresModeFilter`:
-    /// - If true: Sends mode + filter byte (0x00 = default filter)
+    /// - If true: Sends mode + filter byte (0x01 = FIL1, default filter per IC-7600 manual)
     /// - If false: Sends mode only (IC-7100 family)
     public func setModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
         if requiresModeFilter {
             // Standard: mode + filter byte
-            return ([CIVFrame.Command.setMode], [mode, 0x00])
+            // Per IC-7600 CI-V manual: Valid filter codes are 01=FIL1, 02=FIL2, 03=FIL3
+            // Using 0x01 (FIL1) as default - 0x00 is NOT valid and causes NAK response
+            return ([CIVFrame.Command.setMode], [mode, 0x01])
         } else {
             // IC-7100 family: mode only (NAKs if filter byte sent)
             return ([CIVFrame.Command.setMode], [mode])
@@ -148,17 +150,17 @@ extension IcomRadioCommandSet {
         // Scale to 0-255 for BCD encoding
         let scale = (percentage * 255) / 100
         let bcd = BCDEncoding.encodePower(scale)
-        return ([CIVFrame.Command.settings, CIVFrame.LevelRead.rfPower], bcd)
+        return ([CIVFrame.Command.settings, CIVFrame.SettingsCode.rfPower], bcd)
     }
 
     public func readPowerCommand() -> [UInt8] {
-        return [CIVFrame.Command.settings, CIVFrame.LevelRead.rfPower]
+        return [CIVFrame.Command.settings, CIVFrame.SettingsCode.rfPower]
     }
 
     public func parsePowerResponse(_ response: CIVFrame) throws -> Int {
         guard response.command.count >= 2,
               response.command[0] == CIVFrame.Command.settings,
-              response.command[1] == CIVFrame.LevelRead.rfPower,
+              response.command[1] == CIVFrame.SettingsCode.rfPower,
               response.data.count >= 2 else {
             throw RigError.invalidResponse
         }

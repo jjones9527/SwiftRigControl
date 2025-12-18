@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and varying frequency capabilities. The IcomInteractiveTest must account for these variations to ensure accurate hardware testing.
+SwiftRigControl supports 25 Icom radios with 4 distinct VFO operation models and varying frequency capabilities. The IcomInteractiveTest must account for these variations to ensure accurate hardware testing.
 
 ## VFO Operation Models
 
@@ -12,13 +12,14 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 **Radios:**
 - IC-7300 (HF/6m, 100W)
 - IC-7700 (HF/6m, 200W)
-- IC-7800 (HF/6m, 200W)
-- IC-756PRO (HF/6m, 100W)
-- IC-756PROII (HF/6m, 100W)
-- IC-756PROIII (HF/6m, 100W)
+- IC-706 (HF/VHF mobile, 100W)
+- IC-706MKII (HF/VHF mobile, 100W)
+- IC-706MKIIG (HF/VHF/UHF mobile, 100W)
+- IC-746 (HF/VHF 2m, 100W)
 - IC-746PRO (HF/VHF 2m, 100W)
+- IC-2730 (VHF/UHF FM mobile, 50W)
 - ID-5100 (VHF/UHF, 50W D-STAR)
-- ID-4100 (VHF/UHF, 65W D-STAR)
+- ID-4100 (VHF/UHF, 50W D-STAR)
 - IC-R8600 (Receiver)
 - IC-R9500 (Receiver)
 
@@ -31,10 +32,17 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 **Dual receiver architecture using Main and Sub bands**
 
 **Radios:**
+- IC-7851 (HF/6m flagship, 200W, dual RX)
+- IC-7800 (HF/6m flagship, 200W, dual RX)
 - IC-7610 (HF/6m, 100W, dual RX)
 - IC-7600 (HF/6m, 100W, dual RX)
+- IC-756 (HF/6m, 100W, dual RX)
+- IC-756PRO (HF/6m, 100W, dual RX)
+- IC-756PROII (HF/6m, 100W, dual RX)
+- IC-756PROIII (HF/6m, 100W, dual RX)
 - IC-9700 (VHF/UHF/1.2GHz, 100W, 2m/70cm/23cm only)
 - IC-9100 (HF/VHF/UHF, 100W, dual RX)
+- IC-910H (VHF/UHF satellite, 100W, dual RX)
 
 **Test Requirements:**
 - Use VFO .main and .sub (NOT .a/.b)
@@ -72,9 +80,9 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 
 ### HF Only (30 kHz - 60 MHz)
 **160m, 80m, 40m, 30m, 20m, 17m, 15m, 12m, 10m, 6m**
-- IC-7300, IC-7610, IC-7600, IC-7200, IC-7410
-- IC-7700, IC-7800
-- IC-756PRO, IC-756PROII, IC-756PROIII
+- IC-7851, IC-7800, IC-7700 (200W flagships)
+- IC-7610, IC-7600, IC-7410, IC-7300, IC-7200 (100W HF)
+- IC-756, IC-756PRO, IC-756PROII, IC-756PROIII (100W HF, dual RX)
 - IC-R75 (receiver)
 
 **Test Frequencies:**
@@ -85,6 +93,9 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 ### HF + VHF (30 kHz - 60 MHz + 144-148 MHz)
 **All HF bands + 2m**
 - IC-746PRO (HF/6m + 2m)
+- IC-746 (HF/6m + 2m)
+- IC-706 (HF/VHF mobile)
+- IC-706MKII (HF/VHF mobile)
 
 **Test Frequencies:**
 - HF: Same as above
@@ -96,6 +107,7 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 - IC-705 (HF through 70cm, portable, current VFO only, no filter byte)
 - IC-9100 (HF through 70cm, Main/Sub dual RX)
 - IC-7000 (HF through 70cm, mobile)
+- IC-706MKIIG (HF/VHF/UHF mobile)
 
 **Test Frequencies:**
 - HF: 14.200 MHz (USB)
@@ -104,8 +116,9 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 
 ### VHF/UHF Only (144-148 MHz, 430-450 MHz)
 **2m and 70cm only**
+- IC-2730 (2m/70cm FM mobile, 50W)
 - ID-5100 (2m/70cm D-STAR mobile, 50W)
-- ID-4100 (2m/70cm D-STAR mobile, 65W)
+- ID-4100 (2m/70cm D-STAR mobile, 50W)
 
 **Test Frequencies:**
 - 2m: 145.000 MHz (FM/DV)
@@ -114,6 +127,7 @@ SwiftRigControl supports 22 Icom radios with 4 distinct VFO operation models and
 ### VHF/UHF/1.2GHz Only (144-1300 MHz)
 **2m, 70cm, 23cm (NO HF!)**
 - IC-9700 (2m/70cm/23cm, Main/Sub, NO HF transmit capability)
+- IC-910H (2m/70cm satellite transceiver, Main/Sub dual RX)
 
 **Test Frequencies:**
 - 2m: 145.000 MHz (USB/FM)

@@ -466,4 +466,26 @@ public actor RigController {
     public var radioName: String {
         radio.fullName
     }
+
+    // MARK: - Radio-Specific Protocol Access
+
+    /// Access to the underlying protocol for radio-specific operations.
+    ///
+    /// This property provides access to the underlying CAT protocol implementation,
+    /// allowing access to radio-specific commands that are not part of the standard
+    /// RigController API.
+    ///
+    /// For IC-7600 radios, cast to `IcomCIVProtocol` to access extended commands:
+    /// ```swift
+    /// if let icomProto = await rig.protocol as? IcomCIVProtocol {
+    ///     try await icomProto.setAttenuator(6)
+    ///     try await icomProto.setPreamp(1)
+    /// }
+    /// ```
+    ///
+    /// - Warning: Radio-specific commands may not be portable across different models.
+    ///   Always check the protocol type before casting.
+    public var `protocol`: any CATProtocol {
+        proto
+    }
 }

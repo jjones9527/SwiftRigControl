@@ -17,12 +17,13 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 ## Supported Radios
 
-**49 radio models across 4 manufacturers**
+**53 radio models across 4 manufacturers**
 
-### Icom (CI-V Protocol) - 21 models ✅
+### Icom (CI-V Protocol) - 25 models ✅
 
 **Flagship & High-End HF:**
-- **IC-7800** - HF/6m flagship (200W, CI-V: 0x6A)
+- **IC-7851** - HF/6m flagship with spectrum scope (200W, CI-V: 0x8E)
+- **IC-7800** - HF/6m flagship dual receiver (200W, CI-V: 0x6A)
 - **IC-7700** - HF/6m high-end (200W, CI-V: 0x74)
 - **IC-7610** - HF/6m SDR with dual receiver (100W, CI-V: 0x98)
 - **IC-7600** - HF/6m high-performance dual receiver (100W, CI-V: 0x7A)
@@ -31,26 +32,33 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **IC-7300** - HF/6m all-mode SDR (100W, CI-V: 0x94)
 - **IC-7410** - HF/6m all-mode (100W, CI-V: 0x80)
 - **IC-7200** - HF/6m mid-range (100W, CI-V: 0x76)
-- **IC-756PRO III** - HF/6m (100W, CI-V: 0x6E)
-- **IC-756PRO II** - HF/6m (100W, CI-V: 0x66)
-- **IC-756PRO** - HF/6m (100W, CI-V: 0x5C)
+- **IC-756PRO III** - HF/6m dual receiver (100W, CI-V: 0x6E)
+- **IC-756PRO II** - HF/6m dual receiver (100W, CI-V: 0x64)
+- **IC-756PRO** - HF/6m dual receiver (100W, CI-V: 0x5C)
+- **IC-756** - HF/6m dual receiver (100W, CI-V: 0x50)
+- **IC-746PRO** - HF/6m + 2m receive (100W, CI-V: 0x66)
+- **IC-746** - HF/6m + 2m receive (100W, CI-V: 0x56)
 
-**HF + VHF/UHF:**
-- **IC-9100** - HF/VHF/UHF dual receiver (100W, CI-V: 0x7C)
+**HF + VHF/UHF Multi-Band:**
+- **IC-9100** - HF/VHF/UHF dual receiver with satellite (100W, CI-V: 0x7C)
 - **IC-7100** - HF/VHF/UHF all-mode (100W, CI-V: 0x88)
 - **IC-705** - HF/VHF/UHF portable (10W, CI-V: 0xA4)
-- **IC-7000** - HF/VHF/UHF mobile (100W, CI-V: 0x70)
-- **IC-746PRO** - HF + 2m (100W, CI-V: 0x66)
+- **IC-7000** - HF/VHF/UHF mobile (100W HF/50W VHF/35W UHF, CI-V: 0x70)
+- **IC-706MKIIG** - HF/VHF/UHF mobile (100W HF/50W VHF/20W UHF, CI-V: 0x58)
+- **IC-706MKII** - HF/VHF mobile (100W HF, CI-V: 0x4E)
+- **IC-706** - HF/VHF mobile (100W HF, CI-V: 0x48)
 
 **VHF/UHF:**
 - **IC-9700** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
-- **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x86)
-- **ID-4100** - VHF/UHF D-STAR mobile (65W, CI-V: 0x82)
+- **IC-910H** - VHF/UHF satellite transceiver (100W 2m/75W 70cm, CI-V: 0x60)
+- **IC-2730** - VHF/UHF dual-band FM mobile (50W, CI-V: 0x90)
+- **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x8C)
+- **ID-4100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x9A)
 
 **Receivers:**
-- **IC-R9500** - Professional wideband receiver (5kHz-3.3GHz, CI-V: 0x7A)
-- **IC-R8600** - Wideband receiver (25kHz-3GHz, CI-V: 0x96)
-- **IC-R75** - HF receiver (CI-V: 0x5A)
+- **IC-R9500** - Professional wideband receiver (1.2kHz-3.3GHz, CI-V: 0x72)
+- **IC-R8600** - Wideband receiver (10kHz-3GHz, CI-V: 0x96)
+- **IC-R75** - HF receiver (30kHz-60MHz, CI-V: 0x5A)
 
 ### Elecraft (Text-Based Protocol) - 6 models ✅
 
@@ -367,12 +375,32 @@ Common patterns:
 
 | Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
 |-------|-----------|-----------|-----------------|---------|-----|-------|
-| IC-9700 | 115200 | 100W | 144 MHz - 1.3 GHz | Yes | No | Yes |
+| IC-7851 | 19200 | 200W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7800 | 19200 | 200W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7700 | 19200 | 200W | 30 kHz - 60 MHz | No | Yes | Yes |
 | IC-7610 | 115200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
-| IC-7300 | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
 | IC-7600 | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-7300 | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| IC-7410 | 19200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
+| IC-7200 | 19200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
 | IC-7100 | 19200 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| IC-7000 | 19200 | 100W | 30 kHz - 500 MHz | No | Yes | Yes |
+| IC-9700 | 115200 | 100W | 144 MHz - 1.3 GHz | Yes | No | Yes |
+| IC-9100 | 19200 | 100W | 30 kHz - 1.3 GHz | Yes | Yes | Yes |
 | IC-705 | 19200 | 10W | 30 kHz - 500 MHz | No | Yes | Yes |
+| IC-756PRO III | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-756PRO II | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-756PRO | 19200 | 100W | 30 kHz - 60 MHz | Yes | Yes | Yes |
+| IC-756 | 19200 | 100W | 30 kHz - 60 MHz | Yes | No | Yes |
+| IC-746PRO | 19200 | 100W | 30 kHz - 148 MHz | No | Yes | Yes |
+| IC-746 | 19200 | 100W | 30 kHz - 148 MHz | No | Yes | Yes |
+| IC-706MKIIG | 19200 | 100W | 30 kHz - 450 MHz | No | No | Yes |
+| IC-706MKII | 19200 | 100W | 30 kHz - 148 MHz | No | No | Yes |
+| IC-706 | 19200 | 100W | 30 kHz - 148 MHz | No | No | Yes |
+| IC-910H | 19200 | 100W | 144-1300 MHz | Yes | No | Yes |
+| ID-5100 | 19200 | 50W | 118-524 MHz | Yes | No | No |
+| ID-4100 | 19200 | 50W | 118-524 MHz | Yes | No | No |
+| IC-R8600 | 19200 | N/A | 10 kHz - 3 GHz | No | No | No |
 
 #### Elecraft Radios (Text Protocol)
 
@@ -607,7 +635,7 @@ See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.m
 7. Submit PR
 
 **We currently support:**
-- Icom CI-V protocol (21 radios)
+- Icom CI-V protocol (25 radios)
 - Elecraft text protocol (6 radios)
 - Yaesu CAT protocol (10 radios)
 - Kenwood text protocol (12 radios)

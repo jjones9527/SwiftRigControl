@@ -24,60 +24,63 @@ let package = Package(
             name: "RigControlHelper",
             targets: ["RigControlHelper"]
         ),
-        // IC-7100 live test executable
+        // Development and debugging tools
+        .executable(
+            name: "IcomInteractiveTest",
+            targets: ["IcomInteractiveTest"]
+        ),
+        .executable(
+            name: "IC7100VFODebug",
+            targets: ["IC7100VFODebug"]
+        ),
+        .executable(
+            name: "IC7600ModeDebug",
+            targets: ["IC7600ModeDebug"]
+        ),
+        // NOTE: IC7600ComprehensiveTest temporarily disabled - has compilation errors
+        // .executable(
+        //     name: "IC7600ComprehensiveTest",
+        //     targets: ["IC7600ComprehensiveTest"]
+        // ),
         .executable(
             name: "IC7100LiveTest",
             targets: ["IC7100LiveTest"]
         ),
-        // IC-7100 diagnostic test
         .executable(
             name: "IC7100DiagnosticTest",
             targets: ["IC7100DiagnosticTest"]
         ),
-        // IC-7100 raw CI-V test
         .executable(
             name: "IC7100RawTest",
             targets: ["IC7100RawTest"]
         ),
-        // IC-7100 debug test
         .executable(
             name: "IC7100DebugTest",
             targets: ["IC7100DebugTest"]
         ),
-        // IC-7100 interactive test
         .executable(
             name: "IC7100InteractiveTest",
             targets: ["IC7100InteractiveTest"]
         ),
-        // IC-7100 mode debug
         .executable(
             name: "IC7100ModeDebug",
             targets: ["IC7100ModeDebug"]
         ),
-        // IC-7100 power control test
         .executable(
             name: "IC7100PowerTest",
             targets: ["IC7100PowerTest"]
         ),
-        // IC-7100 power debug
         .executable(
             name: "IC7100PowerDebug",
             targets: ["IC7100PowerDebug"]
         ),
-        // IC-7100 PTT test
         .executable(
             name: "IC7100PTTTest",
             targets: ["IC7100PTTTest"]
         ),
-        // IC-7100 PTT debug
         .executable(
             name: "IC7100PTTDebug",
             targets: ["IC7100PTTDebug"]
-        ),
-        // Comprehensive Icom test suite
-        .executable(
-            name: "IcomInteractiveTest",
-            targets: ["IcomInteractiveTest"]
         ),
     ],
     targets: [
@@ -102,91 +105,103 @@ let package = Package(
             path: "Sources/RigControlHelper"
         ),
 
-        // IC-7100 live test executable
-        .executableTarget(
-            name: "IC7100LiveTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100LiveTest.swift"]
-        ),
-
-        // IC-7100 diagnostic test
-        .executableTarget(
-            name: "IC7100DiagnosticTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100DiagnosticTest.swift"]
-        ),
-
-        // IC-7100 raw CI-V test
-        .executableTarget(
-            name: "IC7100RawTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100RawTest.swift"]
-        ),
-
-        // IC-7100 debug test
-        .executableTarget(
-            name: "IC7100DebugTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100DebugTest.swift"]
-        ),
-
-        // IC-7100 interactive test
-        .executableTarget(
-            name: "IC7100InteractiveTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100InteractiveTest.swift"]
-        ),
-
-        // IC-7100 mode debug
-        .executableTarget(
-            name: "IC7100ModeDebug",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100ModeDebug.swift"]
-        ),
-
-        // IC-7100 power control test
-        .executableTarget(
-            name: "IC7100PowerTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100PowerTest.swift"]
-        ),
-
-        // IC-7100 power debug
-        .executableTarget(
-            name: "IC7100PowerDebug",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100PowerDebug.swift"]
-        ),
-
-        // IC-7100 PTT test
-        .executableTarget(
-            name: "IC7100PTTTest",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100PTTTest.swift"]
-        ),
-
-        // IC-7100 PTT debug
-        .executableTarget(
-            name: "IC7100PTTDebug",
-            dependencies: ["RigControl"],
-            path: "Tests",
-            sources: ["IC7100PTTDebug.swift"]
-        ),
-
-        // Comprehensive Icom interactive test suite
+        // Development and debugging tools
         .executableTarget(
             name: "IcomInteractiveTest",
             dependencies: ["RigControl"],
-            path: "Sources/IcomInteractiveTest"
+            path: "Tools/IcomInteractiveTest"
+        ),
+
+        // IC-7100 VFO debug
+        .executableTarget(
+            name: "IC7100VFODebug",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100VFODebug"
+        ),
+
+        // IC-7600 mode debug
+        .executableTarget(
+            name: "IC7600ModeDebug",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7600ModeDebug"
+        ),
+
+        // IC-7600 comprehensive test (disabled - needs fixing)
+        // .executableTarget(
+        //     name: "IC7600ComprehensiveTest",
+        //     dependencies: ["RigControl"],
+        //     path: "Tools/IC7600ComprehensiveTest"
+        // ),
+
+        // IC-7100 test suite
+        .executableTarget(
+            name: "IC7100LiveTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100LiveTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100DiagnosticTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100DiagnosticTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100RawTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100RawTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100DebugTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100DebugTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100InteractiveTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100InteractiveTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100ModeDebug",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100ModeDebug.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100PowerTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100PowerTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100PowerDebug",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100PowerDebug.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100PTTTest",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100PTTTest.swift"]
+        ),
+
+        .executableTarget(
+            name: "IC7100PTTDebug",
+            dependencies: ["RigControl"],
+            path: "Tools/IC7100Tests",
+            sources: ["IC7100PTTDebug.swift"]
         ),
 
         // Tests
