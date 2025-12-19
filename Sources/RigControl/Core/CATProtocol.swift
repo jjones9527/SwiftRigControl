@@ -220,6 +220,59 @@ public protocol CATProtocol: Actor {
     /// - Throws: `RigError.unsupportedOperation` if AGC control not supported
     func getAGC() async throws -> AGCSpeed
 
+    /// Sets the noise blanker configuration.
+    ///
+    /// Noise blanker removes impulse noise such as power line noise, ignition noise,
+    /// and static crashes. Different radios support different NB capabilities:
+    /// - Some radios have simple on/off control
+    /// - Others have adjustable NB level (0-10)
+    ///
+    /// # Example
+    /// ```swift
+    /// // Enable NB with level 5
+    /// try await protocol.setNoiseBlanker(.enabled(level: 5))
+    ///
+    /// // Disable NB
+    /// try await protocol.setNoiseBlanker(.off)
+    /// ```
+    ///
+    /// - Parameter config: The desired noise blanker configuration
+    /// - Throws: `RigError.unsupportedOperation` if NB not supported
+    /// - Throws: `RigError.invalidParameter` if level out of range for this radio
+    func setNoiseBlanker(_ config: NoiseBlanker) async throws
+
+    /// Gets the current noise blanker configuration.
+    ///
+    /// - Returns: Current noise blanker setting
+    /// - Throws: `RigError.unsupportedOperation` if NB not supported
+    func getNoiseBlanker() async throws -> NoiseBlanker
+
+    /// Sets the noise reduction configuration.
+    ///
+    /// Noise reduction uses DSP filtering to reduce continuous background noise
+    /// while preserving the desired signal. Higher levels provide better noise
+    /// reduction but may affect audio fidelity.
+    ///
+    /// # Example
+    /// ```swift
+    /// // Enable NR with level 8
+    /// try await protocol.setNoiseReduction(.enabled(level: 8))
+    ///
+    /// // Disable NR
+    /// try await protocol.setNoiseReduction(.off)
+    /// ```
+    ///
+    /// - Parameter config: The desired noise reduction configuration
+    /// - Throws: `RigError.unsupportedOperation` if NR not supported
+    /// - Throws: `RigError.invalidParameter` if level out of range for this radio
+    func setNoiseReduction(_ config: NoiseReduction) async throws
+
+    /// Gets the current noise reduction configuration.
+    ///
+    /// - Returns: Current noise reduction setting
+    /// - Throws: `RigError.unsupportedOperation` if NR not supported
+    func getNoiseReduction() async throws -> NoiseReduction
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -333,6 +386,26 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getAGC() async throws -> AGCSpeed {
         throw RigError.unsupportedOperation("AGC (Automatic Gain Control) not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
+        throw RigError.unsupportedOperation("Noise blanker not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getNoiseBlanker() async throws -> NoiseBlanker {
+        throw RigError.unsupportedOperation("Noise blanker not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setNoiseReduction(_ config: NoiseReduction) async throws {
+        throw RigError.unsupportedOperation("Noise reduction not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getNoiseReduction() async throws -> NoiseReduction {
+        throw RigError.unsupportedOperation("Noise reduction not supported")
     }
 
     /// Default connect implementation just opens the transport

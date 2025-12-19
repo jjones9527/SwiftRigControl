@@ -823,7 +823,7 @@ extension IcomCIVProtocol {
     ///
     /// - Returns: True if enabled, false if disabled
     /// - Throws: `RigError.invalidResponse` if response is malformed
-    public func getNoiseBlanker() async throws -> Bool {
+    internal func getNoiseBlankerState() async throws -> Bool {
         let frame = CIVFrame(
             to: civAddress,
             command: [0x16, 0x22],
@@ -870,7 +870,7 @@ extension IcomCIVProtocol {
     ///
     /// - Returns: True if enabled, false if disabled
     /// - Throws: `RigError.invalidResponse` if response is malformed
-    public func getNoiseReduction() async throws -> Bool {
+    internal func getNoiseReductionState() async throws -> Bool {
         let frame = CIVFrame(
             to: civAddress,
             command: [0x16, 0x40],

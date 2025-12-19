@@ -613,6 +613,133 @@ public actor RigController {
         }
     }
 
+    /// Sets the noise blanker configuration.
+    ///
+    /// Noise blanker removes impulse noise such as power line noise, ignition noise,
+    /// and static crashes. Different radios support different NB capabilities:
+    /// - Some radios have simple on/off control
+    /// - Others have adjustable NB level (0-255)
+    ///
+    /// - Parameter config: The desired noise blanker configuration
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if NB not supported
+    ///   - `RigError.invalidParameter` if level out of range for this radio
+    ///
+    /// # Example
+    /// ```swift
+    /// // Enable NB with level 5
+    /// try await rig.setNoiseBlanker(.enabled(level: 5))
+    ///
+    /// // Disable NB
+    /// try await rig.setNoiseBlanker(.off)
+    ///
+    /// // Enable NB (radios without level control)
+    /// try await rig.setNoiseBlanker(.enabled())
+    /// ```
+    public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setNoiseBlanker(config)
+        await stateCache.invalidate("noise_blanker")
+    }
+
+    /// Gets the current noise blanker configuration.
+    ///
+    /// Returns the current NB state including level if the radio supports it.
+    ///
+    /// - Parameter cached: Whether to use cached value (default true)
+    /// - Returns: Current noise blanker configuration
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if NB not supported
+    ///
+    /// # Example
+    /// ```swift
+    /// let nb = try await rig.noiseBlanker()
+    /// if nb.isEnabled {
+    ///     print("NB enabled, level: \(nb.level ?? 0)")
+    /// }
+    /// ```
+    public func noiseBlanker(cached: Bool = true) async throws -> NoiseBlanker {
+        guard connected else {
+            throw RigError.notConnected
+        }
+
+        if cached {
+            return try await stateCache.get("noise_blanker", maxAge: 0.5) {
+                try await proto.getNoiseBlanker()
+            }
+        } else {
+            await stateCache.invalidate("noise_blanker")
+            return try await proto.getNoiseBlanker()
+        }
+    }
+
+    /// Sets the noise reduction configuration.
+    ///
+    /// Noise reduction uses DSP filtering to reduce continuous background noise
+    /// while preserving the desired signal. Higher levels provide better noise
+    /// reduction but may affect audio fidelity.
+    ///
+    /// - Parameter config: The desired noise reduction configuration
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if NR not supported
+    ///   - `RigError.invalidParameter` if level out of range for this radio
+    ///
+    /// # Example
+    /// ```swift
+    /// // Enable NR with level 8
+    /// try await rig.setNoiseReduction(.enabled(level: 8))
+    ///
+    /// // Disable NR
+    /// try await rig.setNoiseReduction(.off)
+    ///
+    /// // Maximum NR for weak signal work
+    /// try await rig.setNoiseReduction(.enabled(level: 15))
+    /// ```
+    public func setNoiseReduction(_ config: NoiseReduction) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setNoiseReduction(config)
+        await stateCache.invalidate("noise_reduction")
+    }
+
+    /// Gets the current noise reduction configuration.
+    ///
+    /// Returns the current NR state including level.
+    ///
+    /// - Parameter cached: Whether to use cached value (default true)
+    /// - Returns: Current noise reduction configuration
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if NR not supported
+    ///
+    /// # Example
+    /// ```swift
+    /// let nr = try await rig.noiseReduction()
+    /// if nr.isEnabled {
+    ///     print("NR enabled, level: \(nr.level ?? 0)")
+    /// }
+    /// ```
+    public func noiseReduction(cached: Bool = true) async throws -> NoiseReduction {
+        guard connected else {
+            throw RigError.notConnected
+        }
+
+        if cached {
+            return try await stateCache.get("noise_reduction", maxAge: 0.5) {
+                try await proto.getNoiseReduction()
+            }
+        } else {
+            await stateCache.invalidate("noise_reduction")
+            return try await proto.getNoiseReduction()
+        }
+    }
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.

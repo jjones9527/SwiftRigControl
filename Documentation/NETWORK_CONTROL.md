@@ -207,14 +207,31 @@ T 1                 # Enable PTT
   - Values: 0=OFF, 1=FAST, 2=MEDIUM, 3=SLOW, 4=AUTO
   - Not all radios support all values (IC-7600/7300/7610 lack OFF)
 
+- **NB**: Noise Blanker (impulse noise suppression)
+  - Values: 0=OFF, 1-255=enabled with level
+  - Level control available on IC-9700, IC-7100, IC-705
+  - IC-7600, IC-7300, IC-7610 support on/off only (level ignored)
+
+- **NR**: Noise Reduction (continuous noise suppression)
+  - Values: 0=OFF, 1-255=enabled with level
+  - Level control available on all modern Icom radios
+
 **Examples:**
 ```
 l AGC               # Get current AGC: 1
 L AGC 1             # Set fast AGC
 L AGC 2             # Set medium AGC
-L AGC 3             # Set slow AGC
 \get_level AGC      # Get AGC (long form)
-\set_level AGC 1    # Set fast AGC (long form)
+
+l NB                # Get NB state: 0 (off) or 1-255 (level)
+L NB 0              # Disable noise blanker
+L NB 5              # Enable NB with level 5
+\set_level NB 10    # Enable NB with level 10 (long form)
+
+l NR                # Get NR state: 0 (off) or 1-255 (level)
+L NR 0              # Disable noise reduction
+L NR 8              # Enable NR with level 8
+\set_level NR 15    # Enable NR with level 15 (long form)
 ```
 
 ### Split Operation Commands

@@ -252,7 +252,7 @@ public actor RigctldCommandHandler {
 
     // MARK: - Level Control
 
-    /// Set a level value (currently supports AGC)
+    /// Set a level value (supports AGC, NB, NR)
     private func setLevel(name: String, value: String, command: RigctldCommand) async throws -> RigctldResponse {
         let normalized = name.uppercased()
 
@@ -279,12 +279,48 @@ public actor RigctldCommandHandler {
             try await rigController.setAGC(agcSpeed)
             return .ok(command: command)
 
+        case "NB":
+            // Parse NB value - 0=OFF, 1-255=enabled with level
+            guard let nbValue = Int(value) else {
+                throw RigError.invalidParameter("Invalid NB value: \(value)")
+            }
+
+            let nbConfig: NoiseBlanker
+            if nbValue == 0 {
+                nbConfig = .off
+            } else if nbValue >= 1 && nbValue <= 255 {
+                nbConfig = .enabled(level: nbValue)
+            } else {
+                throw RigError.invalidParameter("NB value must be 0-255, got \(nbValue)")
+            }
+
+            try await rigController.setNoiseBlanker(nbConfig)
+            return .ok(command: command)
+
+        case "NR":
+            // Parse NR value - 0=OFF, 1-255=enabled with level
+            guard let nrValue = Int(value) else {
+                throw RigError.invalidParameter("Invalid NR value: \(value)")
+            }
+
+            let nrConfig: NoiseReduction
+            if nrValue == 0 {
+                nrConfig = .off
+            } else if nrValue >= 1 && nrValue <= 255 {
+                nrConfig = .enabled(level: nrValue)
+            } else {
+                throw RigError.invalidParameter("NR value must be 0-255, got \(nrValue)")
+            }
+
+            try await rigController.setNoiseReduction(nrConfig)
+            return .ok(command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
     }
 
-    /// Get a level value (currently supports AGC)
+    /// Get a level value (supports AGC, NB, NR)
     private func getLevel(name: String, command: RigctldCommand) async throws -> RigctldResponse {
         let normalized = name.uppercased()
 
@@ -299,6 +335,30 @@ public actor RigctldCommandHandler {
             case .medium: value = "2"
             case .slow: value = "3"
             case .auto: value = "4"
+            }
+            return RigctldResponse(value: value, command: command)
+
+        case "NB":
+            let nb = try await rigController.noiseBlanker()
+            // Map NoiseBlanker to numeric value: 0=OFF, 1-255=level
+            let value: String
+            switch nb {
+            case .off:
+                value = "0"
+            case .enabled(let level):
+                value = String(level ?? 1)  // Default to 1 if no level
+            }
+            return RigctldResponse(value: value, command: command)
+
+        case "NR":
+            let nr = try await rigController.noiseReduction()
+            // Map NoiseReduction to numeric value: 0=OFF, 1-255=level
+            let value: String
+            switch nr {
+            case .off:
+                value = "0"
+            case .enabled(let level):
+                value = String(level)
             }
             return RigctldResponse(value: value, command: command)
 
