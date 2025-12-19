@@ -175,6 +175,29 @@ extension RadioDefinition {
         )
     }
 
+    /// Icom IC-703 Portable HF/6m QRP transceiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x68)
+    /// - Returns: RadioDefinition for IC-703
+    public static func icomIC703(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-703",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC703,
+            civAddress: civAddress ?? IcomRadioModel.ic703.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic703,
+                    commandSet: StandardIcomCommandSet.ic703,
+                    capabilities: RadioCapabilitiesDatabase.icomIC703
+                )
+            }
+        )
+    }
+
     // MARK: - Legacy HF/VHF/UHF Mobile Transceivers
 
     /// Icom IC-706 HF/6m/2m mobile transceiver
@@ -427,6 +450,29 @@ extension RadioDefinition {
                     radioModel: .ic7200,
                     commandSet: StandardIcomCommandSet.ic7200,
                     capabilities: RadioCapabilitiesDatabase.icomIC7200
+                )
+            }
+        )
+    }
+
+    /// Icom IC-718 HF budget transceiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x5E)
+    /// - Returns: RadioDefinition for IC-718
+    public static func icomIC718(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-718",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC718,
+            civAddress: civAddress ?? IcomRadioModel.ic718.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic718,
+                    commandSet: StandardIcomCommandSet.ic718,
+                    capabilities: RadioCapabilitiesDatabase.icomIC718
                 )
             }
         )

@@ -119,6 +119,20 @@ extension StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x76, vfoModel: .currentOnly)
     }
 
+    /// IC-718 HF budget transceiver
+    /// - VFO Model: Current Only (operates on current VFO)
+    /// - 19200 baud, 100W, requires mode filter
+    public static var ic718: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x5E, vfoModel: .currentOnly)
+    }
+
+    /// IC-703 Portable HF/6m QRP transceiver
+    /// - VFO Model: Current Only (operates on current VFO)
+    /// - 19200 baud, 10W, requires mode filter
+    public static var ic703: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x68, vfoModel: .currentOnly)
+    }
+
     /// IC-7410 HF/50MHz transceiver
     /// - VFO Model: Current Only (operates on current VFO)
     /// - 19200 baud, 100W, requires mode filter

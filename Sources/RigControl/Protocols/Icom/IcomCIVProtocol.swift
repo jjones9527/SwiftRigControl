@@ -803,7 +803,7 @@ public actor IcomCIVProtocol: CATProtocol {
         // Return model-specific channel count
         // Common values: 99 (most radios), 100 (IC-7600), 109 (IC-7100/9700)
         switch radioModel {
-        case .ic7300, .ic705:
+        case .ic7300, .ic705, .ic703:
             return 99
         case .ic7600:
             return 100
@@ -811,7 +811,7 @@ public actor IcomCIVProtocol: CATProtocol {
             return 109  // Includes program scan edges and call channels
         case .ic9100, .ic7000:
             return 99
-        case .ic7610, .ic7700, .ic7410, .ic7200:
+        case .ic7610, .ic7700, .ic7410, .ic7200, .ic718:
             return 99
         case .ic7851, .ic7850, .ic7800:
             return 99
