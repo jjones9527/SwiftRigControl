@@ -740,6 +740,63 @@ public actor RigController {
         }
     }
 
+    /// Sets the IF (Intermediate Frequency) filter selection.
+    ///
+    /// Selects which of the radio's preset IF filters to use (FIL1/FIL2/FIL3).
+    /// Each mode has independent filter settings stored in the radio.
+    /// Narrower filters reduce adjacent channel interference.
+    ///
+    /// - Parameter filter: The filter to select
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if IF filter control not supported
+    ///
+    /// # Example
+    /// ```swift
+    /// // Select narrow filter for CW weak signal work
+    /// try await rig.setIFFilter(.filter3)
+    ///
+    /// // Select default filter
+    /// try await rig.setIFFilter(.filter1)
+    /// ```
+    public func setIFFilter(_ filter: IFFilter) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setIFFilter(filter)
+        await stateCache.invalidate("if_filter")
+    }
+
+    /// Gets the current IF filter selection.
+    ///
+    /// Returns which preset filter is currently active (FIL1/FIL2/FIL3).
+    ///
+    /// - Parameter cached: Whether to use cached value (default true)
+    /// - Returns: Current IF filter selection
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if IF filter control not supported
+    ///
+    /// # Example
+    /// ```swift
+    /// let filter = try await rig.ifFilter()
+    /// print("Current filter: \(filter.description)")  // "FIL2 (Medium)"
+    /// ```
+    public func ifFilter(cached: Bool = true) async throws -> IFFilter {
+        guard connected else {
+            throw RigError.notConnected
+        }
+
+        if cached {
+            return try await stateCache.get("if_filter", maxAge: 0.5) {
+                try await proto.getIFFilter()
+            }
+        } else {
+            await stateCache.invalidate("if_filter")
+            return try await proto.getIFFilter()
+        }
+    }
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.

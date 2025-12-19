@@ -216,6 +216,11 @@ T 1                 # Enable PTT
   - Values: 0=OFF, 1-255=enabled with level
   - Level control available on all modern Icom radios
 
+- **IF**: IF (Intermediate Frequency) Filter selection
+  - Values: 1=FIL1 (wide), 2=FIL2 (medium), 3=FIL3 (narrow)
+  - Available on IC-7600, IC-7300, IC-7610, IC-9700, and other modern radios
+  - Each mode has independent filter settings
+
 **Examples:**
 ```
 l AGC               # Get current AGC: 1
@@ -232,6 +237,12 @@ l NR                # Get NR state: 0 (off) or 1-255 (level)
 L NR 0              # Disable noise reduction
 L NR 8              # Enable NR with level 8
 \set_level NR 15    # Enable NR with level 15 (long form)
+
+l IF                # Get IF filter: 1, 2, or 3
+L IF 1              # Select FIL1 (wide filter)
+L IF 2              # Select FIL2 (medium filter)
+L IF 3              # Select FIL3 (narrow filter for weak signals)
+\set_level IF 3     # Select narrow filter (long form)
 ```
 
 ### Split Operation Commands

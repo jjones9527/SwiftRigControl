@@ -315,12 +315,25 @@ public actor RigctldCommandHandler {
             try await rigController.setNoiseReduction(nrConfig)
             return .ok(command: command)
 
+        case "IF", "IFFILTER":
+            // Parse IF filter value - 1=FIL1, 2=FIL2, 3=FIL3
+            guard let filterNum = Int(value) else {
+                throw RigError.invalidParameter("Invalid IF filter value: \(value)")
+            }
+
+            guard let filter = IFFilter(rawValue: UInt8(filterNum)) else {
+                throw RigError.invalidParameter("IF filter must be 1, 2, or 3, got \(filterNum)")
+            }
+
+            try await rigController.setIFFilter(filter)
+            return .ok(command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
     }
 
-    /// Get a level value (supports AGC, NB, NR)
+    /// Get a level value (supports AGC, NB, NR, IF filter)
     private func getLevel(name: String, command: RigctldCommand) async throws -> RigctldResponse {
         let normalized = name.uppercased()
 
@@ -360,6 +373,12 @@ public actor RigctldCommandHandler {
             case .enabled(let level):
                 value = String(level)
             }
+            return RigctldResponse(value: value, command: command)
+
+        case "IF", "IFFILTER":
+            let filter = try await rigController.ifFilter()
+            // Map IFFilter to numeric value: 1=FIL1, 2=FIL2, 3=FIL3
+            let value = String(filter.rawValue)
             return RigctldResponse(value: value, command: command)
 
         default:

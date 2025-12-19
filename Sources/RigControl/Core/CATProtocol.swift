@@ -273,6 +273,31 @@ public protocol CATProtocol: Actor {
     /// - Throws: `RigError.unsupportedOperation` if NR not supported
     func getNoiseReduction() async throws -> NoiseReduction
 
+    /// Sets the IF (Intermediate Frequency) filter selection.
+    ///
+    /// Selects which of the radio's preset IF filters to use (FIL1/FIL2/FIL3).
+    /// Each mode has independent filter settings. Narrower filters reduce adjacent
+    /// channel interference but may affect audio quality.
+    ///
+    /// # Example
+    /// ```swift
+    /// // Select narrow filter for weak signal work
+    /// try await protocol.setIFFilter(.filter3)
+    ///
+    /// // Select default filter
+    /// try await protocol.setIFFilter(.filter1)
+    /// ```
+    ///
+    /// - Parameter filter: The filter to select (filter1/filter2/filter3)
+    /// - Throws: `RigError.unsupportedOperation` if IF filter control not supported
+    func setIFFilter(_ filter: IFFilter) async throws
+
+    /// Gets the current IF filter selection.
+    ///
+    /// - Returns: Current IF filter setting
+    /// - Throws: `RigError.unsupportedOperation` if IF filter control not supported
+    func getIFFilter() async throws -> IFFilter
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -406,6 +431,16 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getNoiseReduction() async throws -> NoiseReduction {
         throw RigError.unsupportedOperation("Noise reduction not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setIFFilter(_ filter: IFFilter) async throws {
+        throw RigError.unsupportedOperation("IF filter control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getIFFilter() async throws -> IFFilter {
+        throw RigError.unsupportedOperation("IF filter control not supported")
     }
 
     /// Default connect implementation just opens the transport
