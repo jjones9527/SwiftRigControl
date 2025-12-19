@@ -242,6 +242,144 @@ public actor YaesuCATProtocol: CATProtocol {
         return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
     }
 
+    // MARK: - RIT/XIT Control
+
+    /// Sets the RIT (Receiver Incremental Tuning) state.
+    ///
+    /// Yaesu radios using Kenwood-compatible CAT commands use:
+    /// - `RT1;` to enable RIT
+    /// - `RT0;` to disable RIT
+    /// - `RU+nnnn;` or `RD+nnnn;` to set offset (in Hz, -9999 to +9999)
+    ///
+    /// - Parameter state: The desired RIT state (enabled/disabled and offset)
+    /// - Throws: `RigError` if operation fails
+    public func setRIT(_ state: RITXITState) async throws {
+        // Validate offset range
+        guard abs(state.offset) <= 9999 else {
+            throw RigError.invalidParameter("RIT offset must be between -9999 and +9999 Hz")
+        }
+
+        // Set RIT offset using RU (up) or RD (down) command
+        // Format: RU+nnnn; or RD-nnnn; (nnnn is absolute value)
+        let absOffset = abs(state.offset)
+        let command: String
+        if state.offset >= 0 {
+            command = String(format: "RU%+05d", state.offset)
+        } else {
+            command = String(format: "RD%+05d", state.offset)
+        }
+
+        try await sendCommand(command)
+        _ = try await receiveResponse()
+
+        // Set RIT ON/OFF
+        let enableCommand = state.enabled ? "RT1" : "RT0"
+        try await sendCommand(enableCommand)
+        _ = try await receiveResponse()
+    }
+
+    /// Gets the current RIT state.
+    ///
+    /// Queries both RIT ON/OFF status and frequency offset.
+    ///
+    /// - Returns: Current RIT state including enabled status and offset
+    /// - Throws: `RigError` if operation fails
+    public func getRIT() async throws -> RITXITState {
+        // Read RIT ON/OFF status
+        try await sendCommand("RT")
+        let enableResponse = try await receiveResponse()
+
+        // Response format: RTx; where x is 0 or 1
+        guard enableResponse.hasPrefix("RT"),
+              enableResponse.count >= 3 else {
+            throw RigError.invalidResponse
+        }
+
+        let enableIndex = enableResponse.index(enableResponse.startIndex, offsetBy: 2)
+        let enableChar = enableResponse[enableIndex]
+        let enabled = enableChar == "1"
+
+        // Read RIT offset
+        // Note: Some Yaesu radios may not support reading offset directly
+        // In that case, we return 0 as offset
+        var offset = 0
+        do {
+            try await sendCommand("RC")
+            let offsetResponse = try await receiveResponse()
+
+            // Response format: RC+nnnnn; or RC-nnnnn;
+            guard offsetResponse.hasPrefix("RC"),
+                  offsetResponse.count >= 8 else {
+                throw RigError.invalidResponse
+            }
+
+            let startIndex = offsetResponse.index(offsetResponse.startIndex, offsetBy: 2)
+            let endIndex = offsetResponse.index(startIndex, offsetBy: 6)
+            let offsetString = String(offsetResponse[startIndex..<endIndex])
+
+            offset = Int(offsetString) ?? 0
+        } catch {
+            // If RC command not supported, default to 0 offset
+            offset = 0
+        }
+
+        return RITXITState(enabled: enabled, offset: offset)
+    }
+
+    /// Sets the XIT (Transmitter Incremental Tuning) state.
+    ///
+    /// Yaesu radios using Kenwood-compatible CAT commands use:
+    /// - `XT1;` to enable XIT
+    /// - `XT0;` to disable XIT
+    /// - Offset is typically shared with RIT
+    ///
+    /// **Note:** Many Yaesu radios don't support separate XIT control.
+    /// They use RIT for both receive and transmit offset.
+    ///
+    /// - Parameter state: The desired XIT state (enabled/disabled and offset)
+    /// - Throws: `RigError` if operation fails or unsupported
+    public func setXIT(_ state: RITXITState) async throws {
+        // Try to set XIT - many radios don't support this
+        let enableCommand = state.enabled ? "XT1" : "XT0"
+
+        do {
+            try await sendCommand(enableCommand)
+            _ = try await receiveResponse()
+        } catch {
+            // If XIT command not supported, throw unsupported error
+            throw RigError.unsupportedOperation("XIT (Transmitter Incremental Tuning) not supported by this radio - use RIT instead")
+        }
+    }
+
+    /// Gets the current XIT state.
+    ///
+    /// **Note:** Many Yaesu radios don't support separate XIT control.
+    ///
+    /// - Returns: Current XIT state including enabled status and offset
+    /// - Throws: `RigError.unsupportedOperation` if XIT not supported
+    public func getXIT() async throws -> RITXITState {
+        // Try to read XIT status
+        do {
+            try await sendCommand("XT")
+            let response = try await receiveResponse()
+
+            // Response format: XTx; where x is 0 or 1
+            guard response.hasPrefix("XT"),
+                  response.count >= 3 else {
+                throw RigError.invalidResponse
+            }
+
+            let enableIndex = response.index(response.startIndex, offsetBy: 2)
+            let enableChar = response[enableIndex]
+            let enabled = enableChar == "1"
+
+            // XIT typically shares offset with RIT on Yaesu radios
+            return RITXITState(enabled: enabled, offset: 0)
+        } catch {
+            throw RigError.unsupportedOperation("XIT (Transmitter Incremental Tuning) not supported by this radio")
+        }
+    }
+
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {
