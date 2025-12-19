@@ -23,6 +23,26 @@
 /// try await rig.setPTT(true)
 /// ```
 ///
+/// ## Network Control (rigctld)
+///
+/// For remote rig control using the Hamlib rigctld protocol:
+///
+/// ```swift
+/// import RigControl
+///
+/// let rig = RigController(
+///     radio: .icomIC7600,
+///     connection: .serial(path: "/dev/cu.IC-7600", baudRate: 19200)
+/// )
+/// try await rig.connect()
+///
+/// let server = RigControlServer(rigController: rig)
+/// try await server.start(port: 4532)
+///
+/// // Clients can now connect using rigctl, telnet, or any TCP client
+/// // rigctl -m 2 -r localhost:4532
+/// ```
+///
 /// ## Supported Radios
 ///
 /// ### Icom

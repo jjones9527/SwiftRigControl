@@ -82,6 +82,10 @@ let package = Package(
             name: "IC7100PTTDebug",
             targets: ["IC7100PTTDebug"]
         ),
+        .executable(
+            name: "RigctldTest",
+            targets: ["RigctldTest"]
+        ),
     ],
     targets: [
         // Core rig control library
@@ -202,6 +206,13 @@ let package = Package(
             dependencies: ["RigControl"],
             path: "Tools/IC7100Tests",
             sources: ["IC7100PTTDebug.swift"]
+        ),
+
+        // rigctld test server
+        .executableTarget(
+            name: "RigctldTest",
+            dependencies: ["RigControl"],
+            path: "Sources/RigctldTest"
         ),
 
         // Tests
