@@ -188,6 +188,43 @@ public protocol CATProtocol: Actor {
     /// - Returns: Current XIT state including enabled status and offset
     /// - Throws: `RigError.unsupportedOperation` if radio doesn't support XIT
     func getXIT() async throws -> RITXITState
+
+    // MARK: - Memory Channel Operations
+
+    /// Stores a configuration to a memory channel.
+    ///
+    /// Writes the specified memory channel configuration to the radio's non-volatile memory.
+    /// The channel can be recalled later for quick frequency/mode changes.
+    ///
+    /// - Parameter channel: Memory channel configuration to store
+    /// - Throws: `RigError` if operation fails or memory channels not supported
+    func setMemoryChannel(_ channel: MemoryChannel) async throws
+
+    /// Reads a memory channel configuration from the radio.
+    ///
+    /// Retrieves the stored configuration for the specified memory channel number.
+    ///
+    /// - Parameter number: Memory channel number to read
+    /// - Returns: Memory channel configuration
+    /// - Throws: `RigError` if operation fails, channel empty, or not supported
+    func getMemoryChannel(_ number: Int) async throws -> MemoryChannel
+
+    /// Gets the total number of memory channels supported by the radio.
+    ///
+    /// Returns the maximum number of user-programmable memory channels.
+    /// This may not include special channels (call channels, program scan edges, etc.).
+    ///
+    /// - Returns: Number of memory channels (e.g., 100, 109, 200)
+    /// - Throws: `RigError.unsupportedOperation` if memory not supported
+    func getMemoryChannelCount() async throws -> Int
+
+    /// Clears (erases) a memory channel.
+    ///
+    /// Removes the configuration from the specified memory channel, making it empty.
+    ///
+    /// - Parameter number: Memory channel number to clear
+    /// - Throws: `RigError` if operation fails or not supported
+    func clearMemoryChannel(_ number: Int) async throws
 }
 
 /// Extension providing default implementations for optional operations
@@ -235,6 +272,26 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getXIT() async throws -> RITXITState {
         throw RigError.unsupportedOperation("XIT (Transmitter Incremental Tuning) not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setMemoryChannel(_ channel: MemoryChannel) async throws {
+        throw RigError.unsupportedOperation("Memory channel operations not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getMemoryChannel(_ number: Int) async throws -> MemoryChannel {
+        throw RigError.unsupportedOperation("Memory channel operations not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getMemoryChannelCount() async throws -> Int {
+        throw RigError.unsupportedOperation("Memory channel operations not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func clearMemoryChannel(_ number: Int) async throws {
+        throw RigError.unsupportedOperation("Memory channel operations not supported")
     }
 
     /// Default connect implementation just opens the transport
