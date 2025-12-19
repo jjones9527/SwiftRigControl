@@ -496,6 +496,319 @@ func checkRITXITSupport(for radio: RigController) async {
 try await checkRITXITSupport(for: rig)
 ```
 
+## Memory Channel Operations (v1.2.0)
+
+Memory channels allow you to store complete radio configurations for quick recall. SwiftRigControl provides a universal memory channel model that works across all radio manufacturers.
+
+### Basic Memory Channel Management
+
+```swift
+import RigControl
+
+class MemoryChannelManager {
+    let rig: RigController
+
+    init(rig: RigController) {
+        self.rig = rig
+    }
+
+    /// Store current configuration to a memory channel
+    func storeCurrentFrequency(to channelNumber: Int, name: String) async throws {
+        // Get current settings
+        let freq = try await rig.frequency(vfo: .a, cached: false)
+        let mode = try await rig.mode(vfo: .a, cached: false)
+
+        // Create memory channel
+        let channel = MemoryChannel(
+            number: channelNumber,
+            frequency: freq,
+            mode: mode,
+            name: name
+        )
+
+        // Store to radio
+        try await rig.setMemoryChannel(channel)
+        print("Stored channel \(channelNumber): \(name) at \(Double(freq)/1_000_000) MHz")
+    }
+
+    /// Recall a memory channel
+    func recall(channelNumber: Int) async throws {
+        let channel = try await rig.getMemoryChannel(channelNumber)
+        print("Recalling: \(channel.description)")
+
+        // Apply to current VFO
+        try await rig.recallMemoryChannel(channelNumber)
+        print("Now operating on \(Double(channel.frequency)/1_000_000) MHz \(channel.mode)")
+    }
+
+    /// List all populated memory channels
+    func listChannels() async throws {
+        let count = try await rig.memoryChannelCount()
+        print("Radio has \(count) memory channels\n")
+
+        var populated = 0
+        for i in 0..<count {
+            do {
+                let channel = try await rig.getMemoryChannel(i)
+                print("[\(i)] \(channel.description)")
+                populated += 1
+            } catch {
+                // Channel is empty, skip
+                continue
+            }
+        }
+
+        print("\nTotal populated: \(populated)/\(count)")
+    }
+}
+```
+
+### Contest Memory Bank Setup
+
+Set up memory channels for a contest with commonly used frequencies:
+
+```swift
+import RigControl
+
+class ContestMemorySetup {
+    let rig: RigController
+
+    func setupCQWWContestMemories() async throws {
+        print("Setting up CQ WW Contest memory banks...")
+
+        let contestChannels = [
+            // 160m
+            MemoryChannel(number: 1, frequency: 1_830_000, mode: .cw, name: "160m CW"),
+            MemoryChannel(number: 2, frequency: 1_850_000, mode: .lsb, name: "160m SSB"),
+
+            // 80m
+            MemoryChannel(number: 10, frequency: 3_530_000, mode: .cw, name: "80m CW"),
+            MemoryChannel(number: 11, frequency: 3_790_000, mode: .lsb, name: "80m SSB"),
+
+            // 40m
+            MemoryChannel(number: 20, frequency: 7_030_000, mode: .cw, name: "40m CW"),
+            MemoryChannel(number: 21, frequency: 7_190_000, mode: .lsb, name: "40m SSB"),
+
+            // 20m
+            MemoryChannel(number: 30, frequency: 14_030_000, mode: .cw, name: "20m CW"),
+            MemoryChannel(number: 31, frequency: 14_200_000, mode: .usb, name: "20m SSB"),
+
+            // 15m
+            MemoryChannel(number: 40, frequency: 21_030_000, mode: .cw, name: "15m CW"),
+            MemoryChannel(number: 41, frequency: 21_300_000, mode: .usb, name: "15m SSB"),
+
+            // 10m
+            MemoryChannel(number: 50, frequency: 28_030_000, mode: .cw, name: "10m CW"),
+            MemoryChannel(number: 51, frequency: 28_400_000, mode: .usb, name: "10m SSB")
+        ]
+
+        for channel in contestChannels {
+            try await rig.setMemoryChannel(channel)
+            print("✓ Stored: \(channel.description)")
+        }
+
+        print("\nContest memories ready!")
+    }
+
+    /// Quick band change during contest
+    func switchToBand(_ band: String, mode: Mode) async throws {
+        let channelMap: [String: Int] = [
+            "160CW": 1, "160SSB": 2,
+            "80CW": 10, "80SSB": 11,
+            "40CW": 20, "40SSB": 21,
+            "20CW": 30, "20SSB": 31,
+            "15CW": 40, "15SSB": 41,
+            "10CW": 50, "10SSB": 51
+        ]
+
+        let key = band + (mode == .cw ? "CW" : "SSB")
+        guard let channelNum = channelMap[key] else {
+            throw RigError.invalidParameter("Unknown band/mode combination")
+        }
+
+        try await rig.recallMemoryChannel(channelNum)
+        print("Switched to \(band) \(mode)")
+    }
+}
+
+// Usage
+let setup = ContestMemorySetup(rig: rig)
+try await setup.setupCQWWContestMemories()
+
+// Quick band change during contest
+try await setup.switchToBand("20", mode: .usb)
+```
+
+### VHF/UHF Repeater Memory Manager
+
+Create and manage repeater channels with CTCSS tones and offsets:
+
+```swift
+import RigControl
+
+struct RepeaterInfo {
+    let name: String
+    let rxFrequency: UInt64
+    let offset: Int  // Hz (positive for +, negative for -)
+    let tone: Double?  // CTCSS tone in Hz
+    let mode: Mode
+}
+
+class RepeaterMemoryManager {
+    let rig: RigController
+
+    /// Program common repeaters into memory
+    func programRepeaters() async throws {
+        let repeaters = [
+            // 2m repeaters
+            RepeaterInfo(
+                name: "W1AW/R",
+                rxFrequency: 146_880_000,  // 146.880 MHz
+                offset: -600_000,          // -600 kHz standard 2m offset
+                tone: 100.0,               // 100 Hz CTCSS
+                mode: .fm
+            ),
+            RepeaterInfo(
+                name: "2m Call",
+                rxFrequency: 146_520_000,  // 146.520 MHz simplex
+                offset: 0,
+                tone: nil,
+                mode: .fm
+            ),
+
+            // 70cm repeaters
+            RepeaterInfo(
+                name: "Local 70",
+                rxFrequency: 442_100_000,  // 442.100 MHz
+                offset: 5_000_000,         // +5 MHz standard 70cm offset
+                tone: 127.3,               // 127.3 Hz CTCSS
+                mode: .fm
+            ),
+            RepeaterInfo(
+                name: "70cm Call",
+                rxFrequency: 446_000_000,  // 446.000 MHz simplex
+                offset: 0,
+                tone: nil,
+                mode: .fm
+            )
+        ]
+
+        for (index, repeater) in repeaters.enumerated() {
+            let channel = MemoryChannel(
+                number: index + 60,  // Start at channel 60
+                frequency: repeater.rxFrequency,
+                mode: repeater.mode,
+                name: repeater.name,
+                toneFrequency: repeater.tone,
+                duplexOffset: repeater.offset != 0 ? repeater.offset : nil
+            )
+
+            try await rig.setMemoryChannel(channel)
+            print("✓ Programmed: \(repeater.name)")
+            print("  RX: \(Double(repeater.rxFrequency)/1_000_000) MHz")
+            if repeater.offset != 0 {
+                let txFreq = UInt64(Int64(repeater.rxFrequency) + Int64(repeater.offset))
+                print("  TX: \(Double(txFreq)/1_000_000) MHz")
+            }
+            if let tone = repeater.tone {
+                print("  Tone: \(tone) Hz")
+            }
+        }
+    }
+
+    /// Quick repeater access
+    func accessRepeater(named name: String) async throws {
+        let count = try await rig.memoryChannelCount()
+
+        // Search for repeater by name
+        for i in 0..<count {
+            if let channel = try? await rig.getMemoryChannel(i),
+               channel.name == name {
+                try await rig.recallMemoryChannel(i)
+                print("Accessing: \(channel.description)")
+                return
+            }
+        }
+
+        throw RigError.invalidParameter("Repeater '\(name)' not found in memory")
+    }
+}
+
+// Usage
+let repeaterMgr = RepeaterMemoryManager(rig: rig)
+try await repeaterMgr.programRepeaters()
+try await repeaterMgr.accessRepeater(named: "W1AW/R")
+```
+
+### DX Memory Bank with Split Operation
+
+Store DX frequencies with split operation settings:
+
+```swift
+import RigControl
+
+class DXMemoryBank {
+    let rig: RigController
+
+    /// Store a DX station with split operation
+    func storeDXSplit(
+        channel: Int,
+        name: String,
+        rxFrequency: UInt64,
+        txFrequency: UInt64,
+        mode: Mode = .usb
+    ) async throws {
+        let dxChannel = MemoryChannel(
+            number: channel,
+            frequency: rxFrequency,
+            mode: mode,
+            name: name,
+            splitEnabled: true,
+            txFrequency: txFrequency
+        )
+
+        try await rig.setMemoryChannel(dxChannel)
+        print("Stored DX split: \(name)")
+        print("  RX: \(Double(rxFrequency)/1_000_000) MHz")
+        print("  TX: \(Double(txFrequency)/1_000_000) MHz")
+    }
+
+    /// Recall DX channel and configure split
+    func recallDXSplit(channel: Int) async throws {
+        let dxChannel = try await rig.getMemoryChannel(channel)
+
+        // Apply RX frequency and mode
+        try await rig.setFrequency(dxChannel.frequency, vfo: .a)
+        try await rig.setMode(dxChannel.mode, vfo: .a)
+
+        // If split is configured, set up VFO B and enable split
+        if let splitEnabled = dxChannel.splitEnabled, splitEnabled,
+           let txFreq = dxChannel.txFrequency {
+            try await rig.setFrequency(txFreq, vfo: .b)
+            try await rig.setMode(dxChannel.mode, vfo: .b)
+            try await rig.setSplit(true)
+            print("Split operation enabled")
+        }
+
+        print("Operating: \(dxChannel.description)")
+    }
+}
+
+// Usage - store DX pileup channels
+let dxBank = DXMemoryBank(rig: rig)
+
+// Store a DX station listening 5 kHz up
+try await dxBank.storeDXSplit(
+    channel: 90,
+    name: "3B7DX",
+    rxFrequency: 14_195_000,  // Listen on 14.195
+    txFrequency: 14_200_000   // Transmit on 14.200
+)
+
+// Recall and activate split
+try await dxBank.recallDXSplit(channel: 90)
+```
+
 ## Power Control
 
 ### Adaptive Power Control

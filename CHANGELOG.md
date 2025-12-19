@@ -5,6 +5,72 @@ All notable changes to SwiftRigControl will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-19
+
+### Added
+
+#### Memory Channel Operations
+- **New `MemoryChannel` model** with universal memory channel structure
+  - Core properties: channel number, frequency, mode, name
+  - Optional manufacturer-specific features: split, CTCSS tones, duplex offset, data mode, filter selection, power level
+  - Validation method `validate(for:)` checks configuration against radio capabilities
+  - Convenience properties: `isSimplex`, `hasTone`, `description`
+- **Memory channel protocol methods** in `CATProtocol`:
+  - `setMemoryChannel(_:)` - Store configuration to memory
+  - `getMemoryChannel(_:)` - Read channel configuration
+  - `getMemoryChannelCount()` - Get total channel count
+  - `clearMemoryChannel(_:)` - Erase a channel
+- **RigController memory operations**:
+  - `setMemoryChannel(_:)` - Store channel with cache invalidation
+  - `getMemoryChannel(_:)` - Read channel from radio
+  - `memoryChannelCount()` - Get radio's channel capacity
+  - `clearMemoryChannel(_:)` - Clear channel with cache invalidation
+  - `recallMemoryChannel(_:to:)` - Recall channel to VFO (convenience)
+  - `storeCurrentToMemory(_:from:name:)` - Store current VFO to channel (convenience)
+- **Icom CI-V memory implementation**:
+  - Uses CI-V command 0x1A 0x00 (Advanced Settings - Memory Contents) for read/write
+  - Uses CI-V command 0x0B (Memory Clear) for channel erase
+  - BCD encoding for channel numbers, frequencies, duplex offsets
+  - CTCSS tone encoding/decoding (67.0-254.1 Hz)
+  - 10-character space-padded ASCII names
+  - Model-specific channel counts (IC-7300: 99, IC-7600: 100, IC-7100/9700: 109)
+  - Supports all Icom radio models (25 models)
+
+#### Documentation
+- **Comprehensive API reference** for memory channel operations
+  - All memory methods with parameters, returns, errors
+  - MemoryChannel model structure and usage examples
+  - Manufacturer feature support matrix
+  - Channel number ranges per radio model
+- **Four detailed usage examples** in USAGE_EXAMPLES.md:
+  - Basic memory channel management (store, recall, list)
+  - Contest memory bank setup (CQ WW with quick band switching)
+  - VHF/UHF repeater memory manager (CTCSS tones, duplex offsets)
+  - DX memory bank with split operation
+- **README update** listing memory channel feature
+
+### Enhanced
+
+#### Architecture
+- **Universal memory model** works across all manufacturers (Icom, Yaesu, Kenwood, Elecraft)
+- **No code duplication** - single MemoryChannel struct with optional properties
+- **Manufacturer flexibility** - optional properties enable radio-specific features
+- **Type safety** - full Swift type system with validation
+
+#### Capabilities
+- **Repeater programming** - CTCSS tones (67.0-254.1 Hz), duplex offsets, DCS codes
+- **Split operation** - Store RX/TX frequencies for DX operation
+- **Data mode support** - Filter selection and data mode flags
+- **Channel names** - Up to 10 characters (Icom), varies by manufacturer
+- **Validation** - Checks frequency range, mode support, tone values
+
+### Technical Details
+- **Thread-safe**: All operations actor-isolated
+- **BCD encoding**: Efficient binary-coded decimal for Icom protocol
+- **Error handling**: Detects empty channels (NAK response)
+- **Caching**: Memory reads/writes invalidate appropriate cache entries
+- **Extensible**: Easy to add manufacturer-specific features
+
 ## [1.0.2] - 2025-11-24
 
 ### Added

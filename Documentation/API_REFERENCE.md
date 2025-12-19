@@ -440,6 +440,146 @@ let xitState = try await rig.getXIT()
 print("XIT: \(xitState.description)")  // "ON (-1000 Hz)" or "OFF"
 ```
 
+#### Memory Channel Operations (v1.2.0)
+
+Memory channels allow storing complete radio configurations (frequency, mode, name, and optional parameters) in non-volatile memory for quick recall. SwiftRigControl provides a universal memory channel model that works across all radio manufacturers.
+
+##### setMemoryChannel(_:)
+
+```swift
+public func setMemoryChannel(_ channel: MemoryChannel) async throws
+```
+
+Stores a configuration to a memory channel.
+
+**Parameters:**
+- `channel`: Memory channel configuration to store
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Memory channels not supported
+- `RigError.commandFailed` - Radio rejected the configuration
+
+**Example:**
+```swift
+// Create a memory channel for 20m FT8
+let channel = MemoryChannel(
+    number: 1,
+    frequency: 14_074_000,
+    mode: .dataUSB,
+    name: "20m FT8"
+)
+try await rig.setMemoryChannel(channel)
+```
+
+##### getMemoryChannel(_:)
+
+```swift
+public func getMemoryChannel(_ number: Int) async throws -> MemoryChannel
+```
+
+Reads a memory channel configuration from the radio.
+
+**Parameters:**
+- `number`: Memory channel number to read
+
+**Returns:** Memory channel configuration
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Memory channels not supported
+- `RigError.commandFailed` - Channel is empty or invalid
+
+**Example:**
+```swift
+let channel = try await rig.getMemoryChannel(1)
+print("Channel \(channel.number): \(channel.description)")
+// Output: "Ch 1 (20m FT8): 14.074 MHz dataUSB"
+```
+
+##### memoryChannelCount()
+
+```swift
+public func memoryChannelCount() async throws -> Int
+```
+
+Gets the total number of memory channels supported by the radio.
+
+**Returns:** Number of memory channels (e.g., 99, 100, 109)
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Memory not supported
+
+**Example:**
+```swift
+let count = try await rig.memoryChannelCount()
+print("\(rig.radioName) supports \(count) memory channels")
+// Output: "Icom IC-7600 supports 100 memory channels"
+```
+
+##### clearMemoryChannel(_:)
+
+```swift
+public func clearMemoryChannel(_ number: Int) async throws
+```
+
+Clears (erases) a memory channel.
+
+**Parameters:**
+- `number`: Memory channel number to clear
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Memory not supported
+- `RigError.commandFailed` - Operation failed
+
+**Example:**
+```swift
+try await rig.clearMemoryChannel(1)
+```
+
+##### recallMemoryChannel(_:to:)
+
+```swift
+public func recallMemoryChannel(_ number: Int, to vfo: VFO = .a) async throws
+```
+
+Recalls a memory channel configuration to the current VFO. This convenience method reads the channel and applies its frequency and mode settings.
+
+**Parameters:**
+- `number`: Memory channel number to recall
+- `vfo`: Target VFO (defaults to `.a`)
+
+**Throws:** `RigError` if operation fails or channel is empty
+
+**Example:**
+```swift
+// Recall channel 1 settings to VFO A
+try await rig.recallMemoryChannel(1)
+```
+
+##### storeCurrentToMemory(_:from:name:)
+
+```swift
+public func storeCurrentToMemory(_ number: Int, from vfo: VFO = .a, name: String? = nil) async throws
+```
+
+Stores the current VFO configuration to a memory channel. Convenience method that reads current settings and creates a memory channel.
+
+**Parameters:**
+- `number`: Memory channel number to store to
+- `vfo`: Source VFO to read from (defaults to `.a`)
+- `name`: Optional channel name (max 10 characters for Icom)
+
+**Throws:** `RigError` if operation fails
+
+**Example:**
+```swift
+// Store current VFO A settings to channel 5 with name
+try await rig.storeCurrentToMemory(5, name: "Contest")
+```
+
 #### Batch Configuration (v1.1.0)
 
 ##### configure(frequency:mode:power:vfo:)
@@ -749,6 +889,120 @@ if currentRIT.enabled {
 
 **Typical Range:**
 Most radios support offsets between -9999 Hz and +9999 Hz, though this varies by manufacturer. Check your radio's capabilities before setting extreme values.
+
+### MemoryChannel (v1.2.0)
+
+```swift
+public struct MemoryChannel: Sendable, Equatable, Codable {
+    // Core properties (universal)
+    public let number: Int           // Memory channel number
+    public let frequency: UInt64     // Operating frequency in Hz
+    public let mode: Mode            // Operating mode
+    public let name: String?         // Optional channel name (max 10 chars for Icom)
+
+    // Optional features (manufacturer-dependent)
+    public let splitEnabled: Bool?       // Split operation enabled
+    public let txFrequency: UInt64?      // Transmit frequency when split
+    public let toneFrequency: Double?    // CTCSS tone (67.0-254.1 Hz)
+    public let toneSqelchFrequency: Double? // CTCSS tone squelch
+    public let dcsCode: Int?             // DCS code (023-754 octal)
+    public let duplexOffset: Int?        // Duplex offset in Hz
+    public let skipScan: Bool?           // Skip during scanning
+    public let lockout: Bool?            // Channel locked
+    public let filterSelection: Int?     // Filter bandwidth selection
+    public let dataMode: Bool?           // Data mode enabled
+    public let powerLevel: Int?          // TX power level
+
+    // Initialization
+    public init(
+        number: Int,
+        frequency: UInt64,
+        mode: Mode,
+        name: String? = nil,
+        splitEnabled: Bool? = nil,
+        txFrequency: UInt64? = nil,
+        toneFrequency: Double? = nil,
+        toneSqelchFrequency: Double? = nil,
+        dcsCode: Int? = nil,
+        duplexOffset: Int? = nil,
+        skipScan: Bool? = nil,
+        lockout: Bool? = nil,
+        filterSelection: Int? = nil,
+        dataMode: Bool? = nil,
+        powerLevel: Int? = nil
+    )
+
+    // Convenience properties
+    public var isSimplex: Bool          // No duplex offset
+    public var hasTone: Bool            // Any tone configured
+    public var description: String       // Human-readable description
+}
+```
+
+Represents a memory channel configuration for radio transceivers.
+
+Memory channels allow storing frequency, mode, and other settings for quick recall. This model provides a unified interface across all radio manufacturers while allowing for manufacturer-specific features through optional properties.
+
+**Manufacturer-Specific Features:**
+- **Icom**: Supports split, data mode, filter selection, duplex offset, CTCSS tones
+- **Yaesu**: Supports CTCSS/DCS tones, skip settings, power levels
+- **Kenwood**: Supports tone squelch, lockout, reverse
+- **Elecraft**: Supports extended settings via menu commands
+
+**Usage:**
+```swift
+// Create a basic memory channel
+let channel = MemoryChannel(
+    number: 1,
+    frequency: 14_230_000,  // 14.230 MHz
+    mode: .usb,
+    name: "20m Net"
+)
+
+// Store to radio
+try await rig.setMemoryChannel(channel)
+
+// Recall from radio
+let stored = try await rig.getMemoryChannel(1)
+print("Channel \(stored.number): \(stored.name ?? "Unnamed")")
+print("Frequency: \(stored.frequency) Hz, Mode: \(stored.mode)")
+
+// Create a VHF/UHF repeater channel with CTCSS tone and offset
+let repeater = MemoryChannel(
+    number: 10,
+    frequency: 146_520_000,  // 2m calling frequency
+    mode: .fm,
+    name: "2m Call",
+    toneFrequency: 100.0,    // 100 Hz CTCSS
+    duplexOffset: 600_000    // +600 kHz standard 2m offset
+)
+try await rig.setMemoryChannel(repeater)
+
+// Create a split operation channel
+let splitChannel = MemoryChannel(
+    number: 15,
+    frequency: 14_195_000,   // Receive frequency
+    mode: .usb,
+    name: "DX Split",
+    splitEnabled: true,
+    txFrequency: 14_225_000  // Transmit frequency
+)
+try await rig.setMemoryChannel(splitChannel)
+```
+
+**Validation:**
+The `validate(for:)` method checks the configuration against radio capabilities:
+```swift
+try channel.validate(for: rig.capabilities)  // Throws if invalid
+```
+
+**Channel Number Ranges:**
+Different radios support different channel counts:
+- IC-7300, IC-705: 0-98 (99 channels)
+- IC-7600: 0-99 (100 channels)
+- IC-7100, IC-9700: 1-109 (includes special channels)
+- Most Yaesu: 1-99 or 1-117
+- Most Kenwood: 0-99 or 0-299
 
 ### RigCapabilities
 

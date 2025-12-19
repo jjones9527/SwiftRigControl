@@ -14,6 +14,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching (v1.1.0)
 - ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
 - ✅ **RIT/XIT Support**: Receiver/Transmitter incremental tuning across all protocols (v1.1.0)
+- ✅ **Memory Channels**: Universal memory channel model with manufacturer-specific features (v1.2.0)
 - ✅ **Open Source**: MIT licensed
 
 ## Supported Radios
