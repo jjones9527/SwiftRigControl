@@ -533,6 +533,86 @@ public actor RigController {
         }
     }
 
+    // MARK: - DSP Controls
+
+    /// Sets the AGC (Automatic Gain Control) speed.
+    ///
+    /// AGC controls how quickly the receiver responds to changes in signal strength.
+    /// Different speeds are optimal for different operating modes:
+    /// - **Fast**: Best for CW and digital modes where rapid signal changes occur
+    /// - **Medium**: Good general-purpose setting for SSB and mixed modes
+    /// - **Slow**: Preferred for weak signal SSB work and DXing
+    /// - **Off**: Disables AGC for manual gain control (advanced users only)
+    ///
+    /// - Parameter speed: The desired AGC speed
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if AGC control not supported
+    ///   - `RigError.invalidParameter` if speed not supported by this radio
+    ///
+    /// # Example
+    /// ```swift
+    /// // Fast AGC for CW operation
+    /// try await rig.setAGC(.fast)
+    ///
+    /// // Slow AGC for weak signal SSB DXing
+    /// try await rig.setAGC(.slow)
+    ///
+    /// // Medium AGC for general SSB
+    /// try await rig.setAGC(.medium)
+    /// ```
+    ///
+    /// # Radio Support
+    /// AGC control is supported on most modern Icom radios:
+    /// - IC-9700, IC-7610, IC-7300, IC-7600, IC-7100, IC-705
+    /// - IC-7851, IC-7800, IC-7700
+    ///
+    /// Note: IC-7600/7300/7610/7851 do not support AGC OFF.
+    public func setAGC(_ speed: AGCSpeed) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        try await proto.setAGC(speed)
+        // Invalidate cached AGC setting
+        await stateCache.invalidate("agc_speed")
+    }
+
+    /// Gets the current AGC speed.
+    ///
+    /// - Parameter cached: Whether to use cached value if available (defaults to true)
+    /// - Returns: Current AGC speed setting
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if AGC control not supported
+    ///
+    /// # Caching
+    /// When `cached` is true, the controller returns a cached AGC setting if available
+    /// and less than 500ms old. Set `cached` to false to force a fresh query.
+    ///
+    /// # Example
+    /// ```swift
+    /// // Get current AGC setting
+    /// let agc = try await rig.agc()
+    /// print("Current AGC: \(agc.description)")  // "Fast AGC"
+    ///
+    /// // Force fresh query
+    /// let freshAGC = try await rig.agc(cached: false)
+    /// ```
+    public func agc(cached: Bool = true) async throws -> AGCSpeed {
+        guard connected else {
+            throw RigError.notConnected
+        }
+
+        if cached {
+            return try await stateCache.get("agc_speed", maxAge: 0.5) {
+                try await proto.getAGC()
+            }
+        } else {
+            await stateCache.invalidate("agc_speed")
+            return try await proto.getAGC()
+        }
+    }
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.

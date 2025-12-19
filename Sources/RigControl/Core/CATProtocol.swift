@@ -189,6 +189,37 @@ public protocol CATProtocol: Actor {
     /// - Throws: `RigError.unsupportedOperation` if radio doesn't support XIT
     func getXIT() async throws -> RITXITState
 
+    // MARK: - DSP Controls
+
+    /// Sets the AGC (Automatic Gain Control) speed.
+    ///
+    /// AGC controls how quickly the receiver responds to changes in signal strength.
+    /// Different speeds are optimal for different operating modes:
+    /// - **Fast**: Best for CW and digital modes
+    /// - **Medium**: Good general-purpose setting for SSB
+    /// - **Slow**: Preferred for weak signal SSB work and DXing
+    /// - **Off**: Disables AGC for manual gain control
+    ///
+    /// # Example
+    /// ```swift
+    /// // Set fast AGC for CW operation
+    /// try await protocol.setAGC(.fast)
+    ///
+    /// // Set slow AGC for weak signal SSB
+    /// try await protocol.setAGC(.slow)
+    /// ```
+    ///
+    /// - Parameter speed: The desired AGC speed
+    /// - Throws: `RigError.unsupportedOperation` if AGC control not supported
+    /// - Throws: `RigError.invalidParameter` if speed not supported by this radio
+    func setAGC(_ speed: AGCSpeed) async throws
+
+    /// Gets the current AGC speed.
+    ///
+    /// - Returns: Current AGC speed setting
+    /// - Throws: `RigError.unsupportedOperation` if AGC control not supported
+    func getAGC() async throws -> AGCSpeed
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -292,6 +323,16 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func clearMemoryChannel(_ number: Int) async throws {
         throw RigError.unsupportedOperation("Memory channel operations not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setAGC(_ speed: AGCSpeed) async throws {
+        throw RigError.unsupportedOperation("AGC (Automatic Gain Control) not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getAGC() async throws -> AGCSpeed {
+        throw RigError.unsupportedOperation("AGC (Automatic Gain Control) not supported")
     }
 
     /// Default connect implementation just opens the transport
