@@ -160,6 +160,16 @@ public enum RigctldCommand: Sendable, Equatable {
     /// Convert milliwatts to power (4 or \mW2power)
     case mW2power(powerMW: Int, frequency: UInt64, mode: String)
 
+    // MARK: - Level Commands
+
+    /// Set level (L or \set_level)
+    /// Currently supports AGC level
+    case setLevel(name: String, value: String)
+
+    /// Get level (l or \get_level)
+    /// Currently supports AGC level
+    case getLevel(name: String)
+
     // MARK: - Information Commands
 
     /// Dump radio capabilities (\dump_caps)
@@ -198,6 +208,8 @@ public enum RigctldCommand: Sendable, Equatable {
         case .getSplitMode: return "get_split_mode"
         case .power2mW: return "power2mW"
         case .mW2power: return "mW2power"
+        case .setLevel: return "set_level"
+        case .getLevel: return "get_level"
         case .dumpCapabilities: return "dump_caps"
         case .dumpState: return "dump_state"
         case .checkVFO: return "chk_vfo"

@@ -204,6 +204,19 @@ public struct RigctldCommandParser {
             }
             return .mW2power(powerMW: powerMW, frequency: freq, mode: args[2])
 
+        // Level commands
+        case "L":
+            guard args.count >= 2 else {
+                throw ParseError.missingParameter("level name and value")
+            }
+            return .setLevel(name: args[0], value: args[1])
+
+        case "l":
+            guard let name = args.first else {
+                throw ParseError.missingParameter("level name")
+            }
+            return .getLevel(name: name)
+
         // Quit
         case "q":
             return .quit
@@ -331,6 +344,19 @@ public struct RigctldCommandParser {
                 throw ParseError.invalidParameter("frequency", value: args[1])
             }
             return .mW2power(powerMW: powerMW, frequency: freq, mode: args[2])
+
+        // Level commands
+        case "set_level":
+            guard args.count >= 2 else {
+                throw ParseError.missingParameter("level name and value")
+            }
+            return .setLevel(name: args[0], value: args[1])
+
+        case "get_level":
+            guard let name = args.first else {
+                throw ParseError.missingParameter("level name")
+            }
+            return .getLevel(name: name)
 
         // Information commands
         case "dump_caps":

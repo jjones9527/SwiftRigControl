@@ -195,6 +195,28 @@ T 1                 # Enable PTT
 \set_ptt 0          # Disable PTT
 ```
 
+### Level Commands (DSP Controls)
+
+| Command | Short | Long | Parameters | Description |
+|---------|-------|------|------------|-------------|
+| Get Level | `l` | `\get_level` | `<name>` | Gets level value (AGC, etc.) |
+| Set Level | `L` | `\set_level` | `<name> <value>` | Sets level value |
+
+**Supported Levels:**
+- **AGC**: Automatic Gain Control speed
+  - Values: 0=OFF, 1=FAST, 2=MEDIUM, 3=SLOW, 4=AUTO
+  - Not all radios support all values (IC-7600/7300/7610 lack OFF)
+
+**Examples:**
+```
+l AGC               # Get current AGC: 1
+L AGC 1             # Set fast AGC
+L AGC 2             # Set medium AGC
+L AGC 3             # Set slow AGC
+\get_level AGC      # Get AGC (long form)
+\set_level AGC 1    # Set fast AGC (long form)
+```
+
 ### Split Operation Commands
 
 | Command | Short | Long | Parameters | Description |

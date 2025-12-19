@@ -151,6 +151,13 @@ public actor RigctldCommandHandler {
             let clamped = min(max(normalized, 0.0), 1.0)
             return RigctldResponse(value: String(format: "%.6f", clamped), command: command)
 
+        // Level commands
+        case .setLevel(let name, let value):
+            return try await setLevel(name: name, value: value, command: command)
+
+        case .getLevel(let name):
+            return try await getLevel(name: name, command: command)
+
         // Information commands
         case .dumpCapabilities:
             return await dumpCapabilities()
@@ -240,6 +247,63 @@ public actor RigctldCommandHandler {
         case "SUB": return .sub
         default:
             throw RigError.invalidParameter("Unknown VFO: \(vfoStr)")
+        }
+    }
+
+    // MARK: - Level Control
+
+    /// Set a level value (currently supports AGC)
+    private func setLevel(name: String, value: String, command: RigctldCommand) async throws -> RigctldResponse {
+        let normalized = name.uppercased()
+
+        switch normalized {
+        case "AGC":
+            // Parse AGC value - Hamlib uses numeric codes
+            // Map common values: 0=OFF, 1=FAST, 2=MEDIUM/MID, 3=SLOW
+            let agcSpeed: AGCSpeed
+            switch value {
+            case "0", "OFF":
+                agcSpeed = .off
+            case "1", "FAST":
+                agcSpeed = .fast
+            case "2", "MID", "MEDIUM":
+                agcSpeed = .medium
+            case "3", "SLOW":
+                agcSpeed = .slow
+            case "4", "AUTO":
+                agcSpeed = .auto
+            default:
+                throw RigError.invalidParameter("Invalid AGC value: \(value)")
+            }
+
+            try await rigController.setAGC(agcSpeed)
+            return .ok(command: command)
+
+        default:
+            return .error(.notImplemented, command: command)
+        }
+    }
+
+    /// Get a level value (currently supports AGC)
+    private func getLevel(name: String, command: RigctldCommand) async throws -> RigctldResponse {
+        let normalized = name.uppercased()
+
+        switch normalized {
+        case "AGC":
+            let agc = try await rigController.agc()
+            // Map AGCSpeed to numeric value for Hamlib compatibility
+            let value: String
+            switch agc {
+            case .off: value = "0"
+            case .fast: value = "1"
+            case .medium: value = "2"
+            case .slow: value = "3"
+            case .auto: value = "4"
+            }
+            return RigctldResponse(value: value, command: command)
+
+        default:
+            return .error(.notImplemented, command: command)
         }
     }
 
