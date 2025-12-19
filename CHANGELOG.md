@@ -97,6 +97,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cache management methods**: `invalidateCache()`, `cacheStatistics()`
 - **Cache statistics** for debugging and monitoring
 
+#### RIT/XIT Support
+- **New `RITXITState` model** representing RIT/XIT enabled state and frequency offset
+- **RIT (Receiver Incremental Tuning) support across all 3 protocols**:
+  - Icom CI-V: Command `0x21 0x00/0x01` (RIT offset and enable)
+  - Yaesu CAT: Commands `RT1;`/`RT0;`, `RU;`/`RD;` (Kenwood-compatible)
+  - Kenwood: Commands `RT1;`/`RT0;`, `RU;`/`RD;`, `RC;` (Native)
+- **XIT (Transmitter Incremental Tuning) support** with graceful degradation:
+  - Icom CI-V: Command `0x21 0x02/0x03` (XIT offset and enable)
+  - Yaesu CAT: Commands `XT1;`/`XT0;` (limited support, many radios RIT-only)
+  - Kenwood: Commands `XT1;`/`XT0;` (shares offset with RIT on most models)
+- **RigController methods**: `setRIT(_:)`, `getRIT(cached:)`, `setXIT(_:)`, `getXIT(cached:)`
+- **Capability flags**: `supportsRIT` and `supportsXIT` in `RigCapabilities`
+- **BCD encoding/decoding** for Icom RIT/XIT offsets (±9999 Hz range)
+- **Offset validation** with clear error messages for out-of-range values
+- **State caching** with 500ms TTL for RIT/XIT queries
+- **Radio-specific handling**: NAK detection for unsupported XIT, shared RIT/XIT offsets
+- **Comprehensive documentation** with usage examples for CW, contest, and data mode operations
+
 #### Batch Configuration API
 - **New `configure()` method** for setting multiple parameters in one call
 - **Optional parameters**: frequency, mode, VFO, power

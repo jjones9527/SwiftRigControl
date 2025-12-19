@@ -7,12 +7,13 @@ This document provides comprehensive examples for common amateur radio control s
 1. [Basic Operations](#basic-operations)
 2. [Digital Mode Applications](#digital-mode-applications)
 3. [Split Operation](#split-operation)
-4. [Power Control](#power-control)
-5. [Multi-VFO Operations](#multi-vfo-operations)
-6. [Error Handling Patterns](#error-handling-patterns)
-7. [Mac App Store Apps (XPC)](#mac-app-store-apps-xpc)
-8. [SwiftUI Integration](#swiftui-integration)
-9. [Logging and Monitoring](#logging-and-monitoring)
+4. [RIT/XIT Operations](#ritxit-operations-v110) (v1.1.0)
+5. [Power Control](#power-control)
+6. [Multi-VFO Operations](#multi-vfo-operations)
+7. [Error Handling Patterns](#error-handling-patterns)
+8. [Mac App Store Apps (XPC)](#mac-app-store-apps-xpc)
+9. [SwiftUI Integration](#swiftui-integration)
+10. [Logging and Monitoring](#logging-and-monitoring)
 
 ## Basic Operations
 
@@ -273,6 +274,226 @@ class SatelliteController {
         try await rig.setFrequency(newTX, vfo: .sub)
     }
 }
+```
+
+## RIT/XIT Operations (v1.1.0)
+
+RIT (Receiver Incremental Tuning) and XIT (Transmitter Incremental Tuning) allow fine-tuning of receive and transmit frequencies independently from the displayed VFO frequency.
+
+### CW Zero-Beating
+
+```swift
+import RigControl
+
+class CWController {
+    let rig: RigController
+
+    /// Adjust RIT to zero-beat a CW signal
+    func zeroBeatSignal(offsetHz: Int) async throws {
+        // Check if radio supports RIT
+        guard rig.capabilities.supportsRIT else {
+            print("Radio doesn't support RIT")
+            return
+        }
+
+        // Validate offset range
+        guard abs(offsetHz) <= 9999 else {
+            throw RigError.invalidParameter("Offset must be ±9999 Hz")
+        }
+
+        // Enable RIT with the measured offset
+        try await rig.setRIT(RITXITState(enabled: true, offset: offsetHz))
+        print("RIT enabled with \(offsetHz) Hz offset")
+    }
+
+    /// Clear RIT after QSO
+    func clearRIT() async throws {
+        try await rig.setRIT(.disabled)
+        print("RIT disabled")
+    }
+
+    /// Incremental RIT adjustment
+    func adjustRIT(by deltaHz: Int) async throws {
+        let current = try await rig.getRIT()
+        let newOffset = current.offset + deltaHz
+
+        guard abs(newOffset) <= 9999 else {
+            print("Offset limit reached")
+            return
+        }
+
+        try await rig.setRIT(RITXITState(enabled: true, offset: newOffset))
+        print("RIT adjusted to \(newOffset) Hz")
+    }
+}
+
+// Usage
+let cw = CWController(rig: rig)
+
+// Zero-beat a signal that's 450 Hz high
+try await cw.zeroBeatSignal(offsetHz: 450)
+
+// Fine-tune by ear
+try await cw.adjustRIT(by: 50)   // +50 Hz
+try await cw.adjustRIT(by: -20)  // -20 Hz
+
+// Clear when done
+try await cw.clearRIT()
+```
+
+### Contest Split Operation
+
+```swift
+import RigControl
+
+class ContestSplitController {
+    let rig: RigController
+
+    /// Set up split operation with XIT for pileup
+    func setupPileupSplit(listenFreq: UInt64, txOffset: Int) async throws {
+        // Set main VFO to listening frequency
+        try await rig.setFrequency(listenFreq, vfo: .a)
+        try await rig.setMode(.ssb, vfo: .a)
+
+        // Enable split operation
+        try await rig.enableSplit(true)
+
+        // Use XIT to shift transmit frequency (if supported)
+        if rig.capabilities.supportsXIT {
+            try await rig.setXIT(RITXITState(enabled: true, offset: txOffset))
+            print("Split enabled: RX=\(listenFreq), TX offset=\(txOffset) Hz")
+        } else {
+            // Fall back to VFO B for split if XIT not supported
+            let txFreq = UInt64(Int64(listenFreq) + Int64(txOffset))
+            try await rig.setFrequency(txFreq, vfo: .b)
+            print("Split enabled: RX=\(listenFreq), TX=\(txFreq)")
+        }
+    }
+
+    /// DX pileup scanner - listen around calling frequency
+    func scanPileup(centerFreq: UInt64, range: Int = 5000) async throws {
+        print("Scanning ±\(range) Hz around \(centerFreq)")
+
+        // Enable RIT for scanning
+        try await rig.setRIT(RITXITState(enabled: true, offset: -range))
+
+        // Scan from low to high
+        for offset in stride(from: -range, through: range, by: 100) {
+            try await rig.setRIT(RITXITState(enabled: true, offset: offset))
+
+            // Check signal strength
+            let signal = try await rig.signalStrength()
+            if signal.isStrongSignal {
+                print("Strong signal at \(offset) Hz: \(signal.description)")
+            }
+
+            try await Task.sleep(nanoseconds: 100_000_000) // 100ms per step
+        }
+
+        // Disable RIT when done
+        try await rig.setRIT(.disabled)
+    }
+}
+
+// Usage for contest pileup
+let contest = ContestSplitController(rig: rig)
+
+// Listen on 14.195, transmit 2 kHz up
+try await contest.setupPileupSplit(
+    listenFreq: 14_195_000,
+    txOffset: 2000
+)
+
+// Scan for stations
+try await contest.scanPileup(centerFreq: 14_195_000, range: 3000)
+```
+
+### Fine-Tuning for Data Modes
+
+```swift
+import RigControl
+
+class DataModeController {
+    let rig: RigController
+
+    /// Fine-tune frequency for FT8/FT4 decode
+    func optimizeForDecoding() async throws {
+        // Read current RIT state
+        let ritState = try await rig.getRIT()
+        print("Current RIT: \(ritState.description)")
+
+        // Most FT8/FT4 stations are within ±100 Hz of frequency
+        // Adjust RIT to maximize decodes
+        let testOffsets = [-50, 0, 50]
+
+        for offset in testOffsets {
+            try await rig.setRIT(RITXITState(enabled: true, offset: offset))
+            print("Testing offset: \(offset) Hz")
+
+            // Let decoder run for one cycle (15 seconds for FT8)
+            try await Task.sleep(nanoseconds: 15_000_000_000)
+
+            // Your app would count decodes here
+            // Pick the offset with best results
+        }
+    }
+
+    /// Automatic frequency calibration
+    func calibrateWithWWV(wwvFreq: UInt64 = 10_000_000) async throws {
+        print("Calibrating with WWV on \(wwvFreq) Hz")
+
+        try await rig.setFrequency(wwvFreq, vfo: .a)
+        try await rig.setMode(.am, vfo: .a)
+
+        // Measure apparent offset by zero-beating the tone
+        // (your app would use audio analysis here)
+        let measuredOffset = -23  // Example: 23 Hz low
+
+        // Apply correction with RIT
+        try await rig.setRIT(RITXITState(enabled: true, offset: measuredOffset))
+        print("Calibration offset applied: \(measuredOffset) Hz")
+    }
+}
+```
+
+### Checking RIT/XIT Support
+
+```swift
+import RigControl
+
+func checkRITXITSupport(for radio: RigController) async {
+    let caps = radio.capabilities
+
+    if caps.supportsRIT {
+        print("✓ Radio supports RIT")
+
+        // Try to read current RIT state
+        do {
+            let ritState = try await radio.getRIT()
+            print("  Current RIT: \(ritState.description)")
+        } catch {
+            print("  Error reading RIT: \(error)")
+        }
+    } else {
+        print("✗ Radio does not support RIT")
+    }
+
+    if caps.supportsXIT {
+        print("✓ Radio supports XIT")
+
+        do {
+            let xitState = try await radio.getXIT()
+            print("  Current XIT: \(xitState.description)")
+        } catch {
+            print("  Error reading XIT: \(error)")
+        }
+    } else {
+        print("✗ Radio does not support XIT (may use RIT for both RX/TX)")
+    }
+}
+
+// Check capabilities
+try await checkRITXITSupport(for: rig)
 ```
 
 ## Power Control

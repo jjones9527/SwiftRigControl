@@ -331,6 +331,115 @@ if signal.isStrongSignal {
 }
 ```
 
+#### RIT/XIT Control (v1.1.0)
+
+RIT (Receiver Incremental Tuning) and XIT (Transmitter Incremental Tuning) allow fine-tuning of receive and transmit frequencies independently from the displayed VFO frequency.
+
+##### setRIT(_:)
+
+```swift
+public func setRIT(_ state: RITXITState) async throws
+```
+
+Sets the RIT (Receiver Incremental Tuning) state.
+
+**Parameters:**
+- `state`: The desired RIT state including enabled status and offset
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Radio doesn't support RIT
+- `RigError.invalidParameter` - Offset out of range (±9999 Hz)
+
+**Example:**
+```swift
+// Enable RIT with +500 Hz offset
+try await rig.setRIT(RITXITState(enabled: true, offset: 500))
+
+// Disable RIT
+try await rig.setRIT(.disabled)
+
+// Adjust offset while keeping RIT enabled
+try await rig.setRIT(RITXITState(enabled: true, offset: -200))
+```
+
+##### getRIT(cached:)
+
+```swift
+public func getRIT(cached: Bool = true) async throws -> RITXITState
+```
+
+Gets the current RIT state.
+
+**Parameters:**
+- `cached`: Use cached value if available (default: `true`)
+
+**Returns:** Current RIT state including enabled status and offset
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Radio doesn't support RIT
+
+**Example:**
+```swift
+let ritState = try await rig.getRIT()
+print("RIT: \(ritState.description)")  // "ON (+500 Hz)" or "OFF"
+
+if ritState.enabled {
+    print("RIT offset: \(ritState.offset) Hz")
+}
+```
+
+##### setXIT(_:)
+
+```swift
+public func setXIT(_ state: RITXITState) async throws
+```
+
+Sets the XIT (Transmitter Incremental Tuning) state.
+
+**Note:** Not all radios support separate XIT control. Some radios (like IC-7100, many Yaesu models) only support RIT, which affects both RX and TX when transmitting.
+
+**Parameters:**
+- `state`: The desired XIT state including enabled status and offset
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Radio doesn't support XIT
+- `RigError.invalidParameter` - Offset out of range (±9999 Hz)
+
+**Example:**
+```swift
+// Enable XIT with -1000 Hz offset for split operation
+try await rig.setXIT(RITXITState(enabled: true, offset: -1000))
+
+// Disable XIT
+try await rig.setXIT(.disabled)
+```
+
+##### getXIT(cached:)
+
+```swift
+public func getXIT(cached: Bool = true) async throws -> RITXITState
+```
+
+Gets the current XIT state.
+
+**Parameters:**
+- `cached`: Use cached value if available (default: `true`)
+
+**Returns:** Current XIT state including enabled status and offset
+
+**Throws:**
+- `RigError.notConnected` - Not connected to radio
+- `RigError.unsupportedOperation` - Radio doesn't support XIT
+
+**Example:**
+```swift
+let xitState = try await rig.getXIT()
+print("XIT: \(xitState.description)")  // "ON (-1000 Hz)" or "OFF"
+```
+
 #### Batch Configuration (v1.1.0)
 
 ##### configure(frequency:mode:power:vfo:)
@@ -599,6 +708,48 @@ if signal.sUnits >= 9 {
 }
 ```
 
+### RITXITState (v1.1.0)
+
+```swift
+public struct RITXITState: Sendable, Equatable, Codable {
+    public let enabled: Bool   // Whether RIT/XIT is enabled
+    public let offset: Int     // Frequency offset in Hz (typically -9999 to +9999)
+
+    public init(enabled: Bool, offset: Int = 0)
+
+    public static let disabled: RITXITState  // Convenience for disabled state
+    public var description: String           // Human-readable description
+}
+```
+
+Represents the state of RIT (Receiver Incremental Tuning) or XIT (Transmitter Incremental Tuning).
+
+RIT and XIT allow fine-tuning of the receiver or transmitter frequency independently from the displayed VFO frequency. This is useful for:
+- Split operation in contests and DX work
+- Zero-beating CW signals
+- Compensating for slight frequency offsets
+
+**Usage:**
+```swift
+// Enable RIT with +500 Hz offset
+let ritState = RITXITState(enabled: true, offset: 500)
+try await rig.setRIT(ritState)
+
+// Disable RIT
+try await rig.setRIT(.disabled)
+
+// Read current RIT state
+let currentRIT = try await rig.getRIT()
+print("RIT: \(currentRIT.description)")  // "ON (+500 Hz)" or "OFF"
+
+if currentRIT.enabled {
+    print("Offset: \(currentRIT.offset) Hz")
+}
+```
+
+**Typical Range:**
+Most radios support offsets between -9999 Hz and +9999 Hz, though this varies by manufacturer. Check your radio's capabilities before setting extreme values.
+
 ### RigCapabilities
 
 ```swift
@@ -614,6 +765,8 @@ public struct RigCapabilities: Sendable {
     public let requiresVFOSelection: Bool // Needs VFO select before ops
     public let requiresModeFilter: Bool   // Mode commands need filter byte
     public let region: AmateurRadioRegion // ITU region for band validation
+    public let supportsRIT: Bool          // Supports RIT (v1.1.0)
+    public let supportsXIT: Bool          // Supports XIT (v1.1.0)
 }
 ```
 
