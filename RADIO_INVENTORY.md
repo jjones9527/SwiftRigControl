@@ -1,7 +1,7 @@
 # SwiftRigControl - Complete Radio Inventory
 
 **Last Updated:** December 19, 2025
-**Total Radios:** 59 models across 4 manufacturers
+**Total Radios:** 65 models across 5 manufacturers
 
 ---
 
@@ -10,10 +10,11 @@
 | Manufacturer | Models | Notes |
 |--------------|--------|-------|
 | **Icom** | 31 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
-| **Yaesu** | 10 | Modern HF transceivers, portable QRP |
+| **Yaesu** | 13 | Modern HF transceivers, portable QRP |
 | **Kenwood** | 12 | HF transceivers, VHF/UHF handhelds/mobiles |
 | **Elecraft** | 6 | QRP and high-end HF transceivers |
-| **TOTAL** | **59** | |
+| **Xiegu** | 3 | Budget HF transceivers (CI-V compatible) |
+| **TOTAL** | **65** | |
 
 ---
 
@@ -72,25 +73,28 @@
 
 ---
 
-## YAESU (10 models)
+## YAESU (13 models)
 
 ### Modern Flagship Transceivers (2020+)
 1. **FTDX-101MP** - HF/6m 200W flagship transceiver
 2. **FTDX-101D** - HF/6m 100W transceiver
 3. **FTDX-10** - HF/6m 100W entry-level SDR transceiver
+4. **FTDX-3000** - HF/6m 100W transceiver ✨ **NEW**
 
 ### Popular HF Transceivers
-4. **FT-710** - HF/6m AESS transceiver (2021)
-5. **FT-891** - HF/6m 100W all-mode field transceiver
-6. **FT-450D** - HF/6m 100W transceiver
+5. **FT-710** - HF/6m AESS transceiver (2021)
+6. **FT-891** - HF/6m 100W all-mode field transceiver
+7. **FT-450D** - HF/6m 100W transceiver
+8. **FT-2000** - HF/6m 100W transceiver ✨ **NEW**
 
 ### Multi-band Transceivers
-7. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
-8. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
-9. **FT-857D** - HF/VHF/UHF compact all-mode mobile
+9. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
+10. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
+11. **FT-857D** - HF/VHF/UHF compact all-mode mobile
 
 ### Portable QRP
-10. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
+12. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
+13. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817) ✨ **NEW**
 
 ---
 
@@ -166,11 +170,12 @@
 
 | Category | SwiftRigControl | MacLoggerDX | Coverage |
 |----------|-----------------|-------------|----------|
-| **Total Radios** | 59 models | ~150 models | 39% |
+| **Total Radios** | 65 models | ~150 models | 43% |
 | **Icom** | 31 models | 40+ models | 77% |
-| **Yaesu** | 10 models | 22+ models | 45% |
+| **Yaesu** | 13 models | 22+ models | 59% |
 | **Kenwood** | 12 models | 19 models | 63% |
 | **Elecraft** | 6 models | 4 models | 150% ✅ |
+| **Xiegu** | 3 models | 3 models | 100% ✅ |
 
 ### Strategic Focus
 SwiftRigControl focuses on:
@@ -182,11 +187,10 @@ SwiftRigControl focuses on:
 
 ### Gaps vs MacLoggerDX
 - **Vintage radios** (pre-2000): Limited coverage by design
-- **Xiegu**: Missing (G90, X6100, X6200) - High priority for Phase 3B
 - **Ten-Tec**: Missing (Orion, Eagle, Jupiter) - Medium priority
 - **FlexRadio**: Missing (Flex 6000/8000 series) - Medium priority
 - **Older Icom**: Missing IC-735, IC-751, IC-781, IC-970, etc. - Low priority
-- **Older Yaesu**: Missing FT-950, FT-2000, FTDX-3000, FTDX-5000, FT-818 - Medium priority
+- **Older Yaesu**: Missing FT-950, FTDX-5000 - Low priority
 
 ---
 
@@ -195,9 +199,15 @@ SwiftRigControl focuses on:
 ### Recent Additions (December 2025)
 - **IC-718** - Phase 3A (Dec 19, 2025)
 - **IC-703** - Phase 3A (Dec 19, 2025)
+- **Xiegu G90** - Phase 3B (Dec 19, 2025)
+- **Xiegu X6100** - Phase 3B (Dec 19, 2025)
+- **Xiegu X6200** - Phase 3B (Dec 19, 2025)
+- **FT-818** - Phase 3C (Dec 19, 2025)
+- **FT-2000** - Phase 3C (Dec 19, 2025)
+- **FTDX-3000** - Phase 3C (Dec 19, 2025)
 
 ### Architecture Quality
-All 59 radios follow the new architecture:
+All 65 radios follow the new architecture:
 - ✅ Comprehensive `RigCapabilities` with detailed frequency ranges
 - ✅ Manufacturer-specific command sets
 - ✅ RadioDefinition factory functions
@@ -210,9 +220,10 @@ All 59 radios follow the new architecture:
 
 ### Testing Status
 - All radios compile successfully
-- Architecture tested with IC-7600, IC-7100, IC-705
+- Architecture tested with IC-7600, IC-7100, IC-705, Xiegu radios
 - Network control (rigctld) tested and working
 - Real hardware testing ongoing
+- Phase 3A-C completed (December 2025)
 
 ---
 
@@ -268,20 +279,30 @@ The majority of "missing" radios from MacLoggerDX comparison were actually **alr
 | **Kenwood** | 12 | HF transceivers, VHF/UHF handhelds/mobiles |
 | **Elecraft** | 6 | QRP and high-end HF transceivers |
 | **Xiegu** | 3 ✨ | Budget HF transceivers (NEW!) |
-| **TOTAL** | **62** | |
+| **TOTAL** | **65** | |
 
-**Previous Total:** 59 radios
+**Original Total:** 59 radios
 **Phase 3B Addition:** +3 Xiegu radios
-**New Total:** **62 radios** across 5 manufacturers
+**Phase 3C Addition:** +3 Yaesu radios
+**New Total:** **65 radios** across 5 manufacturers
 
 ---
 
-## Phase 3B Complete! (December 19, 2025)
+## Phase 3 Complete! (December 19, 2025)
 
-Added complete Xiegu manufacturer support:
+### Phase 3A: Popular Icom Budget Models
+- ✅ **IC-718** - HF 100W budget transceiver
+- ✅ **IC-703** - Portable HF/6m 10W QRP
+
+### Phase 3B: Xiegu Manufacturer Support
 - ✅ **G90** - HF 20W SDR (0.5-30 MHz, SSB/CW/AM, built-in ATU)
 - ✅ **X6100** - Portable HF/6m 10W SDR (battery, touchscreen, ATU)
 - ✅ **X6200** - Portable HF/6m 8W SDR (VHF air band + FM broadcast RX)
 
 All Xiegu radios leverage existing Icom CI-V protocol infrastructure!
+
+### Phase 3C: Popular Yaesu Additions
+- ✅ **FT-818** - Portable QRP HF/VHF/UHF 6W (successor to FT-817, 208 channels)
+- ✅ **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
+- ✅ **FTDX-3000** - HF/6m 100W transceiver (advanced DSP, spectrum scope)
 

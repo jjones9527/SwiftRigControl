@@ -141,4 +141,46 @@ extension RadioDefinition {
             )
         }
     )
+
+    /// Yaesu FT-818 portable QRP HF/VHF/UHF transceiver (successor to FT-817)
+    public static let yaesuFT818 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-818",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT818,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT818
+            )
+        }
+    )
+
+    /// Yaesu FT-2000 HF/6m 100W transceiver
+    public static let yaesuFT2000 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-2000",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT2000,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT2000
+            )
+        }
+    )
+
+    /// Yaesu FTDX-3000 HF/6m 100W transceiver
+    public static let yaesuFTDX3000 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FTDX-3000",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFTDX3000,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFTDX3000
+            )
+        }
+    )
 }
