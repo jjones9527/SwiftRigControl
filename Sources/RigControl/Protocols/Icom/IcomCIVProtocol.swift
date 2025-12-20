@@ -805,6 +805,8 @@ public actor IcomCIVProtocol: CATProtocol {
         switch radioModel {
         case .ic7300, .ic705, .ic703:
             return 99
+        case .xieguG90, .xieguX6100, .xieguX6200:
+            return 99  // Xiegu radios use 1-99 memory channels
         case .ic7600:
             return 100
         case .ic7100, .ic9700:

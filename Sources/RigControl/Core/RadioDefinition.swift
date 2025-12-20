@@ -25,6 +25,7 @@ public struct RadioDefinition: Sendable {
         case elecraft = "Elecraft"
         case yaesu = "Yaesu"
         case kenwood = "Kenwood"
+        case xiegu = "Xiegu"
         case tentec = "Ten-Tec"
     }
 

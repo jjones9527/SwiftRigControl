@@ -96,6 +96,17 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-703 Portable HF/6m 10W QRP transceiver
     case ic703 = "IC-703"
 
+    // MARK: - Xiegu Radios (CI-V Compatible)
+
+    /// Xiegu G90 HF 20W SDR transceiver
+    case xieguG90 = "Xiegu G90"
+
+    /// Xiegu X6100 HF/6m 10W portable SDR transceiver
+    case xieguX6100 = "Xiegu X6100"
+
+    /// Xiegu X6200 HF/6m 8W portable SDR transceiver
+    case xieguX6200 = "Xiegu X6200"
+
     // MARK: - VHF/UHF Transceivers
 
     /// IC-910H VHF/UHF all-mode transceiver with satellite mode
@@ -181,6 +192,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic9100: return 0x7C
         case .ic705: return 0xA4
         case .ic703: return 0x68
+
+        // Xiegu (CI-V compatible)
+        case .xieguG90, .xieguX6100, .xieguX6200: return 0xA4
 
         // VHF/UHF
         case .ic910h: return 0x60
