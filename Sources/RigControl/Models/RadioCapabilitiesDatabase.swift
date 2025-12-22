@@ -528,6 +528,44 @@ public struct RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
 
+    /// Icom IC-751 HF all-mode transceiver (classic)
+    public static let icomIC751 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,  // 100W SSB/CW, 40W AM
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 100_000, max: 30_000_000),
+        detailedFrequencyRanges: [
+            // General coverage receive
+            DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .rtty], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .fm, .am, .rtty], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .cw, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
 
     /// Icom IC-9100 - HF/VHF/UHF all-mode transceiver
     public static let icomIC9100 = RigCapabilities(
@@ -1200,6 +1238,34 @@ public struct RadioCapabilitiesDatabase {
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "70cm"),
             // 23cm receive only
             DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: false, bandName: "23cm RX"),
+        ],
+        hasDualReceiver: true,  // Main/Sub for satellite operation
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: true,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Icom IC-970 VHF/UHF all-mode transceiver with satellite mode
+    public static let icomIC970 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 45,  // 45W FM VHF, 40W FM UHF, 35W SSB/CW VHF, 30W SSB/CW UHF
+        supportedModes: [.lsb, .usb, .cw, .cwR, .fm, .fmN],
+        frequencyRange: FrequencyRange(min: 144_000_000, max: 1_300_000_000),
+        detailedFrequencyRanges: [
+            // 2m band
+            DetailedFrequencyRange(min: 144_000_000, max: 150_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "2m"),
+            // Receive gap
+            DetailedFrequencyRange(min: 150_000_001, max: 429_999_999, modes: [.usb, .fm], canTransmit: false),
+            // 70cm band
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "70cm"),
+            // Receive gap
+            DetailedFrequencyRange(min: 450_000_001, max: 1_239_999_999, modes: [.usb, .fm], canTransmit: false),
+            // 23cm band (optional UX-97 module)
+            DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "23cm"),
         ],
         hasDualReceiver: true,  // Main/Sub for satellite operation
         hasATU: false,
@@ -2109,6 +2175,137 @@ public struct RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
 
+    /// Yaesu FTDX-5000 HF/6m 200W flagship transceiver with dual receiver
+    public static let yaesuFTDX5000 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 200,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
+        detailedFrequencyRanges: [
+            // General coverage receive
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_099_999, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_100_000, max: 5_329_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 5_330_500, max: 5_403_500, modes: [.lsb, .usb], canTransmit: true, bandName: "60m"),
+            DetailedFrequencyRange(min: 5_403_501, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .am, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 54_000_001, max: 60_000_000, modes: [.usb, .am], canTransmit: false),
+        ],
+        hasDualReceiver: true,
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Yaesu FTDX-1200 HF/6m 100W transceiver
+    public static let yaesuFTDX1200 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 56_000_000),
+        detailedFrequencyRanges: [
+            // General coverage receive
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_099_999, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_100_000, max: 5_329_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 5_330_500, max: 5_403_500, modes: [.lsb, .usb], canTransmit: true, bandName: "60m"),
+            DetailedFrequencyRange(min: 5_403_501, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .am, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 54_000_001, max: 56_000_000, modes: [.usb, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
+
+    /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
+    public static let yaesuFT100 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,  // 100W on HF/6m, 50W on 2m, 20W on 70cm
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .dataUSB, .dataLSB],
+        frequencyRange: FrequencyRange(min: 100_000, max: 961_000_000),
+        detailedFrequencyRanges: [
+            // General coverage receive (cellular blocked)
+            DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            // HF bands
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .am, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            // 6m
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 54_000_001, max: 143_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            // 2m
+            DetailedFrequencyRange(min: 144_000_000, max: 146_000_000, modes: [.usb, .cw, .fm], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 146_000_001, max: 429_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            // 70cm
+            DetailedFrequencyRange(min: 430_000_000, max: 440_000_000, modes: [.usb, .cw, .fm], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 440_000_001, max: 961_000_000, modes: [.fm, .am], canTransmit: false),
+        ],
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,
+        requiresModeFilter: true,
+        powerUnits: .percentage
+    )
 
 
     /// Kenwood TS-890S - HF/6m transceiver with dual receiver

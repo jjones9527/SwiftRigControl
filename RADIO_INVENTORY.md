@@ -1,7 +1,7 @@
 # SwiftRigControl - Complete Radio Inventory
 
 **Last Updated:** December 22, 2025
-**Total Radios:** 70 models across 5 manufacturers
+**Total Radios:** 75 models across 5 manufacturers
 
 ---
 
@@ -9,16 +9,16 @@
 
 | Manufacturer | Models | Notes |
 |--------------|--------|-------|
-| **Icom** | 34 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
-| **Yaesu** | 15 | Modern HF transceivers, portable QRP |
+| **Icom** | 36 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
+| **Yaesu** | 18 | Modern HF transceivers, portable QRP |
 | **Kenwood** | 12 | HF transceivers, VHF/UHF handhelds/mobiles |
 | **Elecraft** | 6 | QRP and high-end HF transceivers |
 | **Xiegu** | 3 | Budget HF transceivers (CI-V compatible) |
-| **TOTAL** | **70** | |
+| **TOTAL** | **75** | |
 
 ---
 
-## ICOM (34 models)
+## ICOM (36 models)
 
 ### Modern HF Flagships (2010+)
 1. **IC-7610** - HF/6m 100W SDR transceiver with dual receiver, spectrum scope
@@ -36,70 +36,75 @@
 9. **IC-7410** - HF/6m 100W transceiver
 10. **IC-7400** - HF/6m/2m 100W transceiver ✨ **NEW**
 11. **IC-735** - HF all-mode transceiver (classic budget HF) ✨ **NEW**
-12. **IC-718** - HF 100W budget transceiver (extremely popular with new hams)
-13. **IC-703** - Portable HF/6m 10W QRP transceiver
+12. **IC-751** - HF all-mode transceiver (classic HF with WARC bands) ✨ **NEW Phase 4B**
+13. **IC-718** - HF 100W budget transceiver (extremely popular with new hams)
+14. **IC-703** - Portable HF/6m 10W QRP transceiver
 
 ### Flagship HF Transceivers
-14. **IC-7700** - HF/6m 200W flagship transceiver
-15. **IC-7800** - HF/6m 200W flagship transceiver
-16. **IC-7851** - HF/6m 200W flagship with spectrum scope (latest flagship)
+15. **IC-7700** - HF/6m 200W flagship transceiver
+16. **IC-7800** - HF/6m 200W flagship transceiver
+17. **IC-7851** - HF/6m 200W flagship with spectrum scope (latest flagship)
 
 ### Legacy HF/VHF/UHF Mobile Transceivers
-14. **IC-706** - HF/6m/2m mobile transceiver
-15. **IC-706MKII** - HF/6m/2m mobile transceiver (improved)
-16. **IC-706MKIIG** - HF/VHF/UHF mobile transceiver (70cm added)
-17. **IC-7000** - HF/VHF/UHF 100W mobile transceiver (popular all-band mobile)
+18. **IC-706** - HF/6m/2m mobile transceiver
+19. **IC-706MKII** - HF/6m/2m mobile transceiver (improved)
+20. **IC-706MKIIG** - HF/VHF/UHF mobile transceiver (70cm added)
+21. **IC-7000** - HF/VHF/UHF 100W mobile transceiver (popular all-band mobile)
 
 ### Legacy HF Transceivers (IC-746 series)
-18. **IC-746** - HF/6m/2m receive transceiver
-19. **IC-746PRO** - HF/6m/2m receive transceiver (improved DSP)
+22. **IC-746** - HF/6m/2m receive transceiver
+23. **IC-746PRO** - HF/6m/2m receive transceiver (improved DSP)
 
 ### Legacy HF Transceivers (IC-756 series)
-20. **IC-756** - HF/6m 100W transceiver (original)
-21. **IC-756PRO** - HF/6m 100W transceiver
-22. **IC-756PROII** - HF/6m 100W transceiver (improved DSP)
-23. **IC-756PROIII** - HF/6m 100W transceiver (best of series)
+24. **IC-756** - HF/6m 100W transceiver (original)
+25. **IC-756PRO** - HF/6m 100W transceiver
+26. **IC-756PROII** - HF/6m 100W transceiver (improved DSP)
+27. **IC-756PROIII** - HF/6m 100W transceiver (best of series)
 
 ### VHF/UHF All-Mode Transceivers
-24. **IC-9100** - HF/VHF/UHF 100W transceiver with D-STAR and satellite mode
-25. **IC-910H** - VHF/UHF all-mode transceiver with satellite mode
+28. **IC-9100** - HF/VHF/UHF 100W transceiver with D-STAR and satellite mode
+29. **IC-910H** - VHF/UHF all-mode transceiver with satellite mode
+30. **IC-970** - VHF/UHF all-mode transceiver with satellite mode (144/430/1200MHz) ✨ **NEW Phase 4B**
 
 ### VHF/UHF Mobile Transceivers (D-STAR)
-26. **ID-5100** - VHF/UHF dual-band mobile with D-STAR
-27. **ID-4100** - VHF/UHF dual-band mobile with D-STAR
-28. **IC-2730** - VHF/UHF dual-band FM mobile
+31. **ID-5100** - VHF/UHF dual-band mobile with D-STAR
+32. **ID-4100** - VHF/UHF dual-band mobile with D-STAR
+33. **IC-2730** - VHF/UHF dual-band FM mobile
 
 ### Receivers
-29. **IC-R8600** - Wideband communications receiver (0.01-3000 MHz)
-30. **IC-R75** - HF communications receiver
-31. **IC-R9500** - Professional wideband receiver
+34. **IC-R8600** - Wideband communications receiver (0.01-3000 MHz)
+35. **IC-R75** - HF communications receiver
+36. **IC-R9500** - Professional wideband receiver
 
 ---
 
-## YAESU (15 models)
+## YAESU (18 models)
 
 ### Modern Flagship Transceivers (2020+)
 1. **FTDX-101MP** - HF/6m 200W flagship transceiver
 2. **FTDX-101D** - HF/6m 100W transceiver
 3. **FTDX-10** - HF/6m 100W entry-level SDR transceiver
 4. **FTDX-3000** - HF/6m 100W transceiver ✨ **NEW**
+5. **FTDX-5000** - HF/6m 200W flagship with dual receiver ✨ **NEW Phase 4B**
 
 ### Popular HF Transceivers
-5. **FT-710** - HF/6m AESS transceiver (2021)
-6. **FT-891** - HF/6m 100W all-mode field transceiver
-7. **FT-950** - HF/6m 100W transceiver with ATU ✨ **NEW**
-8. **FT-450D** - HF/6m 100W transceiver
-9. **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
+6. **FT-710** - HF/6m AESS transceiver (2021)
+7. **FT-891** - HF/6m 100W all-mode field transceiver
+8. **FT-950** - HF/6m 100W transceiver with ATU ✨ **NEW**
+9. **FTDX-1200** - HF/6m 100W transceiver with DSP ✨ **NEW Phase 4B**
+10. **FT-450D** - HF/6m 100W transceiver
+11. **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
 
 ### Multi-band Transceivers
-10. **FT-991** - HF/VHF/UHF all-mode transceiver ✨ **NEW**
-11. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
-12. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
-13. **FT-857D** - HF/VHF/UHF compact all-mode mobile
+12. **FT-991** - HF/VHF/UHF all-mode transceiver ✨ **NEW**
+13. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
+14. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
+15. **FT-857D** - HF/VHF/UHF compact all-mode mobile
+16. **FT-100** - HF/VHF/UHF mobile transceiver ✨ **NEW Phase 4B**
 
 ### Portable QRP
-14. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
-15. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817)
+17. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
+18. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817)
 
 ---
 

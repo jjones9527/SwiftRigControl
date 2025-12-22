@@ -815,7 +815,7 @@ public actor IcomCIVProtocol: CATProtocol {
             return 109  // Similar to IC-9700
         case .ic9100, .ic7000:
             return 99
-        case .ic7610, .ic7700, .ic7410, .ic7400, .ic7200, .ic735, .ic718:
+        case .ic7610, .ic7700, .ic7410, .ic7400, .ic7200, .ic751, .ic735, .ic718:
             return 99
         case .ic7851, .ic7850, .ic7800:
             return 99
@@ -825,7 +825,7 @@ public actor IcomCIVProtocol: CATProtocol {
             return 99
         case .ic706mkiig, .ic706mkii, .ic706:
             return 99
-        case .ic910h, .ic9000, .ic820h:
+        case .ic970, .ic910h, .ic9000, .ic820h:
             return 99
         case .ic275, .ic375, .ic475:
             return 99

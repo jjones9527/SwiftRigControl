@@ -211,4 +211,46 @@ extension RadioDefinition {
             )
         }
     )
+
+    /// Yaesu FTDX-5000 HF/6m 200W flagship transceiver
+    public static let yaesuFTDX5000 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FTDX-5000",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFTDX5000,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFTDX5000
+            )
+        }
+    )
+
+    /// Yaesu FTDX-1200 HF/6m 100W transceiver
+    public static let yaesuFTDX1200 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FTDX-1200",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFTDX1200,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFTDX1200
+            )
+        }
+    )
+
+    /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
+    public static let yaesuFT100 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-100",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT100,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT100
+            )
+        }
+    )
 }

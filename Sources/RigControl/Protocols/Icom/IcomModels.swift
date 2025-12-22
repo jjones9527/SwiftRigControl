@@ -827,6 +827,52 @@ extension RadioDefinition {
         )
     }
 
+    /// Icom IC-751 HF all-mode transceiver (classic)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x1C)
+    /// - Returns: RadioDefinition for IC-751
+    public static func icomIC751(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-751",
+            defaultBaudRate: 1200,
+            capabilities: RadioCapabilitiesDatabase.icomIC751,
+            civAddress: civAddress ?? IcomRadioModel.ic751.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic751,
+                    commandSet: StandardIcomCommandSet.ic718,
+                    capabilities: RadioCapabilitiesDatabase.icomIC751
+                )
+            }
+        )
+    }
+
+    /// Icom IC-970 VHF/UHF all-mode transceiver with satellite mode
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x2E)
+    /// - Returns: RadioDefinition for IC-970
+    public static func icomIC970(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-970",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC970,
+            civAddress: civAddress ?? IcomRadioModel.ic970.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic970,
+                    commandSet: StandardIcomCommandSet.ic9100,
+                    capabilities: RadioCapabilitiesDatabase.icomIC970
+                )
+            }
+        )
+    }
+
     // MARK: - Backward Compatibility
 
     /// Legacy IC-9700 definition (static property for backward compatibility)

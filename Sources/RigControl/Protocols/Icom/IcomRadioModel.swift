@@ -70,6 +70,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7200 HF/6m 100W transceiver
     case ic7200 = "IC-7200"
 
+    /// IC-751 HF all-mode transceiver (classic)
+    case ic751 = "IC-751"
+
     /// IC-735 HF all-mode transceiver (classic)
     case ic735 = "IC-735"
 
@@ -117,6 +120,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     case xieguX6200 = "Xiegu X6200"
 
     // MARK: - VHF/UHF Transceivers
+
+    /// IC-970 VHF/UHF all-mode transceiver with satellite mode
+    case ic970 = "IC-970"
 
     /// IC-910H VHF/UHF all-mode transceiver with satellite mode
     case ic910h = "IC-910H"
@@ -185,6 +191,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7410: return 0x80
         case .ic7400: return 0x66
         case .ic7200: return 0x76
+        case .ic751: return 0x1C
         case .ic735: return 0x04
         case .ic718: return 0x5E
         case .ic756proIII: return 0x6E
@@ -209,6 +216,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .xieguG90, .xieguX6100, .xieguX6200: return 0xA4
 
         // VHF/UHF
+        case .ic970: return 0x2E
         case .ic910h: return 0x60
         case .ic9000: return 0x60  // Same as IC-910H
         case .ic820h: return 0x42
