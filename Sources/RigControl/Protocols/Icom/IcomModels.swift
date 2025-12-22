@@ -570,6 +570,29 @@ extension RadioDefinition {
         )
     }
 
+    /// Icom IC-7850 HF/6m 200W flagship transceiver (50th Anniversary Limited Edition)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x8E)
+    /// - Returns: RadioDefinition for IC-7850
+    public static func icomIC7850(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7850",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7850,
+            civAddress: civAddress ?? IcomRadioModel.ic7850.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7850,
+                    commandSet: StandardIcomCommandSet.ic7851,  // Uses same command set as IC-7851
+                    capabilities: RadioCapabilitiesDatabase.icomIC7850
+                )
+            }
+        )
+    }
+
     /// Icom IC-9100 HF/VHF/UHF transceiver with satellite mode
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x7C)
@@ -611,6 +634,29 @@ extension RadioDefinition {
                     radioModel: .ic910h,
                     commandSet: StandardIcomCommandSet.ic910H,
                     capabilities: RadioCapabilitiesDatabase.icomIC910H
+                )
+            }
+        )
+    }
+
+    /// Icom IC-820H VHF/UHF dual-band satellite transceiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x42)
+    /// - Returns: RadioDefinition for IC-820H
+    public static func icomIC820H(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-820H",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomIC820H,
+            civAddress: civAddress ?? IcomRadioModel.ic820h.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic820h,
+                    commandSet: StandardIcomCommandSet.ic910H,  // Uses similar command set
+                    capabilities: RadioCapabilitiesDatabase.icomIC820H
                 )
             }
         )

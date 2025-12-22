@@ -1,7 +1,7 @@
 # SwiftRigControl - Complete Radio Inventory
 
 **Last Updated:** December 22, 2025
-**Total Radios:** 75 models across 5 manufacturers
+**Total Radios:** 80 models across 5 manufacturers
 
 ---
 
@@ -9,16 +9,16 @@
 
 | Manufacturer | Models | Notes |
 |--------------|--------|-------|
-| **Icom** | 36 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
-| **Yaesu** | 18 | Modern HF transceivers, portable QRP |
+| **Icom** | 38 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
+| **Yaesu** | 21 | Modern HF transceivers, portable QRP |
 | **Kenwood** | 12 | HF transceivers, VHF/UHF handhelds/mobiles |
 | **Elecraft** | 6 | QRP and high-end HF transceivers |
 | **Xiegu** | 3 | Budget HF transceivers (CI-V compatible) |
-| **TOTAL** | **75** | |
+| **TOTAL** | **80** | |
 
 ---
 
-## ICOM (36 models)
+## ICOM (38 models)
 
 ### Modern HF Flagships (2010+)
 1. **IC-7610** - HF/6m 100W SDR transceiver with dual receiver, spectrum scope
@@ -44,41 +44,43 @@
 15. **IC-7700** - HF/6m 200W flagship transceiver
 16. **IC-7800** - HF/6m 200W flagship transceiver
 17. **IC-7851** - HF/6m 200W flagship with spectrum scope (latest flagship)
+18. **IC-7850** - HF/6m 200W flagship (50th Anniversary Limited Edition - only 150 made) ✨ **NEW Phase 4C**
 
 ### Legacy HF/VHF/UHF Mobile Transceivers
-18. **IC-706** - HF/6m/2m mobile transceiver
-19. **IC-706MKII** - HF/6m/2m mobile transceiver (improved)
-20. **IC-706MKIIG** - HF/VHF/UHF mobile transceiver (70cm added)
-21. **IC-7000** - HF/VHF/UHF 100W mobile transceiver (popular all-band mobile)
+19. **IC-706** - HF/6m/2m mobile transceiver
+20. **IC-706MKII** - HF/6m/2m mobile transceiver (improved)
+21. **IC-706MKIIG** - HF/VHF/UHF mobile transceiver (70cm added)
+22. **IC-7000** - HF/VHF/UHF 100W mobile transceiver (popular all-band mobile)
 
 ### Legacy HF Transceivers (IC-746 series)
-22. **IC-746** - HF/6m/2m receive transceiver
-23. **IC-746PRO** - HF/6m/2m receive transceiver (improved DSP)
+23. **IC-746** - HF/6m/2m receive transceiver
+24. **IC-746PRO** - HF/6m/2m receive transceiver (improved DSP)
 
 ### Legacy HF Transceivers (IC-756 series)
-24. **IC-756** - HF/6m 100W transceiver (original)
-25. **IC-756PRO** - HF/6m 100W transceiver
-26. **IC-756PROII** - HF/6m 100W transceiver (improved DSP)
-27. **IC-756PROIII** - HF/6m 100W transceiver (best of series)
+25. **IC-756** - HF/6m 100W transceiver (original)
+26. **IC-756PRO** - HF/6m 100W transceiver
+27. **IC-756PROII** - HF/6m 100W transceiver (improved DSP)
+28. **IC-756PROIII** - HF/6m 100W transceiver (best of series)
 
 ### VHF/UHF All-Mode Transceivers
-28. **IC-9100** - HF/VHF/UHF 100W transceiver with D-STAR and satellite mode
-29. **IC-910H** - VHF/UHF all-mode transceiver with satellite mode
-30. **IC-970** - VHF/UHF all-mode transceiver with satellite mode (144/430/1200MHz) ✨ **NEW Phase 4B**
+29. **IC-9100** - HF/VHF/UHF 100W transceiver with D-STAR and satellite mode
+30. **IC-910H** - VHF/UHF all-mode transceiver with satellite mode
+31. **IC-970** - VHF/UHF all-mode transceiver with satellite mode (144/430/1200MHz) ✨ **NEW Phase 4B**
+32. **IC-820H** - VHF/UHF dual-band satellite transceiver (144/430MHz) ✨ **NEW Phase 4C**
 
 ### VHF/UHF Mobile Transceivers (D-STAR)
-31. **ID-5100** - VHF/UHF dual-band mobile with D-STAR
-32. **ID-4100** - VHF/UHF dual-band mobile with D-STAR
-33. **IC-2730** - VHF/UHF dual-band FM mobile
+33. **ID-5100** - VHF/UHF dual-band mobile with D-STAR
+34. **ID-4100** - VHF/UHF dual-band mobile with D-STAR
+35. **IC-2730** - VHF/UHF dual-band FM mobile
 
 ### Receivers
-34. **IC-R8600** - Wideband communications receiver (0.01-3000 MHz)
-35. **IC-R75** - HF communications receiver
-36. **IC-R9500** - Professional wideband receiver
+36. **IC-R8600** - Wideband communications receiver (0.01-3000 MHz)
+37. **IC-R75** - HF communications receiver
+38. **IC-R9500** - Professional wideband receiver
 
 ---
 
-## YAESU (18 models)
+## YAESU (21 models)
 
 ### Modern Flagship Transceivers (2020+)
 1. **FTDX-101MP** - HF/6m 200W flagship transceiver
@@ -86,25 +88,28 @@
 3. **FTDX-10** - HF/6m 100W entry-level SDR transceiver
 4. **FTDX-3000** - HF/6m 100W transceiver ✨ **NEW**
 5. **FTDX-5000** - HF/6m 200W flagship with dual receiver ✨ **NEW Phase 4B**
+6. **FTDX-9000** - HF/6m 200W/400W flagship (Contest/D/MP versions) ✨ **NEW Phase 4C**
 
 ### Popular HF Transceivers
-6. **FT-710** - HF/6m AESS transceiver (2021)
-7. **FT-891** - HF/6m 100W all-mode field transceiver
-8. **FT-950** - HF/6m 100W transceiver with ATU ✨ **NEW**
-9. **FTDX-1200** - HF/6m 100W transceiver with DSP ✨ **NEW Phase 4B**
-10. **FT-450D** - HF/6m 100W transceiver
-11. **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
+7. **FT-710** - HF/6m AESS transceiver (2021)
+8. **FT-891** - HF/6m 100W all-mode field transceiver
+9. **FT-950** - HF/6m 100W transceiver with ATU ✨ **NEW**
+10. **FTDX-1200** - HF/6m 100W transceiver with DSP ✨ **NEW Phase 4B**
+11. **FT-920** - HF/6m 100W transceiver with DSP and ATU ✨ **NEW Phase 4C**
+12. **FT-450D** - HF/6m 100W transceiver
+13. **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
 
 ### Multi-band Transceivers
-12. **FT-991** - HF/VHF/UHF all-mode transceiver ✨ **NEW**
-13. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
-14. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
-15. **FT-857D** - HF/VHF/UHF compact all-mode mobile
-16. **FT-100** - HF/VHF/UHF mobile transceiver ✨ **NEW Phase 4B**
+14. **FT-991** - HF/VHF/UHF all-mode transceiver ✨ **NEW**
+15. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
+16. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
+17. **FT-857D** - HF/VHF/UHF compact all-mode mobile
+18. **FT-847** - HF/VHF/UHF all-band transceiver ✨ **NEW Phase 4C**
+19. **FT-100** - HF/VHF/UHF mobile transceiver ✨ **NEW Phase 4B**
 
 ### Portable QRP
-17. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
-18. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817)
+20. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
+21. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817)
 
 ---
 
