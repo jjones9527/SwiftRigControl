@@ -19,9 +19,9 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 ## Supported Radios
 
-**53 radio models across 4 manufacturers**
+**80 radio models across 5 manufacturers**
 
-### Icom (CI-V Protocol) - 25 models ✅
+### Icom (CI-V Protocol) - 38 models ✅
 
 **Flagship & High-End HF:**
 - **IC-7851** - HF/6m flagship with spectrum scope (200W, CI-V: 0x8E)
@@ -62,6 +62,37 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **IC-R8600** - Wideband receiver (10kHz-3GHz, CI-V: 0x96)
 - **IC-R75** - HF receiver (30kHz-60MHz, CI-V: 0x5A)
 
+### Yaesu (CAT Protocol) - 21 models ✅
+
+**Flagship HF:**
+- **FTDX-9000** - HF/6m 200W/400W flagship (38400 baud)
+- **FTDX-5000** - HF/6m 200W flagship dual receiver (38400 baud)
+- **FTDX-101MP** - HF/6m 200W flagship (38400 baud)
+- **FTDX-101D** - HF/6m 100W dual receiver (38400 baud)
+- **FTDX-3000** - HF/6m 100W (38400 baud)
+- **FTDX-1200** - HF/6m 100W with DSP (38400 baud)
+
+**Popular HF:**
+- **FTDX-10** - HF/6m 100W entry-level SDR (38400 baud)
+- **FT-991** - HF/VHF/UHF all-mode (38400 baud)
+- **FT-991A** - HF/VHF/UHF all-mode (38400 baud)
+- **FT-950** - HF/6m 100W with ATU (38400 baud)
+- **FT-920** - HF/6m 100W with DSP (38400 baud)
+- **FT-710** - HF/6m AESS (38400 baud)
+- **FT-891** - HF/6m field transceiver (38400 baud)
+- **FT-450D** - HF/6m budget (38400 baud)
+- **FT-2000** - HF/6m 100W (38400 baud)
+
+**HF + VHF/UHF Mobile:**
+- **FT-897D** - HF/VHF/UHF base/mobile (38400 baud)
+- **FT-857D** - HF/VHF/UHF mobile (38400 baud)
+- **FT-847** - HF/VHF/UHF all-band (38400 baud)
+- **FT-100** - HF/VHF/UHF mobile (38400 baud)
+
+**Portable/QRP:**
+- **FT-818** - HF/VHF/UHF portable (38400 baud)
+- **FT-817** - HF/VHF/UHF portable QRP (38400 baud)
+
 ### Elecraft (Text-Based Protocol) - 6 models ✅
 
 **High-Performance:**
@@ -74,23 +105,12 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **KX2** - HF portable (12W, 38400 baud)
 - **K2** - HF transceiver (15W, 4800 baud)
 
-### Yaesu (CAT Protocol) - 10 models ✅
+### Xiegu (CI-V Compatible) - 3 models ✅
 
-**High-End HF:**
-- **FTDX-101MP** - HF/6m flagship (200W, 38400 baud)
-- **FTDX-101D** - HF/6m with dual receiver (100W, 38400 baud)
-- **FTDX-10** - HF/6m all-mode (100W, 38400 baud)
-
-**Mid-Range HF:**
-- **FT-710** - HF/6m AESS (100W, 38400 baud)
-- **FT-891** - HF/6m field transceiver (100W, 38400 baud)
-- **FT-450D** - HF/6m budget (100W, 38400 baud)
-
-**HF + VHF/UHF:**
-- **FT-991A** - HF/VHF/UHF all-mode (100W, 38400 baud)
-- **FT-897D** - HF/VHF/UHF base/mobile (100W, 38400 baud)
-- **FT-857D** - HF/VHF/UHF mobile (100W, 38400 baud)
-- **FT-817** - HF/VHF/UHF portable QRP (5W, 38400 baud)
+**Budget HF:**
+- **G90** - HF 20W SDR transceiver (19200 baud, CI-V: 0xA4)
+- **X6100** - HF/6m 10W portable SDR (19200 baud, CI-V: 0xA4)
+- **X6200** - HF/6m 8W portable SDR (19200 baud, CI-V: 0xA4)
 
 ### Kenwood (Text-Based Protocol) - 12 models ✅
 
@@ -637,10 +657,11 @@ See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.m
 7. Submit PR
 
 **We currently support:**
-- Icom CI-V protocol (25 radios)
-- Elecraft text protocol (6 radios)
-- Yaesu CAT protocol (10 radios)
+- Icom CI-V protocol (38 radios)
+- Yaesu CAT protocol (21 radios)
 - Kenwood text protocol (12 radios)
+- Elecraft text protocol (6 radios)
+- Xiegu (CI-V compatible) (3 radios)
 
 Adding a radio using an existing protocol typically takes 30-60 minutes!
 
