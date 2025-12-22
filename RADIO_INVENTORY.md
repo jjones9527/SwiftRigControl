@@ -1,7 +1,7 @@
 # SwiftRigControl - Complete Radio Inventory
 
-**Last Updated:** December 19, 2025
-**Total Radios:** 65 models across 5 manufacturers
+**Last Updated:** December 22, 2025
+**Total Radios:** 70 models across 5 manufacturers
 
 ---
 
@@ -9,16 +9,16 @@
 
 | Manufacturer | Models | Notes |
 |--------------|--------|-------|
-| **Icom** | 31 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
-| **Yaesu** | 13 | Modern HF transceivers, portable QRP |
+| **Icom** | 34 | HF/VHF/UHF transceivers, receivers, D-STAR mobiles |
+| **Yaesu** | 15 | Modern HF transceivers, portable QRP |
 | **Kenwood** | 12 | HF transceivers, VHF/UHF handhelds/mobiles |
 | **Elecraft** | 6 | QRP and high-end HF transceivers |
 | **Xiegu** | 3 | Budget HF transceivers (CI-V compatible) |
-| **TOTAL** | **65** | |
+| **TOTAL** | **70** | |
 
 ---
 
-## ICOM (31 models)
+## ICOM (34 models)
 
 ### Modern HF Flagships (2010+)
 1. **IC-7610** - HF/6m 100W SDR transceiver with dual receiver, spectrum scope
@@ -29,17 +29,20 @@
 4. **IC-7100** - HF/VHF/UHF 100W transceiver with D-STAR
 5. **IC-705** - Portable HF/VHF/UHF 10W transceiver with D-STAR (latest portable)
 6. **IC-9700** - VHF/UHF/1.2GHz 100W transceiver with D-STAR and satellite mode
+7. **IC-905** - VHF/UHF/SHF all-mode transceiver with satellite mode (up to 10GHz) ✨ **NEW**
 
 ### Budget/Popular HF Transceivers
-7. **IC-7200** - HF/6m 100W mid-range transceiver
-8. **IC-7410** - HF/6m 100W transceiver
-9. **IC-718** - HF 100W budget transceiver (extremely popular with new hams) ✨ **NEW**
-10. **IC-703** - Portable HF/6m 10W QRP transceiver ✨ **NEW**
+8. **IC-7200** - HF/6m 100W mid-range transceiver
+9. **IC-7410** - HF/6m 100W transceiver
+10. **IC-7400** - HF/6m/2m 100W transceiver ✨ **NEW**
+11. **IC-735** - HF all-mode transceiver (classic budget HF) ✨ **NEW**
+12. **IC-718** - HF 100W budget transceiver (extremely popular with new hams)
+13. **IC-703** - Portable HF/6m 10W QRP transceiver
 
 ### Flagship HF Transceivers
-11. **IC-7700** - HF/6m 200W flagship transceiver
-12. **IC-7800** - HF/6m 200W flagship transceiver
-13. **IC-7851** - HF/6m 200W flagship with spectrum scope (latest flagship)
+14. **IC-7700** - HF/6m 200W flagship transceiver
+15. **IC-7800** - HF/6m 200W flagship transceiver
+16. **IC-7851** - HF/6m 200W flagship with spectrum scope (latest flagship)
 
 ### Legacy HF/VHF/UHF Mobile Transceivers
 14. **IC-706** - HF/6m/2m mobile transceiver
@@ -73,7 +76,7 @@
 
 ---
 
-## YAESU (13 models)
+## YAESU (15 models)
 
 ### Modern Flagship Transceivers (2020+)
 1. **FTDX-101MP** - HF/6m 200W flagship transceiver
@@ -84,17 +87,19 @@
 ### Popular HF Transceivers
 5. **FT-710** - HF/6m AESS transceiver (2021)
 6. **FT-891** - HF/6m 100W all-mode field transceiver
-7. **FT-450D** - HF/6m 100W transceiver
-8. **FT-2000** - HF/6m 100W transceiver ✨ **NEW**
+7. **FT-950** - HF/6m 100W transceiver with ATU ✨ **NEW**
+8. **FT-450D** - HF/6m 100W transceiver
+9. **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
 
 ### Multi-band Transceivers
-9. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
-10. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
-11. **FT-857D** - HF/VHF/UHF compact all-mode mobile
+10. **FT-991** - HF/VHF/UHF all-mode transceiver ✨ **NEW**
+11. **FT-991A** - HF/VHF/UHF all-mode transceiver (very popular)
+12. **FT-897D** - HF/VHF/UHF 100W all-mode mobile
+13. **FT-857D** - HF/VHF/UHF compact all-mode mobile
 
 ### Portable QRP
-12. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
-13. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817) ✨ **NEW**
+14. **FT-817** - Ultra-compact portable HF/VHF/UHF transceiver (5W)
+15. **FT-818** - Portable QRP HF/VHF/UHF (6W, successor to FT-817)
 
 ---
 
@@ -170,9 +175,9 @@
 
 | Category | SwiftRigControl | MacLoggerDX | Coverage |
 |----------|-----------------|-------------|----------|
-| **Total Radios** | 65 models | ~150 models | 43% |
-| **Icom** | 31 models | 40+ models | 77% |
-| **Yaesu** | 13 models | 22+ models | 59% |
+| **Total Radios** | 70 models | ~150 models | 47% |
+| **Icom** | 34 models | 40+ models | 85% |
+| **Yaesu** | 15 models | 22+ models | 68% |
 | **Kenwood** | 12 models | 19 models | 63% |
 | **Elecraft** | 6 models | 4 models | 150% ✅ |
 | **Xiegu** | 3 models | 3 models | 100% ✅ |
@@ -205,9 +210,14 @@ SwiftRigControl focuses on:
 - **FT-818** - Phase 3C (Dec 19, 2025)
 - **FT-2000** - Phase 3C (Dec 19, 2025)
 - **FTDX-3000** - Phase 3C (Dec 19, 2025)
+- **FT-991** - Phase 4A (Dec 22, 2025)
+- **FT-950** - Phase 4A (Dec 22, 2025)
+- **IC-905** - Phase 4A (Dec 22, 2025)
+- **IC-7400** - Phase 4A (Dec 22, 2025)
+- **IC-735** - Phase 4A (Dec 22, 2025)
 
 ### Architecture Quality
-All 65 radios follow the new architecture:
+All 70 radios follow the new architecture:
 - ✅ Comprehensive `RigCapabilities` with detailed frequency ranges
 - ✅ Manufacturer-specific command sets
 - ✅ RadioDefinition factory functions
@@ -223,7 +233,8 @@ All 65 radios follow the new architecture:
 - Architecture tested with IC-7600, IC-7100, IC-705, Xiegu radios
 - Network control (rigctld) tested and working
 - Real hardware testing ongoing
-- Phase 3A-C completed (December 2025)
+- Phase 3A-C completed (December 19, 2025)
+- Phase 4A completed (December 22, 2025)
 
 ---
 
@@ -284,7 +295,8 @@ The majority of "missing" radios from MacLoggerDX comparison were actually **alr
 **Original Total:** 59 radios
 **Phase 3B Addition:** +3 Xiegu radios
 **Phase 3C Addition:** +3 Yaesu radios
-**New Total:** **65 radios** across 5 manufacturers
+**Phase 4A Addition:** +5 radios (2 Yaesu, 3 Icom)
+**New Total:** **70 radios** across 5 manufacturers
 
 ---
 
@@ -305,4 +317,27 @@ All Xiegu radios leverage existing Icom CI-V protocol infrastructure!
 - ✅ **FT-818** - Portable QRP HF/VHF/UHF 6W (successor to FT-817, 208 channels)
 - ✅ **FT-2000** - HF/6m 100W transceiver (dual receiver capable)
 - ✅ **FTDX-3000** - HF/6m 100W transceiver (advanced DSP, spectrum scope)
+
+---
+
+## Phase 4A Complete! (December 22, 2025)
+
+### MacLoggerDX Parity - Most Popular Missing Radios
+
+Added 5 highly popular radios to improve coverage vs MacLoggerDX:
+
+**Yaesu Additions:**
+- ✅ **FT-991** - HF/VHF/UHF all-mode 100W (predecessor to FT-991A, very popular)
+- ✅ **FT-950** - HF/6m 100W with built-in ATU (popular mid-range HF)
+
+**Icom Additions:**
+- ✅ **IC-905** - VHF/UHF/SHF all-mode with satellite mode (up to 10GHz, newest microwave)
+- ✅ **IC-7400** - HF/6m/2m 100W transceiver (similar to IC-7600)
+- ✅ **IC-735** - Classic HF all-mode transceiver (extremely popular budget HF)
+
+**Coverage Improvement:**
+- Icom coverage: 77% → 85% vs MacLoggerDX
+- Yaesu coverage: 59% → 68% vs MacLoggerDX
+- Overall coverage: 43% → 47% vs MacLoggerDX
+- Total radios: 65 → 70 models
 

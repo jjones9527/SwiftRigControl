@@ -758,6 +758,75 @@ extension RadioDefinition {
         )
     }
 
+    /// Icom IC-905 VHF/UHF/SHF all-mode transceiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xAC)
+    /// - Returns: RadioDefinition for IC-905
+    public static func icomIC905(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-905",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC905,
+            civAddress: civAddress ?? IcomRadioModel.ic905.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic905,
+                    commandSet: StandardIcomCommandSet.ic9100,
+                    capabilities: RadioCapabilitiesDatabase.icomIC905
+                )
+            }
+        )
+    }
+
+    /// Icom IC-7400 HF/6m/2m transceiver
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x66)
+    /// - Returns: RadioDefinition for IC-7400
+    public static func icomIC7400(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7400",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7400,
+            civAddress: civAddress ?? IcomRadioModel.ic7400.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7400,
+                    commandSet: StandardIcomCommandSet.ic7600,
+                    capabilities: RadioCapabilitiesDatabase.icomIC7400
+                )
+            }
+        )
+    }
+
+    /// Icom IC-735 HF all-mode transceiver (classic)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x04)
+    /// - Returns: RadioDefinition for IC-735
+    public static func icomIC735(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-735",
+            defaultBaudRate: 1200,
+            capabilities: RadioCapabilitiesDatabase.icomIC735,
+            civAddress: civAddress ?? IcomRadioModel.ic735.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic735,
+                    commandSet: StandardIcomCommandSet.ic718,
+                    capabilities: RadioCapabilitiesDatabase.icomIC735
+                )
+            }
+        )
+    }
+
     // MARK: - Backward Compatibility
 
     /// Legacy IC-9700 definition (static property for backward compatibility)

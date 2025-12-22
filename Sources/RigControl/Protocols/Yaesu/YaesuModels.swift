@@ -183,4 +183,32 @@ extension RadioDefinition {
             )
         }
     )
+
+    /// Yaesu FT-991 HF/VHF/UHF all-mode transceiver (predecessor to FT-991A)
+    public static let yaesuFT991 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-991",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT991,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT991
+            )
+        }
+    )
+
+    /// Yaesu FT-950 HF/6m 100W transceiver
+    public static let yaesuFT950 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-950",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT950,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT950
+            )
+        }
+    )
 }

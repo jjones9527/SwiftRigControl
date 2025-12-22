@@ -811,9 +811,11 @@ public actor IcomCIVProtocol: CATProtocol {
             return 100
         case .ic7100, .ic9700:
             return 109  // Includes program scan edges and call channels
+        case .ic905:
+            return 109  // Similar to IC-9700
         case .ic9100, .ic7000:
             return 99
-        case .ic7610, .ic7700, .ic7410, .ic7200, .ic718:
+        case .ic7610, .ic7700, .ic7410, .ic7400, .ic7200, .ic735, .ic718:
             return 99
         case .ic7851, .ic7850, .ic7800:
             return 99

@@ -64,8 +64,14 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7410 HF/6m 100W transceiver
     case ic7410 = "IC-7410"
 
+    /// IC-7400 HF/6m/2m 100W transceiver
+    case ic7400 = "IC-7400"
+
     /// IC-7200 HF/6m 100W transceiver
     case ic7200 = "IC-7200"
+
+    /// IC-735 HF all-mode transceiver (classic)
+    case ic735 = "IC-735"
 
     /// IC-718 HF 100W transceiver (budget model)
     case ic718 = "IC-718"
@@ -86,6 +92,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
 
     /// IC-9700 VHF/UHF/1.2GHz 100W transceiver with D-STAR and satellite mode
     case ic9700 = "IC-9700"
+
+    /// IC-905 VHF/UHF/SHF all-mode transceiver with satellite mode
+    case ic905 = "IC-905"
 
     /// IC-9100 HF/VHF/UHF 100W transceiver with D-STAR and satellite mode
     case ic9100 = "IC-9100"
@@ -174,7 +183,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7800: return 0x6A
         case .ic7700: return 0x74
         case .ic7410: return 0x80
+        case .ic7400: return 0x66
         case .ic7200: return 0x76
+        case .ic735: return 0x04
         case .ic718: return 0x5E
         case .ic756proIII: return 0x6E
         case .ic756proII: return 0x64
@@ -189,6 +200,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         // Multi-band
         case .ic7100: return 0x88
         case .ic9700: return 0xA2
+        case .ic905: return 0xAC
         case .ic9100: return 0x7C
         case .ic705: return 0xA4
         case .ic703: return 0x68
