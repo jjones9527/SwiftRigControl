@@ -8,7 +8,7 @@ import Foundation
 ///
 /// Example usage:
 /// ```swift
-/// let rig = RigController(
+/// let rig = try RigController(
 ///     radio: .icomIC9700,
 ///     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
 /// )
@@ -39,7 +39,9 @@ public actor RigController {
     /// - Parameters:
     ///   - radio: The radio definition (e.g., .icomIC9700)
     ///   - connection: How to connect to the radio
-    public init(radio: RadioDefinition, connection: ConnectionType) {
+    ///
+    /// - Throws: `RigError.unsupportedOperation` if an invalid connection type is specified
+    public init(radio: RadioDefinition, connection: ConnectionType) throws {
         self.radio = radio
 
         // Create the appropriate transport
@@ -51,8 +53,9 @@ public actor RigController {
             transport = IOKitSerialPort(configuration: config)
 
         case .mock:
-            // For testing - would need a mock transport implementation
-            fatalError("Mock transport not yet implemented")
+            throw RigError.unsupportedOperation(
+                "Mock transport is only available in test builds. Use .serial(path:baudRate:) for actual hardware."
+            )
         }
 
         // Create the protocol instance

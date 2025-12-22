@@ -45,7 +45,7 @@ final class IcomIntegrationTests: XCTestCase {
             radio = .icomIC9700
         }
 
-        rig = RigController(
+        rig = try RigController(
             radio: radio,
             connection: .serial(path: port)
         )

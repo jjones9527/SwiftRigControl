@@ -88,7 +88,7 @@ struct RigctldTest {
         // Create rig controller
         let rig: RigController
         if let serialPort = serialPort {
-            rig = RigController(
+            rig = try RigController(
                 radio: radio,
                 connection: .serial(path: serialPort, baudRate: Int(baudRate))
             )
@@ -112,7 +112,7 @@ struct RigctldTest {
                 print("")
             }
         } else {
-            rig = RigController(
+            rig = try RigController(
                 radio: radio,
                 connection: .serial(path: "/dev/null", baudRate: 19200)
             )

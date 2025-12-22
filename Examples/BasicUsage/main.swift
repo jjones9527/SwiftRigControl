@@ -19,14 +19,14 @@ struct BasicUsageExample {
         print("SwiftRigControl - Basic Usage Example")
         print("==========================================\n")
 
-        // Create rig controller
-        print("Creating rig controller for IC-9700...")
-        let rig = RigController(
-            radio: .icomIC9700,
-            connection: .serial(path: serialPort, baudRate: baudRate)
-        )
-
         do {
+            // Create rig controller
+            print("Creating rig controller for IC-9700...")
+            let rig = try RigController(
+                radio: .icomIC9700,
+                connection: .serial(path: serialPort, baudRate: baudRate)
+            )
+
             // Connect to radio
             print("Connecting to radio at \(serialPort)...")
             try await rig.connect()

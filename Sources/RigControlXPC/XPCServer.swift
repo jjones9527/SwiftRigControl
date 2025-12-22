@@ -35,7 +35,7 @@ public class XPCServer: NSObject, RigControlXPCProtocol {
 
                 // Create controller
                 let baud = baudRate?.intValue
-                let controller = RigController(
+                let controller = try RigController(
                     radio: radio,
                     connection: .serial(path: serialPort, baudRate: baud)
                 )
