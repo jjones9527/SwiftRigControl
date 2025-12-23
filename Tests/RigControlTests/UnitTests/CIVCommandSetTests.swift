@@ -151,12 +151,10 @@ final class CIVCommandSetTests: XCTestCase {
     func testStandardCommandSetCustomization() {
         let commandSet = StandardIcomCommandSet(
             civAddress: 0xA4,
-            echoesCommands: true,
-            requiresVFOSelection: false
+            echoesCommands: true
         )
         XCTAssertEqual(commandSet.civAddress, 0xA4)
         XCTAssertTrue(commandSet.echoesCommands)
-        XCTAssertFalse(commandSet.requiresVFOSelection)
     }
 
     func testStandardModeCommand() {
@@ -191,44 +189,13 @@ final class CIVCommandSetTests: XCTestCase {
         XCTAssertEqual(freq, 7_200_000)
     }
 
-    // MARK: - Convenience Initializers Tests
-
-    func testIC705ConvenienceInit() {
-        let commandSet = StandardIcomCommandSet.ic705
-        XCTAssertEqual(commandSet.civAddress, 0xA4)
-        XCTAssertTrue(commandSet.echoesCommands)
-        XCTAssertFalse(commandSet.requiresVFOSelection)
-    }
-
-    func testIC7300ConvenienceInit() {
-        let commandSet = StandardIcomCommandSet.ic7300
-        XCTAssertEqual(commandSet.civAddress, 0x94)
-        XCTAssertFalse(commandSet.echoesCommands)
-        XCTAssertTrue(commandSet.requiresVFOSelection)
-    }
-
-    func testIC7610ConvenienceInit() {
-        let commandSet = StandardIcomCommandSet.ic7610
-        XCTAssertEqual(commandSet.civAddress, 0x98)
-    }
-
-    func testIC7600ConvenienceInit() {
-        let commandSet = StandardIcomCommandSet.ic7600
-        XCTAssertEqual(commandSet.civAddress, 0x7A)
-    }
-
-    func testIC9100ConvenienceInit() {
-        let commandSet = StandardIcomCommandSet.ic9100
-        XCTAssertEqual(commandSet.civAddress, 0x7C)
-    }
-
     // MARK: - Power Scale Tests
 
     func testPowerScaleRoundTrip() throws {
         let commandSets: [any CIVCommandSet] = [
             IC7100CommandSet(),
             IC9700CommandSet(),
-            StandardIcomCommandSet.ic7300
+            StandardIcomCommandSet(civAddress: 0x94) // IC-7300
         ]
 
         for commandSet in commandSets {
@@ -302,7 +269,7 @@ final class CIVCommandSetTests: XCTestCase {
     }
 
     func testInvalidFrequencyResponseThrows() {
-        let commandSet = StandardIcomCommandSet.ic7300
+        let commandSet = StandardIcomCommandSet(civAddress: 0x94) // IC-7300
 
         // Wrong data length
         let shortFrame = CIVFrame(to: 0xE0, from: 0x94, command: [0x03], data: [0x00, 0x00])

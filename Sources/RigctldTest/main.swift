@@ -87,35 +87,40 @@ struct RigctldTest {
 
         // Create rig controller
         let rig: RigController
-        if let serialPort = serialPort {
-            rig = try RigController(
-                radio: radio,
-                connection: .serial(path: serialPort, baudRate: Int(baudRate))
-            )
+        do {
+            if let serialPort = serialPort {
+                rig = try RigController(
+                    radio: radio,
+                    connection: .serial(path: serialPort, baudRate: Int(baudRate))
+                )
 
-            print("Connecting to radio...")
-            do {
-                try await rig.connect()
-                print("✓ Connected to radio")
+                print("Connecting to radio...")
+                do {
+                    try await rig.connect()
+                    print("✓ Connected to radio")
 
-                // Test basic communication
-                if let freq = try? await rig.frequency(vfo: .a, cached: false) {
-                    print("  Current frequency: \(Double(freq) / 1_000_000.0) MHz")
+                    // Test basic communication
+                    if let freq = try? await rig.frequency(vfo: .a, cached: false) {
+                        print("  Current frequency: \(Double(freq) / 1_000_000.0) MHz")
+                    }
+                    if let mode = try? await rig.mode(vfo: .a, cached: false) {
+                        print("  Current mode: \(mode.rawValue)")
+                    }
+                    print("")
+                } catch {
+                    print("✗ Failed to connect: \(error)")
+                    print("  Continuing in simulation mode...")
+                    print("")
                 }
-                if let mode = try? await rig.mode(vfo: .a, cached: false) {
-                    print("  Current mode: \(mode.rawValue)")
-                }
-                print("")
-            } catch {
-                print("✗ Failed to connect: \(error)")
-                print("  Continuing in simulation mode...")
-                print("")
+            } else {
+                rig = try RigController(
+                    radio: radio,
+                    connection: .serial(path: "/dev/null", baudRate: 19200)
+                )
             }
-        } else {
-            rig = try RigController(
-                radio: radio,
-                connection: .serial(path: "/dev/null", baudRate: 19200)
-            )
+        } catch {
+            print("✗ Failed to create rig controller: \(error)")
+            Foundation.exit(1)
         }
 
         // Start rigctld server

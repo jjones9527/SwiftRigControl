@@ -80,4 +80,13 @@ actor MockTransport: SerialTransport {
     func setResponse(for command: Data, response: Data) {
         mockResponses[command] = response
     }
+
+    // Actor-safe property setters for testing
+    func setShouldThrowOnRead(_ value: Bool) {
+        shouldThrowOnRead = value
+    }
+
+    func setShouldThrowOnWrite(_ value: Bool) {
+        shouldThrowOnWrite = value
+    }
 }

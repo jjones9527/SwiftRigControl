@@ -160,7 +160,7 @@ final class IcomProtocolTests: XCTestCase {
 
     func testTimeoutOnRead() async throws {
         await mockTransport.reset()
-        await mockTransport.setProperty(\.shouldThrowOnRead, to: true)
+        await mockTransport.setShouldThrowOnRead(true)
 
         do {
             try await icomProtocol.setPTT(true)

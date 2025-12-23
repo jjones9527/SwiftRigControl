@@ -51,7 +51,11 @@ final class IcomIntegrationTests: XCTestCase {
         )
 
         try await rig?.connect()
-        print("✓ Connected to \(rig?.radioName ?? "radio") at \(port)")
+        if let rigName = await rig?.radioName {
+            print("✓ Connected to \(rigName) at \(port)")
+        } else {
+            print("✓ Connected to radio at \(port)")
+        }
     }
 
     override func tearDown() async throws {
@@ -159,7 +163,8 @@ final class IcomIntegrationTests: XCTestCase {
             throw XCTSkip("Rig not initialized")
         }
 
-        guard rig.capabilities.hasVFOB else {
+        let capabilities = await rig.capabilities
+        guard capabilities.hasVFOB else {
             throw XCTSkip("Radio doesn't have VFO B")
         }
 
@@ -186,7 +191,8 @@ final class IcomIntegrationTests: XCTestCase {
             throw XCTSkip("Rig not initialized")
         }
 
-        guard rig.capabilities.powerControl else {
+        let capabilities = await rig.capabilities
+        guard capabilities.powerControl else {
             throw XCTSkip("Radio doesn't support power control")
         }
 
@@ -217,7 +223,8 @@ final class IcomIntegrationTests: XCTestCase {
             throw XCTSkip("Rig not initialized")
         }
 
-        guard rig.capabilities.hasSplit else {
+        let capabilities = await rig.capabilities
+        guard capabilities.hasSplit else {
             throw XCTSkip("Radio doesn't support split operation")
         }
 
@@ -267,7 +274,8 @@ final class IcomIntegrationTests: XCTestCase {
             throw XCTSkip("Rig not initialized")
         }
 
-        guard let range = rig.capabilities.frequencyRange else {
+        let capabilities = await rig.capabilities
+        guard let range = capabilities.frequencyRange else {
             throw XCTSkip("Radio frequency range not defined")
         }
 
