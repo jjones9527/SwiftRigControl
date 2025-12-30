@@ -31,6 +31,10 @@ let package = Package(
             targets: ["IC7100Validator"]
         ),
         .executable(
+            name: "IC7100ManualValidation",
+            targets: ["IC7100ManualValidation"]
+        ),
+        .executable(
             name: "IC7600Validator",
             targets: ["IC7600Validator"]
         ),
@@ -83,6 +87,12 @@ let package = Package(
             name: "IC7100Validator",
             dependencies: ["RigControl", "ValidationHelpers"],
             path: "HardwareValidation/IC7100Validator"
+        ),
+
+        .executableTarget(
+            name: "IC7100ManualValidation",
+            dependencies: ["RigControl"],
+            path: "Sources/IC7100ManualValidation"
         ),
 
         .executableTarget(

@@ -381,17 +381,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getPreampIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x02],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x02)
     }
 
     // MARK: - Voice Synthesizer (0x13)
@@ -987,17 +977,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getAGCIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x12],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x12)
     }
 
     /// Set monitor function (IC-7100)
@@ -1642,5 +1622,166 @@ extension IcomCIVProtocol {
         }
 
         return freq
+    }
+
+    // MARK: - IC-7100 Response Format Helpers
+
+    /// Helper method to read a Function command (0x16) response in IC-7100 format
+    ///
+    /// The IC-7100 uses a unique response format where the subcommand byte is echoed
+    /// in the data field rather than the command field:
+    ///
+    /// **Standard Icom Format:**
+    /// ```
+    /// Request:  FE FE 88 E0 16 [sub] FD
+    /// Response: FE FE E0 88 16 [sub] [value] FD
+    ///           command=[16, sub], data=[value]
+    /// ```
+    ///
+    /// **IC-7100 Format:**
+    /// ```
+    /// Request:  FE FE 88 E0 16 [sub] FD
+    /// Response: FE FE E0 88 16 [sub] [value] FD
+    ///           command=[16], data=[sub, value]
+    /// ```
+    ///
+    /// - Parameter subCommand: The function subcommand byte (e.g., 0x02 for Preamp)
+    /// - Returns: The value byte from the response
+    /// - Throws: `RigError.invalidResponse` if response format is incorrect
+    private func getFunctionIC7100(_ subCommand: UInt8) async throws -> UInt8 {
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.function, subCommand],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        // IC-7100 format: command=[16], data=[subCommand, value]
+        if response.command.count == 1 && response.data.count == 2 {
+            guard response.command[0] == CIVFrame.Command.function,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1]
+        }
+        // Fallback to standard format (defensive programming)
+        else if response.command.count >= 2 && response.data.count >= 1 {
+            guard response.command[0] == CIVFrame.Command.function,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0]
+        }
+        else {
+            throw RigError.invalidResponse
+        }
+    }
+
+    /// Helper method to read a Level command (0x14) response in IC-7100 format
+    ///
+    /// Similar to Function commands, Level commands use IC-7100 response format.
+    ///
+    /// - Parameter subCommand: The level subcommand byte
+    /// - Returns: The decoded integer value (from BCD)
+    /// - Throws: `RigError.invalidResponse` if response format is incorrect
+    private func getLevelIC7100(_ subCommand: UInt8) async throws -> Int {
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.settings, subCommand],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        // IC-7100 format: command=[14], data=[subCommand, value_bcd...]
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == CIVFrame.Command.settings,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return BCDEncoding.decodePower(Array(response.data[1...]))
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && response.data.count >= 2 {
+            guard response.command[0] == CIVFrame.Command.settings,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return BCDEncoding.decodePower(response.data)
+        }
+        else {
+            throw RigError.invalidResponse
+        }
+    }
+
+    /// Helper method to read an Advanced Settings command (0x1A) response in IC-7100 format
+    ///
+    /// - Parameter subCommand: The advanced settings subcommand byte
+    /// - Returns: The value byte from the response
+    /// - Throws: `RigError.invalidResponse` if response format is incorrect
+    private func getAdvancedSettingIC7100(_ subCommand: UInt8) async throws -> UInt8 {
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.advancedSettings, subCommand],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        // IC-7100 format: command=[1A], data=[subCommand, value]
+        if response.command.count == 1 && response.data.count >= 2 {
+            guard response.command[0] == CIVFrame.Command.advancedSettings,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1]
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && !response.data.isEmpty {
+            guard response.command[0] == CIVFrame.Command.advancedSettings,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0]
+        }
+        else {
+            throw RigError.invalidResponse
+        }
+    }
+
+    /// Helper method to read a Read Level command (0x15) response in IC-7100 format
+    ///
+    /// - Parameter subCommand: The read level subcommand byte
+    /// - Returns: True if non-zero, false if zero
+    /// - Throws: `RigError.invalidResponse` if response format is incorrect
+    private func getReadLevelIC7100(_ subCommand: UInt8) async throws -> Bool {
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.readLevel, subCommand],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        // IC-7100 format: command=[15], data=[subCommand, value_bcd...]
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == CIVFrame.Command.readLevel,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1] != 0x00
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && response.data.count >= 2 {
+            guard response.command[0] == CIVFrame.Command.readLevel,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0] != 0x00
+        }
+        else {
+            throw RigError.invalidResponse
+        }
     }
 }
