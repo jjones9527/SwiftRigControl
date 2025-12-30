@@ -345,18 +345,18 @@ struct IC7100ComprehensiveTest {
                     throw RigError.commandFailed("Protocol access")
                 }
 
-                // Test Attenuator (IC-7100: OFF or 12dB only)
+                // Test Attenuator (IC-7100: OFF or ON only)
                 print("   Testing Attenuator...")
-                for (value, name) in [(0x00 as UInt8, "OFF"), (0x12 as UInt8, "12dB")] {
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x12 as UInt8, "ON")] {
                     try await icomProtocol.setAttenuatorIC7100(value)
                     let actual = try await icomProtocol.getAttenuatorIC7100()
                     print("   ✓ Attenuator \(name): \(actual == value ? "OK" : "MISMATCH")")
                 }
                 try await icomProtocol.setAttenuatorIC7100(0x00)  // OFF
 
-                // Test Preamp (IC-7100: OFF or P.AMP1 only, no P.AMP2)
+                // Test Preamp (IC-7100: OFF or ON only)
                 print("   Testing Preamp...")
-                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "P.AMP1")] {
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "ON")] {
                     try await icomProtocol.setPreampIC7100(value)
                     let actual = try await icomProtocol.getPreampIC7100()
                     print("   ✓ Preamp \(name): \(actual == value ? "OK" : "MISMATCH")")
@@ -443,16 +443,21 @@ struct IC7100ComprehensiveTest {
                     throw RigError.commandFailed("Protocol access")
                 }
 
-                // Test VOX Gain
-                print("   Testing VOX...")
-                try await icomProtocol.setVoxGainIC7100(128)
-                let voxGain = try await icomProtocol.getVoxGainIC7100()
-                print("   ✓ VOX Gain: \(voxGain)")
+                // Test VOX Gain (0-255 = 0-100%)
+                print("   Testing VOX Gain...")
+                for (value, name) in [(0 as UInt8, "0%"), (128 as UInt8, "50%"), (255 as UInt8, "100%")] {
+                    try await icomProtocol.setVoxGainIC7100(value)
+                    let actual = try await icomProtocol.getVoxGainIC7100()
+                    print("   ✓ VOX Gain \(name): \(actual == value ? "OK" : "MISMATCH")")
+                }
 
-                // Test Anti-VOX
-                try await icomProtocol.setAntiVoxGainIC7100(64)
-                let antiVox = try await icomProtocol.getAntiVoxGainIC7100()
-                print("   ✓ Anti-VOX Gain: \(antiVox)")
+                // Test Anti-VOX Gain (0-255 = 0-100%)
+                print("   Testing Anti-VOX Gain...")
+                for (value, name) in [(0 as UInt8, "0%"), (128 as UInt8, "50%"), (255 as UInt8, "100%")] {
+                    try await icomProtocol.setAntiVoxGainIC7100(value)
+                    let actual = try await icomProtocol.getAntiVoxGainIC7100()
+                    print("   ✓ Anti-VOX Gain \(name): \(actual == value ? "OK" : "MISMATCH")")
+                }
 
                 // Test Speech Compression
                 print("   Testing Speech Compression...")

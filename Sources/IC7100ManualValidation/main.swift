@@ -94,10 +94,10 @@ struct IC7100ManualValidation {
         print("TEST: Attenuator (Command 0x11)")
         print(String(repeating: "=", count: 70))
 
-        // IC-7100 only supports OFF or 12dB, no 6dB or 24dB
+        // IC-7100 only supports OFF or ON (12dB attenuation)
         let testCases: [(value: UInt8, name: String, display: String)] = [
             (0x00, "OFF", "ATT should be OFF"),
-            (0x12, "12dB", "ATT should show 12dB")
+            (0x12, "ON", "ATT should be ON")
         ]
 
         for testCase in testCases {
@@ -164,10 +164,10 @@ struct IC7100ManualValidation {
         print("TEST: Preamp (Command 0x16 0x02)")
         print(String(repeating: "=", count: 70))
 
-        // IC-7100 only supports OFF or P.AMP1, no P.AMP2
+        // IC-7100 only supports OFF or ON (preamp enabled)
         let testCases: [(value: UInt8, name: String, display: String)] = [
-            (0x00, "OFF", "P.AMP should be OFF"),
-            (0x01, "P.AMP1", "P.AMP1 or preamp indicator")
+            (0x00, "OFF", "Preamp should be OFF"),
+            (0x01, "ON", "Preamp should be ON")
         ]
 
         for testCase in testCases {
@@ -428,10 +428,11 @@ struct IC7100ManualValidation {
         print("TEST: VOX Gain (Command 0x14 0x16)")
         print(String(repeating: "=", count: 70))
 
+        // VOX Gain: 0-255 = 0-100%
         let testCases: [(value: Int, name: String, display: String)] = [
-            (0, "Minimum", "VOX gain at minimum or 0"),
-            (128, "Mid", "VOX gain at middle level"),
-            (255, "Maximum", "VOX gain at maximum")
+            (0, "0%", "VOX gain at 0%"),
+            (128, "50%", "VOX gain at 50%"),
+            (255, "100%", "VOX gain at 100%")
         ]
 
         for testCase in testCases {
