@@ -94,11 +94,10 @@ struct IC7100ManualValidation {
         print("TEST: Attenuator (Command 0x11)")
         print(String(repeating: "=", count: 70))
 
+        // IC-7100 only supports OFF or 12dB, no 6dB or 24dB
         let testCases: [(value: UInt8, name: String, display: String)] = [
             (0x00, "OFF", "ATT should be OFF"),
-            (0x06, "6dB", "ATT should show 6dB or similar"),
-            (0x12, "12dB", "ATT should show 12dB or similar"),
-            (0x18, "24dB", "ATT should show 24dB or similar")
+            (0x12, "12dB", "ATT should show 12dB")
         ]
 
         for testCase in testCases {
@@ -165,10 +164,10 @@ struct IC7100ManualValidation {
         print("TEST: Preamp (Command 0x16 0x02)")
         print(String(repeating: "=", count: 70))
 
+        // IC-7100 only supports OFF or P.AMP1, no P.AMP2
         let testCases: [(value: UInt8, name: String, display: String)] = [
             (0x00, "OFF", "P.AMP should be OFF"),
-            (0x01, "P.AMP1", "P.AMP1 or similar preamp indicator"),
-            (0x02, "P.AMP2", "P.AMP2 or similar preamp indicator (if supported)")
+            (0x01, "P.AMP1", "P.AMP1 or preamp indicator")
         ]
 
         for testCase in testCases {

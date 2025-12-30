@@ -345,21 +345,23 @@ struct IC7100ComprehensiveTest {
                     throw RigError.commandFailed("Protocol access")
                 }
 
-                // Test Attenuator
+                // Test Attenuator (IC-7100: OFF or 12dB only)
                 print("   Testing Attenuator...")
-                try await icomProtocol.setAttenuatorIC7100(0x20)  // 20dB
-                let att = try await icomProtocol.getAttenuatorIC7100()
-                print("   ✓ Attenuator: \(att == 0x20 ? "20dB" : "Other")")
-
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x12 as UInt8, "12dB")] {
+                    try await icomProtocol.setAttenuatorIC7100(value)
+                    let actual = try await icomProtocol.getAttenuatorIC7100()
+                    print("   ✓ Attenuator \(name): \(actual == value ? "OK" : "MISMATCH")")
+                }
                 try await icomProtocol.setAttenuatorIC7100(0x00)  // OFF
 
-                // Test Preamp
+                // Test Preamp (IC-7100: OFF or P.AMP1 only, no P.AMP2)
                 print("   Testing Preamp...")
-                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "P.AMP1"), (0x02 as UInt8, "P.AMP2")] {
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "P.AMP1")] {
                     try await icomProtocol.setPreampIC7100(value)
                     let actual = try await icomProtocol.getPreampIC7100()
                     print("   ✓ Preamp \(name): \(actual == value ? "OK" : "MISMATCH")")
                 }
+                try await icomProtocol.setPreampIC7100(0x00)  // OFF
 
                 // Test AGC
                 print("   Testing AGC...")

@@ -18,8 +18,8 @@ import Foundation
 /// ## IC-7100 Specific Features:
 /// - Memory channels: 1-109 (includes special channels for VHF/UHF)
 /// - Memory banks: A-E
-/// - Attenuator: 0dB or 12dB only
-/// - Preamp: OFF, P.AMP1 (HF/50MHz), P.AMP2 (HF/50MHz), ON (144/430MHz)
+/// - Attenuator: OFF (0x00) or ON/12dB (0x12) only - no 6dB or 24dB
+/// - Preamp: OFF (0x00) or ON/P.AMP1 (0x01) only - no P.AMP2
 /// - D-STAR digital voice (DV mode)
 /// - DTCS and VSC squelch systems
 /// - Built-in GPS
@@ -365,7 +365,7 @@ extension IcomCIVProtocol {
 
     /// Set preamp (IC-7100 specific)
     /// Command: 0x16 0x02 [preamp code]
-    /// Codes: 0x00=OFF, 0x01=ON (144/430MHz) or P.AMP1 (HF/50MHz), 0x02=P.AMP2 (HF/50MHz)
+    /// Codes: 0x00=OFF, 0x01=ON/P.AMP1 (P.AMP2 not supported on IC-7100)
     public func setPreampIC7100(_ code: UInt8) async throws {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setPreampIC7100 is only available on IC-7100")
