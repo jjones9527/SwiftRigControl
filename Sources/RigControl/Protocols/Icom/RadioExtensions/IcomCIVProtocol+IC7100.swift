@@ -455,7 +455,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setInnerPBTIC7100 is only available on IC-7100")
         }
-        let bcdPosition = [UInt8(position % 10) | (UInt8(position / 10) << 4), UInt8(position / 100)]
+        let bcdPosition = [(UInt8(position / 10) % 10) << 4 | (position % 10), UInt8(position / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x07],
@@ -483,7 +483,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setOuterPBTIC7100 is only available on IC-7100")
         }
-        let bcdPosition = [UInt8(position % 10) | (UInt8(position / 10) << 4), UInt8(position / 100)]
+        let bcdPosition = [(UInt8(position / 10) % 10) << 4 | (position % 10), UInt8(position / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x08],
@@ -512,7 +512,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setNotchPositionIC7100 is only available on IC-7100")
         }
-        let bcdPosition = [UInt8(position % 10) | (UInt8(position / 10) << 4), UInt8(position / 100)]
+        let bcdPosition = [(UInt8(position / 10) % 10) << 4 | (position % 10), UInt8(position / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x0D],
@@ -541,7 +541,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setCompLevelIC7100 is only available on IC-7100")
         }
-        let bcdLevel = [UInt8(level % 10) | (UInt8(level / 10) << 4), UInt8(level / 100)]
+        let bcdLevel = [(UInt8(level / 10) % 10) << 4 | (level % 10), UInt8(level / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x0E],
@@ -570,7 +570,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setBreakInDelayIC7100 is only available on IC-7100")
         }
-        let bcdDelay = [UInt8(delay % 10) | (UInt8(delay / 10) << 4), UInt8(delay / 100)]
+        let bcdDelay = [(UInt8(delay / 10) % 10) << 4 | (delay % 10), UInt8(delay / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x0F],
@@ -598,7 +598,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setNBLevelIC7100 is only available on IC-7100")
         }
-        let bcdLevel = [UInt8(level % 10) | (UInt8(level / 10) << 4), UInt8(level / 100)]
+        let bcdLevel = [(UInt8(level / 10) % 10) << 4 | (level % 10), UInt8(level / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x12],
@@ -626,7 +626,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setMonitorGainIC7100 is only available on IC-7100")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        let bcdGain = [(UInt8(gain / 10) % 10) << 4 | (gain % 10), UInt8(gain / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x15],
@@ -654,7 +654,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setVoxGainIC7100 is only available on IC-7100")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        // BCD encode: ones digit in low nibble, tens digit in high nibble, hundreds in second byte
+        let bcdGain = [(UInt8(gain / 10) % 10) << 4 | (gain % 10), UInt8(gain / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x16],
@@ -682,7 +683,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setAntiVoxGainIC7100 is only available on IC-7100")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        // BCD encode: ones digit in low nibble, tens digit in high nibble, hundreds in second byte
+        let bcdGain = [(UInt8(gain / 10) % 10) << 4 | (gain % 10), UInt8(gain / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x17],
@@ -710,7 +712,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setLCDContrastIC7100 is only available on IC-7100")
         }
-        let bcdContrast = [UInt8(contrast % 10) | (UInt8(contrast / 10) << 4), UInt8(contrast / 100)]
+        let bcdContrast = [(UInt8(contrast / 10) % 10) << 4 | (contrast % 10), UInt8(contrast / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x18],
@@ -738,7 +740,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("setLCDBacklightIC7100 is only available on IC-7100")
         }
-        let bcdBacklight = [UInt8(backlight % 10) | (UInt8(backlight / 10) << 4), UInt8(backlight / 100)]
+        let bcdBacklight = [(UInt8(backlight / 10) % 10) << 4 | (backlight % 10), UInt8(backlight / 100)]
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x19],
