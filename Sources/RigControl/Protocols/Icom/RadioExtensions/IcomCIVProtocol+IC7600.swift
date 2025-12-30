@@ -130,6 +130,9 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
+
+        // Attenuator command 0x11 is single-byte, no subcommand
+        // IC-7600 returns: command=[11], data=[value]
         guard response.command.count >= 1,
               response.command[0] == CIVFrame.Command.attenuator,
               !response.data.isEmpty else {
@@ -347,13 +350,25 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.readLevel,
-              response.command[1] == CIVFrame.LevelRead.squelch,
-              response.data.count >= 2 else {
+
+        // IC-7600 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            // IC-7600/IC-7100 format: command=[15], data=[01, value_bcd...]
+            guard response.command[0] == CIVFrame.Command.readLevel,
+                  response.data[0] == CIVFrame.LevelRead.squelch else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1] != 0x00
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Standard format: command=[15, 01], data=[value_bcd...]
+            guard response.command[0] == CIVFrame.Command.readLevel,
+                  response.command[1] == CIVFrame.LevelRead.squelch else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0] != 0x00
+        } else {
             throw RigError.invalidResponse
         }
-        return response.data[0] != 0x00
     }
 
     // MARK: - Function Controls (IC-7600 Specific)
@@ -532,13 +547,25 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.advancedSettings,
-              response.command[1] == CIVFrame.AdvancedCode.filterWidth,
-              !response.data.isEmpty else {
+
+        // IC-7600 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 2 {
+            // IC-7600/IC-7100 format: command=[1A], data=[03, value]
+            guard response.command[0] == CIVFrame.Command.advancedSettings,
+                  response.data[0] == CIVFrame.AdvancedCode.filterWidth else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1]
+        } else if response.command.count >= 2 && !response.data.isEmpty {
+            // Standard format: command=[1A, 03], data=[value]
+            guard response.command[0] == CIVFrame.Command.advancedSettings,
+                  response.command[1] == CIVFrame.AdvancedCode.filterWidth else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0]
+        } else {
             throw RigError.invalidResponse
         }
-        return response.data[0]
     }
 
     /// Set AGC time constant (IC-7600)
@@ -690,13 +717,25 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.settings,
-              response.command[1] == subCommand,
-              response.data.count >= 2 else {
+
+        // IC-7600 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            // IC-7600/IC-7100 format: command=[14], data=[subCommand, value_bcd...]
+            guard response.command[0] == CIVFrame.Command.settings,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return BCDEncoding.decodePower(Array(response.data[1...]))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Standard format: command=[14, subCommand], data=[value_bcd...]
+            guard response.command[0] == CIVFrame.Command.settings,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return BCDEncoding.decodePower(response.data)
+        } else {
             throw RigError.invalidResponse
         }
-        return BCDEncoding.decodePower(response.data)
     }
 
     /// Set a function on/off or to a specific value (IC-7600 internal helper)
@@ -723,12 +762,82 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2,
-              response.command[0] == CIVFrame.Command.function,
-              response.command[1] == subCommand,
-              !response.data.isEmpty else {
+
+        // IC-7600 may return subcommand in data field like IC-7100: command=[16], data=[subCommand value]
+        // OR standard format: command=[16 subCommand], data=[value]
+
+        if response.command.count == 1 && response.data.count == 2 {
+            // IC-7600 format: subcommand in first data byte, value in second
+            guard response.command[0] == CIVFrame.Command.function,
+                  response.data[0] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1]
+        } else if response.command.count >= 2 && response.data.count >= 1 {
+            // Standard format: subcommand in command field
+            guard response.command[0] == CIVFrame.Command.function,
+                  response.command[1] == subCommand else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0]
+        } else {
             throw RigError.invalidResponse
         }
-        return response.data[0]
+    }
+
+    // MARK: - DATA Mode Control (IC-7600 Specific)
+
+    /// Set DATA mode and filter (IC-7600)
+    /// Command: 0x1A 0x06 [data_mode][filter]
+    ///
+    /// - Parameters:
+    ///   - dataMode: 0x00=OFF, 0x01=D1, 0x02=D2, 0x03=D3
+    ///   - filter: 0x00=OFF, 0x01=FIL1, 0x02=FIL2, 0x03=FIL3
+    public func setDataModeIC7600(dataMode: UInt8, filter: UInt8) async throws {
+        guard radioModel == .ic7600 else {
+            throw RigError.unsupportedOperation("setDataModeIC7600 is only available on IC-7600")
+        }
+        guard dataMode <= 0x03 else {
+            throw RigError.invalidParameter("Data mode must be 0x00-0x03")
+        }
+        guard filter <= 0x03 else {
+            throw RigError.invalidParameter("Filter must be 0x00-0x03")
+        }
+
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [0x1A, 0x06],
+            data: [dataMode, filter]
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+        guard response.isAck else {
+            throw RigError.commandFailed("DATA mode command rejected")
+        }
+    }
+
+    /// Get current DATA mode and filter setting (IC-7600)
+    /// Returns tuple: (dataMode: 0x00-0x03, filter: 0x00-0x03)
+    public func getDataModeIC7600() async throws -> (dataMode: UInt8, filter: UInt8) {
+        guard radioModel == .ic7600 else {
+            throw RigError.unsupportedOperation("getDataModeIC7600 is only available on IC-7600")
+        }
+
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [0x1A, 0x06],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+
+        guard response.command.count >= 2,
+              response.command[0] == 0x1A,
+              response.command[1] == 0x06,
+              response.data.count == 2 else {
+            throw RigError.invalidResponse
+        }
+
+        return (dataMode: response.data[0], filter: response.data[1])
     }
 }

@@ -5,7 +5,7 @@ import Foundation
 /// The IC-9700 is a VHF/UHF/1.2GHz all-mode transceiver with dual receiver capability.
 /// - **CI-V Address**: 0xA2
 /// - **Power Display**: Percentage (0-100%), NOT watts
-/// - **Command Echo**: NO - Radio does not echo commands
+/// - **Command Echo**: YES - Radio echoes commands before responses (over USB)
 /// - **Mode Filter**: REQUIRED - Mode commands must include filter byte
 /// - **VFO Model**: Main/Sub (dual receiver architecture, NOT VFO A/B)
 ///
@@ -28,9 +28,9 @@ import Foundation
 /// - All methods inherited from protocol default implementations
 public struct IC9700CommandSet: IcomRadioCommandSet {
     public let civAddress: UInt8 = 0xA2
-    public let vfoModel: VFOOperationModel = .mainSub
-    public let requiresModeFilter = true
-    public let echoesCommands = false
+    public let vfoModel: VFOOperationModel = .currentOnly  // Operates on currently selected band
+    public let requiresModeFilter = false  // IC-9700 does NOT accept filter byte
+    public let echoesCommands = true  // IC-9700 echoes commands over USB
     public let powerUnits: PowerUnits = .percentage
 
     public init() {}

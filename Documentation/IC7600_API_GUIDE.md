@@ -89,6 +89,53 @@ try await rig.setMode(.lsb, vfo: .sub)
 // .lsb, .usb, .am, .cw, .cwR, .rtty, .rttyR, .fm
 ```
 
+#### DATA Mode (USB-D/LSB-D)
+
+The IC-7600 handles DATA modes differently from basic modes. Instead of separate mode codes, DATA modes use a two-step process:
+
+1. Set the base mode (USB or LSB)
+2. Enable DATA mode via command 1A 06
+
+```swift
+import RigControl
+
+// Get access to IC-7600 protocol methods
+let proto = await rig.protocol
+guard let icomProtocol = proto as? IcomCIVProtocol else {
+    fatalError("Not an Icom protocol")
+}
+
+// Set USB-D (USB + DATA mode D1)
+try await rig.setMode(.usb, vfo: .main)
+try await icomProtocol.setDataModeIC7600(dataMode: 0x01, filter: 0x01)
+
+// Set LSB-D (LSB + DATA mode D1)
+try await rig.setMode(.lsb, vfo: .main)
+try await icomProtocol.setDataModeIC7600(dataMode: 0x01, filter: 0x01)
+
+// Read current DATA mode setting
+let (dataMode, filter) = try await icomProtocol.getDataModeIC7600()
+// dataMode: 0x00=OFF, 0x01=D1, 0x02=D2, 0x03=D3
+// filter: 0x00=OFF, 0x01=FIL1, 0x02=FIL2, 0x03=FIL3
+
+// Turn off DATA mode (return to normal USB/LSB)
+try await icomProtocol.setDataModeIC7600(dataMode: 0x00, filter: 0x00)
+```
+
+**DATA Mode Settings:**
+- `dataMode: 0x00` - DATA mode OFF (normal USB/LSB)
+- `dataMode: 0x01` - DATA mode D1 (USB-D1 or LSB-D1)
+- `dataMode: 0x02` - DATA mode D2 (USB-D2 or LSB-D2)
+- `dataMode: 0x03` - DATA mode D3 (USB-D3 or LSB-D3)
+
+**Filter Settings:**
+- `filter: 0x00` - Filter OFF
+- `filter: 0x01` - Filter 1 (FIL1)
+- `filter: 0x02` - Filter 2 (FIL2)
+- `filter: 0x03` - Filter 3 (FIL3)
+
+**Note:** On the IC-7600, you activate USB-D or LSB-D on the front panel by pressing and holding the SSB button until the "-D" appears. This is different from radios that have a dedicated DATA button.
+
 ### Power Control
 
 ```swift
@@ -491,6 +538,8 @@ struct IC7600Example {
 For the complete list of ~150 IC-7600 commands available via direct protocol access, see `IC7600Protocol.swift`.
 
 Common commands accessed via protocol:
+- `setDataModeIC7600(dataMode:filter:)` - Set DATA mode (0x00-0x03) and filter (0x00-0x03)
+- `getDataModeIC7600()` - Get current DATA mode and filter settings
 - `setNRLevel(_:)` - Noise reduction level (0-255)
 - `setInnerPBT(_:)`, `setOuterPBT(_:)` - Passband tuning
 - `setCWPitch(_:)` - CW pitch (300-900 Hz)
@@ -523,6 +572,73 @@ do {
 }
 ```
 
+## Known Limitations
+
+### Mode-Specific Features
+
+Some IC-7600 features only work in specific operating modes:
+
+**CW Mode Features:**
+- **Audio Peak Filter**: Only functions in CW mode
+- **Break-in**: CW-only feature (Semi/Full)
+
+**Digital Mode Features:**
+- **Twin Peak Filter**: Only functions in RTTY or PSK modes
+
+**FM Mode Features:**
+- **Squelch Condition**: Only available in FM mode
+
+When using these features via CI-V, ensure the radio is in the correct mode first:
+
+```swift
+// For Twin Peak Filter
+try await rig.setMode(.rtty, vfo: .main)
+try await icomProtocol.setTwinPeakFilterIC7600(true)
+
+// For Audio Peak Filter
+try await rig.setMode(.cw, vfo: .main)
+try await icomProtocol.setAudioPeakFilterIC7600(true)
+
+// For Squelch Condition
+try await rig.setMode(.fm, vfo: .main)
+let squelchOpen = try await icomProtocol.getSquelchConditionIC7600()
+```
+
+### XIT (Delta TX) - Shared Offset Architecture
+
+The IC-7600 uses a **shared offset architecture** for RIT and ΔTX - there is no separate XIT control via CI-V:
+
+**How it works:**
+- **Single Offset**: Commands 0x21 0x00 (set offset) and 0x21 0x01 (enable/disable) control **both** RIT and ΔTX
+- **Front Panel Switch**: The RIT/ΔTX button on the radio determines whether the offset applies to RX or TX
+- **No CI-V Control**: Command 0x21 0x02/0x03 (separate XIT control) returns NAK - not supported
+- **Shared Clear**: Command 1A 05 0085 "Quick RIT/ΔTX clear" clears the shared offset
+
+**What this means for CI-V control:**
+
+```swift
+// ✅ Set RIT offset (also affects ΔTX if enabled on front panel):
+try await rig.setRIT(RITXITState(enabled: true, offset: 500))
+// This sets the offset to +500 Hz
+// - If front panel is in RIT mode: RX offset = +500 Hz
+// - If front panel is in ΔTX mode: TX offset = +500 Hz
+
+// ❌ Separate XIT control NOT supported:
+try await rig.setXIT(RITXITState(enabled: true, offset: -300))
+// This will fail - IC-7600 doesn't support independent XIT commands
+```
+
+**Workaround**: Use split operation for independent TX offset:
+
+```swift
+// Set different TX/RX frequencies using split mode
+try await rig.selectVFO(.main)
+try await rig.setFrequency(14_200_000, vfo: .main)  // RX frequency
+try await rig.selectVFO(.sub)
+try await rig.setFrequency(14_200_300, vfo: .sub)   // TX frequency (+300 Hz)
+try await rig.setSplit(true)
+```
+
 ## Tips & Best Practices
 
 1. **Always check connection** before sending commands
@@ -533,6 +649,7 @@ do {
 6. **Use .main and .sub VFOs** (not .a and .b) for IC-7600
 7. **Wait after frequency changes** before reading back
 8. **For TX operations**, ensure dummy load is connected
+9. **For transmit offset**, use split mode (XIT not supported via CI-V)
 
 ## See Also
 

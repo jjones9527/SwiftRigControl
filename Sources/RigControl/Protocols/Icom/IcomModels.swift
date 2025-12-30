@@ -137,7 +137,7 @@ extension RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-9700",
-            defaultBaudRate: 115200,
+            defaultBaudRate: 19200,  // Factory default is 19200 baud
             capabilities: RadioCapabilitiesDatabase.icomIC9700,
             civAddress: civAddress ?? IcomRadioModel.ic9700.defaultCIVAddress,
             protocolFactory: { transport in

@@ -513,14 +513,26 @@ public actor IcomCIVProtocol: CATProtocol {
         try await sendFrame(enableFrame)
         let enableResponse = try await receiveFrame()
 
-        guard enableResponse.command.count >= 2,
-              enableResponse.command[0] == CIVFrame.Command.ritXit,
-              enableResponse.command[1] == CIVFrame.RITXITCode.ritOnOff,
-              !enableResponse.data.isEmpty else {
+        // IC-7100 returns subcommand in data field: command=[21], data=[01 01]
+        // Other radios return: command=[21 01], data=[01]
+        let enabled: Bool
+        if enableResponse.command.count == 1 && enableResponse.data.count == 2 {
+            // IC-7100 format: subcommand in first data byte, value in second
+            guard enableResponse.command[0] == CIVFrame.Command.ritXit,
+                  enableResponse.data[0] == CIVFrame.RITXITCode.ritOnOff else {
+                throw RigError.invalidResponse
+            }
+            enabled = enableResponse.data[1] == 0x01
+        } else if enableResponse.command.count >= 2 && enableResponse.data.count >= 1 {
+            // Standard format
+            guard enableResponse.command[0] == CIVFrame.Command.ritXit,
+                  enableResponse.command[1] == CIVFrame.RITXITCode.ritOnOff else {
+                throw RigError.invalidResponse
+            }
+            enabled = enableResponse.data[0] == 0x01
+        } else {
             throw RigError.invalidResponse
         }
-
-        let enabled = enableResponse.data[0] == 0x01
 
         // Read RIT frequency offset
         let offsetFrame = CIVFrame(
@@ -532,14 +544,28 @@ public actor IcomCIVProtocol: CATProtocol {
         try await sendFrame(offsetFrame)
         let offsetResponse = try await receiveFrame()
 
-        guard offsetResponse.command.count >= 2,
-              offsetResponse.command[0] == CIVFrame.Command.ritXit,
-              offsetResponse.command[1] == CIVFrame.RITXITCode.ritFrequency,
-              offsetResponse.data.count == 3 else {
+        // IC-7100 returns subcommand in data field: command=[21], data=[00 XX XX XX]
+        // Other radios return: command=[21 00], data=[XX XX XX]
+        let offsetData: [UInt8]
+        if offsetResponse.command.count == 1 && offsetResponse.data.count == 4 {
+            // IC-7100 format: subcommand in first data byte, offset in remaining bytes
+            guard offsetResponse.command[0] == CIVFrame.Command.ritXit,
+                  offsetResponse.data[0] == CIVFrame.RITXITCode.ritFrequency else {
+                throw RigError.invalidResponse
+            }
+            offsetData = Array(offsetResponse.data[1...])  // Skip subcommand byte
+        } else if offsetResponse.command.count >= 2 && offsetResponse.data.count == 3 {
+            // Standard format
+            guard offsetResponse.command[0] == CIVFrame.Command.ritXit,
+                  offsetResponse.command[1] == CIVFrame.RITXITCode.ritFrequency else {
+                throw RigError.invalidResponse
+            }
+            offsetData = offsetResponse.data
+        } else {
             throw RigError.invalidResponse
         }
 
-        let offset = try BCDEncoding.decodeRITXITOffset(offsetResponse.data)
+        let offset = try BCDEncoding.decodeRITXITOffset(offsetData)
 
         return RITXITState(enabled: enabled, offset: offset)
     }

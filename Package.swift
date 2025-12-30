@@ -9,57 +9,113 @@ let package = Package(
         .macOS(.v13)  // Minimum macOS 13 for modern async/await and actor features
     ],
     products: [
-        // Core library for rig control
+        // MARK: - Core Libraries
         .library(
             name: "RigControl",
             targets: ["RigControl"]
         ),
-        // XPC client library for sandboxed apps
         .library(
             name: "RigControlXPC",
             targets: ["RigControlXPC"]
         ),
-        // XPC helper executable
+
+        // MARK: - System Components
         .executable(
             name: "RigControlHelper",
             targets: ["RigControlHelper"]
         ),
-        // rigctld test server
+
+        // MARK: - Hardware Validation Tools
         .executable(
-            name: "RigctldTest",
-            targets: ["RigctldTest"]
+            name: "IC7100Validator",
+            targets: ["IC7100Validator"]
+        ),
+        .executable(
+            name: "IC7600Validator",
+            targets: ["IC7600Validator"]
+        ),
+        .executable(
+            name: "IC9700Validator",
+            targets: ["IC9700Validator"]
+        ),
+        .executable(
+            name: "K2Validator",
+            targets: ["K2Validator"]
+        ),
+        .executable(
+            name: "RigctldEmulator",
+            targets: ["RigctldEmulator"]
+        ),
+        .executable(
+            name: "IC7600ManualValidation",
+            targets: ["IC7600ManualValidation"]
         ),
     ],
     targets: [
-        // Core rig control library
+        // MARK: - Core Libraries
         .target(
             name: "RigControl",
             dependencies: [],
             path: "Sources/RigControl"
         ),
 
-        // XPC client library
         .target(
             name: "RigControlXPC",
             dependencies: ["RigControl"],
             path: "Sources/RigControlXPC"
         ),
 
-        // XPC helper executable
+        // MARK: - System Components
         .executableTarget(
             name: "RigControlHelper",
             dependencies: ["RigControl", "RigControlXPC"],
             path: "Sources/RigControlHelper"
         ),
 
-        // rigctld test server
-        .executableTarget(
-            name: "RigctldTest",
+        // MARK: - Hardware Validation Tools
+        .target(
+            name: "ValidationHelpers",
             dependencies: ["RigControl"],
-            path: "Sources/RigctldTest"
+            path: "HardwareValidation/Shared"
         ),
 
-        // Tests
+        .executableTarget(
+            name: "IC7100Validator",
+            dependencies: ["RigControl", "ValidationHelpers"],
+            path: "HardwareValidation/IC7100Validator"
+        ),
+
+        .executableTarget(
+            name: "IC7600Validator",
+            dependencies: ["RigControl", "ValidationHelpers"],
+            path: "HardwareValidation/IC7600Validator"
+        ),
+
+        .executableTarget(
+            name: "IC9700Validator",
+            dependencies: ["RigControl", "ValidationHelpers"],
+            path: "HardwareValidation/IC9700Validator"
+        ),
+
+        .executableTarget(
+            name: "K2Validator",
+            dependencies: ["RigControl", "ValidationHelpers"],
+            path: "HardwareValidation/K2Validator"
+        ),
+
+        .executableTarget(
+            name: "RigctldEmulator",
+            dependencies: ["RigControl"],
+            path: "HardwareValidation/RigctldEmulator"
+        ),
+
+        .executableTarget(
+            name: "IC7600ManualValidation",
+            dependencies: ["RigControl"],
+            path: "Sources/IC7600ManualValidation"
+        ),
+
+        // MARK: - Tests
         .testTarget(
             name: "RigControlTests",
             dependencies: ["RigControl"],
