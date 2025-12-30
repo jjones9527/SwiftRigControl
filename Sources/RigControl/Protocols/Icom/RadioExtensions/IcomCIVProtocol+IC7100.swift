@@ -351,7 +351,13 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 1, response.data.count == 1 else {
+
+        // Command 0x11 is a single-byte command (no subcommand)
+        // Standard format: command=[11], data=[value]
+        guard response.command.count >= 1, response.data.count >= 1 else {
+            throw RigError.invalidResponse
+        }
+        guard response.command[0] == CIVFrame.Command.attenuator else {
             throw RigError.invalidResponse
         }
         return response.data[0]
@@ -467,20 +473,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getInnerPBTIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x07],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x07)
+        return UInt8(value)
     }
 
     /// Set outer Twin PBT position (0-255) (IC-7100)
@@ -507,20 +501,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getOuterPBTIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x08],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x08)
+        return UInt8(value)
     }
 
     /// Set notch position (0-255) (IC-7100)
@@ -548,20 +530,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getNotchPositionIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x0D],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x0D)
+        return UInt8(value)
     }
 
     /// Set compression level (0-255) (IC-7100)
@@ -589,20 +559,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getCompLevelIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x0E],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x0E)
+        return UInt8(value)
     }
 
     /// Set break-in delay (0-255) (IC-7100)
@@ -630,20 +588,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getBreakInDelayIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x0F],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x0F)
+        return UInt8(value)
     }
 
     /// Set NB level (0-255) (IC-7100)
@@ -670,20 +616,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getNBLevelIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x12],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x12)
+        return UInt8(value)
     }
 
     /// Set monitor gain (0-255) (IC-7100)
@@ -710,20 +644,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getMonitorGainIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x15],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x15)
+        return UInt8(value)
     }
 
     /// Set VOX gain (0-255) (IC-7100)
@@ -750,20 +672,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getVoxGainIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x16],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x16)
+        return UInt8(value)
     }
 
     /// Set anti-VOX gain (0-255) (IC-7100)
@@ -790,20 +700,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getAntiVoxGainIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x17],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x17)
+        return UInt8(value)
     }
 
     /// Set LCD contrast (0-255) (IC-7100)
@@ -830,20 +728,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getLCDContrastIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x18],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x18)
+        return UInt8(value)
     }
 
     /// Set LCD backlight (0-255) (IC-7100)
@@ -870,20 +756,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getLCDBacklightIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x14, 0x19],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
+        let value = try await getLevelIC7100(0x19)
+        return UInt8(value)
     }
 
     // MARK: - Meter Readings (IC-7100 Specific, NOT in common)
@@ -895,17 +769,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getSquelchStatusIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x15, 0x01],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        return try await getReadLevelIC7100(0x01)
     }
 
     /// Read various SQL function status (IC-7100)
@@ -915,17 +779,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getVariousSQLStatusIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x15, 0x05],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        return try await getReadLevelIC7100(0x05)
     }
 
     /// Read PO meter level (IC-7100)
@@ -942,13 +796,30 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-7100 format: command=[15], data=[11, bcd_lo, bcd_hi]
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x15, response.data[0] == 0x11 else {
+                throw RigError.invalidResponse
+            }
+            let lo = response.data[1] & 0x0F
+            let hi = (response.data[1] >> 4) * 10
+            let hund = response.data[2] * 100
+            return hund + hi + lo
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && response.data.count >= 2 {
+            guard response.command[0] == 0x15, response.command[1] == 0x11 else {
+                throw RigError.invalidResponse
+            }
+            let lo = response.data[0] & 0x0F
+            let hi = (response.data[0] >> 4) * 10
+            let hund = response.data[1] * 100
+            return hund + hi + lo
+        }
+        else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     // MARK: - Function Settings (IC-7100 Specific, NOT in common)
@@ -1004,17 +875,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getMonitorIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x45],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x45)
+        return value == 0x01
     }
 
     /// Set break-in function (IC-7100)
@@ -1041,17 +903,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getBreakInIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x47],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x47)
     }
 
     /// Set manual notch (IC-7100)
@@ -1078,17 +930,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getManualNotchIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x48],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x48)
+        return value == 0x01
     }
 
     /// Set DTCS (IC-7100 specific)
@@ -1115,17 +958,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getDTCSIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x4B],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x4B)
+        return value == 0x01
     }
 
     /// Set VSC (Voice Squelch Control) - IC-7100 specific
@@ -1152,17 +986,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getVSCIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x4C],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x4C)
+        return value == 0x01
     }
 
     /// Set twin peak filter (IC-7100)
@@ -1189,17 +1014,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getTwinPeakFilterIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x4F],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x4F)
+        return value == 0x01
     }
 
     /// Set dial lock (IC-7100)
@@ -1226,17 +1042,8 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getDialLockIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x50],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0] == 0x01
+        let value = try await getFunctionIC7100(0x50)
+        return value == 0x01
     }
 
     /// Set DSP filter type (IC-7100)
@@ -1263,17 +1070,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getDSPFilterTypeIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x56],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x56)
     }
 
     /// Set manual notch width (IC-7100)
@@ -1300,17 +1097,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getManualNotchWidthIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x57],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x57)
     }
 
     /// Set SSB transmit bandwidth (IC-7100)
@@ -1337,17 +1124,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getSSBTransmitBandwidthIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x58],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x58)
     }
 
     /// Set DSQL/CSQL (DV mode only) - IC-7100 specific
@@ -1374,17 +1151,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic7100 else {
             throw RigError.unsupportedOperation("getDigitalSquelchIC7100 is only available on IC-7100")
         }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x16, 0x5B],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
-            throw RigError.invalidResponse
-        }
-        return response.data[0]
+        return try await getFunctionIC7100(0x5B)
     }
 
     // MARK: - Power Control (0x18)
@@ -1472,18 +1239,38 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 3 else {
+
+        // IC-7100 format: command=[21], data=[00, bcd1, bcd2, direction]
+        if response.command.count == 1 && response.data.count >= 4 {
+            guard response.command[0] == 0x21, response.data[0] == 0x00 else {
+                throw RigError.invalidResponse
+            }
+            let ones = Int(response.data[1] & 0x0F)
+            let tens = Int((response.data[1] >> 4) & 0x0F) * 10
+            let hundreds = Int(response.data[2] & 0x0F) * 100
+            let khz = Int((response.data[2] >> 4) & 0x0F) * 1000
+            let direction = response.data[3]
+
+            let absHz = khz + hundreds + tens + ones
+            return direction == 0x00 ? absHz : -absHz
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && response.data.count >= 3 {
+            guard response.command[0] == 0x21, response.command[1] == 0x00 else {
+                throw RigError.invalidResponse
+            }
+            let ones = Int(response.data[0] & 0x0F)
+            let tens = Int((response.data[0] >> 4) & 0x0F) * 10
+            let hundreds = Int(response.data[1] & 0x0F) * 100
+            let khz = Int((response.data[1] >> 4) & 0x0F) * 1000
+            let direction = response.data[2]
+
+            let absHz = khz + hundreds + tens + ones
+            return direction == 0x00 ? absHz : -absHz
+        }
+        else {
             throw RigError.invalidResponse
         }
-
-        let ones = Int(response.data[0] & 0x0F)
-        let tens = Int((response.data[0] >> 4) & 0x0F) * 10
-        let hundreds = Int(response.data[1] & 0x0F) * 100
-        let khz = Int((response.data[1] >> 4) & 0x0F) * 1000
-        let direction = response.data[2]
-
-        let absHz = khz + hundreds + tens + ones
-        return direction == 0x00 ? absHz : -absHz
     }
 
     /// Set RIT ON/OFF (IC-7100)
@@ -1516,10 +1303,24 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // IC-7100 format: command=[21], data=[01, value]
+        if response.command.count == 1 && response.data.count >= 2 {
+            guard response.command[0] == 0x21, response.data[0] == 0x01 else {
+                throw RigError.invalidResponse
+            }
+            return response.data[1] == 0x01
+        }
+        // Fallback to standard format
+        else if response.command.count >= 2 && response.data.count >= 1 {
+            guard response.command[0] == 0x21, response.command[1] == 0x01 else {
+                throw RigError.invalidResponse
+            }
+            return response.data[0] == 0x01
+        }
+        else {
             throw RigError.invalidResponse
         }
-        return response.data[0] == 0x01
     }
 
     // MARK: - Selected/Unselected VFO (0x25, 0x26)

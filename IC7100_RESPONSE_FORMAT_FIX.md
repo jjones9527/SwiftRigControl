@@ -120,44 +120,42 @@ public func getPreampIC7100() async throws -> UInt8 {
 ### Command 0x16 (Function) - 11 methods
 - [x] `getPreampIC7100()` - FIXED
 - [x] `getAGCIC7100()` - FIXED
-- [ ] `getMonitorIC7100()`
-- [ ] `getBreakInIC7100()`
-- [ ] `getManualNotchIC7100()`
-- [ ] `getDTCSIC7100()`
-- [ ] `getVSCIC7100()`
-- [ ] `getTwinPeakFilterIC7100()`
-- [ ] `getDialLockIC7100()`
-- [ ] `getDSPFilterTypeIC7100()`
-- [ ] `getManualNotchWidthIC7100()`
+- [x] `getMonitorIC7100()` - FIXED
+- [x] `getBreakInIC7100()` - FIXED
+- [x] `getManualNotchIC7100()` - FIXED
+- [x] `getDTCSIC7100()` - FIXED
+- [x] `getVSCIC7100()` - FIXED
+- [x] `getTwinPeakFilterIC7100()` - FIXED
+- [x] `getDialLockIC7100()` - FIXED
+- [x] `getDSPFilterTypeIC7100()` - FIXED
+- [x] `getManualNotchWidthIC7100()` - FIXED
+- [x] `getSSBTransmitBandwidthIC7100()` - FIXED
+- [x] `getDigitalSquelchIC7100()` - FIXED
 
-### Command 0x14 (Level) - 8 methods
-- [ ] `getInnerPBTIC7100()`
-- [ ] `getOuterPBTIC7100()`
-- [ ] `getNotchPositionIC7100()`
-- [ ] `getCompLevelIC7100()`
-- [ ] `getBreakInDelayIC7100()`
-- [ ] `getNBLevelIC7100()`
-- [ ] `getMonitorGainIC7100()`
-- [ ] `getVoxGainIC7100()`
-- [ ] `getAntiVoxGainIC7100()`
-- [ ] `getLCDContrastIC7100()`
-- [ ] `getLCDBacklightIC7100()`
+### Command 0x14 (Level) - 11 methods
+- [x] `getInnerPBTIC7100()` - FIXED
+- [x] `getOuterPBTIC7100()` - FIXED
+- [x] `getNotchPositionIC7100()` - FIXED
+- [x] `getCompLevelIC7100()` - FIXED
+- [x] `getBreakInDelayIC7100()` - FIXED
+- [x] `getNBLevelIC7100()` - FIXED
+- [x] `getMonitorGainIC7100()` - FIXED
+- [x] `getVoxGainIC7100()` - FIXED
+- [x] `getAntiVoxGainIC7100()` - FIXED
+- [x] `getLCDContrastIC7100()` - FIXED
+- [x] `getLCDBacklightIC7100()` - FIXED
 
 ### Command 0x15 (Read Level) - 3 methods
-- [ ] `getSquelchStatusIC7100()`
-- [ ] `getVariousSQLStatusIC7100()`
-- [ ] `getPOMeterLevelIC7100()`
-
-### Command 0x1A (Advanced Settings) - 4 methods
-- [ ] `getSSBTransmitBandwidthIC7100()`
-- [ ] `getDigitalSquelchIC7100()`
+- [x] `getSquelchStatusIC7100()` - FIXED
+- [x] `getVariousSQLStatusIC7100()` - FIXED
+- [x] `getPOMeterLevelIC7100()` - FIXED (custom implementation)
 
 ### Command 0x21 (RIT/XIT) - 2 methods
-- [ ] `getRITFrequencyIC7100()`
-- [ ] `getRITIC7100()`
+- [x] `getRITFrequencyIC7100()` - FIXED (custom implementation)
+- [x] `getRITIC7100()` - FIXED (custom implementation)
 
 ### Command 0x11 (Attenuator) - 1 method
-- [ ] `getAttenuatorIC7100()` - Single-byte command, may not need fix
+- [x] `getAttenuatorIC7100()` - FIXED (improved validation)
 
 ## Swift 6 Best Practices Applied
 
@@ -218,5 +216,5 @@ public func getPreampIC7100() async throws -> UInt8 {
 **Date**: 2025-12-30
 **Discovered By**: IC-7100 hardware validation testing
 **Severity**: CRITICAL - Affects all IC-7100 GET operations
-**Status**: 🔄 IN PROGRESS (2/31 commands fixed)
+**Status**: ✅ COMPLETE (31/31 commands fixed)
 **Priority**: HIGH - Blocks IC-7100 functionality
