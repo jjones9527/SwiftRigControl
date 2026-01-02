@@ -428,6 +428,15 @@ struct IC7100ManualValidation {
         print("TEST: VOX Gain (Command 0x14 0x16)")
         print(String(repeating: "=", count: 70))
 
+        // Read and save original value
+        var originalValue: UInt8?
+        do {
+            originalValue = try await icomProtocol.getVoxGainIC7100()
+            print("\n💾 Saved original VOX Gain: \(originalValue!)")
+        } catch {
+            print("\n⚠️  Could not read original VOX Gain: \(error)")
+        }
+
         // VOX Gain: 0-255 = 0-100%
         let testCases: [(value: Int, name: String, display: String)] = [
             (0, "0%", "VOX gain at 0%"),
@@ -484,12 +493,31 @@ struct IC7100ManualValidation {
                 ))
             }
         }
+
+        // Restore original value
+        if let original = originalValue {
+            do {
+                try await icomProtocol.setVoxGainIC7100(original)
+                print("\n🔄 VOX Gain restored to original value: \(original)")
+            } catch {
+                print("\n⚠️  Could not restore VOX Gain: \(error)")
+            }
+        }
     }
 
     static func testLCDBacklight(icomProtocol: IcomCIVProtocol, results: inout [(test: String, commandWorks: Bool, responseWorks: Bool, notes: String)]) async {
         print("\n" + String(repeating: "=", count: 70))
         print("TEST: LCD Backlight (Command 0x14 0x03)")
         print(String(repeating: "=", count: 70))
+
+        // Read and save original value
+        var originalValue: UInt8?
+        do {
+            originalValue = try await icomProtocol.getLCDBacklightIC7100()
+            print("\n💾 Saved original LCD Backlight: \(originalValue!)")
+        } catch {
+            print("\n⚠️  Could not read original LCD Backlight: \(error)")
+        }
 
         let testCases: [(value: Int, name: String, display: String)] = [
             (50, "Dim", "Display should be dimmer"),
@@ -545,12 +573,31 @@ struct IC7100ManualValidation {
                 ))
             }
         }
+
+        // Restore original value
+        if let original = originalValue {
+            do {
+                try await icomProtocol.setLCDBacklightIC7100(original)
+                print("\n🔄 LCD Backlight restored to original value: \(original)")
+            } catch {
+                print("\n⚠️  Could not restore LCD Backlight: \(error)")
+            }
+        }
     }
 
     static func testLCDContrast(icomProtocol: IcomCIVProtocol, results: inout [(test: String, commandWorks: Bool, responseWorks: Bool, notes: String)]) async {
         print("\n" + String(repeating: "=", count: 70))
         print("TEST: LCD Contrast (Command 0x14 0x04)")
         print(String(repeating: "=", count: 70))
+
+        // Read and save original value
+        var originalValue: UInt8?
+        do {
+            originalValue = try await icomProtocol.getLCDContrastIC7100()
+            print("\n💾 Saved original LCD Contrast: \(originalValue!)")
+        } catch {
+            print("\n⚠️  Could not read original LCD Contrast: \(error)")
+        }
 
         let testCases: [(value: Int, name: String, display: String)] = [
             (50, "Low", "Display contrast should be lower"),
@@ -604,6 +651,16 @@ struct IC7100ManualValidation {
                     responseWorks: false,
                     notes: "SET command failed: \(error)"
                 ))
+            }
+        }
+
+        // Restore original value
+        if let original = originalValue {
+            do {
+                try await icomProtocol.setLCDContrastIC7100(original)
+                print("\n🔄 LCD Contrast restored to original value: \(original)")
+            } catch {
+                print("\n⚠️  Could not restore LCD Contrast: \(error)")
             }
         }
     }
