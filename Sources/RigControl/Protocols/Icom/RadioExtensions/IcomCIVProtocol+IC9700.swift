@@ -299,7 +299,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setNRLevelIC9700 is only available on IC-9700")
         }
-        let bcdLevel = [UInt8(level % 10) | (UInt8(level / 10) << 4), UInt8(level / 100)]
+        let bcdLevel = BCDEncoding.encodePower(Int(level))
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x06],
@@ -324,13 +324,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x14, response.data[0] == 0x06 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x14, response.command[1] == 0x06 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     /// Set notch position (0-255) (IC-9700)
@@ -339,7 +348,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setNotchPositionIC9700 is only available on IC-9700")
         }
-        let bcdPosition = [UInt8(position % 10) | (UInt8(position / 10) << 4), UInt8(position / 100)]
+        let bcdPosition = BCDEncoding.encodePower(Int(position))
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x0D],
@@ -364,13 +373,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x14, response.data[0] == 0x0D else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x14, response.command[1] == 0x0D else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     /// Set monitor gain (0-255) (IC-9700)
@@ -379,7 +397,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setMonitorGainIC9700 is only available on IC-9700")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        let bcdGain = BCDEncoding.encodePower(Int(gain))
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x15],
@@ -404,13 +422,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x14, response.data[0] == 0x15 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x14, response.command[1] == 0x15 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     /// Set VOX gain (0-255) (IC-9700)
@@ -419,7 +446,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setVoxGainIC9700 is only available on IC-9700")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        let bcdGain = BCDEncoding.encodePower(Int(gain))
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x16],
@@ -444,13 +471,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x14, response.data[0] == 0x16 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x14, response.command[1] == 0x16 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     /// Set anti-VOX gain (0-255) (IC-9700)
@@ -459,7 +495,7 @@ extension IcomCIVProtocol {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setAntiVoxGainIC9700 is only available on IC-9700")
         }
-        let bcdGain = [UInt8(gain % 10) | (UInt8(gain / 10) << 4), UInt8(gain / 100)]
+        let bcdGain = BCDEncoding.encodePower(Int(gain))
         let frame = CIVFrame(
             to: civAddress,
             command: [0x14, 0x17],
@@ -484,13 +520,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x14, response.data[0] == 0x17 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x14, response.command[1] == 0x17 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     // MARK: - Meter Readings (IC-9700 Specific)
@@ -528,13 +573,22 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 2 else {
+
+        // IC-9700 uses IC-7100 format: subcommand echoed in data field
+        if response.command.count == 1 && response.data.count >= 3 {
+            guard response.command[0] == 0x15, response.data[0] == 0x11 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+        } else if response.command.count >= 2 && response.data.count >= 2 {
+            // Fallback to standard format
+            guard response.command[0] == 0x15, response.command[1] == 0x11 else {
+                throw RigError.invalidResponse
+            }
+            return UInt8(BCDEncoding.decodePower(response.data))
+        } else {
             throw RigError.invalidResponse
         }
-        let lo = response.data[0] & 0x0F
-        let hi = (response.data[0] >> 4) * 10
-        let hund = response.data[1] * 100
-        return hund + hi + lo
     }
 
     // MARK: - Function Settings (IC-9700 Specific)
