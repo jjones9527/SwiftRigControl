@@ -45,9 +45,10 @@ public protocol IcomRadioCommandSet: CIVCommandSet {
 extension IcomRadioCommandSet {
     /// Default VFO selection implementation based on VFO operation model.
     ///
-    /// Automatically handles the three different VFO architectures:
+    /// Automatically handles the different VFO architectures:
     /// - **Targetable/CurrentOnly**: Uses standard VFO A/B codes (0x00/0x01)
     /// - **MainSub**: Uses Main/Sub codes (0xD0/0xD1), returns nil for VFO A/B
+    /// - **MainSubDualVFO**: Accepts BOTH Main/Sub (0xD0/0xD1) AND VFO A/B (0x00/0x01)
     /// - **None**: Returns nil (VFO selection not supported)
     public func selectVFOCommand(_ vfo: VFO) -> (command: [UInt8], data: [UInt8])? {
         switch vfoModel {
@@ -57,12 +58,25 @@ extension IcomRadioCommandSet {
             return ([CIVFrame.Command.selectVFO], [vfoCode])
 
         case .mainSub:
-            // Main/Sub receiver architecture
-            // Returns nil if user tries to use VFO A/B on a Main/Sub radio
+            // Main/Sub receiver architecture (2-state: Main or Sub only)
+            // Returns nil if user tries to use VFO A/B on a 2-state Main/Sub radio
             guard let vfoCode = VFOCodeHelper.mainSubCode(for: vfo) else {
                 return nil
             }
             return ([CIVFrame.Command.selectVFO], [vfoCode])
+
+        case .mainSubDualVFO:
+            // Main/Sub receiver with VFO A/B per receiver (4-state)
+            // Supports BOTH band selection (.main/.sub) AND VFO selection (.a/.b)
+            if let bandCode = VFOCodeHelper.mainSubCode(for: vfo) {
+                // Band selection (Main=0xD0, Sub=0xD1)
+                return ([CIVFrame.Command.selectVFO], [bandCode])
+            } else if let vfoCode = VFOCodeHelper.dualVFOCode(for: vfo) {
+                // VFO selection (A=0x00, B=0x01) on current receiver
+                return ([CIVFrame.Command.selectVFO], [vfoCode])
+            } else {
+                return nil
+            }
 
         case .none:
             // No VFO support
@@ -76,10 +90,11 @@ extension IcomRadioCommandSet {
     /// - **targetable**: true (must select target VFO)
     /// - **currentOnly**: true (must switch to desired VFO)
     /// - **mainSub**: true (must select Main/Sub)
+    /// - **mainSubDualVFO**: true (must select band and/or VFO)
     /// - **none**: false (no VFO operations)
     public var requiresVFOSelection: Bool {
         switch vfoModel {
-        case .targetable, .currentOnly, .mainSub:
+        case .targetable, .currentOnly, .mainSub, .mainSubDualVFO:
             return true
         case .none:
             return false
