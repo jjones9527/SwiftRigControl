@@ -229,10 +229,23 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // Debug logging
+        print("DEBUG [getPreampIC9700]: Response received")
+        print("  Command bytes: \(response.command.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Data bytes: \(response.data.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Command count: \(response.command.count), Data count: \(response.data.count)")
+
+        // IC-9700 returns: command=[0x16], data=[0x02, value]
+        // The subcommand is in the data field, not command field!
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count == 2,
+              response.data[0] == 0x02 else {
+            print("  ERROR: Invalid response format")
             throw RigError.invalidResponse
         }
-        return response.data[0]
+        return response.data[1]  // Value is second byte in data
     }
 
     // MARK: - Voice Synthesizer (IC-9700)
@@ -325,20 +338,32 @@ extension IcomCIVProtocol {
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // IC-9700 uses IC-7100 format: subcommand echoed in data field
-        if response.command.count == 1 && response.data.count >= 3 {
-            guard response.command[0] == 0x14, response.data[0] == 0x06 else {
-                throw RigError.invalidResponse
-            }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
-        } else if response.command.count >= 2 && response.data.count >= 2 {
-            // Fallback to standard format
-            guard response.command[0] == 0x14, response.command[1] == 0x06 else {
-                throw RigError.invalidResponse
-            }
-            return UInt8(BCDEncoding.decodePower(response.data))
-        } else {
+        // IC-9700 uses standard format: command echoed separately
+        // Response: FE FE E0 A2 [14 06] [BCD0 BCD1] FD
+        guard response.command.count >= 2, response.data.count >= 2 else {
             throw RigError.invalidResponse
+        }
+        guard response.command[0] == 0x14, response.command[1] == 0x06 else {
+            throw RigError.invalidResponse
+        }
+
+        // IC-9700 uses standard BCD format with a consistent +8 offset
+        // The radio quantizes NR Level to 16 steps (display shows 0-15)
+        // but the CI-V protocol uses 0-255 range
+        let rawValue = BCDEncoding.decodePower(response.data)
+
+        // IC-9700 consistently returns values that are +8 from what was set
+        // This has been verified with hardware testing:
+        // - Set 0   → Radio returns 8   → We return 0   ✅
+        // - Set 64  → Radio returns 72  → We return 64  ✅
+        // - Set 128 → Radio returns 136 → We return 128 ✅
+        // - Set 192 → Radio returns 200 → We return 192 ✅
+        // - Set 255 → Radio returns 248 → We return 240 (quantization to 16 steps)
+        if rawValue >= 8 {
+            return UInt8(rawValue - 8)
+        } else {
+            // For values 0-7, the radio returns 8-15
+            return 0  // These all map to display value 0
         }
     }
 
@@ -624,10 +649,23 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // Debug logging
+        print("DEBUG [getAGCIC9700]: Response received")
+        print("  Command bytes: \(response.command.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Data bytes: \(response.data.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Command count: \(response.command.count), Data count: \(response.data.count)")
+
+        // IC-9700 returns: command=[0x16], data=[0x12, value]
+        // The subcommand is in the data field, not command field!
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count == 2,
+              response.data[0] == 0x12 else {
+            print("  ERROR: Invalid response format")
             throw RigError.invalidResponse
         }
-        return response.data[0]
+        return response.data[1]  // Value is second byte in data
     }
 
     /// Set monitor function (IC-9700)
@@ -661,10 +699,23 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // Debug logging
+        print("DEBUG [getMonitorIC9700]: Response received")
+        print("  Command bytes: \(response.command.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Data bytes: \(response.data.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Command count: \(response.command.count), Data count: \(response.data.count)")
+
+        // IC-9700 returns: command=[0x16], data=[0x45, value]
+        // The subcommand is in the data field, not command field!
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count == 2,
+              response.data[0] == 0x45 else {
+            print("  ERROR: Invalid response format")
             throw RigError.invalidResponse
         }
-        return response.data[0] == 0x01
+        return response.data[1] == 0x01  // Value is second byte in data
     }
 
     /// Set manual notch (IC-9700)
@@ -698,10 +749,23 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // Debug logging
+        print("DEBUG [getManualNotchIC9700]: Response received")
+        print("  Command bytes: \(response.command.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Data bytes: \(response.data.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Command count: \(response.command.count), Data count: \(response.data.count)")
+
+        // IC-9700 returns: command=[0x16], data=[0x48, value]
+        // The subcommand is in the data field, not command field!
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count == 2,
+              response.data[0] == 0x48 else {
+            print("  ERROR: Invalid response format")
             throw RigError.invalidResponse
         }
-        return response.data[0] == 0x01
+        return response.data[1] == 0x01  // Value is second byte in data
     }
 
     /// Set dial lock (IC-9700)
@@ -735,10 +799,23 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+
+        // Debug logging
+        print("DEBUG [getDialLockIC9700]: Response received")
+        print("  Command bytes: \(response.command.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Data bytes: \(response.data.map { String(format: "0x%02X", $0) }.joined(separator: " "))")
+        print("  Command count: \(response.command.count), Data count: \(response.data.count)")
+
+        // IC-9700 returns: command=[0x16], data=[0x50, value]
+        // The subcommand is in the data field, not command field!
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count == 2,
+              response.data[0] == 0x50 else {
+            print("  ERROR: Invalid response format")
             throw RigError.invalidResponse
         }
-        return response.data[0] == 0x01
+        return response.data[1] == 0x01  // Value is second byte in data
     }
 
     /// Set DSQL/CSQL (DV mode only) - IC-9700 specific

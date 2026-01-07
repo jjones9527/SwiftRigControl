@@ -96,23 +96,30 @@ extension IcomCIVProtocol {
     /// Enable or disable dualwatch mode.
     ///
     /// When enabled, radio monitors both Main and Sub receivers simultaneously.
+    /// **Only available on IC-7600** - IC-9700/IC-9100 are true dual-receivers (both always active).
     ///
     /// - Parameter enabled: true to enable dualwatch, false to disable
-    /// - Throws: RigError if command fails
+    /// - Throws: RigError if command fails or radio doesn't support dualwatch
     ///
     /// ## Usage
     /// ```swift
-    /// try await proto.setDualwatch(true)   // Enable simultaneous RX
-    /// try await proto.setDualwatch(false)  // Disable dualwatch
+    /// try await proto.setDualwatch(true)   // Enable simultaneous RX (IC-7600 only)
+    /// try await proto.setDualwatch(false)  // Disable dualwatch (IC-7600 only)
     /// ```
     ///
     /// ## CI-V Command
     /// - ON:  `FE FE [addr] E0 07 C3 FD`
     /// - OFF: `FE FE [addr] E0 07 C2 FD`
+    ///
+    /// ## Note
+    /// IC-9700 and IC-9100 are true dual-receiver radios where both receivers are
+    /// always independent and active. Use the SUB AF/RF knob to turn Sub receiver on/off.
     public func setDualwatch(_ enabled: Bool) async throws {
-        let dualReceiverModels: [IcomRadioModel] = [.ic7600, .ic9700, .ic9100]
-        guard dualReceiverModels.contains(radioModel) else {
-            throw RigError.unsupportedOperation("Dualwatch only available for dual-receiver radios")
+        // Only IC-7600 supports traditional dualwatch mode
+        // IC-9700/IC-9100 are true dual-receivers (both always independent)
+        let dualwatchModels: [IcomRadioModel] = [.ic7600]
+        guard dualwatchModels.contains(radioModel) else {
+            throw RigError.unsupportedOperation("Dualwatch mode only available on IC-7600. IC-9700/IC-9100 are true dual-receivers (both always active).")
         }
 
         let code: UInt8 = enabled ? CIVFrame.VFOSelect.dualwatchOn : CIVFrame.VFOSelect.dualwatchOff

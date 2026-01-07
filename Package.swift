@@ -54,6 +54,22 @@ let package = Package(
             name: "IC7600ManualValidation",
             targets: ["IC7600ManualValidation"]
         ),
+        .executable(
+            name: "IC9700ManualValidation",
+            targets: ["IC9700ManualValidation"]
+        ),
+        .executable(
+            name: "IC9700InteractiveValidator",
+            targets: ["IC9700InteractiveValidator"]
+        ),
+        .executable(
+            name: "IC9700ComprehensiveTest",
+            targets: ["IC9700ComprehensiveTest"]
+        ),
+        .executable(
+            name: "IC9700NRDebug",
+            targets: ["IC9700NRDebug"]
+        ),
     ],
     targets: [
         // MARK: - Core Libraries
@@ -123,6 +139,30 @@ let package = Package(
             name: "IC7600ManualValidation",
             dependencies: ["RigControl"],
             path: "Sources/IC7600ManualValidation"
+        ),
+
+        .executableTarget(
+            name: "IC9700ManualValidation",
+            dependencies: ["RigControl"],
+            path: "Sources/IC9700ManualValidation"
+        ),
+
+        .executableTarget(
+            name: "IC9700InteractiveValidator",
+            dependencies: ["RigControl"],
+            path: "Sources/IC9700InteractiveValidator"
+        ),
+
+        .executableTarget(
+            name: "IC9700ComprehensiveTest",
+            dependencies: ["RigControl"],
+            path: "Sources/IC9700ComprehensiveTest"
+        ),
+
+        .executableTarget(
+            name: "IC9700NRDebug",
+            dependencies: ["RigControl"],
+            path: "Sources/IC9700NRDebug"
         ),
 
         // MARK: - Tests
