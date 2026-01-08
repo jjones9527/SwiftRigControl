@@ -217,7 +217,7 @@ public struct RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        requiresVFOSelection: false,  // IC-7600 uses Main/Sub (not VFO A/B), operates on current band
+        requiresVFOSelection: true,  // IC-7600 MUST select Main/Sub before read/write operations
         requiresModeFilter: true,  // IC-7600 requires filter byte in mode commands
         powerUnits: .percentage
     )

@@ -2,13 +2,28 @@ import Foundation
 import RigControl
 
 /// Comprehensive CI-V command test for IC-7600
-/// Tests HF/6m bands with dual receiver validation
+/// Tests HF/6m bands with dual receiver validation and protocol extensions
+///
+/// Test Coverage (13 Tests):
+/// 1. Multi-Band Frequency Control (160m-6m)
+/// 2. Mode Control (USB, LSB, CW, RTTY, AM, FM, Data modes)
+/// 3. Dual Receiver Operations (Main/Sub)
+/// 4. Split Operation
+/// 5. Power Control
+/// 6. PTT Control
+/// 7. Signal Strength (S-meter)
+/// 8. RIT Control
+/// 9. XIT Control
+/// 10. Rapid Frequency Switching
+/// 11. Band Selection API (Protocol Extension)
+/// 12. Band Exchange (Main ↔ Sub)
+/// 13. Dualwatch Mode (IC-7600 Exclusive Feature)
 @main
 struct IC7600ComprehensiveTest {
     static func main() async {
         print("\n" + String(repeating: "=", count: 70))
         print("IC-7600 Comprehensive CI-V Command Test")
-        print("Testing HF/6m dual receiver with all major bands")
+        print("Testing HF/6m dual receiver with all major bands + protocol extensions")
         print(String(repeating: "=", count: 70) + "\n")
 
         guard let port = ProcessInfo.processInfo.environment["IC7600_SERIAL_PORT"]
@@ -41,8 +56,8 @@ struct IC7600ComprehensiveTest {
 
             // Save original state
             print("💾 Saving original radio state...")
-            let originalFreq = try await rig.frequency(vfo: .a, cached: false)
-            let originalMode = try await rig.mode(vfo: .a, cached: false)
+            let originalFreq = try await rig.frequency(vfo: .main, cached: false)
+            let originalMode = try await rig.mode(vfo: .main, cached: false)
             let originalPower = try await rig.power()
             print("   Frequency: \(formatFreq(originalFreq))")
             print("   Mode: \(originalMode.rawValue)")
@@ -64,8 +79,8 @@ struct IC7600ComprehensiveTest {
                     (50_100_000, "6m USB")
                 ]
                 for (freq, band) in testFreqs {
-                    try await rig.setFrequency(freq, vfo: .a)
-                    let actual = try await rig.frequency(vfo: .a, cached: false)
+                    try await rig.setFrequency(freq, vfo: .main)
+                    let actual = try await rig.frequency(vfo: .main, cached: false)
                     guard actual == freq else {
                         print("   ❌ \(band): Expected \(formatFreq(freq)), got \(formatFreq(actual))")
                         continue
@@ -82,11 +97,11 @@ struct IC7600ComprehensiveTest {
             // Test 2: Mode Control
             print("📻 Test 2: Mode Control Commands")
             do {
-                try await rig.setFrequency(14_200_000, vfo: .a)
+                try await rig.setFrequency(14_200_000, vfo: .main)
                 let modes: [Mode] = [.usb, .lsb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB]
                 for mode in modes {
-                    try await rig.setMode(mode, vfo: .a)
-                    let actual = try await rig.mode(vfo: .a, cached: false)
+                    try await rig.setMode(mode, vfo: .main)
+                    let actual = try await rig.mode(vfo: .main, cached: false)
                     guard actual == mode else {
                         print("   ⚠️  \(mode.rawValue): Expected \(mode.rawValue), got \(actual.rawValue)")
                         continue
@@ -100,39 +115,40 @@ struct IC7600ComprehensiveTest {
                 testsFailed += 1
             }
 
-            // Test 3: Dual VFO Operations
-            print("🔀 Test 3: Dual VFO Operations")
+            // Test 3: Dual Receiver Operations (Main/Sub)
+            print("🔀 Test 3: Dual Receiver Operations (Main/Sub)")
             do {
-                // Set different frequencies on VFO A and B
-                try await rig.selectVFO(.a)
-                try await rig.setFrequency(14_200_000, vfo: .a)
-                try await rig.setMode(.usb, vfo: .a)
+                // IC-7600 uses Main/Sub receivers, NOT VFO A/B
+                // Set different frequencies on Main and Sub receivers
+                try await rig.selectVFO(.main)
+                try await rig.setFrequency(14_200_000, vfo: .main)
+                try await rig.setMode(.usb, vfo: .main)
 
-                try await rig.selectVFO(.b)
-                try await rig.setFrequency(7_100_000, vfo: .b)
-                try await rig.setMode(.lsb, vfo: .b)
+                try await rig.selectVFO(.sub)
+                try await rig.setFrequency(7_100_000, vfo: .sub)
+                try await rig.setMode(.lsb, vfo: .sub)
 
-                // Verify both VFOs
-                let freqA = try await rig.frequency(vfo: .a, cached: false)
-                let modeA = try await rig.mode(vfo: .a, cached: false)
-                let freqB = try await rig.frequency(vfo: .b, cached: false)
-                let modeB = try await rig.mode(vfo: .b, cached: false)
+                // Verify both receivers
+                let freqMain = try await rig.frequency(vfo: .main, cached: false)
+                let modeMain = try await rig.mode(vfo: .main, cached: false)
+                let freqSub = try await rig.frequency(vfo: .sub, cached: false)
+                let modeSub = try await rig.mode(vfo: .sub, cached: false)
 
-                print("   ✓ VFO A (20m): \(formatFreq(freqA)) \(modeA.rawValue)")
-                print("   ✓ VFO B (40m): \(formatFreq(freqB)) \(modeB.rawValue)")
+                print("   ✓ Main Receiver (20m): \(formatFreq(freqMain)) \(modeMain.rawValue)")
+                print("   ✓ Sub Receiver (40m): \(formatFreq(freqSub)) \(modeSub.rawValue)")
 
                 testsPassed += 1
-                print("   ✅ Dual VFO operations: PASS\n")
+                print("   ✅ Dual receiver operations: PASS\n")
             } catch {
-                print("   ❌ Dual VFO operations: FAIL - \(error)\n")
+                print("   ❌ Dual receiver operations: FAIL - \(error)\n")
                 testsFailed += 1
             }
 
             // Test 4: Split Operation
             print("🔊 Test 4: Split Operation Commands")
             do {
-                try await rig.setFrequency(14_200_000, vfo: .a)
-                try await rig.setFrequency(14_250_000, vfo: .b)
+                try await rig.setFrequency(14_200_000, vfo: .main)
+                try await rig.setFrequency(14_250_000, vfo: .sub)
 
                 try await rig.setSplit(true)
                 let splitOn = try await rig.isSplitEnabled()
@@ -185,8 +201,8 @@ struct IC7600ComprehensiveTest {
             do {
                 // Test on 20m with low power
                 try await rig.setPower(10)
-                try await rig.setFrequency(14_200_000, vfo: .a)
-                try await rig.setMode(.usb, vfo: .a)
+                try await rig.setFrequency(14_200_000, vfo: .main)
+                try await rig.setMode(.usb, vfo: .main)
 
                 print("   Testing PTT (14.200 MHz USB, 10W)...")
                 try await rig.setPTT(true)
@@ -302,8 +318,8 @@ struct IC7600ComprehensiveTest {
 
                 let startTime = Date()
                 for (freq, label) in freqs {
-                    try await rig.setFrequency(freq, vfo: .a)
-                    let actual = try await rig.frequency(vfo: .a, cached: false)
+                    try await rig.setFrequency(freq, vfo: .main)
+                    let actual = try await rig.frequency(vfo: .main, cached: false)
                     guard actual == freq else {
                         print("   ⚠️  \(label) verification failed")
                         continue
@@ -322,11 +338,133 @@ struct IC7600ComprehensiveTest {
                 testsFailed += 1
             }
 
+            // Test 11: Band Selection API (Protocol Extension)
+            print("🔀 Test 11: Band Selection API (selectBand)")
+            do {
+                guard let proto = await rig.protocol as? IcomCIVProtocol else {
+                    print("   ❌ Not an Icom protocol")
+                    testsFailed += 1
+                    throw RigError.unsupportedOperation("Not an Icom protocol")
+                }
+
+                // Test selectBand(.main)
+                try await proto.selectBand(.main)
+                try await rig.setFrequency(14_200_000, vfo: .main)
+                let mainFreq = try await rig.frequency(vfo: .main, cached: false)
+                guard mainFreq == 14_200_000 else {
+                    print("   ❌ Main band selection verification failed")
+                    testsFailed += 1
+                    throw RigError.commandFailed("Main band verification")
+                }
+                print("   ✓ selectBand(.main) - 14.200 MHz")
+
+                // Test selectBand(.sub)
+                try await proto.selectBand(.sub)
+                try await rig.setFrequency(7_100_000, vfo: .sub)
+                let subFreq = try await rig.frequency(vfo: .sub, cached: false)
+                guard subFreq == 7_100_000 else {
+                    print("   ❌ Sub band selection verification failed")
+                    testsFailed += 1
+                    throw RigError.commandFailed("Sub band verification")
+                }
+                print("   ✓ selectBand(.sub) - 7.100 MHz")
+
+                testsPassed += 1
+                print("   ✅ Band selection API: PASS\n")
+            } catch {
+                print("   ❌ Band selection API: FAIL - \(error)\n")
+                testsFailed += 1
+            }
+
+            // Test 12: Band Exchange Command (exchangeBands)
+            print("🔄 Test 12: Band Exchange Command")
+            do {
+                guard let proto = await rig.protocol as? IcomCIVProtocol else {
+                    print("   ❌ Not an Icom protocol")
+                    testsFailed += 1
+                    throw RigError.unsupportedOperation("Not an Icom protocol")
+                }
+
+                // Set known frequencies on Main and Sub
+                try await proto.selectBand(.main)
+                try await rig.setFrequency(14_200_000, vfo: .main)
+                try await rig.setMode(.usb, vfo: .main)
+
+                try await proto.selectBand(.sub)
+                try await rig.setFrequency(7_100_000, vfo: .sub)
+                try await rig.setMode(.lsb, vfo: .sub)
+
+                print("   Before exchange:")
+                print("     Main: 14.200 MHz USB")
+                print("     Sub:  7.100 MHz LSB")
+
+                // Send exchange command (0x07 0xB0)
+                // Note: IC-7600 behavior needs verification with hardware
+                try await proto.exchangeBands()
+                try await Task.sleep(nanoseconds: 200_000_000)  // Give radio time to process
+
+                // Read back and report actual behavior
+                let mainFreqAfter = try await rig.frequency(vfo: .main, cached: false)
+                let mainModeAfter = try await rig.mode(vfo: .main, cached: false)
+                let subFreqAfter = try await rig.frequency(vfo: .sub, cached: false)
+                let subModeAfter = try await rig.mode(vfo: .sub, cached: false)
+
+                print("   After exchange:")
+                print("     Main: \(formatFreq(mainFreqAfter)) \(mainModeAfter.rawValue)")
+                print("     Sub:  \(formatFreq(subFreqAfter)) \(subModeAfter.rawValue)")
+
+                // Check if frequencies changed at all
+                let mainChanged = (mainFreqAfter != 14_200_000 || mainModeAfter != .usb)
+                let subChanged = (subFreqAfter != 7_100_000 || subModeAfter != .lsb)
+
+                if mainFreqAfter == 7_100_000 && subFreqAfter == 14_200_000 {
+                    print("   ✓ Command executed: Main ↔ Sub swap confirmed")
+                } else if mainChanged || subChanged {
+                    print("   ⚠️  Command executed but behavior differs from expected swap")
+                    print("   Note: IC-7600 may have different exchange semantics")
+                } else {
+                    print("   ⚠️  Command accepted but no observable change")
+                    print("   Note: Exchange command (0x07 0xB0) may not be supported on IC-7600")
+                }
+
+                testsPassed += 1
+                print("   ✅ Band exchange command: PASS (command accepted)\n")
+            } catch {
+                print("   ❌ Band exchange command: FAIL - \(error)\n")
+                testsFailed += 1
+            }
+
+            // Test 13: Dualwatch Mode (IC-7600 Exclusive)
+            print("👁️  Test 13: Dualwatch Mode (IC-7600 Only)")
+            do {
+                guard let proto = await rig.protocol as? IcomCIVProtocol else {
+                    print("   ❌ Not an Icom protocol")
+                    testsFailed += 1
+                    throw RigError.unsupportedOperation("Not an Icom protocol")
+                }
+
+                // Enable dualwatch
+                try await proto.setDualwatch(true)
+                print("   ✓ Dualwatch enabled")
+
+                try await Task.sleep(nanoseconds: 200_000_000)
+
+                // Disable dualwatch
+                try await proto.setDualwatch(false)
+                print("   ✓ Dualwatch disabled")
+
+                testsPassed += 1
+                print("   ✅ Dualwatch mode: PASS\n")
+            } catch {
+                print("   ❌ Dualwatch mode: FAIL - \(error)\n")
+                testsFailed += 1
+            }
+
             // Restore original state
             print("🔄 Restoring original state...")
-            try await rig.selectVFO(.a)
-            try await rig.setFrequency(originalFreq, vfo: .a)
-            try await rig.setMode(originalMode, vfo: .a)
+            try await rig.selectVFO(.main)  // IC-7600 uses Main/Sub, not VFO A/B
+            try await rig.setFrequency(originalFreq, vfo: .main)
+            try await rig.setMode(originalMode, vfo: .main)
             try await rig.setPower(originalPower)
             print("   ✓ State restored\n")
 

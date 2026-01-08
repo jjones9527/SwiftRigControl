@@ -70,6 +70,14 @@ let package = Package(
             name: "IC9700NRDebug",
             targets: ["IC9700NRDebug"]
         ),
+        .executable(
+            name: "IC7600ComprehensiveTest",
+            targets: ["IC7600ComprehensiveTest"]
+        ),
+        .executable(
+            name: "IC7600ModeDebug",
+            targets: ["IC7600ModeDebug"]
+        ),
     ],
     targets: [
         // MARK: - Core Libraries
@@ -163,6 +171,18 @@ let package = Package(
             name: "IC9700NRDebug",
             dependencies: ["RigControl"],
             path: "Sources/IC9700NRDebug"
+        ),
+
+        .executableTarget(
+            name: "IC7600ComprehensiveTest",
+            dependencies: ["RigControl"],
+            path: "Sources/IC7600ComprehensiveTest"
+        ),
+
+        .executableTarget(
+            name: "IC7600ModeDebug",
+            dependencies: ["RigControl"],
+            path: "Sources/IC7600ModeDebug"
         ),
 
         // MARK: - Tests
