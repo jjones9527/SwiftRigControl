@@ -5,6 +5,199 @@ All notable changes to SwiftRigControl will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-01-14
+
+### Added
+
+#### License & Project Organization
+- **LGPL v3.0 License** - Added GNU Lesser General Public License v3.0
+  - Follows [Hamlib](https://hamlib.github.io/) licensing model
+  - Allows commercial application integration
+  - Requires library modifications be shared back to community
+  - Clear documentation of license terms in README
+  - Complete license text with SwiftRigControl copyright (2024-2025)
+
+#### GitHub Integration
+- **Issue Templates** for professional bug reporting and feature requests:
+  - `.github/ISSUE_TEMPLATE/bug_report.md` - Structured bug reporting
+  - `.github/ISSUE_TEMPLATE/feature_request.md` - Feature request template
+  - `.github/ISSUE_TEMPLATE/radio_support.md` - New radio support requests
+- **Pull Request Template** (`.github/PULL_REQUEST_TEMPLATE.md`):
+  - Code review checklist
+  - Testing requirements
+  - Documentation updates
+  - Breaking change guidelines
+
+#### Debug Tools
+- **Examples/Debugging/** directory for K2 troubleshooting tools:
+  - `K2PTTDebug` - PTT control testing with 5-second observation windows
+  - `K2PowerDebug` - QRP power control verification (0-15W)
+  - `K2NewCommandsTest` - TQ, RC, RD, RU command testing
+  - Complete README explaining tool usage
+
+### Fixed
+
+#### Elecraft K2 Implementation (Critical Fixes)
+- **Power Control Format Issue** ([K2_POWER_FIX.md](Documentation/Development/K2/K2_POWER_FIX.md)):
+  - **Problem:** Setting 5W read back as 2W, settings not persisting correctly
+  - **Root Cause:** K2 uses direct watts (PC005 = 5W), K3/K4 use percentage (PC033 = 33%)
+  - **Solution:** Auto-detect K2 by maxPower (≤15W) and use correct format
+  - **Status:** ✅ FIXED - Power control now accurate across all Elecraft models
+
+- **PTT Control Missing** ([K2_PTT_FIX.md](Documentation/Development/K2/K2_PTT_FIX.md)):
+  - **Problem:** `getPTT()` threw "unsupported operation" error
+  - **Root Cause:** PTT query not implemented for K2
+  - **Solution:** Implement using TQ command (K2) and IF command (K3/K4)
+  - **Status:** ✅ FIXED - PTT query fully functional
+
+- **PTT Timing Issues** ([K2_PTT_TIMING_FIX.md](Documentation/Development/K2/K2_PTT_TIMING_FIX.md)):
+  - **Problem:** TQ query returned RX (TQ0) even when radio transmitting
+  - **Root Cause:** K2 TX/RX transition takes 50-100ms (relay switching, PA bias, RF muting)
+  - **Solution:**
+    - Increased `setPTT()` delay from 50ms to 100ms
+    - Added 20ms pre-query delay in `getPTT()`
+    - Total timing budget: ~120ms for verified state transition
+  - **Status:** ✅ FIXED - Verified with external watt meter showing correct RF output
+
+- **K2 Protocol Handling** in `ElecraftProtocol.swift`:
+  - Added K2 detection logic (maxPower ≤ 15W)
+  - Added 50ms command delay (k2CommandDelay) to prevent buffer overflow
+  - Fixed non-echoing SET command handling (K2 only echoes QUERY commands)
+  - Added busy state detection (?; response)
+
+#### K2 New Commands Implemented
+- **TQ (Transmit Query)** - GET only, returns TQ0 (RX) or TQ1 (TX)
+  - Most efficient way to check TX/RX status on K2
+  - Used by `getPTT()` for K2 radios
+- **RC (RIT Clear)** - Clears RIT/XIT offset to zero
+- **RD (RIT Down)** - Decreases RIT/XIT offset by 10 Hz
+- **RU (RIT Up)** - Increases RIT/XIT offset by 10 Hz
+
+### Changed
+
+#### Project Structure Reorganization
+- **Root Directory Cleanup:**
+  - Moved 60+ markdown files from root to `Documentation/Development/`
+  - Organized into subdirectories: K2/, Icom/, Research/, Testing/, Sprints/, General/
+  - Root now contains only essential user-facing files
+
+- **Documentation Structure:**
+  ```
+  Documentation/
+  ├── Development/
+  │   ├── K2/                  # 10 K2 implementation docs
+  │   ├── Icom/                # 19 IC-7600/7100/9700 docs
+  │   ├── Research/            # 6 Hamlib comparison docs
+  │   ├── Testing/             # 8 test suite docs
+  │   ├── Sprints/             # 5 sprint summaries
+  │   └── General/             # 12 misc development docs
+  └── (user-facing docs)
+  ```
+
+- **Enhanced .gitignore:**
+  - Added `*.pdf` exclusion (copyrighted manufacturer manuals)
+  - Added `*.sh` exclusion (test scripts)
+  - Added editor directory exclusions (.vscode/, .idea/)
+  - Organized with category comments
+
+#### Package.swift Updates
+- Removed 3 redundant K2 debug tools (K2Debug, K2RITDebug, K2IFDebug)
+- Updated paths for debug tools moved to Examples/Debugging/
+- Added clear section markers for debug tools
+- Verified build succeeds with updated structure
+
+#### Hardware Validation
+- **K2Validator PTT Test Updated:**
+  - Changed from USB mode to CW mode (SSB requires audio input for RF)
+  - Extended TX hold time to 5 seconds for easy observation
+  - Added detailed diagnostic prompts and watt meter instructions
+  - Confirmed working with hardware validation
+
+### Verified
+
+#### Hardware Testing Complete
+- ✅ **IC-7600** - All 13 comprehensive tests passing (commit 5a02fca)
+- ✅ **IC-7100** - All 7 multi-band tests passing
+- ✅ **IC-9700** - All 14 tests passing (4-state VFO architecture)
+- ✅ **Elecraft K2** - All 11 tests passing with fixes applied
+  - Frequency control (160m-10m including WARC bands)
+  - Mode control (LSB/USB/CW/AM/FM)
+  - QRP power control (1-15W)
+  - PTT control (CW mode tested)
+  - RIT/XIT control
+  - Split operation
+
+### Documentation
+
+#### Comprehensive K2 Documentation (10 files, ~80 pages)
+- [K2_IMPLEMENTATION_REVIEW.md](Documentation/Development/K2/K2_IMPLEMENTATION_REVIEW.md) - 17-page detailed analysis vs KIO2 spec
+- [K2_REVIEW_SUMMARY.md](Documentation/Development/K2/K2_REVIEW_SUMMARY.md) - Executive summary (A- grade, 90% implementation)
+- [K2_POWER_FIX.md](Documentation/Development/K2/K2_POWER_FIX.md) - Power format fix details
+- [K2_PTT_FIX.md](Documentation/Development/K2/K2_PTT_FIX.md) - PTT implementation
+- [K2_PTT_TIMING_FIX.md](Documentation/Development/K2/K2_PTT_TIMING_FIX.md) - TX/RX timing analysis
+- [K2_PTT_TROUBLESHOOTING.md](Documentation/Development/K2/K2_PTT_TROUBLESHOOTING.md) - Troubleshooting guide
+- [K2_PTT_SSB_AUDIO_REQUIREMENT.md](Documentation/Development/K2/K2_PTT_SSB_AUDIO_REQUIREMENT.md) - SSB audio requirement discovery
+- [K2_PTT_CW_MODE_TEST.md](Documentation/Development/K2/K2_PTT_CW_MODE_TEST.md) - CW mode testing rationale
+- [K2_PTT_5_SECOND_TEST.md](Documentation/Development/K2/K2_PTT_5_SECOND_TEST.md) - 5-second observation test guide
+- [K2_PTT_INVESTIGATION.md](Documentation/Development/K2/K2_PTT_INVESTIGATION.md) - Initial investigation notes
+
+### Removed
+
+#### Cleanup
+- 5 PDF files removed from tracking (~3MB copyrighted manuals):
+  - IC-7100 CIV.pdf
+  - IC-7600 CI-V.pdf
+  - IC-9700 CI-V.pdf
+  - KIO2 Pgmrs Ref rev E.pdf
+  - Users should download from manufacturers
+- test_ic7100_ptt.sh script removed
+- main.swift.backup files removed
+- 3 redundant K2 debug tools removed (K2Debug, K2IFDebug, K2RITDebug)
+
+### Technical Details
+
+#### K2 Protocol Characteristics Documented
+- Does NOT echo SET commands (only echoes QUERY commands)
+- Requires 50ms delay between commands (prevent buffer overflow)
+- Returns ?; when busy (transmit, direct frequency entry, scanning)
+- Uses direct watts for power control (000-015 for QRP)
+- TX/RX transition: 50-100ms hardware delay for relay/PA
+- Firmware requirement: 2.01+ (tested with 2.04)
+
+#### Build Status
+- ✅ Swift 6.2+ compatible
+- ✅ Package builds successfully with new structure
+- ✅ All hardware validators functional
+- ✅ Zero compilation errors
+
+#### License Alignment
+- Follows Hamlib's LGPL model (industry standard for ham radio libraries)
+- LGPL v3.0 (modern version) vs Hamlib's LGPL v2.1 (1999)
+- Enables commercial integration while ensuring community benefits from improvements
+
+### Migration Notes
+
+**No breaking changes** - This is a bugfix and organizational release.
+
+#### For K2 Users
+If you were experiencing power control or PTT issues with K2, these are now fixed. No code changes required on your end - just update to v1.0.4.
+
+#### For All Users
+The project structure is cleaner but all public APIs remain unchanged. If you reference internal documentation files in your build scripts, note they've moved to `Documentation/Development/`.
+
+### Release Significance
+
+This release represents a major milestone:
+1. ✅ **Production-Ready K2 Support** - All critical bugs fixed
+2. ✅ **Four Radios Verified** - IC-7600, IC-7100, IC-9700, K2 with hardware
+3. ✅ **Professional Structure** - Clean organization ready for contributors
+4. ✅ **Proper Licensing** - LGPL v3.0 following industry standards
+5. ✅ **GitHub Ready** - Issue templates, PR templates, proper .gitignore
+
+SwiftRigControl is now ready for public release and third-party integration.
+
+---
+
 ## [1.0.3] - 2024-12-23
 
 ### Added
