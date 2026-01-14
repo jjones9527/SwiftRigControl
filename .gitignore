@@ -1,8 +1,33 @@
+# macOS
 .DS_Store
+
+# Swift Package Manager
 /.build
 /Packages
-xcuserdata/
-DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcworkspace
+!Package.swift.xcworkspace
+
+# Credentials
 .netrc
+
+# PDFs (copyrighted manufacturer manuals - users should download from source)
+*.pdf
+
+# Test scripts
+*.sh
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Development notes (if keeping locally)
+# Documentation/Development/

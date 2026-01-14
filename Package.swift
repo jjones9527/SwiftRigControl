@@ -78,18 +78,8 @@ let package = Package(
             name: "IC7600ModeDebug",
             targets: ["IC7600ModeDebug"]
         ),
-        .executable(
-            name: "K2Debug",
-            targets: ["K2Debug"]
-        ),
-        .executable(
-            name: "K2RITDebug",
-            targets: ["K2RITDebug"]
-        ),
-        .executable(
-            name: "K2IFDebug",
-            targets: ["K2IFDebug"]
-        ),
+
+        // MARK: - Debug Tools (Examples)
         .executable(
             name: "K2NewCommandsTest",
             targets: ["K2NewCommandsTest"]
@@ -209,40 +199,23 @@ let package = Package(
             path: "Sources/IC7600ModeDebug"
         ),
 
-        .executableTarget(
-            name: "K2Debug",
-            dependencies: ["RigControl"],
-            path: "Sources/K2Debug"
-        ),
-
-        .executableTarget(
-            name: "K2RITDebug",
-            dependencies: ["RigControl"],
-            path: "Sources/K2RITDebug"
-        ),
-
-        .executableTarget(
-            name: "K2IFDebug",
-            dependencies: ["RigControl"],
-            path: "Sources/K2IFDebug"
-        ),
-
+        // MARK: - Debug Tools (Examples)
         .executableTarget(
             name: "K2NewCommandsTest",
             dependencies: ["RigControl"],
-            path: "Sources/K2NewCommandsTest"
+            path: "Examples/Debugging/K2NewCommandsTest"
         ),
 
         .executableTarget(
             name: "K2PowerDebug",
             dependencies: ["RigControl"],
-            path: "Sources/K2PowerDebug"
+            path: "Examples/Debugging/K2PowerDebug"
         ),
 
         .executableTarget(
             name: "K2PTTDebug",
             dependencies: ["RigControl"],
-            path: "Sources/K2PTTDebug"
+            path: "Examples/Debugging/K2PTTDebug"
         ),
 
         // MARK: - Tests
