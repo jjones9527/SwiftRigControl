@@ -237,30 +237,22 @@ struct K2Validator {
             }
 
             // Test 8: RIT Control
+            // Note: K2 only supports enable/disable via CAT, NOT offset adjustment
+            // Offset must be set using physical RIT knob
             print("🎚️  Test 8: RIT (Receiver Incremental Tuning)")
             do {
-                // Enable RIT with +500 Hz offset
-                try await rig.setRIT(RITXITState(enabled: true, offset: 500))
-                print("   ✓ RIT +500 Hz set")
+                // Enable RIT (offset ignored - set via physical knob)
+                try await rig.setRIT(RITXITState(enabled: true, offset: 0))
+                print("   ✓ RIT enabled")
 
-                // Try to read back
+                // Read back RIT state (should be enabled, offset depends on physical setting)
                 let ritState = try await rig.getRIT(cached: false)
-                guard ritState.enabled && ritState.offset == 500 else {
-                    print("   ❌ RIT read-back mismatch: enabled=\(ritState.enabled), offset=\(ritState.offset)")
+                guard ritState.enabled else {
+                    print("   ❌ RIT not enabled")
                     testsFailed += 1
-                    throw RigError.commandFailed("RIT verification")
+                    throw RigError.commandFailed("RIT enable verification")
                 }
-                print("   ✓ RIT +500 Hz verified")
-
-                // Test negative offset
-                try await rig.setRIT(RITXITState(enabled: true, offset: -300))
-                let ritNeg = try await rig.getRIT(cached: false)
-                guard ritNeg.offset == -300 else {
-                    print("   ❌ RIT -300 Hz failed")
-                    testsFailed += 1
-                    throw RigError.commandFailed("RIT negative offset")
-                }
-                print("   ✓ RIT -300 Hz verified")
+                print("   ✓ RIT enabled verified (offset: \(ritState.offset) Hz from physical control)")
 
                 // Disable RIT
                 try await rig.setRIT(RITXITState(enabled: false, offset: 0))
@@ -274,25 +266,28 @@ struct K2Validator {
 
                 testsPassed += 1
                 print("   ✅ RIT control: PASS\n")
+                print("   Note: K2 offset adjustment requires physical RIT knob")
             } catch {
                 print("   ❌ RIT control: FAIL - \(error)\n")
                 testsFailed += 1
             }
 
             // Test 9: XIT Control
+            // Note: K2 only supports enable/disable via CAT, NOT offset adjustment
+            // Offset must be set using VFO A/B controls
             print("🎚️  Test 9: XIT (Transmitter Incremental Tuning)")
             do {
-                // Enable XIT with +750 Hz offset
-                try await rig.setXIT(RITXITState(enabled: true, offset: 750))
-                print("   ✓ XIT +750 Hz set")
+                // Enable XIT (offset ignored - set via physical controls)
+                try await rig.setXIT(RITXITState(enabled: true, offset: 0))
+                print("   ✓ XIT enabled")
 
                 let xitState = try await rig.getXIT(cached: false)
-                guard xitState.enabled && xitState.offset == 750 else {
-                    print("   ❌ XIT read-back mismatch")
+                guard xitState.enabled else {
+                    print("   ❌ XIT not enabled")
                     testsFailed += 1
-                    throw RigError.commandFailed("XIT verification")
+                    throw RigError.commandFailed("XIT enable verification")
                 }
-                print("   ✓ XIT +750 Hz verified")
+                print("   ✓ XIT enabled verified (offset: \(xitState.offset) Hz from physical control)")
 
                 // Disable XIT
                 try await rig.setXIT(RITXITState(enabled: false, offset: 0))
@@ -306,43 +301,71 @@ struct K2Validator {
 
                 testsPassed += 1
                 print("   ✅ XIT control: PASS\n")
+                print("   Note: K2 offset adjustment requires physical VFO A/B controls")
             } catch {
                 print("   ❌ XIT control: FAIL - \(error)\n")
                 testsFailed += 1
             }
 
-            // Test 10: PTT Control
-            print("📡 Test 10: PTT Control Commands")
+            // Test 10: PTT Control (using CW mode - SSB requires audio input)
+            print("📡 Test 10: PTT Control Commands (CW Mode)")
             do {
                 try await rig.setPower(1)  // 1W QRP
-                try await rig.setFrequency(14_200_000, vfo: .a)
-                try await rig.setMode(.usb, vfo: .a)
+                try await rig.setFrequency(14_100_000, vfo: .a)  // CW portion of 20m
+                try await rig.setMode(.cw, vfo: .a)  // CW mode produces carrier without audio
 
-                print("   Keying transmitter for 200ms at 1W...")
+                print("   Keying transmitter for 5 seconds at 1W...")
+                print("   (CW mode should produce full carrier)")
+                print("   → Watch power meter on radio for TX indication")
+
                 try await rig.setPTT(true)
+                print("   → TX command sent, waiting 200ms...")
+
+                // Give K2 extra time to fully engage in CW mode
+                try await Task.sleep(nanoseconds: 200_000_000)  // 200ms
+
+                print("   → Querying PTT status...")
                 let pttOn = try await rig.isPTTEnabled()
                 guard pttOn else {
                     print("   ❌ PTT ON status check failed")
+                    print("   ℹ️  TQ query returned RX status (TQ0)")
+                    print("   ℹ️  Did radio show TX on display/meter? (Y/N)")
+                    print("      → If YES: TQ query timing issue or TQ command not working")
+                    print("      → If NO: CAT PTT may be disabled in K2 menu (INP or T-R)")
                     testsFailed += 1
                     throw RigError.commandFailed("PTT ON")
                 }
-                print("   ✓ PTT ON confirmed")
+                print("   ✓ PTT ON confirmed (TQ1)")
+                print("   → Radio should be transmitting CW carrier")
 
-                try await Task.sleep(nanoseconds: 200_000_000)
+                // Hold TX for 5 seconds for easy observation
+                print("   → Holding TX for 5 seconds (observe power meter)...")
+                try await Task.sleep(nanoseconds: 5_000_000_000)  // 5 seconds
 
+                print("   → Sending RX command...")
                 try await rig.setPTT(false)
+
+                // Give K2 time to return to RX
+                try await Task.sleep(nanoseconds: 200_000_000)  // 200ms
+
                 let pttOff = try await rig.isPTTEnabled()
                 guard !pttOff else {
                     print("   ❌ PTT OFF status check failed")
                     testsFailed += 1
                     throw RigError.commandFailed("PTT OFF")
                 }
-                print("   ✓ PTT OFF confirmed")
+                print("   ✓ PTT OFF confirmed (TQ0)")
 
                 testsPassed += 1
-                print("   ✅ PTT control: PASS\n")
+                print("   ✅ PTT control: PASS")
+                print("   Note: SSB mode requires audio input for RF output\n")
             } catch {
-                print("   ❌ PTT control: FAIL - \(error)\n")
+                print("   ❌ PTT control: FAIL - \(error)")
+                print("\n   Troubleshooting:")
+                print("   1. Run: K2_SERIAL_PORT=<port> swift run K2PTTDebug")
+                print("   2. Check K2 menu: T-R (ensure VOX is OFF)")
+                print("   3. Check K2 menu: INP (PTT settings)")
+                print("   4. Verify K2 firmware 2.01+ with KIO2 option installed\n")
                 testsFailed += 1
             }
 
