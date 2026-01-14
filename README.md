@@ -15,7 +15,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
 - ✅ **RIT/XIT Support**: Receiver/Transmitter incremental tuning across all protocols (v1.1.0)
 - ✅ **Memory Channels**: Universal memory channel model with manufacturer-specific features (v1.2.0)
-- ✅ **Open Source**: MIT licensed
+- ✅ **Open Source**: LGPL v3.0 licensed
 
 ## Supported Radios
 
@@ -667,7 +667,16 @@ Adding a radio using an existing protocol typically takes 30-60 minutes!
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+GNU Lesser General Public License v3.0 (LGPL v3.0) - see [LICENSE](LICENSE) for details.
+
+**What this means for you:**
+- ✅ **Use freely** in commercial or open source applications
+- ✅ **Link as a library** - your application code remains under your chosen license
+- ✅ **Distribute freely** - no restrictions on redistribution
+- ⚠️ **Share modifications** - if you modify SwiftRigControl itself, those changes must be shared under LGPL v3.0
+- ✅ **Attribution** - minimal requirement to mention you use SwiftRigControl
+
+This follows the same licensing model as [Hamlib](https://hamlib.github.io/), the industry-standard radio control library.
 
 ## Authors
 
