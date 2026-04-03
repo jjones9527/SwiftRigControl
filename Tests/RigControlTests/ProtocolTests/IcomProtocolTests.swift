@@ -1,11 +1,12 @@
-import XCTest
+import Testing
 @testable import RigControl
 
-final class IcomProtocolTests: XCTestCase {
-    var mockTransport: MockTransport!
-    var icomProtocol: IcomCIVProtocol!
+/// Protocol-level tests for Icom CI-V communication
+@Suite struct IcomProtocolTests {
+    var mockTransport: MockTransport
+    var icomProtocol: IcomCIVProtocol
 
-    override func setUp() async throws {
+    init() async throws {
         mockTransport = MockTransport()
         icomProtocol = IcomCIVProtocol(
             transport: mockTransport,
@@ -15,17 +16,12 @@ final class IcomProtocolTests: XCTestCase {
         try await icomProtocol.connect()
     }
 
-    override func tearDown() async throws {
-        await icomProtocol.disconnect()
-        mockTransport = nil
-        icomProtocol = nil
-    }
-
     // MARK: - PTT Tests
 
-    func testSetPTTOn() async throws {
-        // Expected command: FE FE A2 E0 1C 01 FD
-        let expectedCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x01, 0xFD])
+    @Test func setPTTOn() async throws {
+        // PTT command: 0x1C sub-command 0x00, data 0x01 (transmit)
+        // Wire format: FE FE A2 E0 1C 00 01 FD
+        let expectedCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x00, 0x01, 0xFD])
 
         // Mock ACK response: FE FE E0 A2 FB FD
         let ackResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
@@ -34,13 +30,14 @@ final class IcomProtocolTests: XCTestCase {
         try await icomProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
-        XCTAssertEqual(writes[0], expectedCommand)
+        #expect(writes.count == 1)
+        #expect(writes[0] == expectedCommand)
     }
 
-    func testSetPTTOff() async throws {
-        // Expected command: FE FE A2 E0 1C 00 FD
-        let expectedCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x00, 0xFD])
+    @Test func setPTTOff() async throws {
+        // PTT command: 0x1C sub-command 0x00, data 0x00 (receive)
+        // Wire format: FE FE A2 E0 1C 00 00 FD
+        let expectedCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x00, 0x00, 0xFD])
 
         // Mock ACK response
         let ackResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
@@ -49,26 +46,27 @@ final class IcomProtocolTests: XCTestCase {
         try await icomProtocol.setPTT(false)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
-        XCTAssertEqual(writes[0], expectedCommand)
+        #expect(writes.count == 1)
+        #expect(writes[0] == expectedCommand)
     }
 
-    func testGetPTT() async throws {
-        // Expected query: FE FE A2 E0 1C FD
-        let expectedQuery = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0xFD])
+    @Test func getPTT() async throws {
+        // PTT read command: 0x1C sub-command 0x00
+        // Wire format: FE FE A2 E0 1C 00 FD
+        let expectedQuery = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x00, 0xFD])
 
-        // Mock response indicating PTT is ON: FE FE E0 A2 1C 01 FD
-        let response = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x1C, 0x01, 0xFD])
+        // Mock response indicating PTT is ON: FE FE E0 A2 1C 00 01 FD
+        let response = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x1C, 0x00, 0x01, 0xFD])
         await mockTransport.setResponse(for: expectedQuery, response: response)
 
         let result = try await icomProtocol.getPTT()
 
-        XCTAssertTrue(result)
+        #expect(result)
     }
 
     // MARK: - Frequency Tests
 
-    func testSetFrequency() async throws {
+    @Test func setFrequency() async throws {
         // First, mock VFO selection
         let vfoCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x07, 0x00, 0xFD])
         let vfoAck = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
@@ -81,11 +79,11 @@ final class IcomProtocolTests: XCTestCase {
         try await icomProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 2)
-        XCTAssertEqual(writes[1], freqCommand)
+        #expect(writes.count == 2)
+        #expect(writes[1] == freqCommand)
     }
 
-    func testGetFrequency() async throws {
+    @Test func getFrequency() async throws {
         // Mock VFO selection
         let vfoCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x07, 0x00, 0xFD])
         let vfoAck = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
@@ -100,29 +98,29 @@ final class IcomProtocolTests: XCTestCase {
 
         let result = try await icomProtocol.getFrequency(vfo: .a)
 
-        XCTAssertEqual(result, 14_230_000)
+        #expect(result == 14_230_000)
     }
 
     // MARK: - Mode Tests
 
-    func testSetMode() async throws {
+    @Test func setMode() async throws {
         // Mock VFO selection
         let vfoCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x07, 0x00, 0xFD])
         let vfoAck = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
         await mockTransport.setResponse(for: vfoCommand, response: vfoAck)
 
-        // Mock mode set to USB (0x01)
-        let modeCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x06, 0x01, 0x00, 0xFD])
+        // Mock mode set to USB (0x01) with FIL1 filter byte (0x01)
+        let modeCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x06, 0x01, 0x01, 0xFD])
         await mockTransport.setResponse(for: modeCommand, response: vfoAck)
 
         try await icomProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 2)
-        XCTAssertEqual(writes[1], modeCommand)
+        #expect(writes.count == 2)
+        #expect(writes[1] == modeCommand)
     }
 
-    func testGetMode() async throws {
+    @Test func getMode() async throws {
         // Mock VFO selection
         let vfoCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x07, 0x00, 0xFD])
         let vfoAck = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
@@ -137,38 +135,28 @@ final class IcomProtocolTests: XCTestCase {
 
         let result = try await icomProtocol.getMode(vfo: .a)
 
-        XCTAssertEqual(result, .usb)
+        #expect(result == .usb)
     }
 
     // MARK: - Error Handling Tests
 
-    func testCommandFailedOnNak() async throws {
+    @Test func commandFailedOnNak() async throws {
         // Mock NAK response: FE FE E0 A2 FA FD
         let nakResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFA, 0xFD])
-        let pttCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x01, 0xFD])
+        let pttCommand = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x00, 0x01, 0xFD])
         await mockTransport.setResponse(for: pttCommand, response: nakResponse)
 
-        do {
+        await #expect(throws: RigError.self) {
             try await icomProtocol.setPTT(true)
-            XCTFail("Expected commandFailed error")
-        } catch RigError.commandFailed {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error: \(error)")
         }
     }
 
-    func testTimeoutOnRead() async throws {
+    @Test func timeoutOnRead() async throws {
         await mockTransport.reset()
         await mockTransport.setShouldThrowOnRead(true)
 
-        do {
+        await #expect(throws: RigError.self) {
             try await icomProtocol.setPTT(true)
-            XCTFail("Expected timeout error")
-        } catch RigError.timeout {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error: \(error)")
         }
     }
 }

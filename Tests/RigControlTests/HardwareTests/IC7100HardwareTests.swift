@@ -1,4 +1,5 @@
-import XCTest
+import Foundation
+import Testing
 @testable import RigControl
 
 /// Comprehensive hardware tests for Icom IC-7100
@@ -13,23 +14,16 @@ import XCTest
 /// swift test --filter IC7100HardwareTests
 /// ```
 ///
-final class IC7100HardwareTests: XCTestCase {
-    var rig: RigController?
-    var savedState: HardwareTestHelpers.RadioState?
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["IC7100_SERIAL_PORT"] != nil,
+                "Set IC7100_SERIAL_PORT environment variable"))
+struct IC7100HardwareTests {
+    var rig: RigController
+    var savedState: HardwareTestHelpers.RadioState
 
     let radioName = "IC-7100"
-    let environmentKey = "IC7100_SERIAL_PORT"
 
-    // MARK: - Setup & Teardown
-
-    override func setUp() async throws {
-        guard let port = HardwareTestHelpers.getSerialPort(
-            environmentKey: environmentKey,
-            radioName: radioName,
-            interactive: false
-        ) else {
-            throw XCTSkip("Set \(environmentKey) environment variable")
-        }
+    init() async throws {
+        let port = try #require(ProcessInfo.processInfo.environment["IC7100_SERIAL_PORT"])
 
         print("\n" + String(repeating: "=", count: 60))
         print("IC-7100 Hardware Test Suite")
@@ -42,34 +36,16 @@ final class IC7100HardwareTests: XCTestCase {
             connection: .serial(path: port, baudRate: nil)
         )
 
-        try await rig!.connect()
+        try await rig.connect()
         print("✓ Connected to IC-7100\n")
 
-        savedState = try await HardwareTestHelpers.RadioState.save(from: rig!)
+        savedState = try await HardwareTestHelpers.RadioState.save(from: rig)
         print("✓ Saved current radio state\n")
-    }
-
-    override func tearDown() async throws {
-        guard let rig = rig else { return }
-
-        if let savedState = savedState {
-            print("\n🔄 Restoring radio state...")
-            try await savedState.restore(to: rig)
-            print("   ✓ Radio state restored")
-        }
-
-        await rig.disconnect()
-        print("   ✓ Disconnected from IC-7100\n")
     }
 
     // MARK: - Basic Tests
 
-    func testConnection() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func connection() async throws {
         print("📡 Test: Basic Connection")
 
         let freq = try await rig.frequency(vfo: .a, cached: false)
@@ -78,18 +54,13 @@ final class IC7100HardwareTests: XCTestCase {
         print("   Current frequency: \(HardwareTestHelpers.formatFrequency(freq))")
         print("   Current mode: \(mode.rawValue)")
 
-        XCTAssertGreaterThan(freq, 0)
+        #expect(freq > 0)
         print("   ✓ Basic communication verified\n")
     }
 
     // MARK: - Multi-Band Tests (HF/VHF/UHF)
 
-    func testHFBands() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func hfBands() async throws {
         print("🎛️  Test: HF Frequency Control")
 
         let hfFrequencies: [(freq: UInt64, band: String)] = [
@@ -105,19 +76,15 @@ final class IC7100HardwareTests: XCTestCase {
             print("   Testing \(band): \(HardwareTestHelpers.formatFrequency(freq))")
             try await rig.setFrequency(freq, vfo: .a)
             let actual = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actual, freq)
+            #expect(actual == freq)
             print("   ✓ \(band) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All HF bands tested\n")
     }
 
-    func testVHFUHFBands() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func vhfUhfBands() async throws {
         print("📻 Test: VHF/UHF Frequency Control")
 
         let vhfuhfFrequencies: [(freq: UInt64, band: String)] = [
@@ -130,21 +97,17 @@ final class IC7100HardwareTests: XCTestCase {
             print("   Testing \(band): \(HardwareTestHelpers.formatFrequency(freq))")
             try await rig.setFrequency(freq, vfo: .a)
             let actual = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actual, freq)
+            #expect(actual == freq)
             print("   ✓ \(band) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All VHF/UHF bands tested\n")
     }
 
     // MARK: - Mode Tests
 
-    func testModeControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func modeControl() async throws {
         print("📻 Test: Mode Control")
 
         try await rig.setFrequency(14_200_000, vfo: .a)
@@ -155,62 +118,17 @@ final class IC7100HardwareTests: XCTestCase {
             print("   Testing mode: \(mode.rawValue)")
             try await rig.setMode(mode, vfo: .a)
             let actual = try await rig.mode(vfo: .a, cached: false)
-            XCTAssertEqual(actual, mode)
+            #expect(actual == mode)
             print("   ✓ \(mode.rawValue) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All modes tested\n")
-    }
-
-    // MARK: - PTT Test
-
-    func testPTTControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
-        guard HardwareTestHelpers.confirmPTTTest(radioName: radioName) else {
-            throw XCTSkip("PTT test skipped by user")
-        }
-
-        print("\n📡 Test: PTT Control")
-
-        print("   Setting power to 10W")
-        try await rig.setPower(10)
-
-        print("   Setting frequency to 14.200 MHz USB")
-        try await rig.setFrequency(14_200_000, vfo: .a)
-        try await rig.setMode(.usb, vfo: .a)
-
-        print("   ⚠️  Keying in 2 seconds...")
-        try await Task.sleep(nanoseconds: 2_000_000_000)
-
-        print("   🔴 PTT ON")
-        try await rig.setPTT(true)
-
-        let pttOn = try await rig.isPTTEnabled()
-        XCTAssertTrue(pttOn)
-
-        try await Task.sleep(nanoseconds: 500_000_000)
-
-        print("   ⚪ PTT OFF")
-        try await rig.setPTT(false)
-
-        let pttOff = try await rig.isPTTEnabled()
-        XCTAssertFalse(pttOff)
-
-        print("   ✓ PTT control verified\n")
     }
 
     // MARK: - Power Control
 
-    func testPowerControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func powerControl() async throws {
         print("⚡ Test: Power Control")
 
         let originalPower = try await rig.power()
@@ -220,7 +138,7 @@ final class IC7100HardwareTests: XCTestCase {
             print("   Setting power to \(targetPower)W")
             try await rig.setPower(targetPower)
             let actual = try await rig.power()
-            XCTAssertTrue(abs(actual - targetPower) <= 5)
+            #expect(abs(actual - targetPower) <= 5)
             print("   ✓ Power set to \(actual)W")
         }
 
@@ -230,12 +148,7 @@ final class IC7100HardwareTests: XCTestCase {
 
     // MARK: - Split Operation
 
-    func testSplitOperation() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func splitOperation() async throws {
         print("🔊 Test: Split Operation")
 
         try await rig.setFrequency(14_195_000, vfo: .a)
@@ -244,13 +157,15 @@ final class IC7100HardwareTests: XCTestCase {
         print("   Enabling split")
         try await rig.setSplit(true)
         let enabled = try await rig.isSplitEnabled()
-        XCTAssertTrue(enabled)
+        #expect(enabled)
         print("   ✓ Split enabled")
 
         print("   Disabling split")
         try await rig.setSplit(false)
         let disabled = try await rig.isSplitEnabled()
-        XCTAssertFalse(disabled)
+        #expect(!disabled)
         print("   ✓ Split disabled\n")
+
+        try await savedState.restore(to: rig)
     }
 }

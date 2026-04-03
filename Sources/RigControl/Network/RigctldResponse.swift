@@ -20,7 +20,7 @@ import Foundation
 /// Server: get_freq: 14230000\n
 /// Server: RPRT 0\n
 /// ```
-public struct RigctldResponse {
+public struct RigctldResponse: Sendable {
     /// Response data
     public let data: [String]
 

@@ -31,13 +31,6 @@ struct IC7100RITDebug {
             try await rig.connect()
             print("✓ Connected to IC-7100\n")
 
-            // Get the protocol to access low-level frame sending
-            let proto = await rig.protocol
-            guard let icomProtocol = proto as? IcomCIVProtocol else {
-                print("❌ Could not access Icom protocol")
-                Foundation.exit(1)
-            }
-
             // Test 1: Set RIT to +500 Hz
             print("📤 Test 1: Setting RIT to +500 Hz")
             print("   Command: 21 00 00 05 00 (RIT frequency +500 Hz)")
@@ -57,20 +50,7 @@ struct IC7100RITDebug {
             try await rig.setRIT(RITXITState(enabled: true, offset: -300))
             let ritState2 = try await rig.getRIT(cached: false)
             print("   ✓ RIT enabled: \(ritState2.enabled)")
-            print("   ✓ RIT offset: \(ritState2.offset) Hz")
-                print("   Raw BCD data: \(dataStr)")
-
-                // Manual decode attempt
-                if offsetResponse.data.count == 3 {
-                    let direction = offsetResponse.data[0]
-                    let byte1 = offsetResponse.data[1]
-                    let byte2 = offsetResponse.data[2]
-                    print("   Direction byte: 0x\(String(format: "%02X", direction)) (\(direction == 0x00 ? "+" : "-"))")
-                    print("   Frequency byte 1: 0x\(String(format: "%02X", byte1))")
-                    print("   Frequency byte 2: 0x\(String(format: "%02X", byte2))")
-                }
-            }
-            print("")
+            print("   ✓ RIT offset: \(ritState2.offset) Hz\n")
 
             // Test 4: Disable RIT
             print("📤 Test 4: Disabling RIT")

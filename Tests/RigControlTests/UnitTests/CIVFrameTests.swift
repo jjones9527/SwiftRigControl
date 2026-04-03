@@ -1,10 +1,11 @@
-import XCTest
+import Testing
 @testable import RigControl
 
-final class CIVFrameTests: XCTestCase {
+/// Unit tests for CI-V frame construction and parsing
+@Suite struct CIVFrameTests {
     // MARK: - Frame Construction Tests
 
-    func testBasicFrameConstruction() {
+    @Test func basicFrameConstruction() {
         let frame = CIVFrame(
             to: 0xA2,
             from: 0xE0,
@@ -15,17 +16,17 @@ final class CIVFrameTests: XCTestCase {
         let bytes = frame.bytes()
 
         // Expected: FE FE A2 E0 1C 01 FD
-        XCTAssertEqual(bytes.count, 7)
-        XCTAssertEqual(bytes[0], 0xFE)  // Preamble
-        XCTAssertEqual(bytes[1], 0xFE)  // Preamble
-        XCTAssertEqual(bytes[2], 0xA2)  // To
-        XCTAssertEqual(bytes[3], 0xE0)  // From
-        XCTAssertEqual(bytes[4], 0x1C)  // Command
-        XCTAssertEqual(bytes[5], 0x01)  // Data
-        XCTAssertEqual(bytes[6], 0xFD)  // Terminator
+        #expect(bytes.count == 7)
+        #expect(bytes[0] == 0xFE)  // Preamble
+        #expect(bytes[1] == 0xFE)  // Preamble
+        #expect(bytes[2] == 0xA2)  // To
+        #expect(bytes[3] == 0xE0)  // From
+        #expect(bytes[4] == 0x1C)  // Command
+        #expect(bytes[5] == 0x01)  // Data
+        #expect(bytes[6] == 0xFD)  // Terminator
     }
 
-    func testFrameWithMultipleDataBytes() {
+    @Test func frameWithMultipleDataBytes() {
         let frame = CIVFrame(
             to: 0xA2,
             from: 0xE0,
@@ -36,21 +37,21 @@ final class CIVFrameTests: XCTestCase {
         let bytes = frame.bytes()
 
         // Expected: FE FE A2 E0 05 00 00 23 14 00 FD
-        XCTAssertEqual(bytes.count, 11)
-        XCTAssertEqual(bytes[0], 0xFE)
-        XCTAssertEqual(bytes[1], 0xFE)
-        XCTAssertEqual(bytes[2], 0xA2)
-        XCTAssertEqual(bytes[3], 0xE0)
-        XCTAssertEqual(bytes[4], 0x05)
-        XCTAssertEqual(bytes[5], 0x00)
-        XCTAssertEqual(bytes[6], 0x00)
-        XCTAssertEqual(bytes[7], 0x23)
-        XCTAssertEqual(bytes[8], 0x14)
-        XCTAssertEqual(bytes[9], 0x00)
-        XCTAssertEqual(bytes[10], 0xFD)
+        #expect(bytes.count == 11)
+        #expect(bytes[0] == 0xFE)
+        #expect(bytes[1] == 0xFE)
+        #expect(bytes[2] == 0xA2)
+        #expect(bytes[3] == 0xE0)
+        #expect(bytes[4] == 0x05)
+        #expect(bytes[5] == 0x00)
+        #expect(bytes[6] == 0x00)
+        #expect(bytes[7] == 0x23)
+        #expect(bytes[8] == 0x14)
+        #expect(bytes[9] == 0x00)
+        #expect(bytes[10] == 0xFD)
     }
 
-    func testFrameWithNoData() {
+    @Test func frameWithNoData() {
         let frame = CIVFrame(
             to: 0xA2,
             from: 0xE0,
@@ -60,75 +61,75 @@ final class CIVFrameTests: XCTestCase {
         let bytes = frame.bytes()
 
         // Expected: FE FE A2 E0 03 FD
-        XCTAssertEqual(bytes.count, 6)
-        XCTAssertEqual(bytes[0], 0xFE)
-        XCTAssertEqual(bytes[1], 0xFE)
-        XCTAssertEqual(bytes[2], 0xA2)
-        XCTAssertEqual(bytes[3], 0xE0)
-        XCTAssertEqual(bytes[4], 0x03)
-        XCTAssertEqual(bytes[5], 0xFD)
+        #expect(bytes.count == 6)
+        #expect(bytes[0] == 0xFE)
+        #expect(bytes[1] == 0xFE)
+        #expect(bytes[2] == 0xA2)
+        #expect(bytes[3] == 0xE0)
+        #expect(bytes[4] == 0x03)
+        #expect(bytes[5] == 0xFD)
     }
 
     // MARK: - Frame Parsing Tests
 
-    func testParseBasicFrame() throws {
+    @Test func parseBasicFrame() throws {
         let data = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
         let frame = try CIVFrame.parse(data)
 
-        XCTAssertEqual(frame.to, 0xE0)
-        XCTAssertEqual(frame.from, 0xA2)
-        XCTAssertEqual(frame.command, [0xFB])
-        XCTAssertEqual(frame.data, [])
-        XCTAssertTrue(frame.isAck)
-        XCTAssertFalse(frame.isNak)
+        #expect(frame.to == 0xE0)
+        #expect(frame.from == 0xA2)
+        #expect(frame.command == [0xFB])
+        #expect(frame.data == [])
+        #expect(frame.isAck)
+        #expect(!frame.isNak)
     }
 
-    func testParseFrameWithData() throws {
+    @Test func parseFrameWithData() throws {
         let data = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x03, 0x00, 0x00, 0x23, 0x14, 0x00, 0xFD])
         let frame = try CIVFrame.parse(data)
 
-        XCTAssertEqual(frame.to, 0xE0)
-        XCTAssertEqual(frame.from, 0xA2)
-        XCTAssertEqual(frame.command, [0x03])
-        XCTAssertEqual(frame.data, [0x00, 0x00, 0x23, 0x14, 0x00])
+        #expect(frame.to == 0xE0)
+        #expect(frame.from == 0xA2)
+        #expect(frame.command == [0x03])
+        #expect(frame.data == [0x00, 0x00, 0x23, 0x14, 0x00])
     }
 
-    func testParseNakFrame() throws {
+    @Test func parseNakFrame() throws {
         let data = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFA, 0xFD])
         let frame = try CIVFrame.parse(data)
 
-        XCTAssertEqual(frame.command, [0xFA])
-        XCTAssertTrue(frame.isNak)
-        XCTAssertFalse(frame.isAck)
+        #expect(frame.command == [0xFA])
+        #expect(frame.isNak)
+        #expect(!frame.isAck)
     }
 
-    func testParseInvalidPreamble() {
+    @Test func parseInvalidPreamble() {
         let data = Data([0xFF, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
 
-        XCTAssertThrowsError(try CIVFrame.parse(data)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try CIVFrame.parse(data)
         }
     }
 
-    func testParseInvalidTerminator() {
+    @Test func parseInvalidTerminator() {
         let data = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFF])
 
-        XCTAssertThrowsError(try CIVFrame.parse(data)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try CIVFrame.parse(data)
         }
     }
 
-    func testParseTooShort() {
+    @Test func parseTooShort() {
         let data = Data([0xFE, 0xFE, 0xE0])
 
-        XCTAssertThrowsError(try CIVFrame.parse(data)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try CIVFrame.parse(data)
         }
     }
 
     // MARK: - Round-trip Tests
 
-    func testRoundTrip() throws {
+    @Test func roundTrip() throws {
         let original = CIVFrame(
             to: 0xA2,
             from: 0xE0,
@@ -139,15 +140,15 @@ final class CIVFrameTests: XCTestCase {
         let bytes = original.bytes()
         let parsed = try CIVFrame.parse(Data(bytes))
 
-        XCTAssertEqual(parsed.to, original.to)
-        XCTAssertEqual(parsed.from, original.from)
-        XCTAssertEqual(parsed.command, original.command)
-        XCTAssertEqual(parsed.data, original.data)
+        #expect(parsed.to == original.to)
+        #expect(parsed.from == original.from)
+        #expect(parsed.command == original.command)
+        #expect(parsed.data == original.data)
     }
 
     // MARK: - Command Type Tests
 
-    func testPTTOnFrame() {
+    @Test func pttOnFrame() {
         let frame = CIVFrame(
             to: 0xA2,
             command: [CIVFrame.Command.ptt],
@@ -156,11 +157,11 @@ final class CIVFrameTests: XCTestCase {
 
         let bytes = frame.bytes()
 
-        XCTAssertEqual(bytes[4], 0x1C)  // PTT command
-        XCTAssertEqual(bytes[5], 0x01)  // ON
+        #expect(bytes[4] == 0x1C)  // PTT command
+        #expect(bytes[5] == 0x01)  // ON
     }
 
-    func testPTTOffFrame() {
+    @Test func pttOffFrame() {
         let frame = CIVFrame(
             to: 0xA2,
             command: [CIVFrame.Command.ptt],
@@ -169,11 +170,11 @@ final class CIVFrameTests: XCTestCase {
 
         let bytes = frame.bytes()
 
-        XCTAssertEqual(bytes[4], 0x1C)  // PTT command
-        XCTAssertEqual(bytes[5], 0x00)  // OFF
+        #expect(bytes[4] == 0x1C)  // PTT command
+        #expect(bytes[5] == 0x00)  // OFF
     }
 
-    func testSetFrequencyFrame() {
+    @Test func setFrequencyFrame() {
         let frame = CIVFrame(
             to: 0xA2,
             command: [CIVFrame.Command.setFrequency],
@@ -182,11 +183,11 @@ final class CIVFrameTests: XCTestCase {
 
         let bytes = frame.bytes()
 
-        XCTAssertEqual(bytes[4], 0x05)  // Set frequency command
-        XCTAssertEqual(bytes[5], 0x00)  // Frequency data starts
+        #expect(bytes[4] == 0x05)  // Set frequency command
+        #expect(bytes[5] == 0x00)  // Frequency data starts
     }
 
-    func testReadFrequencyFrame() {
+    @Test func readFrequencyFrame() {
         let frame = CIVFrame(
             to: 0xA2,
             command: [CIVFrame.Command.readFrequency]
@@ -194,11 +195,11 @@ final class CIVFrameTests: XCTestCase {
 
         let bytes = frame.bytes()
 
-        XCTAssertEqual(bytes[4], 0x03)  // Read frequency command
-        XCTAssertEqual(bytes.count, 6)  // No data
+        #expect(bytes[4] == 0x03)  // Read frequency command
+        #expect(bytes.count == 6)  // No data
     }
 
-    func testSetModeFrame() {
+    @Test func setModeFrame() {
         let frame = CIVFrame(
             to: 0xA2,
             command: [CIVFrame.Command.setMode],
@@ -207,8 +208,8 @@ final class CIVFrameTests: XCTestCase {
 
         let bytes = frame.bytes()
 
-        XCTAssertEqual(bytes[4], 0x06)  // Set mode command
-        XCTAssertEqual(bytes[5], 0x01)  // USB mode
-        XCTAssertEqual(bytes[6], 0x00)  // Default filter
+        #expect(bytes[4] == 0x06)  // Set mode command
+        #expect(bytes[5] == 0x01)  // USB mode
+        #expect(bytes[6] == 0x00)  // Default filter
     }
 }

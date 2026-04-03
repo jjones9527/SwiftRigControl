@@ -1,431 +1,321 @@
-# SwiftRigControl - Development Roadmap & Future Plans
+# SwiftRigControl - Development Roadmap
 
-**Last Updated:** December 22, 2024
-**Current Version:** 1.2.0
-**Total Radios Supported:** 80 models across 5 manufacturers
-
----
-
-## Current Status: PRODUCTION READY ✅
-
-SwiftRigControl has achieved **production-ready status** with comprehensive feature coverage, excellent code quality (89/100 Swift best practices score), and extensive radio support.
-
-### Major Accomplishments
-
-**✅ COMPLETED - Phase 1: Core Feature Parity**
-- Network control (rigctld-compatible TCP server)
-- Memory channel operations (read/write/scan)
-- RIT/XIT support across all protocols
-- Signal strength monitoring (S-meter)
-- Performance caching (10-20x speedup)
-- Batch configuration API
-
-**✅ COMPLETED - Phase 2: Advanced DSP Controls**
-- AGC speed control (Fast/Medium/Slow/Off)
-- Noise blanker and noise reduction
-- IF filter selection
-- Notch filter control
-- PBT (Passband Tuning)
-- Audio processing controls
-
-**✅ COMPLETED - Phase 3: Radio Expansion**
-- 80 total radios (from initial 25)
-- Xiegu support (G90, X6100, X6200)
-- Expanded Yaesu lineup (21 models)
-- Expanded Icom lineup (38 models)
-- Comprehensive Kenwood support (12 models)
-- Complete Elecraft lineup (6 models)
-
-**✅ COMPLETED - Infrastructure**
-- Comprehensive documentation (11 guides)
-- XPC helper for sandboxed apps
-- Mock transport for testing
-- Example applications
-- Integration tests
+**Last Updated:** February 26, 2026
+**Current Version:** 1.0.4
+**Swift Version:** 6.2 (strict concurrency)
+**Minimum Platform:** macOS 14+
+**License:** LGPL v3.0
 
 ---
 
-## Radio Coverage Summary
+## Project Overview
 
-| Manufacturer | Models | Status | Popular Radios Included |
-|--------------|--------|--------|-------------------------|
-| **Icom** | 38 | ✅ Complete | IC-7300, IC-7610, IC-9700, IC-705, IC-7100 |
-| **Yaesu** | 21 | ✅ Excellent | FTDX-10, FT-991A, FTDX-101D/MP, FT-710 |
-| **Kenwood** | 12 | ✅ Complete | TS-890S, TS-990S, TS-590SG |
-| **Elecraft** | 6 | ✅ Complete | K4, K3S, KX3, KX2 |
-| **Xiegu** | 3 | ✅ Complete | G90, X6100, X6200 |
-| **TOTAL** | **80** | **Excellent** | All major modern radios |
+SwiftRigControl is a native Swift library for controlling amateur radio transceivers on macOS. It provides a modern, type-safe, actor-based API using async/await concurrency, with zero external dependencies.
 
-### Coverage by Era
+### Hardware-Verified Radios
 
-- **Modern (2015+):** ✅ **Excellent** - All popular radios covered
-- **Recent (2000-2014):** ✅ **Good** - Most popular models covered
-- **Legacy (1990s):** ⚠️ **Partial** - Selected classic models
-- **Vintage (<1990):** ❌ **Minimal** - By design (focus on modern equipment)
+| Radio | Protocol | Verification Status |
+|-------|----------|-------------------|
+| Icom IC-7600 | CI-V | Fully verified (HF/6m dual receiver) |
+| Icom IC-7100 | CI-V | Fully verified (HF/VHF/UHF) |
+| Icom IC-9700 | CI-V | Fully verified (VHF/UHF/1.2GHz satellite) |
+| Elecraft K2 | Text CAT | Fully verified (HF QRP) |
 
----
+### Supported Radio Definitions
 
-## Strategic Direction: Quality Over Quantity ⭐
+80+ radio models across 5 manufacturers (Icom, Elecraft, Yaesu, Kenwood, Xiegu) with capabilities databases and protocol implementations.
 
-SwiftRigControl focuses on being the **best Swift library for modern amateur radio control** rather than attempting to match Hamlib's breadth (350+ radios).
+### Core Architecture
 
-### Core Principles
-
-1. **Modern Swift Excellence** - Leverage async/await, actors, type safety
-2. **Developer Experience** - Clean API, comprehensive docs, great examples
-3. **Popular Radio Focus** - Deep support for radios people actually use
-4. **Production Quality** - Thoroughly tested, reliable, well-documented
-
----
-
-## Phase 4: Production Polish (CURRENT) 🔄
-
-**Timeline:** Q4 2024 (In Progress)
-**Status:** 80% Complete
-
-### Objectives
-
-1. ✅ **Radio Expansion to 80 Models**
-   - Added 15 radios in three phases (4A, 4B, 4C)
-   - Focused on MacLoggerDX parity for modern radios
-   - Status: **COMPLETE**
-
-2. 🔄 **Production Readiness Review** (In Progress)
-   - ✅ API documentation review (100% public API documented)
-   - ✅ Swift best practices compliance (89/100 score)
-   - ✅ README updates with accurate counts
-   - 🔄 ROADMAP update (this document)
-   - ⏳ Final build and comprehensive testing
-
-3. ⏳ **Minor Bug Fixes**
-   - Fix fatalError in RigController mock transport
-   - Fix IC7600ComprehensiveTest compilation
-   - Add consistent MARK comments across files
-   - Add test coverage reporting
-
-4. ⏳ **Release Preparation**
-   - Generate DocC documentation site
-   - Create release notes
-   - Tag v1.2.0 release
-   - Publish to Swift Package Index
-
-### Remaining Tasks
-
-- [ ] Fix RigController.swift:55 fatalError → proper error
-- [ ] Fix or remove IC7600ComprehensiveTest
-- [ ] Add MARK comments to files lacking organization
-- [ ] Generate and host DocC documentation
-- [ ] Add test coverage reporting (target: 80%+)
-- [ ] Create v1.2.0 release notes
-- [ ] Final build verification on clean system
-
-**Expected Completion:** December 2024
+```
+Sources/RigControl/
+  Cache/              RadioStateCache (actor-based, 500ms TTL)
+  Core/               CATProtocol (30 methods), RadioDefinition
+  Models/             15 data models (Mode, VFO, SignalStrength, etc.)
+  Network/            RigControlServer (rigctld-compatible TCP)
+  Protocols/          5 manufacturer implementations (29 files)
+    Icom/             CI-V with per-model command sets
+    Elecraft/         K2/K3/K4 text protocol
+    Yaesu/            CAT protocol
+    Kenwood/          Text protocol
+    Xiegu/            G90/X5105 protocol
+  RigController/      14 extension files (modular public API)
+  Transport/          SerialTransport, IOKitSerialPort
+  Utilities/          BCDEncoding, VFOCodeHelper
+```
 
 ---
 
-## Phase 5: Advanced Features (Q1-Q2 2025)
+## What's Been Accomplished
 
-**Timeline:** January - June 2025
-**Priority:** Medium
-**Status:** Planned
+### v1.0.0 - v1.0.4 (Released)
 
-### 5.1 Enhanced Testing Infrastructure
+- [x] Protocol-oriented architecture with `CATProtocol` base (30 methods)
+- [x] Actor-based `RigController` with modular extensions (14 files)
+- [x] Icom CI-V protocol with dedicated command sets per radio family
+- [x] Elecraft text-based protocol (K2, K3, K4)
+- [x] Yaesu CAT protocol
+- [x] Kenwood text-based protocol
+- [x] Xiegu protocol (G90, X5105)
+- [x] Frequency, mode, PTT, power, VFO, split control
+- [x] RIT/XIT support across all protocols
+- [x] DSP controls: AGC, noise blanker, noise reduction, IF filter
+- [x] Signal strength (S-meter) reading across all 4 protocol families
+- [x] Memory channel operations (read/write/scan)
+- [x] `RadioStateCache` actor with configurable TTL (10-20x query speedup)
+- [x] Batch configuration API (`configure(frequency:mode:vfo:power:)`)
+- [x] `RadioCapabilitiesDatabase` with 80+ radio definitions
+- [x] Network control via rigctld-compatible TCP server
+- [x] XPC helper for Mac App Store sandboxed applications
+- [x] Comprehensive documentation (62 development docs, 9 user guides)
+- [x] LGPL v3.0 licensing (follows Hamlib model)
+- [x] Hardware validation tools for IC-7100, IC-7600, IC-9700, K2
 
-**Objective:** Achieve 85%+ test coverage with automated verification
+### Recent Cleanup (February 2026 - In Progress, Uncommitted)
 
-**Tasks:**
-- [ ] Add test coverage reporting to CI/CD
-- [ ] Expand unit test coverage for uncovered paths
-- [ ] Add property-based testing for encoding/decoding
-- [ ] Create comprehensive mock radio implementations
-- [ ] Add performance regression testing
+- [x] RigController refactored from monolithic file into 14 extension files
+- [x] Swift 6.2 strict concurrency compliance (`swiftLanguageModes: [.v6]`)
+- [x] All build warnings eliminated (0 warnings, 0 errors)
+- [x] Test suite migrated from XCTest to Swift Testing framework
+- [x] All 192 tests passing (8 unit/protocol suites + 4 hardware suites)
+- [x] Hardware test suites gated by environment variables
+- [x] Executable targets renamed from `main.swift` to descriptive names
+- [x] Package.swift reorganized with clear MARK sections
+- [x] `RadioStateCache` enhanced with `@Sendable` closure support
+- [x] Legacy debug tools archived in `Tests/RigControlTests/Archived/`
 
-**Benefits:**
-- Increased confidence in releases
-- Faster bug detection
-- Better regression prevention
+---
 
-**Effort:** 3-4 weeks
+## Current Sprint: Codebase Stabilization
+
+**Status: IN PROGRESS**
+**Goal:** Finalize the uncommitted refactoring work and prepare a clean release.
+
+### Step 1: Commit Current Refactoring
+
+- [ ] Review all uncommitted changes for correctness
+- [ ] Commit RigController extension refactoring
+- [ ] Commit Swift Testing migration
+- [ ] Commit Package.swift cleanup
+- [ ] Commit executable target renames
+- [ ] Tag release (v1.0.5 or v1.1.0 depending on scope)
+
+### Step 2: Remove Deprecated API Surface
+
+The following deprecated items should be migrated to the newer APIs or removed in the next major version:
+
+- [ ] `IcomCIVProtocol.init(transport:civAddress:capabilities:)` - Replace with `init(transport:civAddress:radioModel:commandSet:capabilities:)`
+- [ ] 6 deprecated `RadioDefinition` static properties (`.icomIC9700`, `.icomIC7300`, etc.) - Replace with function-based factory methods (`.icomIC9700()`, `.icomIC7300()`, etc.)
+
+### Step 3: Debug Tool Consolidation
+
+There are currently 16 standalone executable targets for hardware debugging/validation. These add build complexity and maintenance burden.
+
+- [ ] Audit which debug tools are still actively used
+- [ ] Archive unused tools (move to `Examples/Archived/`)
+- [ ] Consider consolidating into fewer multi-purpose validators
+- [ ] Remove archived executable targets from Package.swift
+
+### Step 4: Documentation Refresh
+
+- [ ] Update `ROADMAP.md` with current state (this document)
+- [ ] Review and update `README.md` with accurate feature list and version
+- [ ] Verify all user-facing docs reflect current API
+- [ ] Remove or update stale development docs that reference pre-v1.0 work
+- [ ] Update `ADDING_RADIOS.md` to reference new command set architecture
+
+---
+
+## v1.1.0 - State Observation & Developer Experience
+
 **Priority:** HIGH
+**Theme:** Reactive state updates and improved developer ergonomics
 
----
+### Features
 
-### 5.2 Advanced Radio-Specific Features
+#### RigStateObserver Protocol (Not Yet Implemented)
 
-**Objective:** Deeper integration with radio-specific capabilities
+The only major v1.1.0 feature from the development plan that hasn't been implemented yet. All other v1.1.0 features (S-meter, caching, batch config) are already in the codebase.
 
-**IC-7300/IC-7610 Enhancements:**
-- [ ] Spectrum scope data streaming
-- [ ] Waterfall display data
-- [ ] Scope reference level control
-- [ ] Scope span/center control
+- [ ] Design `RigStateObserver` protocol with async callbacks
+- [ ] Implement weak observer registration in `RigController`
+- [ ] Notify observers on frequency, mode, PTT, and power changes
+- [ ] Provide default empty implementations for optional methods
+- [ ] Add observer unit tests with `MockTransport`
+- [ ] Document observer pattern with SwiftUI `@Observable` example
 
-**IC-9700 Satellite Features:**
-- [ ] Satellite frequency tracking
-- [ ] Doppler correction automation
-- [ ] Multi-band simultaneous control
-
-**FTDX-101D/MP Advanced:**
-- [ ] Dual receiver independent control
-- [ ] Roofing filter selection
-- [ ] Contour control
-
-**Effort:** 4-6 weeks
-**Priority:** MEDIUM
-
----
-
-### 5.3 Scanning Operations
-
-**Objective:** Implement comprehensive scanning capabilities
-
-**Features:**
 ```swift
-public protocol ScanningProtocol {
-    // VFO scanning
-    func startVFOScan(start: UInt64, end: UInt64, step: Int) async throws
-    func stopScan() async throws
-
-    // Memory scanning
-    func startMemoryScan(channels: [Int]) async throws
-    func startMemoryScan(start: Int, end: Int) async throws
-
-    // Programmable scan edges
-    func setProgrammableScanEdges(low: UInt64, high: UInt64) async throws
-    func startProgrammableScan() async throws
+// Target API
+public protocol RigStateObserver: AnyObject, Sendable {
+    func frequencyChanged(rig: RigController, vfo: VFO, frequency: UInt64) async
+    func modeChanged(rig: RigController, vfo: VFO, mode: Mode) async
+    func pttChanged(rig: RigController, enabled: Bool) async
+    func signalStrengthChanged(rig: RigController, strength: SignalStrength) async
 }
 ```
 
-**Radios:** IC-7300, IC-7610, IC-9700, FTDX-10, TS-890S
+#### Connection Health Monitoring
 
-**Effort:** 3-4 weeks
-**Priority:** LOW-MEDIUM
+- [ ] Auto-reconnection support with configurable retry policy
+- [ ] Connection state change notifications via observer pattern
+- [ ] Heartbeat polling (periodic frequency read to detect disconnection)
+- [ ] Graceful degradation when connection drops
 
----
+#### Additional Protocol Tests
 
-### 5.4 CW Keyer Control
+- [ ] Add S-meter response parsing tests to all 4 protocol test suites
+- [ ] Add DSP control mock tests (AGC, NB, NR, IF filter)
+- [ ] Add memory channel operation mock tests
+- [ ] Add RIT/XIT mock tests for Icom protocol suite
 
-**Objective:** Support built-in CW keyer configuration
+#### DocC Documentation Generation
 
-**Features:**
-```swift
-public struct CWKeyerConfig: Sendable {
-    let speed: Int              // WPM (5-60)
-    let weight: Double          // Dot/dash ratio (2.5-4.5)
-    let mode: CWKeyerMode       // iambicA, iambicB, straight, bug
-    let paddleReverse: Bool     // Swap dit/dah paddles
-}
-
-public enum CWKeyerMode: String, Sendable {
-    case iambicA, iambicB, straight, bug, ultimatic
-}
-
-public protocol CWKeyerProtocol {
-    func setCWKeyerConfig(_ config: CWKeyerConfig) async throws
-    func getCWKeyerConfig() async throws -> CWKeyerConfig
-    func sendCWMessage(_ text: String) async throws
-}
-```
-
-**Radios:** IC-7300, IC-7610, K3S, K4, FTDX-10
-
-**Effort:** 2-3 weeks
-**Priority:** LOW (specialized use case)
+- [ ] Add DocC catalog to `Sources/RigControl/`
+- [ ] Generate and verify DocC documentation site
+- [ ] Host documentation (GitHub Pages or similar)
+- [ ] Add code examples to all major public API symbols
 
 ---
 
-## Phase 6: Additional Manufacturers (Q3 2025)
+## v1.2.0 - Multi-Rig & Advanced Control
 
-**Timeline:** July - September 2025
-**Priority:** Medium
-**Status:** Planned
-
-### 6.1 FlexRadio Support
-
-**Objective:** Add support for FlexRadio SDR transceivers
-
-**Radios:**
-- Flex-6400
-- Flex-6600
-- Flex-6700
-
-**Protocol:** SmartSDR CAT over TCP/IP
-
-**Challenges:**
-- Network-based protocol (different from serial)
-- Requires SmartSDR API implementation
-- Complex multi-slice architecture
-
-**Market:** High-end SDR users
-
-**Effort:** 6-8 weeks
 **Priority:** MEDIUM
+**Theme:** Contest and multi-radio operation support
+
+### Features
+
+- [ ] `RigManager` actor for coordinating multiple `RigController` instances
+- [ ] VFO synchronization between radios (SO2R support)
+- [ ] Band stacking register support
+- [ ] CW keyer configuration and message sending
+- [ ] Scanning operations (VFO scan, memory scan, programmable scan)
+- [ ] Antenna selection control
+- [ ] TX meter reading (power out, SWR, ALC)
 
 ---
 
-### 6.2 Additional Budget Transceivers
+## v1.3.0 - SwiftUI Components
 
-**Objective:** Expand budget radio support
+**Priority:** MEDIUM
+**Theme:** Pre-built UI components for rapid app development
 
-**Candidates:**
-- Lab599 Discovery TX-500 (QRP portable)
-- (tr)uSDX (ultra-budget QRP)
-- QDX digital transceiver
+### Features
 
-**Effort:** 2-3 weeks each
-**Priority:** LOW-MEDIUM
-
----
-
-## Phase 7: Cross-Platform Support (2026)
-
-**Timeline:** 2026
-**Priority:** Low
-**Status:** Research
-
-### 7.1 Linux Support Investigation
-
-**Objective:** Explore Linux compatibility
-
-**Challenges:**
-- Serial port access differs from macOS (no IOKit)
-- Would require alternative serial implementation
-- Swift on Linux maturity considerations
-
-**Approach:**
-- Create abstraction for serial port layer
-- Implement Linux serial using SwiftNIO or similar
-- Maintain macOS IOKit implementation
-
-**Benefits:**
-- Broader platform reach
-- Raspberry Pi support
-- Linux logging software integration
-
-**Effort:** 8-12 weeks
-**Priority:** LOW (significant effort, smaller market)
+- [ ] New `RigControlUI` module (separate library product)
+- [ ] `RadioControlView` - Full radio control panel
+- [ ] `FrequencyDisplay` - VFO frequency with tuning
+- [ ] `ModeSelector` - Mode picker
+- [ ] `MeterView` - S-meter and TX meters
+- [ ] `BandSelector` - Quick band changes
+- [ ] `@Observable` view models using `RigStateObserver`
+- [ ] Example SwiftUI application
 
 ---
 
-## Not Planned (Out of Scope)
+## v2.0.0 - Network & Integration
 
-The following features are explicitly **not planned** to maintain focus on core strengths:
+**Priority:** LOW
+**Theme:** Remote operation and ecosystem integration
 
-### ❌ Vintage Radio Support
-- Pre-1990s equipment
-- Radios without CAT control
-- Manual tuning radios
+### Features
 
-**Reason:** Focus on modern equipment with better ROI
+- [ ] Enhanced network rig control (multi-client, authentication)
+- [ ] Audio routing integration (Core Audio)
+- [ ] ADIF export for logging integration
+- [ ] Digital mode app integration (WSJT-X, fldigi)
+- [ ] Radio simulator for development without hardware
+- [ ] CLI tool for testing and scripting
+- [ ] Automatic radio detection (serial port scanning)
 
-### ❌ Rotator Control
-- Antenna rotator support (Yaesu, SPID, etc.)
+### Potential Breaking Changes
 
-**Reason:** Different domain, well-served by other tools
-
-### ❌ Amplifier Control
-- Linear amplifier integration
-
-**Reason:** Niche use case, complex integration
-
-### ❌ DX Cluster Integration
-- Built-in spotting network
-
-**Reason:** Application-level concern, not library feature
-
-### ❌ Contest Logging
-- Built-in logging features
-
-**Reason:** Application responsibility, not protocol library
-
-### ❌ Windows Support
-- Native Windows CAT control
-
-**Reason:** Swift on Windows immaturity, limited resources
+- Potential `CATProtocol` refinements
+- Swift 7 language mode adoption (when available)
+- Minimum macOS version bump if needed
 
 ---
 
-## Success Metrics & Goals
+## Future Considerations
 
-### Current Status (December 2024)
+### Additional Manufacturer Support
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| **Radio Coverage** | 75+ radios | 80 radios | ✅ EXCEEDED |
-| **Test Coverage** | 80%+ | ~75% (est) | 🔄 In Progress |
-| **Documentation** | 100% public API | 100% | ✅ COMPLETE |
-| **Swift Best Practices** | 85+ score | 89/100 | ✅ EXCEEDED |
-| **Network Control** | rigctld compatible | ✅ Complete | ✅ COMPLETE |
-| **Memory Operations** | Full support | ✅ Complete | ✅ COMPLETE |
-| **Modern Features** | RIT/XIT, DSP | ✅ Complete | ✅ COMPLETE |
+| Manufacturer | Priority | Notes |
+|-------------|----------|-------|
+| FlexRadio | Medium | SmartSDR CAT over TCP/IP; Flex-6400/6600/6700 |
+| Lab599 | Low | TX-500 QRP portable; Kenwood-like protocol |
+| QRP Labs | Low | QDX/QMX digital transceivers |
 
-### 2025 Goals
+### Cross-Platform
 
-| Goal | Target | Priority |
-|------|--------|----------|
-| **Test Coverage** | 85%+ | HIGH |
-| **Production Apps** | 5+ apps using library | MEDIUM |
-| **GitHub Stars** | 200+ | LOW |
-| **Swift Package Index** | Featured | MEDIUM |
-| **Advanced Features** | Scanning, CW keyer | MEDIUM |
-| **FlexRadio Support** | 3+ models | LOW |
+| Platform | Priority | Challenges |
+|----------|----------|------------|
+| Linux | Low | No IOKit; needs SwiftNIO or similar for serial |
+| visionOS | Low | UI components would need adaptation |
 
----
+### Advanced Radio Features
 
-## Development Resources
-
-### Time Estimates
-
-| Phase | Timeline | FTE | Effort |
-|-------|----------|-----|--------|
-| **Phase 4** (Current) | Q4 2024 | 0.5 | Polish & release prep |
-| **Phase 5** | Q1-Q2 2025 | 0.25 | Advanced features |
-| **Phase 6** | Q3 2025 | 0.25 | Additional manufacturers |
-| **Phase 7** | 2026 | 0.5 | Cross-platform research |
-
-### Hardware Requirements
-
-**Currently Available for Testing:**
-- ✅ IC-7100 (HF/VHF/UHF)
-- ✅ IC-7600 (HF flagship)
-- ✅ IC-9700 (VHF/UHF SDR)
-
-**Needed for Future Phases:**
-- IC-7300 or IC-7610 (for scope features)
-- FlexRadio unit (for Flex support)
-- K3S or K4 (for advanced Elecraft features)
-
-**Alternative:** Remote station access or community testing
+| Feature | Radios | Priority |
+|---------|--------|----------|
+| Spectrum scope streaming | IC-7300, IC-7610 | Medium |
+| Satellite Doppler correction | IC-9700 | Medium |
+| Dual receiver independent control | IC-7610, FTDX-101D/MP | Low |
+| Roofing filter selection | IC-7610, TS-890S | Low |
 
 ---
 
-## Community & Ecosystem
+## Out of Scope
 
-### Integration Targets
+The following are explicitly not planned, to maintain focus:
 
-**Priority Applications:**
-1. Logging software (contest, general)
-2. Digital mode applications (WSJT-X alternative)
-3. Remote station control
-4. SDR integration apps
-5. SSTV applications
+- **Vintage radio support** (pre-1990s, no CAT control)
+- **Rotator control** (different domain, well-served by other tools)
+- **Amplifier control** (niche use case)
+- **DX cluster integration** (application-level concern)
+- **Contest logging** (application responsibility)
+- **Windows support** (Swift on Windows immaturity)
 
-### Documentation
+---
 
-**Current (Excellent):**
-- ✅ API Reference (comprehensive)
-- ✅ Usage Examples (extensive)
-- ✅ Troubleshooting Guide
-- ✅ Serial Port Configuration
-- ✅ Adding Radio Support Guide
-- ✅ Hamlib Migration Guide
-- ✅ XPC Helper Guide
+## Development Principles
 
-**Planned:**
-- [ ] Generated DocC site (hosted)
-- [ ] Video tutorials
-- [ ] Sample applications repository
-- [ ] Architecture deep-dive guide
+1. **Zero dependencies** - Keep the library self-contained
+2. **No breaking changes in v1.x** - Additive API only; use deprecation
+3. **Test before merge** - All changes must include appropriate tests
+4. **Hardware-verify before claiming support** - Don't claim "verified" without real hardware testing
+5. **Swift 6 best practices** - Strict concurrency, actors, Sendable types
+6. **Document as you go** - Update docs alongside code changes
+7. **Quality over quantity** - Deep support for popular radios over breadth
+
+---
+
+## Hardware Available for Testing
+
+| Radio | Interface | Notes |
+|-------|-----------|-------|
+| Icom IC-7100 | USB (serial) | HF/VHF/UHF, 100W |
+| Icom IC-7600 | USB (serial) | HF/6m dual receiver, 100W |
+| Icom IC-9700 | USB (serial) | VHF/UHF/1.2GHz SDR, satellite capable |
+| Elecraft K2 | USB (serial) | HF QRP, 0-15W |
+
+---
+
+## Test Suite Summary
+
+| Suite | Tests | Status | Notes |
+|-------|-------|--------|-------|
+| BCDEncodingTests | 14 | Passing | BCD encode/decode for Icom CI-V |
+| CIVFrameTests | 12 | Passing | CI-V frame construction and parsing |
+| CIVCommandSetTests | 23 | Passing | IC-7100, IC-9700, Standard command sets |
+| RadioCapabilitiesTests | 17 | Passing | Frequency ranges, modes, transmit checks |
+| IcomProtocolTests | 10 | Passing | Mock transport, PTT/freq/mode/errors |
+| ElecraftProtocolTests | ~15 | Passing | Mock transport protocol tests |
+| KenwoodProtocolTests | ~15 | Passing | Mock transport protocol tests |
+| YaesuCATProtocolTests | ~15 | Passing | Mock transport protocol tests |
+| IC7100HardwareTests | ~12 | Skipped (no hardware) | Gated by `IC7100_SERIAL_PORT` env var |
+| IC7600HardwareTests | ~14 | Skipped (no hardware) | Gated by `IC7600_SERIAL_PORT` env var |
+| IC9700HardwareTests | ~20 | Skipped (no hardware) | Gated by `IC9700_SERIAL_PORT` env var |
+| K2HardwareTests | ~14 | Skipped (no hardware) | Gated by `K2_SERIAL_PORT` env var |
+| **Total** | **192** | **All passing** | Swift Testing framework |
 
 ---
 
@@ -435,96 +325,18 @@ The following features are explicitly **not planned** to maintain focus on core 
 
 | Aspect | SwiftRigControl | Hamlib |
 |--------|----------------|--------|
-| **Language** | Swift 5.9+ | C (C89/C99) |
-| **Radios** | 80 modern radios | 350+ radios |
-| **Platform** | macOS 13+ | Cross-platform |
-| **API Design** | Modern, type-safe | Function pointers |
-| **Concurrency** | async/await actors | Synchronous + locks |
-| **Type Safety** | Full Swift types | Integer codes |
-| **Performance** | 10-20x (cached) | Baseline |
-| **Documentation** | Excellent | Good |
-| **Network** | rigctld-compatible | rigctld (original) |
-| **Memory Ops** | Full support | Full support |
-| **Testing** | Modern Swift tests | C test suite |
+| **Language** | Swift 6.2 | C (C89/C99) |
+| **Radio Coverage** | 80+ definitions, 4 hardware-verified | 350+ |
+| **Platform** | macOS 14+ | Cross-platform |
+| **API Design** | Modern, type-safe, async/await | Function pointers |
+| **Concurrency** | Actors, structured concurrency | Synchronous + locks |
+| **Type Safety** | Full Swift types, enums | Integer codes |
+| **Performance** | 10-20x (cached queries) | Baseline |
+| **Testing** | Swift Testing framework | C test suite |
+| **Dependencies** | Zero | Multiple C libraries |
 
-**Positioning:** "The modern, Swift-native alternative to Hamlib for macOS developers"
-
-### Value Proposition
-
-**For App Developers:**
-- ✅ Type-safe API (fewer bugs)
-- ✅ Modern async/await (cleaner code)
-- ✅ Excellent documentation (faster integration)
-- ✅ Performance caching (better UX)
-- ✅ Mac-native (no C bridging)
-
-**For Radio Operators:**
-- ✅ Modern radio support (latest models)
-- ✅ Reliable operation (well-tested)
-- ✅ Mac App Store compatible (XPC helper)
-- ✅ Active development
+**Positioning:** The modern, Swift-native alternative to Hamlib for macOS developers who want type safety, modern concurrency, and a clean API.
 
 ---
 
-## Risk Assessment
-
-### Technical Risks
-
-| Risk | Probability | Impact | Mitigation |
-|------|------------|--------|------------|
-| **Serial protocol changes** | Low | Medium | Monitor manufacturer updates |
-| **macOS API changes** | Medium | Medium | Track Apple betas, update quickly |
-| **Hardware availability** | Medium | High | Community testing program |
-| **Swift evolution** | Low | Low | Conservative Swift version policy |
-
-### Market Risks
-
-| Risk | Probability | Impact | Mitigation |
-|------|------------|--------|------------|
-| **Limited Mac developer base** | High | Medium | Accept niche focus |
-| **Hamlib dominance** | High | Medium | Differentiate on quality/DX |
-| **Radio manufacturer changes** | Low | High | Flexible architecture |
-
----
-
-## Conclusion
-
-### Current State Assessment
-
-**SwiftRigControl has achieved production-ready status** with:
-- ✅ 80 radio models (comprehensive modern coverage)
-- ✅ All major features implemented (network, memory, RIT/XIT, DSP)
-- ✅ Excellent code quality (89/100 best practices score)
-- ✅ Comprehensive documentation (11 guides, 100% API coverage)
-- ✅ Modern Swift architecture (async/await, actors, type-safe)
-
-### Strategic Position
-
-SwiftRigControl is **the premier Swift library for macOS amateur radio control**, offering:
-1. Superior developer experience vs. Hamlib
-2. Modern Swift design patterns
-3. Comprehensive coverage of popular radios
-4. Production-grade reliability
-
-### 2025 Vision
-
-**Primary Goal:** Become the **default choice for macOS rig control development**
-
-**Success Criteria:**
-- 5+ production apps using the library
-- 85%+ test coverage
-- Featured on Swift Package Index
-- Active community engagement
-- Advanced features (scanning, CW keyer)
-
-### Final Recommendation
-
-**Execute Phase 4 completion (production polish) immediately**, followed by Phase 5 (advanced features) in Q1 2025. Continue to focus on **quality over quantity**, maintaining the architectural excellence that differentiates SwiftRigControl from alternatives.
-
-The library is well-positioned to serve the macOS amateur radio development community for years to come.
-
----
-
-**73 de SwiftRigControl Team 📻**
-
-*"Modern Swift, Modern Radios, Modern Ham Radio"*
+*73 de VA3ZTF*

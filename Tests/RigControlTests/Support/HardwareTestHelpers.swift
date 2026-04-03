@@ -1,5 +1,4 @@
 import Foundation
-import XCTest
 @testable import RigControl
 
 /// Common helpers and utilities for hardware tests

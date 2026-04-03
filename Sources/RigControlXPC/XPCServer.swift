@@ -6,7 +6,11 @@ import RigControl
 /// XPCServer receives XPC calls from sandboxed applications and controls
 /// radios using the RigControl library. This runs in the privileged helper
 /// which has access to serial ports.
-public class XPCServer: NSObject, RigControlXPCProtocol {
+///
+/// Isolated to `@MainActor` to satisfy Swift 6 strict concurrency, since XPC
+/// callbacks dispatch on the main queue when the helper's run loop runs there.
+@MainActor
+public class XPCServer: NSObject, @preconcurrency RigControlXPCProtocol {
     /// The current rig controller instance
     private var rigController: RigController?
 
@@ -369,17 +373,17 @@ public class XPCServer: NSObject, RigControlXPCProtocol {
         switch model.uppercased() {
         // Icom
         case "IC-9700", "IC9700", "9700":
-            return .icomIC9700
+            return .icomIC9700()
         case "IC-7610", "IC7610", "7610":
-            return .icomIC7610
+            return .icomIC7610()
         case "IC-7300", "IC7300", "7300":
-            return .icomIC7300
+            return .icomIC7300()
         case "IC-7600", "IC7600", "7600":
-            return .icomIC7600
+            return .icomIC7600()
         case "IC-7100", "IC7100", "7100":
-            return .icomIC7100
+            return .icomIC7100()
         case "IC-705", "IC705", "705":
-            return .icomIC705
+            return .icomIC705()
 
         // Elecraft
         case "K2":

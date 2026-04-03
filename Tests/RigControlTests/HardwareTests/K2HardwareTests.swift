@@ -1,4 +1,5 @@
-import XCTest
+import Foundation
+import Testing
 @testable import RigControl
 
 /// Comprehensive hardware tests for Elecraft K2
@@ -13,23 +14,18 @@ import XCTest
 /// swift test --filter K2HardwareTests
 /// ```
 ///
-final class K2HardwareTests: XCTestCase {
-    var rig: RigController?
-    var savedState: HardwareTestHelpers.RadioState?
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["K2_SERIAL_PORT"] != nil,
+                "Set K2_SERIAL_PORT environment variable"))
+struct K2HardwareTests {
+    var rig: RigController
+    var savedState: HardwareTestHelpers.RadioState
 
     let radioName = "K2"
-    let environmentKey = "K2_SERIAL_PORT"
 
-    // MARK: - Setup & Teardown
+    // MARK: - Setup
 
-    override func setUp() async throws {
-        guard let port = HardwareTestHelpers.getSerialPort(
-            environmentKey: environmentKey,
-            radioName: radioName,
-            interactive: false
-        ) else {
-            throw XCTSkip("Set \(environmentKey) environment variable")
-        }
+    init() async throws {
+        let port = try #require(ProcessInfo.processInfo.environment["K2_SERIAL_PORT"])
 
         print("\n" + String(repeating: "=", count: 60))
         print("Elecraft K2 Hardware Test Suite")
@@ -42,34 +38,16 @@ final class K2HardwareTests: XCTestCase {
             connection: .serial(path: port, baudRate: nil)
         )
 
-        try await rig!.connect()
+        try await rig.connect()
         print("✓ Connected to Elecraft K2\n")
 
-        savedState = try await HardwareTestHelpers.RadioState.save(from: rig!)
+        savedState = try await HardwareTestHelpers.RadioState.save(from: rig)
         print("✓ Saved current radio state\n")
-    }
-
-    override func tearDown() async throws {
-        guard let rig = rig else { return }
-
-        if let savedState = savedState {
-            print("\n🔄 Restoring radio state...")
-            try await savedState.restore(to: rig)
-            print("   ✓ Radio state restored")
-        }
-
-        await rig.disconnect()
-        print("   ✓ Disconnected from K2\n")
     }
 
     // MARK: - Basic Tests
 
-    func testConnection() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func connection() async throws {
         print("📡 Test: Basic Connection")
 
         let freq = try await rig.frequency(vfo: .a, cached: false)
@@ -78,18 +56,13 @@ final class K2HardwareTests: XCTestCase {
         print("   Current frequency: \(HardwareTestHelpers.formatFrequency(freq))")
         print("   Current mode: \(mode.rawValue)")
 
-        XCTAssertGreaterThan(freq, 0)
+        #expect(freq > 0)
         print("   ✓ Basic communication verified\n")
     }
 
     // MARK: - Frequency Control Tests
 
-    func testFrequencyControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func frequencyControl() async throws {
         print("🎛️  Test: Frequency Control")
 
         let testFrequencies: [(freq: UInt64, band: String)] = [
@@ -108,19 +81,15 @@ final class K2HardwareTests: XCTestCase {
             print("   Testing \(band): \(HardwareTestHelpers.formatFrequency(freq))")
             try await rig.setFrequency(freq, vfo: .a)
             let actual = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actual, freq)
+            #expect(actual == freq)
             print("   ✓ \(band) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All HF bands tested\n")
     }
 
-    func testFineFrequencyControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func fineFrequencyControl() async throws {
         print("🎯 Test: Fine Frequency Control")
 
         let baseFreq: UInt64 = 14_200_000
@@ -133,21 +102,17 @@ final class K2HardwareTests: XCTestCase {
             print("   Setting \(HardwareTestHelpers.formatFrequency(freq))")
             try await rig.setFrequency(freq, vfo: .a)
             let actual = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actual, freq)
+            #expect(actual == freq)
             print("   ✓ +\(offset) Hz verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ Fine frequency control verified\n")
     }
 
     // MARK: - Mode Control Tests
 
-    func testModeControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func modeControl() async throws {
         print("📻 Test: Mode Control")
 
         try await rig.setFrequency(14_200_000, vfo: .a)
@@ -158,21 +123,17 @@ final class K2HardwareTests: XCTestCase {
             print("   Testing mode: \(mode.rawValue)")
             try await rig.setMode(mode, vfo: .a)
             let actual = try await rig.mode(vfo: .a, cached: false)
-            XCTAssertEqual(actual, mode)
+            #expect(actual == mode)
             print("   ✓ \(mode.rawValue) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All modes tested\n")
     }
 
     // MARK: - Power Control Tests
 
-    func testQRPPowerControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func qrpPowerControl() async throws {
         print("⚡ Test: QRP Power Control (0-15W)")
 
         let originalPower = try await rig.power()
@@ -187,7 +148,7 @@ final class K2HardwareTests: XCTestCase {
             let actual = try await rig.power()
 
             // Allow ±2W tolerance for QRP levels
-            XCTAssertTrue(
+            #expect(
                 abs(actual - targetPower) <= 2,
                 "Power should be approximately \(targetPower)W, got \(actual)W"
             )
@@ -200,12 +161,7 @@ final class K2HardwareTests: XCTestCase {
 
     // MARK: - VFO Tests
 
-    func testVFOControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func vfoControl() async throws {
         print("🔀 Test: VFO A/B Control")
 
         let freqA: UInt64 = 14_230_000
@@ -220,22 +176,19 @@ final class K2HardwareTests: XCTestCase {
         let actualA = try await rig.frequency(vfo: .a, cached: false)
         let actualB = try await rig.frequency(vfo: .b, cached: false)
 
-        XCTAssertEqual(actualA, freqA)
-        XCTAssertEqual(actualB, freqB)
+        #expect(actualA == freqA)
+        #expect(actualB == freqB)
 
         print("   ✓ VFO A: \(HardwareTestHelpers.formatFrequency(actualA))")
         print("   ✓ VFO B: \(HardwareTestHelpers.formatFrequency(actualB))")
         print("   ✓ VFO control verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Split Operation
 
-    func testSplitOperation() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func splitOperation() async throws {
         print("🔊 Test: Split Operation")
 
         try await rig.setFrequency(14_195_000, vfo: .a)
@@ -244,83 +197,75 @@ final class K2HardwareTests: XCTestCase {
         print("   Enabling split")
         try await rig.setSplit(true)
         let enabled = try await rig.isSplitEnabled()
-        XCTAssertTrue(enabled)
+        #expect(enabled)
         print("   ✓ Split enabled")
 
         print("   Disabling split")
         try await rig.setSplit(false)
         let disabled = try await rig.isSplitEnabled()
-        XCTAssertFalse(disabled)
+        #expect(!disabled)
         print("   ✓ Split disabled\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - RIT/XIT Tests
 
-    func testRITControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func ritControl() async throws {
         print("🎚️  Test: RIT (Receiver Incremental Tuning)")
 
         print("   Setting RIT: +500 Hz")
         try await rig.setRIT(RITXITState(enabled: true, offset: 500))
 
         var ritState = try await rig.getRIT()
-        XCTAssertTrue(ritState.enabled)
-        XCTAssertEqual(ritState.offset, 500)
+        #expect(ritState.enabled)
+        #expect(ritState.offset == 500)
         print("   ✓ RIT enabled at +\(ritState.offset) Hz")
 
         print("   Setting RIT: -300 Hz")
         try await rig.setRIT(RITXITState(enabled: true, offset: -300))
 
         ritState = try await rig.getRIT()
-        XCTAssertEqual(ritState.offset, -300)
+        #expect(ritState.offset == -300)
         print("   ✓ RIT set to \(ritState.offset) Hz")
 
         print("   Disabling RIT")
         try await rig.setRIT(RITXITState(enabled: false, offset: 0))
 
         ritState = try await rig.getRIT()
-        XCTAssertFalse(ritState.enabled)
+        #expect(!ritState.enabled)
         print("   ✓ RIT disabled\n")
+
+        try await savedState.restore(to: rig)
     }
 
-    func testXITControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func xitControl() async throws {
         print("🎚️  Test: XIT (Transmitter Incremental Tuning)")
 
         print("   Setting XIT: +750 Hz")
         try await rig.setXIT(RITXITState(enabled: true, offset: 750))
 
         var xitState = try await rig.getXIT()
-        XCTAssertTrue(xitState.enabled)
-        XCTAssertEqual(xitState.offset, 750)
+        #expect(xitState.enabled)
+        #expect(xitState.offset == 750)
         print("   ✓ XIT enabled at +\(xitState.offset) Hz")
 
         print("   Disabling XIT")
         try await rig.setXIT(RITXITState(enabled: false, offset: 0))
 
         xitState = try await rig.getXIT()
-        XCTAssertFalse(xitState.enabled)
+        #expect(!xitState.enabled)
         print("   ✓ XIT disabled\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - PTT Test
 
-    func testPTTControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func pttControl() async throws {
         guard HardwareTestHelpers.confirmPTTTest(radioName: radioName) else {
-            throw XCTSkip("PTT test skipped by user")
+            print("PTT test skipped by user")
+            return
         }
 
         print("\n📡 Test: PTT Control")
@@ -339,7 +284,7 @@ final class K2HardwareTests: XCTestCase {
         try await rig.setPTT(true)
 
         let pttOn = try await rig.isPTTEnabled()
-        XCTAssertTrue(pttOn)
+        #expect(pttOn)
 
         try await Task.sleep(nanoseconds: 500_000_000)
 
@@ -347,19 +292,16 @@ final class K2HardwareTests: XCTestCase {
         try await rig.setPTT(false)
 
         let pttOff = try await rig.isPTTEnabled()
-        XCTAssertFalse(pttOff)
+        #expect(!pttOff)
 
         print("   ✓ PTT control verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - CW Tests (K2 Specialty)
 
-    func testCWMode() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func cwMode() async throws {
         print("📻 Test: CW Mode (K2 Specialty)")
 
         try await rig.setFrequency(14_050_000, vfo: .a)
@@ -367,24 +309,21 @@ final class K2HardwareTests: XCTestCase {
         print("   Setting CW mode")
         try await rig.setMode(.cw, vfo: .a)
         let mode = try await rig.mode(vfo: .a, cached: false)
-        XCTAssertEqual(mode, .cw)
+        #expect(mode == .cw)
         print("   ✓ CW mode verified")
 
         print("   Setting CW-R mode")
         try await rig.setMode(.cwR, vfo: .a)
         let modeR = try await rig.mode(vfo: .a, cached: false)
-        XCTAssertEqual(modeR, .cwR)
+        #expect(modeR == .cwR)
         print("   ✓ CW-R mode verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Stress Tests
 
-    func testRapidFrequencyChanges() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func rapidFrequencyChanges() async throws {
         print("⚡ Test: Rapid Frequency Changes")
 
         let startFreq: UInt64 = 14_000_000
@@ -409,16 +348,13 @@ final class K2HardwareTests: XCTestCase {
         print("   Completed \(iterations) frequency changes in \(String(format: "%.2f", duration))s")
         print("   Average time per change: \(String(format: "%.1f", avgTime))ms")
         print("   ✓ Rapid frequency changes verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Band Edge Tests
 
-    func testBandEdges() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func bandEdges() async throws {
         print("🎯 Test: Band Edge Frequencies")
 
         let bandEdges: [(low: UInt64, high: UInt64, band: String)] = [
@@ -434,35 +370,31 @@ final class K2HardwareTests: XCTestCase {
             print("   Testing \(band) lower edge: \(HardwareTestHelpers.formatFrequency(low))")
             try await rig.setFrequency(low, vfo: .a)
             let actualLow = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actualLow, low)
+            #expect(actualLow == low)
 
             print("   Testing \(band) upper edge: \(HardwareTestHelpers.formatFrequency(high))")
             try await rig.setFrequency(high, vfo: .a)
             let actualHigh = try await rig.frequency(vfo: .a, cached: false)
-            XCTAssertEqual(actualHigh, high)
+            #expect(actualHigh == high)
 
             print("   ✓ \(band) edges verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All band edges tested\n")
     }
 
     // MARK: - Signal Strength
 
-    func testSignalStrength() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func signalStrength() async throws {
         print("📊 Test: Signal Strength (S-Meter)")
 
         for i in 1...5 {
             let strength = try await rig.signalStrength()
             print("   Reading \(i): \(strength.description) (Raw: \(strength.raw))")
 
-            XCTAssertGreaterThanOrEqual(strength.sUnits, 0)
-            XCTAssertLessThanOrEqual(strength.sUnits, 9)
+            #expect(strength.sUnits >= 0)
+            #expect(strength.sUnits <= 9)
 
             try await Task.sleep(nanoseconds: 200_000_000)
         }

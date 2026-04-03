@@ -1,197 +1,204 @@
-import XCTest
+import Testing
 @testable import RigControl
 
 /// Unit tests for CIVCommandSet protocol implementations
-final class CIVCommandSetTests: XCTestCase {
+@Suite struct CIVCommandSetTests {
 
     // MARK: - IC7100CommandSet Tests
 
-    func testIC7100Properties() {
+    @Test func ic7100Properties() {
         let commandSet = IC7100CommandSet()
-        XCTAssertEqual(commandSet.civAddress, 0x88)
-        XCTAssertEqual(commandSet.powerUnits, .percentage)
-        XCTAssertTrue(commandSet.echoesCommands)
-        XCTAssertFalse(commandSet.requiresVFOSelection)
+        #expect(commandSet.civAddress == 0x88)
+        #expect(commandSet.powerUnits == .percentage)
+        #expect(commandSet.echoesCommands)
+        #expect(commandSet.requiresVFOSelection) // .currentOnly requires VFO selection
     }
 
-    func testIC7100ModeCommand() {
+    @Test func ic7100ModeCommand() {
         let commandSet = IC7100CommandSet()
 
         // IC-7100 does NOT include filter byte
         let (cmd, data) = commandSet.setModeCommand(mode: 0x01) // USB
-        XCTAssertEqual(cmd, [0x06])
-        XCTAssertEqual(data, [0x01]) // Mode only, no filter
+        #expect(cmd == [0x06])
+        #expect(data == [0x01]) // Mode only, no filter
     }
 
-    func testIC7100PowerCommand() {
+    @Test func ic7100PowerCommand() {
         let commandSet = IC7100CommandSet()
 
         // Test 50%
         let (cmd, data) = commandSet.setPowerCommand(value: 50)
-        XCTAssertEqual(cmd, [0x14, 0x0A])
-        XCTAssertEqual(data.count, 2) // BCD encoded
+        #expect(cmd == [0x14, 0x0A])
+        #expect(data.count == 2) // BCD encoded
 
         // Decode to verify
         let scale = BCDEncoding.decodePower(data)
         let percentage = (scale * 100) / 255
-        XCTAssertEqual(percentage, 50, accuracy: 1)
+        #expect(abs(percentage - 50) <= 1)
     }
 
-    func testIC7100PTTCommand() {
+    @Test func ic7100PTTCommand() {
         let commandSet = IC7100CommandSet()
 
         // Test TX
         let (cmdTX, dataTX) = commandSet.setPTTCommand(enabled: true)
-        XCTAssertEqual(cmdTX, [0x1C, 0x00])
-        XCTAssertEqual(dataTX, [0x01])
+        #expect(cmdTX == [0x1C, 0x00])
+        #expect(dataTX == [0x01])
 
         // Test RX
         let (cmdRX, dataRX) = commandSet.setPTTCommand(enabled: false)
-        XCTAssertEqual(cmdRX, [0x1C, 0x00])
-        XCTAssertEqual(dataRX, [0x00])
+        #expect(cmdRX == [0x1C, 0x00])
+        #expect(dataRX == [0x00])
     }
 
-    func testIC7100VFOCommand() {
+    @Test func ic7100VFOCommand() {
         let commandSet = IC7100CommandSet()
 
-        // IC-7100 doesn't require VFO selection
-        XCTAssertNil(commandSet.selectVFOCommand(.a))
-        XCTAssertNil(commandSet.selectVFOCommand(.b))
+        // IC-7100 uses .currentOnly model - requires VFO selection (switch to desired VFO)
+        let cmdA = commandSet.selectVFOCommand(.a)
+        #expect(cmdA != nil)
+        #expect(cmdA?.command == [0x07])
+        #expect(cmdA?.data == [0x00]) // VFO A
+
+        let cmdB = commandSet.selectVFOCommand(.b)
+        #expect(cmdB != nil)
+        #expect(cmdB?.command == [0x07])
+        #expect(cmdB?.data == [0x01]) // VFO B
     }
 
-    func testIC7100ParseModeResponse() throws {
+    @Test func ic7100ParseModeResponse() throws {
         let commandSet = IC7100CommandSet()
 
         // Simulate response: FE FE E0 88 04 01 FD (mode = USB)
         let frame = CIVFrame(to: 0xE0, from: 0x88, command: [0x04], data: [0x01])
         let mode = try commandSet.parseModeResponse(frame)
-        XCTAssertEqual(mode, 0x01) // USB
+        #expect(mode == 0x01) // USB
     }
 
-    func testIC7100ParsePowerResponse() throws {
+    @Test func ic7100ParsePowerResponse() throws {
         let commandSet = IC7100CommandSet()
 
         // Simulate 100% power response
         let powerBCD = BCDEncoding.encodePower(255)
         let frame = CIVFrame(to: 0xE0, from: 0x88, command: [0x14, 0x0A], data: powerBCD)
         let power = try commandSet.parsePowerResponse(frame)
-        XCTAssertEqual(power, 100)
+        #expect(power == 100)
     }
 
-    func testIC7100ParsePTTResponse() throws {
+    @Test func ic7100ParsePTTResponse() throws {
         let commandSet = IC7100CommandSet()
 
         // Simulate TX response
         let frameTX = CIVFrame(to: 0xE0, from: 0x88, command: [0x1C, 0x00], data: [0x01])
-        XCTAssertTrue(try commandSet.parsePTTResponse(frameTX))
+        #expect(try commandSet.parsePTTResponse(frameTX))
 
         // Simulate RX response
         let frameRX = CIVFrame(to: 0xE0, from: 0x88, command: [0x1C, 0x00], data: [0x00])
-        XCTAssertFalse(try commandSet.parsePTTResponse(frameRX))
+        #expect(try !commandSet.parsePTTResponse(frameRX))
     }
 
     // MARK: - IC9700CommandSet Tests
 
-    func testIC9700Properties() {
+    @Test func ic9700Properties() {
         let commandSet = IC9700CommandSet()
-        XCTAssertEqual(commandSet.civAddress, 0xA2)
-        XCTAssertEqual(commandSet.powerUnits, .percentage)
-        XCTAssertFalse(commandSet.echoesCommands)
-        XCTAssertTrue(commandSet.requiresVFOSelection)
+        #expect(commandSet.civAddress == 0xA2)
+        #expect(commandSet.powerUnits == .percentage)
+        #expect(commandSet.echoesCommands) // IC-9700 echoes commands over USB
+        #expect(commandSet.requiresVFOSelection)
     }
 
-    func testIC9700ModeCommand() {
+    @Test func ic9700ModeCommand() {
         let commandSet = IC9700CommandSet()
 
-        // IC-9700 DOES include filter byte
+        // IC-9700 does NOT include filter byte (requiresModeFilter = false)
         let (cmd, data) = commandSet.setModeCommand(mode: 0x01) // USB
-        XCTAssertEqual(cmd, [0x06])
-        XCTAssertEqual(data, [0x01, 0x00]) // Mode + default filter
+        #expect(cmd == [0x06])
+        #expect(data == [0x01]) // Mode only, no filter
     }
 
-    func testIC9700PowerCommand() {
+    @Test func ic9700PowerCommand() {
         let commandSet = IC9700CommandSet()
 
         // Test 75%
         let (cmd, data) = commandSet.setPowerCommand(value: 75)
-        XCTAssertEqual(cmd, [0x14, 0x0A])
-        XCTAssertEqual(data.count, 2)
+        #expect(cmd == [0x14, 0x0A])
+        #expect(data.count == 2)
 
         // Decode to verify
         let scale = BCDEncoding.decodePower(data)
         let percentage = (scale * 100) / 255
-        XCTAssertEqual(percentage, 75, accuracy: 1)
+        #expect(abs(percentage - 75) <= 1)
     }
 
-    func testIC9700VFOCommand() {
+    @Test func ic9700VFOCommand() {
         let commandSet = IC9700CommandSet()
 
         // IC-9700 requires VFO selection
         let cmdA = commandSet.selectVFOCommand(.a)
-        XCTAssertNotNil(cmdA)
-        XCTAssertEqual(cmdA?.command, [0x07])
-        XCTAssertEqual(cmdA?.data, [0x00]) // VFO A
+        #expect(cmdA != nil)
+        #expect(cmdA?.command == [0x07])
+        #expect(cmdA?.data == [0x00]) // VFO A
 
         let cmdMain = commandSet.selectVFOCommand(.main)
-        XCTAssertNotNil(cmdMain)
-        XCTAssertEqual(cmdMain?.command, [0x07])
-        XCTAssertEqual(cmdMain?.data, [0xD0]) // Main receiver
+        #expect(cmdMain != nil)
+        #expect(cmdMain?.command == [0x07])
+        #expect(cmdMain?.data == [0xD0]) // Main receiver
     }
 
     // MARK: - StandardIcomCommandSet Tests
 
-    func testStandardCommandSetProperties() {
+    @Test func standardCommandSetProperties() {
         let commandSet = StandardIcomCommandSet(civAddress: 0x94)
-        XCTAssertEqual(commandSet.civAddress, 0x94)
-        XCTAssertEqual(commandSet.powerUnits, .percentage)
-        XCTAssertFalse(commandSet.echoesCommands)
-        XCTAssertTrue(commandSet.requiresVFOSelection)
+        #expect(commandSet.civAddress == 0x94)
+        #expect(commandSet.powerUnits == .percentage)
+        #expect(!commandSet.echoesCommands)
+        #expect(commandSet.requiresVFOSelection)
     }
 
-    func testStandardCommandSetCustomization() {
+    @Test func standardCommandSetCustomization() {
         let commandSet = StandardIcomCommandSet(
             civAddress: 0xA4,
             echoesCommands: true
         )
-        XCTAssertEqual(commandSet.civAddress, 0xA4)
-        XCTAssertTrue(commandSet.echoesCommands)
+        #expect(commandSet.civAddress == 0xA4)
+        #expect(commandSet.echoesCommands)
     }
 
-    func testStandardModeCommand() {
+    @Test func standardModeCommand() {
         let commandSet = StandardIcomCommandSet(civAddress: 0x94)
 
-        // Standard radios include filter byte
+        // Standard radios include filter byte (0x01 = FIL1, the default)
         let (cmd, data) = commandSet.setModeCommand(mode: 0x00) // LSB
-        XCTAssertEqual(cmd, [0x06])
-        XCTAssertEqual(data, [0x00, 0x00]) // Mode + default filter
+        #expect(cmd == [0x06])
+        #expect(data == [0x00, 0x01]) // Mode + FIL1 filter
     }
 
-    func testStandardFrequencyCommand() throws {
+    @Test func standardFrequencyCommand() throws {
         let commandSet = StandardIcomCommandSet(civAddress: 0x94)
 
         // Test 14.250 MHz
         let (cmd, data) = commandSet.setFrequencyCommand(frequency: 14_250_000)
-        XCTAssertEqual(cmd, [0x05])
-        XCTAssertEqual(data.count, 5)
+        #expect(cmd == [0x05])
+        #expect(data.count == 5)
 
         // Verify encoding
         let freq = try BCDEncoding.decodeFrequency(data)
-        XCTAssertEqual(freq, 14_250_000)
+        #expect(freq == 14_250_000)
     }
 
-    func testStandardParseFrequencyResponse() throws {
+    @Test func standardParseFrequencyResponse() throws {
         let commandSet = StandardIcomCommandSet(civAddress: 0x94)
 
         // Simulate frequency response for 7.200 MHz
         let freqBCD = BCDEncoding.encodeFrequency(7_200_000)
         let frame = CIVFrame(to: 0xE0, from: 0x94, command: [0x03], data: freqBCD)
         let freq = try commandSet.parseFrequencyResponse(frame)
-        XCTAssertEqual(freq, 7_200_000)
+        #expect(freq == 7_200_000)
     }
 
     // MARK: - Power Scale Tests
 
-    func testPowerScaleRoundTrip() throws {
+    @Test func powerScaleRoundTrip() throws {
         let commandSets: [any CIVCommandSet] = [
             IC7100CommandSet(),
             IC9700CommandSet(),
@@ -212,69 +219,71 @@ final class CIVCommandSetTests: XCTestCase {
                 )
 
                 let parsedPower = try commandSet.parsePowerResponse(frame)
-                XCTAssertEqual(parsedPower, testPower, accuracy: 1,
-                              "Power round-trip failed for \(testPower)% on address 0x\(String(format: "%02X", commandSet.civAddress))")
+                #expect(
+                    abs(parsedPower - testPower) <= 1,
+                    "Power round-trip failed for \(testPower)% on address 0x\(String(format: "%02X", commandSet.civAddress))"
+                )
             }
         }
     }
 
     // MARK: - Error Handling Tests
 
-    func testInvalidModeResponseThrows() {
+    @Test func invalidModeResponseThrows() {
         let commandSet = IC7100CommandSet()
 
         // Wrong command in response
         let badFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x05], data: [0x01])
-        XCTAssertThrowsError(try commandSet.parseModeResponse(badFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parseModeResponse(badFrame)
         }
 
         // Empty data
         let emptyFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x04], data: [])
-        XCTAssertThrowsError(try commandSet.parseModeResponse(emptyFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parseModeResponse(emptyFrame)
         }
     }
 
-    func testInvalidPowerResponseThrows() {
+    @Test func invalidPowerResponseThrows() {
         let commandSet = IC7100CommandSet()
 
         // Wrong command
         let badFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x14, 0x0B], data: [0x00, 0x00])
-        XCTAssertThrowsError(try commandSet.parsePowerResponse(badFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parsePowerResponse(badFrame)
         }
 
         // Insufficient data
         let shortFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x14, 0x0A], data: [0x00])
-        XCTAssertThrowsError(try commandSet.parsePowerResponse(shortFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parsePowerResponse(shortFrame)
         }
     }
 
-    func testInvalidPTTResponseThrows() {
+    @Test func invalidPTTResponseThrows() {
         let commandSet = IC7100CommandSet()
 
         // Wrong command
         let badFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x1C, 0x01], data: [0x00])
-        XCTAssertThrowsError(try commandSet.parsePTTResponse(badFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parsePTTResponse(badFrame)
         }
 
         // Empty data
         let emptyFrame = CIVFrame(to: 0xE0, from: 0x88, command: [0x1C, 0x00], data: [])
-        XCTAssertThrowsError(try commandSet.parsePTTResponse(emptyFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parsePTTResponse(emptyFrame)
         }
     }
 
-    func testInvalidFrequencyResponseThrows() {
+    @Test func invalidFrequencyResponseThrows() {
         let commandSet = StandardIcomCommandSet(civAddress: 0x94) // IC-7300
 
         // Wrong data length
         let shortFrame = CIVFrame(to: 0xE0, from: 0x94, command: [0x03], data: [0x00, 0x00])
-        XCTAssertThrowsError(try commandSet.parseFrequencyResponse(shortFrame)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try commandSet.parseFrequencyResponse(shortFrame)
         }
     }
 }

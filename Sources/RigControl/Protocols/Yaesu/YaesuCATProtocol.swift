@@ -260,8 +260,7 @@ public actor YaesuCATProtocol: CATProtocol {
         }
 
         // Set RIT offset using RU (up) or RD (down) command
-        // Format: RU+nnnn; or RD-nnnn; (nnnn is absolute value)
-        let absOffset = abs(state.offset)
+        // Format: RU+nnnn; or RD-nnnn; (signed offset value)
         let command: String
         if state.offset >= 0 {
             command = String(format: "RU%+05d", state.offset)

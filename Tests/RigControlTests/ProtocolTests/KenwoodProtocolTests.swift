@@ -1,11 +1,12 @@
-import XCTest
+import Testing
 @testable import RigControl
 
-final class KenwoodProtocolTests: XCTestCase {
-    var mockTransport: MockTransport!
-    var kenwoodProtocol: KenwoodProtocol!
+/// Protocol-level tests for Kenwood text-based CAT communication
+@Suite struct KenwoodProtocolTests {
+    var mockTransport: MockTransport
+    var kenwoodProtocol: KenwoodProtocol
 
-    override func setUp() async throws {
+    init() async throws {
         mockTransport = MockTransport()
         kenwoodProtocol = KenwoodProtocol(
             transport: mockTransport,
@@ -13,15 +14,9 @@ final class KenwoodProtocolTests: XCTestCase {
         )
     }
 
-    override func tearDown() async throws {
-        await kenwoodProtocol.disconnect()
-        mockTransport = nil
-        kenwoodProtocol = nil
-    }
-
     // MARK: - Connection Tests
 
-    func testConnect() async throws {
+    @Test func connect() async throws {
         // Mock AI0; response (auto-info disable)
         let aiCommand = "AI0;".data(using: .ascii)!
         let aiResponse = "AI0;".data(using: .ascii)!
@@ -30,15 +25,15 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.connect()
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "AI0;")
+        #expect(command == "AI0;")
     }
 
     // MARK: - Frequency Tests
 
-    func testSetFrequency() async throws {
+    @Test func setFrequency() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -50,32 +45,29 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FA00014230000;")
+        #expect(command == "FA00014230000;")
     }
 
-    func testGetFrequency() async throws {
+    @Test func getFrequency() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Query: FA;
-        // Response: FA00014230000;
         let queryCommand = "FA;".data(using: .ascii)!
         let response = "FA00014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let freq = try await kenwoodProtocol.getFrequency(vfo: .a)
 
-        XCTAssertEqual(freq, 14_230_000)
+        #expect(freq == 14_230_000)
     }
 
-    func testSetFrequencyVFOB() async throws {
+    @Test func setFrequencyVFOB() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Expected command: FB00007100000; (7.100 MHz)
         let expectedCommand = "FB00007100000;".data(using: .ascii)!
         let response = "FB00007100000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
@@ -83,19 +75,18 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setFrequency(7_100_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FB00007100000;")
+        #expect(command == "FB00007100000;")
     }
 
     // MARK: - Mode Tests
 
-    func testSetMode() async throws {
+    @Test func setMode() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Set mode to USB (code 2)
         let expectedCommand = "MD2;".data(using: .ascii)!
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
@@ -103,28 +94,26 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "MD2;")
+        #expect(command == "MD2;")
     }
 
-    func testGetMode() async throws {
+    @Test func getMode() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Query: MD;
-        // Response: MD2; (USB)
         let queryCommand = "MD;".data(using: .ascii)!
         let response = "MD2;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let mode = try await kenwoodProtocol.getMode(vfo: .a)
 
-        XCTAssertEqual(mode, .usb)
+        #expect(mode == .usb)
     }
 
-    func testModeMappings() async throws {
+    @Test func modeMappings() async throws {
         try await kenwoodProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
@@ -148,16 +137,16 @@ final class KenwoodProtocolTests: XCTestCase {
             try await kenwoodProtocol.setMode(mode, vfo: .a)
 
             let writes = await mockTransport.recordedWrites
-            XCTAssertEqual(writes.count, 1, "Mode \(mode) failed")
+            #expect(writes.count == 1, "Mode \(mode) failed")
 
             let command = String(data: writes[0], encoding: .ascii)
-            XCTAssertEqual(command, expectedCmd, "Mode \(mode) command mismatch")
+            #expect(command == expectedCmd, "Mode \(mode) command mismatch")
         }
     }
 
     // MARK: - PTT Tests
 
-    func testSetPTTOn() async throws {
+    @Test func setPTTOn() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -168,13 +157,13 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "TX1;")
+        #expect(command == "TX1;")
     }
 
-    func testSetPTTOff() async throws {
+    @Test func setPTTOff() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -185,30 +174,28 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setPTT(false)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "TX0;")
+        #expect(command == "TX0;")
     }
 
-    func testGetPTT() async throws {
+    @Test func getPTT() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Query: TX;
-        // Response: TX1; (PTT on)
         let queryCommand = "TX;".data(using: .ascii)!
         let response = "TX1;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let enabled = try await kenwoodProtocol.getPTT()
 
-        XCTAssertTrue(enabled)
+        #expect(enabled)
     }
 
     // MARK: - VFO Tests
 
-    func testSelectVFO() async throws {
+    @Test func selectVFO() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -220,13 +207,13 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FR0;")
+        #expect(command == "FR0;")
     }
 
-    func testSelectVFOB() async throws {
+    @Test func selectVFOB() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -238,19 +225,18 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.selectVFO(.b)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FR1;")
+        #expect(command == "FR1;")
     }
 
     // MARK: - Power Control Tests
 
-    func testSetPower() async throws {
+    @Test func setPower() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Set power to 50W (50%)
         let expectedCommand = "PC050;".data(using: .ascii)!
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
@@ -258,29 +244,26 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setPower(50)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "PC050;")
+        #expect(command == "PC050;")
     }
 
-    func testGetPower() async throws {
+    @Test func getPower() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Query: PC;
-        // Response: PC050; (50%)
         let queryCommand = "PC;".data(using: .ascii)!
         let response = "PC050;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let power = try await kenwoodProtocol.getPower()
 
-        // Full scale is 100W, so 50% = 50W
-        XCTAssertEqual(power, 50)
+        #expect(power == 50)
     }
 
-    func testPowerConversion() async throws {
+    @Test func powerConversion() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -308,12 +291,12 @@ final class KenwoodProtocolTests: XCTestCase {
 
         let writes = await mockTransport.recordedWrites
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "PC050;")
+        #expect(command == "PC050;")
     }
 
     // MARK: - Split Operation Tests
 
-    func testSetSplitOn() async throws {
+    @Test func setSplitOn() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -325,13 +308,13 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setSplit(true)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FT1;")
+        #expect(command == "FT1;")
     }
 
-    func testSetSplitOff() async throws {
+    @Test func setSplitOff() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
@@ -342,34 +325,30 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setSplit(false)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 1)
+        #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        XCTAssertEqual(command, "FT0;")
+        #expect(command == "FT0;")
     }
 
-    func testGetSplit() async throws {
+    @Test func getSplit() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Query: FT;
-        // Response: FT1; (split on)
         let queryCommand = "FT;".data(using: .ascii)!
         let response = "FT1;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let splitEnabled = try await kenwoodProtocol.getSplit()
 
-        XCTAssertTrue(splitEnabled)
+        #expect(splitEnabled)
     }
 
     // MARK: - Integration Tests
 
-    func testCompleteWorkflow() async throws {
+    @Test func completeWorkflow() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        // Simulate a complete workflow: Set frequency, mode, and PTT
 
         // 1. Set frequency
         let freqCmd = "FA00014230000;".data(using: .ascii)!
@@ -387,26 +366,20 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 3)
+        #expect(writes.count == 3)
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
         let cmd2 = String(data: writes[1], encoding: .ascii)
         let cmd3 = String(data: writes[2], encoding: .ascii)
 
-        XCTAssertEqual(cmd1, "FA00014230000;")
-        XCTAssertEqual(cmd2, "MD2;")
-        XCTAssertEqual(cmd3, "TX1;")
+        #expect(cmd1 == "FA00014230000;")
+        #expect(cmd2 == "MD2;")
+        #expect(cmd3 == "TX1;")
     }
 
-    func testSplitOperationWorkflow() async throws {
+    @Test func splitOperationWorkflow() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        // Typical split operation workflow:
-        // 1. Enable split
-        // 2. Set VFO A frequency (receive)
-        // 3. Set VFO B frequency (transmit)
-        // 4. Select VFO A for receive
 
         // 1. Enable split
         let splitOnCmd = "FT1;".data(using: .ascii)!
@@ -429,20 +402,20 @@ final class KenwoodProtocolTests: XCTestCase {
         try await kenwoodProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 4)
+        #expect(writes.count == 4)
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
         let cmd2 = String(data: writes[1], encoding: .ascii)
         let cmd3 = String(data: writes[2], encoding: .ascii)
         let cmd4 = String(data: writes[3], encoding: .ascii)
 
-        XCTAssertEqual(cmd1, "FT1;")           // Split on
-        XCTAssertEqual(cmd2, "FA00014230000;") // RX freq
-        XCTAssertEqual(cmd3, "FB00014235000;") // TX freq
-        XCTAssertEqual(cmd4, "FR0;")           // Select VFO A
+        #expect(cmd1 == "FT1;")           // Split on
+        #expect(cmd2 == "FA00014230000;") // RX freq
+        #expect(cmd3 == "FB00014235000;") // TX freq
+        #expect(cmd4 == "FR0;")           // Select VFO A
     }
 
-    func testDualReceiverRadio() async throws {
+    @Test func dualReceiverRadio() async throws {
         // Test TS-890S which has dual receivers
         let dualRxProtocol = KenwoodProtocol(
             transport: mockTransport,
@@ -472,12 +445,12 @@ final class KenwoodProtocolTests: XCTestCase {
         try await dualRxProtocol.setFrequency(7_100_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
-        XCTAssertEqual(writes.count, 2)
+        #expect(writes.count == 2)
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
         let cmd2 = String(data: writes[1], encoding: .ascii)
 
-        XCTAssertEqual(cmd1, "FA00014230000;")
-        XCTAssertEqual(cmd2, "FB00007100000;")
+        #expect(cmd1 == "FA00014230000;")
+        #expect(cmd2 == "FB00007100000;")
     }
 }

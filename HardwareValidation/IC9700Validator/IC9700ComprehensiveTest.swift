@@ -27,7 +27,7 @@ struct IC9700ComprehensiveTest {
 
         var testsPassed = 0
         var testsFailed = 0
-        var testsSkipped = 0
+        let testsSkipped = 0
 
         do {
             // Create controller

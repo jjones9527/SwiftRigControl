@@ -1,104 +1,105 @@
-import XCTest
+import Testing
 @testable import RigControl
 
-final class BCDEncodingTests: XCTestCase {
+/// Unit tests for BCD encoding/decoding used in Icom CI-V protocol
+@Suite struct BCDEncodingTests {
     // MARK: - Frequency Encoding Tests
 
-    func testEncodeSimpleFrequency() {
+    @Test func encodeSimpleFrequency() {
         // 14.230 MHz = 14230000 Hz
         // BCD: 00 00 23 14 00 (little-endian)
         let result = BCDEncoding.encodeFrequency(14_230_000)
 
-        XCTAssertEqual(result.count, 5)
-        XCTAssertEqual(result[0], 0x00)  // 00 Hz
-        XCTAssertEqual(result[1], 0x00)  // 00 Hz
-        XCTAssertEqual(result[2], 0x23)  // 23 kHz
-        XCTAssertEqual(result[3], 0x14)  // 14 MHz
-        XCTAssertEqual(result[4], 0x00)  // 000 MHz
+        #expect(result.count == 5)
+        #expect(result[0] == 0x00)  // 00 Hz
+        #expect(result[1] == 0x00)  // 00 Hz
+        #expect(result[2] == 0x23)  // 23 kHz
+        #expect(result[3] == 0x14)  // 14 MHz
+        #expect(result[4] == 0x00)  // 000 MHz
     }
 
-    func testEncode7MHzFrequency() {
+    @Test func encode7MHzFrequency() {
         // 7.100 MHz = 7100000 Hz
         // BCD: 00 00 10 07 00
         let result = BCDEncoding.encodeFrequency(7_100_000)
 
-        XCTAssertEqual(result.count, 5)
-        XCTAssertEqual(result[0], 0x00)
-        XCTAssertEqual(result[1], 0x00)
-        XCTAssertEqual(result[2], 0x10)
-        XCTAssertEqual(result[3], 0x07)
-        XCTAssertEqual(result[4], 0x00)
+        #expect(result.count == 5)
+        #expect(result[0] == 0x00)
+        #expect(result[1] == 0x00)
+        #expect(result[2] == 0x10)
+        #expect(result[3] == 0x07)
+        #expect(result[4] == 0x00)
     }
 
-    func testEncodeVHFFrequency() {
+    @Test func encodeVHFFrequency() {
         // 146.52 MHz = 146520000 Hz (2m calling frequency)
-        // BCD: 00 00 52 65 14
+        // BCD little-endian: 00 00 52 46 01
         let result = BCDEncoding.encodeFrequency(146_520_000)
 
-        XCTAssertEqual(result.count, 5)
-        XCTAssertEqual(result[0], 0x00)
-        XCTAssertEqual(result[1], 0x00)
-        XCTAssertEqual(result[2], 0x52)
-        XCTAssertEqual(result[3], 0x65)
-        XCTAssertEqual(result[4], 0x14)
+        #expect(result.count == 5)
+        #expect(result[0] == 0x00)  // 00 Hz
+        #expect(result[1] == 0x00)  // 00 Hz
+        #expect(result[2] == 0x52)  // 52 kHz
+        #expect(result[3] == 0x46)  // 46 MHz
+        #expect(result[4] == 0x01)  // 1xx MHz
     }
 
-    func testEncodeUHFFrequency() {
+    @Test func encodeUHFFrequency() {
         // 446.0 MHz = 446000000 Hz (70cm)
-        // BCD: 00 00 00 60 44
+        // BCD little-endian: 00 00 00 46 04
         let result = BCDEncoding.encodeFrequency(446_000_000)
 
-        XCTAssertEqual(result.count, 5)
-        XCTAssertEqual(result[0], 0x00)
-        XCTAssertEqual(result[1], 0x00)
-        XCTAssertEqual(result[2], 0x00)
-        XCTAssertEqual(result[3], 0x60)
-        XCTAssertEqual(result[4], 0x44)
+        #expect(result.count == 5)
+        #expect(result[0] == 0x00)  // 00 Hz
+        #expect(result[1] == 0x00)  // 00 Hz
+        #expect(result[2] == 0x00)  // 00 kHz
+        #expect(result[3] == 0x46)  // 46 MHz
+        #expect(result[4] == 0x04)  // 4xx MHz
     }
 
     // MARK: - Frequency Decoding Tests
 
-    func testDecodeSimpleFrequency() throws {
+    @Test func decodeSimpleFrequency() throws {
         let bcd: [UInt8] = [0x00, 0x00, 0x23, 0x14, 0x00]
         let result = try BCDEncoding.decodeFrequency(bcd)
 
-        XCTAssertEqual(result, 14_230_000)
+        #expect(result == 14_230_000)
     }
 
-    func testDecode7MHzFrequency() throws {
+    @Test func decode7MHzFrequency() throws {
         let bcd: [UInt8] = [0x00, 0x00, 0x10, 0x07, 0x00]
         let result = try BCDEncoding.decodeFrequency(bcd)
 
-        XCTAssertEqual(result, 7_100_000)
+        #expect(result == 7_100_000)
     }
 
-    func testDecodeVHFFrequency() throws {
-        let bcd: [UInt8] = [0x00, 0x00, 0x52, 0x65, 0x14]
+    @Test func decodeVHFFrequency() throws {
+        let bcd: [UInt8] = [0x00, 0x00, 0x52, 0x46, 0x01]
         let result = try BCDEncoding.decodeFrequency(bcd)
 
-        XCTAssertEqual(result, 146_520_000)
+        #expect(result == 146_520_000)
     }
 
-    func testDecodeInvalidLength() {
+    @Test func decodeInvalidLength() {
         let bcd: [UInt8] = [0x00, 0x00, 0x23]
 
-        XCTAssertThrowsError(try BCDEncoding.decodeFrequency(bcd)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try BCDEncoding.decodeFrequency(bcd)
         }
     }
 
-    func testDecodeInvalidBCD() {
+    @Test func decodeInvalidBCD() {
         // 0xFF is not a valid BCD digit
         let bcd: [UInt8] = [0x00, 0x00, 0xFF, 0x14, 0x00]
 
-        XCTAssertThrowsError(try BCDEncoding.decodeFrequency(bcd)) { error in
-            XCTAssertEqual(error as? RigError, .invalidResponse)
+        #expect(throws: RigError.invalidResponse) {
+            try BCDEncoding.decodeFrequency(bcd)
         }
     }
 
     // MARK: - Round-trip Tests
 
-    func testFrequencyRoundTrip() throws {
+    @Test func frequencyRoundTrip() throws {
         let frequencies: [UInt64] = [
             3_500_000,    // 80m
             7_100_000,    // 40m
@@ -112,50 +113,50 @@ final class BCDEncodingTests: XCTestCase {
         for freq in frequencies {
             let encoded = BCDEncoding.encodeFrequency(freq)
             let decoded = try BCDEncoding.decodeFrequency(encoded)
-            XCTAssertEqual(decoded, freq, "Round-trip failed for \(freq) Hz")
+            #expect(decoded == freq, "Round-trip failed for \(freq) Hz")
         }
     }
 
     // MARK: - Power Level Tests
 
-    func testEncodePowerZero() {
+    @Test func encodePowerZero() {
         let result = BCDEncoding.encodePower(0)
 
-        XCTAssertEqual(result.count, 2)
-        XCTAssertEqual(result[0], 0x00)
-        XCTAssertEqual(result[1], 0x00)
+        #expect(result.count == 2)
+        #expect(result[0] == 0x00)
+        #expect(result[1] == 0x00)
     }
 
-    func testEncodePowerHalf() {
+    @Test func encodePowerHalf() {
         // 50% = 128
         let result = BCDEncoding.encodePower(128)
 
-        XCTAssertEqual(result.count, 2)
-        XCTAssertEqual(result[0], 0x28)  // 28 in BCD
-        XCTAssertEqual(result[1], 0x01)  // 1 in hundreds
+        #expect(result.count == 2)
+        #expect(result[0] == 0x01)  // 1 in hundreds
+        #expect(result[1] == 0x28)  // 28 in BCD (tens=2, ones=8)
     }
 
-    func testEncodePowerMax() {
+    @Test func encodePowerMax() {
         // 255
         let result = BCDEncoding.encodePower(255)
 
-        XCTAssertEqual(result.count, 2)
-        XCTAssertEqual(result[0], 0x55)  // 55 in BCD
-        XCTAssertEqual(result[1], 0x02)  // 2 in hundreds
+        #expect(result.count == 2)
+        #expect(result[0] == 0x02)  // 2 in hundreds
+        #expect(result[1] == 0x55)  // 55 in BCD (tens=5, ones=5)
     }
 
-    func testDecodePower() {
-        let bcd: [UInt8] = [0x28, 0x01]
+    @Test func decodePower() {
+        let bcd: [UInt8] = [0x01, 0x28]
         let result = BCDEncoding.decodePower(bcd)
 
-        XCTAssertEqual(result, 128)
+        #expect(result == 128)
     }
 
-    func testPowerRoundTrip() {
+    @Test func powerRoundTrip() {
         for power in [0, 50, 100, 128, 200, 255] {
             let encoded = BCDEncoding.encodePower(power)
             let decoded = BCDEncoding.decodePower(encoded)
-            XCTAssertEqual(decoded, power, "Round-trip failed for power \(power)")
+            #expect(decoded == power, "Round-trip failed for power \(power)")
         }
     }
 }

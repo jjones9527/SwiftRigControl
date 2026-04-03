@@ -1,4 +1,5 @@
-import XCTest
+import Foundation
+import Testing
 @testable import RigControl
 
 /// Comprehensive hardware tests for Icom IC-7600
@@ -34,24 +35,18 @@ import XCTest
 /// - Radio state is saved and restored after tests
 /// - Conservative power levels used (10W default)
 ///
-final class IC7600HardwareTests: XCTestCase {
-    var rig: RigController?
-    var savedState: HardwareTestHelpers.RadioState?
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["IC7600_SERIAL_PORT"] != nil,
+                "Set IC7600_SERIAL_PORT environment variable"))
+struct IC7600HardwareTests {
+    var rig: RigController
+    var savedState: HardwareTestHelpers.RadioState
 
     let radioName = "IC-7600"
-    let environmentKey = "IC7600_SERIAL_PORT"
 
-    // MARK: - Setup & Teardown
+    // MARK: - Setup
 
-    override func setUp() async throws {
-        // Get serial port from environment
-        guard let port = HardwareTestHelpers.getSerialPort(
-            environmentKey: environmentKey,
-            radioName: radioName,
-            interactive: false
-        ) else {
-            throw XCTSkip("Set \(environmentKey) environment variable. Example: export IC7600_SERIAL_PORT=\"/dev/cu.IC7600\"")
-        }
+    init() async throws {
+        let port = try #require(ProcessInfo.processInfo.environment["IC7600_SERIAL_PORT"])
 
         print("\n" + String(repeating: "=", count: 60))
         print("IC-7600 Hardware Test Suite")
@@ -59,66 +54,37 @@ final class IC7600HardwareTests: XCTestCase {
         print("Port: \(port)")
         print(String(repeating: "=", count: 60) + "\n")
 
-        // Create controller
         rig = try RigController(
             radio: .icomIC7600(civAddress: nil),
             connection: .serial(path: port, baudRate: nil)
         )
 
-        // Connect
-        try await rig!.connect()
+        try await rig.connect()
         print("✓ Connected to IC-7600\n")
 
-        // Save current state
-        savedState = try await HardwareTestHelpers.RadioState.save(from: rig!)
+        savedState = try await HardwareTestHelpers.RadioState.save(from: rig)
         print("✓ Saved current radio state\n")
-    }
-
-    override func tearDown() async throws {
-        guard let rig = rig else { return }
-
-        // Restore saved state
-        if let savedState = savedState {
-            print("\n🔄 Restoring radio state...")
-            try await savedState.restore(to: rig)
-            print("   ✓ Radio state restored")
-        }
-
-        await rig.disconnect()
-        print("   ✓ Disconnected from IC-7600\n")
     }
 
     // MARK: - Basic Communication Tests
 
-    func testConnection() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func connection() async throws {
         print("📡 Test: Basic Connection")
         print("   Testing basic radio communication...")
 
-        // Read current frequency
         let freq = try await rig.frequency(vfo: .a, cached: false)
         print("   Current frequency: \(HardwareTestHelpers.formatFrequency(freq))")
 
-        // Read current mode
         let mode = try await rig.mode(vfo: .a, cached: false)
         print("   Current mode: \(mode.rawValue)")
 
-        XCTAssertGreaterThan(freq, 0, "Frequency should be greater than 0")
+        #expect(freq > 0, "Frequency should be greater than 0")
         print("   ✓ Basic communication verified\n")
     }
 
     // MARK: - Frequency Control Tests
 
-    func testFrequencyControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func frequencyControl() async throws {
         print("🎛️  Test: Frequency Control")
 
         let testFrequencies: [(freq: UInt64, band: String)] = [
@@ -137,19 +103,15 @@ final class IC7600HardwareTests: XCTestCase {
             try await rig.setFrequency(freq, vfo: .a)
             let actual = try await rig.frequency(vfo: .a, cached: false)
 
-            XCTAssertEqual(actual, freq, "\(band) frequency mismatch")
+            #expect(actual == freq, "\(band) frequency mismatch")
             print("   ✓ \(band) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All bands tested successfully\n")
     }
 
-    func testDualVFO() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func dualVFO() async throws {
         print("🔀 Test: Dual VFO Operation")
 
         let freqA: UInt64 = 14_230_000  // 20m
@@ -165,22 +127,19 @@ final class IC7600HardwareTests: XCTestCase {
         let actualA = try await rig.frequency(vfo: .a, cached: false)
         let actualB = try await rig.frequency(vfo: .b, cached: false)
 
-        XCTAssertEqual(actualA, freqA, "VFO A frequency mismatch")
-        XCTAssertEqual(actualB, freqB, "VFO B frequency mismatch")
+        #expect(actualA == freqA, "VFO A frequency mismatch")
+        #expect(actualB == freqB, "VFO B frequency mismatch")
 
         print("   ✓ VFO A: \(HardwareTestHelpers.formatFrequency(actualA))")
         print("   ✓ VFO B: \(HardwareTestHelpers.formatFrequency(actualB))")
         print("   ✓ Dual VFO operation verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Mode Control Tests
 
-    func testModeControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func modeControl() async throws {
         print("📻 Test: Mode Control")
 
         // Set to a common HF frequency first
@@ -194,28 +153,22 @@ final class IC7600HardwareTests: XCTestCase {
             try await rig.setMode(mode, vfo: .a)
             let actual = try await rig.mode(vfo: .a, cached: false)
 
-            XCTAssertEqual(actual, mode, "Mode mismatch for \(mode.rawValue)")
+            #expect(actual == mode, "Mode mismatch for \(mode.rawValue)")
             print("   ✓ \(mode.rawValue) verified")
         }
 
+        try await savedState.restore(to: rig)
         print("   ✓ All modes tested successfully\n")
     }
 
     // MARK: - Power Control Tests
 
-    func testPowerControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func powerControl() async throws {
         print("⚡ Test: Power Control")
 
-        // Read current power
         let originalPower = try await rig.power()
         print("   Original power: \(originalPower)W")
 
-        // Test various power levels
         let testPowers = [10, 25, 50, 75, 100]
 
         for targetPower in testPowers {
@@ -225,7 +178,7 @@ final class IC7600HardwareTests: XCTestCase {
             let actual = try await rig.power()
 
             // Allow ±5W tolerance due to BCD rounding
-            XCTAssertTrue(
+            #expect(
                 abs(actual - targetPower) <= 5,
                 "Power should be approximately \(targetPower)W, got \(actual)W"
             )
@@ -239,12 +192,7 @@ final class IC7600HardwareTests: XCTestCase {
 
     // MARK: - Split Operation Tests
 
-    func testSplitOperation() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func splitOperation() async throws {
         print("🔊 Test: Split Operation")
 
         // Set up split (typical DX pile-up scenario)
@@ -261,26 +209,23 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setSplit(true)
 
         let splitEnabled = try await rig.isSplitEnabled()
-        XCTAssertTrue(splitEnabled, "Split should be enabled")
+        #expect(splitEnabled, "Split should be enabled")
         print("   ✓ Split enabled")
 
         print("   Disabling split operation")
         try await rig.setSplit(false)
 
         let splitDisabled = try await rig.isSplitEnabled()
-        XCTAssertFalse(splitDisabled, "Split should be disabled")
+        #expect(!splitDisabled, "Split should be disabled")
         print("   ✓ Split disabled")
         print("   ✓ Split operation verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - RIT/XIT Tests
 
-    func testRITControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func ritControl() async throws {
         print("🎚️  Test: RIT (Receiver Incremental Tuning)")
 
         // Test RIT with positive offset
@@ -288,8 +233,8 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setRIT(RITXITState(enabled: true, offset: 1000))
 
         var ritState = try await rig.getRIT()
-        XCTAssertTrue(ritState.enabled, "RIT should be enabled")
-        XCTAssertEqual(ritState.offset, 1000, "RIT offset should be 1000 Hz")
+        #expect(ritState.enabled, "RIT should be enabled")
+        #expect(ritState.offset == 1000, "RIT offset should be 1000 Hz")
         print("   ✓ RIT enabled at +\(ritState.offset) Hz")
 
         // Test RIT with negative offset
@@ -297,7 +242,7 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setRIT(RITXITState(enabled: true, offset: -500))
 
         ritState = try await rig.getRIT()
-        XCTAssertEqual(ritState.offset, -500, "RIT offset should be -500 Hz")
+        #expect(ritState.offset == -500, "RIT offset should be -500 Hz")
         print("   ✓ RIT set to \(ritState.offset) Hz")
 
         // Disable RIT
@@ -305,17 +250,14 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setRIT(RITXITState(enabled: false, offset: 0))
 
         ritState = try await rig.getRIT()
-        XCTAssertFalse(ritState.enabled, "RIT should be disabled")
+        #expect(!ritState.enabled, "RIT should be disabled")
         print("   ✓ RIT disabled")
         print("   ✓ RIT control verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
-    func testXITControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func xitControl() async throws {
         print("🎚️  Test: XIT (Transmitter Incremental Tuning)")
 
         // Test XIT with positive offset
@@ -323,8 +265,8 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setXIT(RITXITState(enabled: true, offset: 1500))
 
         var xitState = try await rig.getXIT()
-        XCTAssertTrue(xitState.enabled, "XIT should be enabled")
-        XCTAssertEqual(xitState.offset, 1500, "XIT offset should be 1500 Hz")
+        #expect(xitState.enabled, "XIT should be enabled")
+        #expect(xitState.offset == 1500, "XIT offset should be 1500 Hz")
         print("   ✓ XIT enabled at +\(xitState.offset) Hz")
 
         // Disable XIT
@@ -332,22 +274,20 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setXIT(RITXITState(enabled: false, offset: 0))
 
         xitState = try await rig.getXIT()
-        XCTAssertFalse(xitState.enabled, "XIT should be disabled")
+        #expect(!xitState.enabled, "XIT should be disabled")
         print("   ✓ XIT disabled")
         print("   ✓ XIT control verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - PTT Control Tests
 
-    func testPTTControl() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func pttControl() async throws {
         // Skip if user declines
         guard HardwareTestHelpers.confirmPTTTest(radioName: radioName) else {
-            throw XCTSkip("PTT test skipped by user")
+            print("PTT test skipped by user")
+            return
         }
 
         print("\n📡 Test: PTT Control")
@@ -368,7 +308,7 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setPTT(true)
 
         let pttOn = try await rig.isPTTEnabled()
-        XCTAssertTrue(pttOn, "PTT should be ON")
+        #expect(pttOn, "PTT should be ON")
 
         print("   Transmitting for 500ms...")
         try await Task.sleep(nanoseconds: 500_000_000)
@@ -377,28 +317,24 @@ final class IC7600HardwareTests: XCTestCase {
         try await rig.setPTT(false)
 
         let pttOff = try await rig.isPTTEnabled()
-        XCTAssertFalse(pttOff, "PTT should be OFF")
+        #expect(!pttOff, "PTT should be OFF")
 
         print("   ✓ PTT control verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Signal Strength Tests
 
-    func testSignalStrength() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func signalStrength() async throws {
         print("📊 Test: Signal Strength (S-Meter)")
 
-        // Read S-meter multiple times
         for i in 1...5 {
             let strength = try await rig.signalStrength()
             print("   Reading \(i): \(strength.description) (Raw: \(strength.raw))")
 
-            XCTAssertGreaterThanOrEqual(strength.sUnits, 0, "S-units should be >= 0")
-            XCTAssertLessThanOrEqual(strength.sUnits, 9, "S-units should be <= 9")
+            #expect(strength.sUnits >= 0, "S-units should be >= 0")
+            #expect(strength.sUnits <= 9, "S-units should be <= 9")
 
             try await Task.sleep(nanoseconds: 200_000_000) // 200ms between readings
         }
@@ -408,12 +344,7 @@ final class IC7600HardwareTests: XCTestCase {
 
     // MARK: - Stress Tests
 
-    func testRapidFrequencyChanges() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func rapidFrequencyChanges() async throws {
         print("⚡ Test: Rapid Frequency Changes")
 
         let startFreq: UInt64 = 14_000_000
@@ -438,35 +369,35 @@ final class IC7600HardwareTests: XCTestCase {
         print("   Completed \(iterations) frequency changes in \(String(format: "%.2f", duration))s")
         print("   Average time per change: \(String(format: "%.1f", avgTime))ms")
         print("   ✓ Rapid frequency changes verified\n")
+
+        try await savedState.restore(to: rig)
     }
 
     // MARK: - Boundary Tests
 
-    func testFrequencyBoundaries() async throws {
-        guard let rig = rig else {
-            XCTFail("Rig not initialized")
-            return
-        }
-
+    @Test func frequencyBoundaries() async throws {
         print("🎯 Test: Frequency Boundaries")
 
         let capabilities = await rig.capabilities
         guard let range = capabilities.frequencyRange else {
-            throw XCTSkip("Frequency range not defined")
+            print("Frequency range not defined - skipping")
+            return
         }
 
         print("   Testing minimum frequency: \(HardwareTestHelpers.formatFrequency(range.min))")
         try await rig.setFrequency(range.min, vfo: .a)
         let minFreq = try await rig.frequency(vfo: .a, cached: false)
-        XCTAssertEqual(minFreq, range.min, "Minimum frequency mismatch")
+        #expect(minFreq == range.min, "Minimum frequency mismatch")
         print("   ✓ Minimum frequency verified")
 
         print("   Testing maximum frequency: \(HardwareTestHelpers.formatFrequency(range.max))")
         try await rig.setFrequency(range.max, vfo: .a)
         let maxFreq = try await rig.frequency(vfo: .a, cached: false)
-        XCTAssertEqual(maxFreq, range.max, "Maximum frequency mismatch")
+        #expect(maxFreq == range.max, "Maximum frequency mismatch")
         print("   ✓ Maximum frequency verified")
 
         print("   ✓ Frequency boundaries verified\n")
+
+        try await savedState.restore(to: rig)
     }
 }

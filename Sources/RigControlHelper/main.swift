@@ -8,7 +8,8 @@ import RigControlXPC
 ///
 /// The helper is installed using SMJobBless and communicates with apps via XPC.
 
-class HelperDelegate: NSObject, NSXPCListenerDelegate {
+@MainActor
+class HelperDelegate: NSObject, @preconcurrency NSXPCListenerDelegate {
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         // Configure the connection
         newConnection.exportedInterface = NSXPCInterface(with: RigControlXPCProtocol.self)
@@ -22,7 +23,8 @@ class HelperDelegate: NSObject, NSXPCListenerDelegate {
 }
 
 /// Main function
-func main() {
+@MainActor
+func helperMain() {
     // Create the XPC listener
     let listener = NSXPCListener(machServiceName: XPCConstants.machServiceName)
 
@@ -39,5 +41,7 @@ func main() {
     RunLoop.current.run()
 }
 
-// Run the helper
-main()
+// Run the helper on the main actor
+MainActor.assumeIsolated {
+    helperMain()
+}

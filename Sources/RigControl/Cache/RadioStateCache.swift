@@ -53,7 +53,7 @@ public actor RadioStateCache {
     /// - Parameters:
     ///   - key: Cache key identifier (e.g., "freq_a", "mode_b")
     ///   - maxAge: Maximum age in seconds (uses default 0.5s if nil)
-    ///   - fetch: Async closure to fetch fresh value if cache miss or expired
+    ///   - fetch: Async throwing closure to fetch fresh value if cache miss or expired
     /// - Returns: Cached or fresh value
     /// - Throws: Any error thrown by the fetch closure
     ///
@@ -63,9 +63,9 @@ public actor RadioStateCache {
     ///     try await protocol.getFrequency(vfo: .a)
     /// }
     /// ```
-    public func get<T>(_ key: String,
+    public func get<T: Sendable>(_ key: String,
                        maxAge: TimeInterval? = nil,
-                       fetch: () async throws -> T) async throws -> T {
+                       fetch: @Sendable () async throws -> T) async throws -> T {
         let age = maxAge ?? defaultMaxAge
 
         // Check cache for valid entry
@@ -78,6 +78,33 @@ public actor RadioStateCache {
         let value = try await fetch()
         cache[key] = CachedValue(value: value, timestamp: Date())
         return value
+    }
+
+    /// Retrieve a cached value if it exists and has not expired.
+    ///
+    /// Use this in combination with ``store(_:forKey:)`` when the fetch closure
+    /// cannot be marked `@Sendable` (e.g., when it captures actor-isolated state).
+    ///
+    /// - Parameters:
+    ///   - key: Cache key identifier
+    ///   - maxAge: Maximum age in seconds (uses default 0.5s if nil)
+    /// - Returns: The cached value if valid, or `nil` if missing/expired
+    public func getIfValid<T>(_ key: String, maxAge: TimeInterval? = nil) -> T? {
+        let age = maxAge ?? defaultMaxAge
+        if let cached = cache[key] as? CachedValue<T>,
+           cached.isValid(maxAge: age) {
+            return cached.value
+        }
+        return nil
+    }
+
+    /// Store a value in the cache.
+    ///
+    /// - Parameters:
+    ///   - value: The value to cache
+    ///   - key: Cache key identifier
+    public func store<T>(_ value: T, forKey key: String) {
+        cache[key] = CachedValue(value: value, timestamp: Date())
     }
 
     /// Invalidate a specific cache entry or all entries
