@@ -271,24 +271,46 @@ extension CIVFrame {
     }
 
     /// Mode codes (used with Command.setMode/readMode 0x06/0x04)
+    ///
+    /// These byte values identify the operating mode in CI-V set-mode (0x06)
+    /// and read-mode (0x04) frames.  The second byte of the data field carries
+    /// the filter selection (see `FilterCode`).
     public enum ModeCode {
+        /// LSB — Lower Sideband (0x00)
         public static let lsb: UInt8 = 0x00
+        /// USB — Upper Sideband (0x01)
         public static let usb: UInt8 = 0x01
+        /// AM — Amplitude Modulation (0x02)
         public static let am: UInt8 = 0x02
+        /// CW — Continuous Wave, normal sideband (0x03)
         public static let cw: UInt8 = 0x03
+        /// RTTY — Radio Teletype, normal sideband (0x04)
         public static let rtty: UInt8 = 0x04
+        /// FM — Narrow-band Frequency Modulation (0x05)
         public static let fm: UInt8 = 0x05
+        /// WFM — Wide-band FM, used on broadcast frequencies (0x06)
         public static let wfm: UInt8 = 0x06
+        /// CW-R — CW reverse sideband (0x07)
         public static let cwR: UInt8 = 0x07
+        /// RTTY-R — RTTY reverse sideband (0x08)
         public static let rttyR: UInt8 = 0x08
+        /// PSK — Phase Shift Keying, normal sideband (0x12)
         public static let psk: UInt8 = 0x12
+        /// PSK-R — PSK reverse sideband (0x13)
         public static let pskR: UInt8 = 0x13
     }
 
     /// Filter codes (used with setMode 0x06)
+    ///
+    /// Sent as the second data byte in a set-mode (0x06) frame, immediately
+    /// after the `ModeCode` byte.  The actual bandwidth assigned to each
+    /// filter position is mode-dependent and is stored in the radio's memory.
     public enum FilterCode {
+        /// Filter 1 — widest preset for the current mode (0x01)
         public static let fil1: UInt8 = 0x01
+        /// Filter 2 — medium-width preset for the current mode (0x02)
         public static let fil2: UInt8 = 0x02
+        /// Filter 3 — narrowest preset for the current mode (0x03)
         public static let fil3: UInt8 = 0x03
     }
 
@@ -326,30 +348,58 @@ extension CIVFrame {
     }
 
     /// Tuning step sub-commands (used with Command.tuningStep 0x10)
+    ///
+    /// Selects the frequency increment used when rotating the main dial.
+    /// The value is sent as the data byte of a tuning-step (0x10) frame.
     public enum TuningStep {
+        /// 10 Hz tuning step (0x00)
         public static let step10Hz: UInt8 = 0x00
+        /// 100 Hz tuning step (0x01)
         public static let step100Hz: UInt8 = 0x01
+        /// 1 kHz tuning step (0x02)
         public static let step1kHz: UInt8 = 0x02
+        /// 2.5 kHz tuning step (0x03)
         public static let step2_5kHz: UInt8 = 0x03
+        /// 5 kHz tuning step (0x04)
         public static let step5kHz: UInt8 = 0x04
+        /// 9 kHz tuning step — useful for AM broadcast band channel spacing (0x05)
         public static let step9kHz: UInt8 = 0x05
+        /// 10 kHz tuning step (0x06)
         public static let step10kHz: UInt8 = 0x06
+        /// 12.5 kHz tuning step — standard VHF/UHF channel spacing (0x07)
         public static let step12_5kHz: UInt8 = 0x07
+        /// 25 kHz tuning step — wide-band FM channel spacing (0x08)
         public static let step25kHz: UInt8 = 0x08
     }
 
     /// Attenuator settings (used with Command.attenuator 0x11)
+    ///
+    /// Controls the front-end attenuator, which reduces the gain of the
+    /// receiver's RF stage to prevent overload from strong nearby signals.
+    /// The value is sent as the data byte of an attenuator (0x11) frame.
+    /// Not all attenuator steps are available on every radio model.
     public enum AttenuatorCode {
+        /// Attenuator off — full receive sensitivity (0x00)
         public static let off: UInt8 = 0x00
+        /// 6 dB attenuation (0x06)
         public static let dB6: UInt8 = 0x06
+        /// 12 dB attenuation (0x12)
         public static let dB12: UInt8 = 0x12
+        /// 18 dB attenuation (0x18)
         public static let dB18: UInt8 = 0x18
     }
 
     /// Announce sub-commands (used with Command.announce 0x13)
+    ///
+    /// Selects which information the radio broadcasts (announces) over CI-V
+    /// without being explicitly polled.  Useful when listening for unsolicited
+    /// status updates.
     public enum AnnounceCode {
+        /// Announce all available information (0x00)
         public static let all: UInt8 = 0x00
+        /// Announce frequency and S-meter reading only (0x01)
         public static let frequencyAndSMeter: UInt8 = 0x01
+        /// Announce operating mode only (0x02)
         public static let mode: UInt8 = 0x02
     }
 
@@ -492,16 +542,32 @@ extension CIVFrame {
     }
 
     /// Preamp settings (used with FunctionCode.preamp)
+    ///
+    /// Selects which (if any) receive preamplifier stage is active.
+    /// Higher preamp levels increase receive sensitivity at the cost of
+    /// greater susceptibility to overload from strong signals.
+    /// Not all radios have two preamp stages; consult the radio manual.
     public enum PreampCode {
+        /// Preamplifier off — no additional gain (0x00)
         public static let off: UInt8 = 0x00
+        /// Preamp 1 — first preamplifier stage, typically +10 dB (0x01)
         public static let preamp1: UInt8 = 0x01
+        /// Preamp 2 — second preamplifier stage, typically +20 dB (0x02);
+        /// not available on all models
         public static let preamp2: UInt8 = 0x02
     }
 
-    /// AGC settings (used with FunctionCode.agc)
+    /// AGC (Automatic Gain Control) time-constant settings (used with FunctionCode.agc)
+    ///
+    /// Controls how quickly the receiver's gain responds to changes in signal
+    /// strength.  Fast AGC is better for CW and data modes; slow AGC provides
+    /// more natural audio on SSB and AM.
     public enum AGCCode {
+        /// Fast AGC — rapid gain recovery, recommended for CW and digital modes (0x01)
         public static let fast: UInt8 = 0x01
+        /// Medium AGC — balanced recovery time suitable for most modes (0x02)
         public static let mid: UInt8 = 0x02
+        /// Slow AGC — gradual recovery, recommended for SSB and AM voice (0x03)
         public static let slow: UInt8 = 0x03
     }
 

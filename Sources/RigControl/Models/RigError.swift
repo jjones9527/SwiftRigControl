@@ -72,14 +72,30 @@ public enum RigError: Error, LocalizedError, Sendable {
 
     public var recoverySuggestion: String? {
         switch self {
+        case .notConnected:
+            return "Call connect() on the RigController before issuing any commands."
+        case .unsupportedRadio:
+            return "Verify the radio model string against the list of supported radios in RadioDefinition."
+        case .commandFailed:
+            return "Check that the radio is in a state that accepts the command, then retry."
+        case .timeout:
+            return "Verify the serial cable is connected, the radio is powered on, and the baud rate matches."
+        case .invalidResponse:
+            return "Ensure the radio firmware is up to date and the correct radio model is selected."
+        case .serialPortError:
+            return "Check that the serial port path is correct and the port is not in use by another application."
+        case .busy:
+            return "Wait for the current radio operation to complete before sending another command."
+        case .unsupportedOperation:
+            return "Consult the radio's capabilities (RigCapabilities) to determine which operations are supported."
+        case .invalidParameter:
+            return "Review the parameter constraints documented on the calling API."
         case .frequencyOutOfRange:
-            return "Check the radio's manual for valid frequency ranges"
+            return "Check the radio's manual for valid frequency ranges."
         case .transmitNotAllowed:
-            return "This frequency is receive-only or outside amateur bands"
+            return "This frequency is receive-only or outside amateur bands."
         case .modeNotSupported:
-            return "Use a different mode for this frequency"
-        default:
-            return nil
+            return "Use a different mode for this frequency."
         }
     }
 }
