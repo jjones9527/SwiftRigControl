@@ -88,7 +88,11 @@ public protocol CATProtocol: Actor {
 
     /// Sets the RF power level.
     ///
-    /// - Parameter watts: Power level in watts (0 to capabilities.maxPower)
+    /// The unit and range depend on the radio's protocol. Icom CI-V radios use a
+    /// 0–255 percentage scale (see `RigCapabilities.powerUnits`), not watts.
+    /// Check `RigCapabilities` for the specific radio's power representation.
+    ///
+    /// - Parameter watts: Power level in the radio's native units (0 to capabilities.maxPower)
     /// - Throws: `RigError.unsupportedOperation` if radio doesn't support power control
     func setPower(_ watts: Int) async throws
 

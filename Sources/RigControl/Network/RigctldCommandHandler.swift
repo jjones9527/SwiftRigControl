@@ -192,11 +192,13 @@ public actor RigctldCommandHandler {
         case "CWR", "CWU": return .cwR
         case "AM": return .am
         case "FM": return .fm
+        case "FMN": return .fmN
         case "WFM": return .wfm
         case "RTTY", "RTTYL": return .rtty
         case "RTTYR", "RTTYU": return .rttyR
-        case "PKTLSB", "DATALSB": return .dataLSB
-        case "PKTUSB", "DATAUSB": return .dataUSB
+        case "PKTLSB", "DATA-LSB", "DATALSB": return .dataLSB
+        case "PKTUSB", "DATA-USB", "DATAUSB": return .dataUSB
+        case "PKTFM", "DATA-FM", "DATAFM": return .dataFM
         default:
             throw RigError.invalidParameter("Unknown mode: \(modeStr)")
         }

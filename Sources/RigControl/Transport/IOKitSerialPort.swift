@@ -122,9 +122,16 @@ public actor IOKitSerialPort: SerialTransport {
         // No output processing
         termios.c_oflag &= ~tcflag_t(OPOST)
 
-        // Set read timeout (VTIME is in deciseconds)
-        termios.c_cc.16 = 1  // VTIME = 0.1 second
-        termios.c_cc.17 = 0  // VMIN = 0 (non-blocking read)
+        // VTIME: read timeout in deciseconds (0.1 s). VMIN: minimum bytes before read returns.
+        // VMIN=0 + VTIME=1 → read(2) returns after at most 0.1 s even if no bytes arrived.
+        //
+        // c_cc is a fixed-size C tuple, not a Swift Array, so subscript syntax is unavailable.
+        // We use withUnsafeMutableBytes to write by byte offset using the POSIX-defined
+        // VTIME/VMIN constants, which are safer than raw magic-number tuple indices.
+        withUnsafeMutableBytes(of: &termios.c_cc) { ptr in
+            ptr[Int(VTIME)] = 1
+            ptr[Int(VMIN)]  = 0
+        }
 
         // Apply settings
         guard tcsetattr(fileDescriptor, TCSANOW, &termios) == 0 else {
@@ -255,11 +262,18 @@ public actor IOKitSerialPort: SerialTransport {
 }
 
 #else
-// Non-macOS platforms get a stub implementation
+// Non-macOS stub — all operations throw at runtime.
+// IOKitSerialPort requires macOS IOKit; it cannot be instantiated on other platforms.
 public actor IOKitSerialPort: SerialTransport {
     public var isOpen: Bool { false }
 
+    /// `IOKitSerialPort` is only available on macOS.
+    ///
+    /// On non-macOS platforms, calling this initializer is a programming error — all
+    /// subsequent operations will throw `RigError.serialPortError`.
+    @available(*, unavailable, message: "IOKitSerialPort is only available on macOS")
     public init(configuration: SerialConfiguration) {
+        // Unreachable: @available(*, unavailable) prevents any call-site from reaching this.
         fatalError("IOKitSerialPort is only available on macOS")
     }
 
@@ -268,9 +282,21 @@ public actor IOKitSerialPort: SerialTransport {
     }
 
     public func close() async {}
-    public func write(_ data: Data) async throws {}
-    public func read(timeout: TimeInterval) async throws -> Data { Data() }
-    public func readUntil(terminator: UInt8, timeout: TimeInterval) async throws -> Data { Data() }
-    public func flush() async throws {}
+
+    public func write(_ data: Data) async throws {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func read(timeout: TimeInterval) async throws -> Data {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func readUntil(terminator: UInt8, timeout: TimeInterval) async throws -> Data {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func flush() async throws {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
 }
 #endif

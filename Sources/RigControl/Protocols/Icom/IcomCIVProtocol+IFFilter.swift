@@ -38,8 +38,8 @@ extension IcomCIVProtocol {
         // Get current mode so we can resend it with the new filter
         let currentMode = try await getMode(vfo: .a)
 
-        // Send mode command with new filter
-        let modeCode = try modeCode(for: currentMode)
+        // Send mode command with new filter (uses canonical mode-to-code mapping)
+        let modeCode = try modeToIcomCode(currentMode)
         let frame = CIVFrame(
             to: civAddress,
             command: [CIVFrame.Command.setMode],
@@ -83,7 +83,13 @@ extension IcomCIVProtocol {
 
         let filterByte = response.data[1]
 
-        // Validate filter byte is one of the known values
+        // Filter byte 0x00 (FilterCode.data) means the radio is in DATA sub-mode.
+        // DATA mode doesn't have a discrete filter position; return filter1 as default.
+        if filterByte == CIVFrame.FilterCode.data {
+            return .filter1
+        }
+
+        // Validate filter byte is one of the known values (0x01–0x03)
         guard let filter = IFFilter(rawValue: filterByte) else {
             throw RigError.invalidResponse
         }
@@ -95,36 +101,7 @@ extension IcomCIVProtocol {
 
     /// Whether this radio supports IF filter control.
     private var supportsIFFilterControl: Bool {
-        // Only radios that require mode filter byte support filter control
-        // This is determined by the IcomRadioCommandSet protocol
-        switch radioModel {
-        case .ic7600, .ic7300, .ic7610, .ic9700, .ic9100, .ic7200, .ic7410,
-             .ic7851, .ic7800, .ic7700:
-            return true
-        case .ic7100, .ic705:
-            // These radios don't include filter in mode command
-            return false
-        default:
-            return false
-        }
-    }
-
-    /// Get mode code for a given Mode.
-    private func modeCode(for mode: Mode) throws -> UInt8 {
-        switch mode {
-        case .lsb: return 0x00
-        case .usb: return 0x01
-        case .am: return 0x02
-        case .cw: return 0x03
-        case .rtty: return 0x04
-        case .fm: return 0x05
-        case .wfm: return 0x06
-        case .cwR: return 0x07
-        case .rttyR: return 0x08
-        case .fmN: return 0x05  // FM Narrow uses same code as FM
-        case .dataLSB: return 0x00  // Data modes use voice mode codes
-        case .dataUSB: return 0x01
-        case .dataFM: return 0x05
-        }
+        // Only radios that send the filter byte in the mode command support filter control
+        capabilities.requiresModeFilter
     }
 }

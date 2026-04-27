@@ -75,9 +75,15 @@ public actor IcomCIVProtocol: CATProtocol {
         )
     }
 
-    /// Required initializer from CATProtocol (throws since we need civAddress)
+    /// Required by `CATProtocol` but not usable for Icom radios.
+    ///
+    /// Always triggers a `fatalError` at runtime. This initializer exists only to satisfy the
+    /// `CATProtocol` requirement; all call-sites must use
+    /// `init(transport:civAddress:radioModel:commandSet:capabilities:)` instead.
+    ///
+    /// - Important: Do not call this initializer directly. Use the designated Icom initializer.
     public init(transport: any SerialTransport) {
-        fatalError("Use init(transport:commandSet:capabilities:) for Icom radios")
+        preconditionFailure("Use init(transport:civAddress:radioModel:commandSet:capabilities:) for Icom radios")
     }
 
     // MARK: - Connection
@@ -152,14 +158,25 @@ public actor IcomCIVProtocol: CATProtocol {
         // Convert Mode enum to Icom mode code
         let modeCode = try modeToIcomCode(mode)
 
-        // Get command formatting from command set
-        let (command, data) = commandSet.setModeCommand(mode: modeCode)
-
-        let frame = CIVFrame(
-            to: civAddress,
-            command: command,
-            data: data
-        )
+        // Data modes use filter byte 0x00; voice/CW/RTTY modes use the command set default (FIL1)
+        let frame: CIVFrame
+        if isDataMode(mode) && capabilities.requiresModeFilter {
+            // DATA mode: send mode byte + filter byte 0x00 (FilterCode.data)
+            // This tells the radio to engage the DATA sub-mode (flat audio path)
+            frame = CIVFrame(
+                to: civAddress,
+                command: [CIVFrame.Command.setMode],
+                data: [modeCode, CIVFrame.FilterCode.data]
+            )
+        } else {
+            // Voice/CW/RTTY mode: delegate to command set (handles filter byte presence per radio)
+            let (command, data) = commandSet.setModeCommand(mode: modeCode)
+            frame = CIVFrame(
+                to: civAddress,
+                command: command,
+                data: data
+            )
+        }
 
         try await sendFrame(frame)
         let response = try await receiveFrame()
@@ -187,9 +204,12 @@ public actor IcomCIVProtocol: CATProtocol {
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // Parse response using command set
+        // Parse mode code from response
         let modeCode = try commandSet.parseModeResponse(response)
-        return try icomCodeToMode(modeCode)
+
+        // Extract filter byte if present (second data byte); FilterCode.data (0x00) = DATA mode
+        let filterByte: UInt8 = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
+        return try icomCodeToMode(modeCode, filterByte: filterByte)
     }
 
     // MARK: - PTT Control
@@ -413,35 +433,65 @@ public actor IcomCIVProtocol: CATProtocol {
         return frame
     }
 
-    /// Converts a Mode enum to an Icom mode code.
+    /// Converts a Mode enum to an Icom mode code byte (CI-V command 0x06 first data byte).
+    ///
+    /// Data modes (DATA-USB, DATA-LSB, DATA-FM) share their mode byte with the equivalent
+    /// voice mode. The radio distinguishes them via the filter byte (0x00 = DATA, 0x01-0x03 = FIL1-3).
+    /// FM-Narrow also shares the FM mode byte; filter selection controls bandwidth.
     internal func modeToIcomCode(_ mode: Mode) throws -> UInt8 {
         switch mode {
-        case .lsb: return CIVFrame.ModeCode.lsb
-        case .usb: return CIVFrame.ModeCode.usb
-        case .am: return CIVFrame.ModeCode.am
-        case .cw: return CIVFrame.ModeCode.cw
-        case .cwR: return CIVFrame.ModeCode.cwR
-        case .rtty: return CIVFrame.ModeCode.rtty
-        case .rttyR: return CIVFrame.ModeCode.rttyR
-        case .fm: return CIVFrame.ModeCode.fm
-        case .wfm: return CIVFrame.ModeCode.wfm
-        default:
-            throw RigError.unsupportedOperation("Mode \(mode) not supported by Icom protocol")
+        case .lsb:     return CIVFrame.ModeCode.lsb
+        case .usb:     return CIVFrame.ModeCode.usb
+        case .am:      return CIVFrame.ModeCode.am
+        case .cw:      return CIVFrame.ModeCode.cw
+        case .cwR:     return CIVFrame.ModeCode.cwR
+        case .rtty:    return CIVFrame.ModeCode.rtty
+        case .rttyR:   return CIVFrame.ModeCode.rttyR
+        case .fm:      return CIVFrame.ModeCode.fm
+        case .fmN:     return CIVFrame.ModeCode.fm   // FM-Narrow uses same code; filter controls bandwidth
+        case .wfm:     return CIVFrame.ModeCode.wfm
+        case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA-LSB uses LSB mode code + filter byte 0x00
+        case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
+        case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
         }
     }
 
-    /// Converts an Icom mode code to a Mode enum.
-    internal func icomCodeToMode(_ code: UInt8) throws -> Mode {
+    /// Returns true if the mode requires the DATA filter byte (0x00) instead of FIL1-3.
+    ///
+    /// On Icom radios, data modes are set by sending the base voice mode code with filter byte 0x00.
+    /// This is what triggers the radio's DATA mode (separate audio path, flat response).
+    internal func isDataMode(_ mode: Mode) -> Bool {
+        switch mode {
+        case .dataLSB, .dataUSB, .dataFM: return true
+        default: return false
+        }
+    }
+
+    /// Converts an Icom mode code + filter byte pair to a Mode enum.
+    ///
+    /// When the filter byte is `FilterCode.data` (0x00), the radio is in DATA mode
+    /// for that base mode. All other filter values (0x01–0x03) indicate voice mode.
+    internal func icomCodeToMode(_ code: UInt8, filterByte: UInt8 = CIVFrame.FilterCode.fil1) throws -> Mode {
+        let isData = (filterByte == CIVFrame.FilterCode.data)
         switch code {
-        case CIVFrame.ModeCode.lsb: return .lsb
-        case CIVFrame.ModeCode.usb: return .usb
-        case CIVFrame.ModeCode.am: return .am
-        case CIVFrame.ModeCode.cw: return .cw
-        case CIVFrame.ModeCode.cwR: return .cwR
-        case CIVFrame.ModeCode.rtty: return .rtty
-        case CIVFrame.ModeCode.rttyR: return .rttyR
-        case CIVFrame.ModeCode.fm: return .fm
-        case CIVFrame.ModeCode.wfm: return .wfm
+        case CIVFrame.ModeCode.lsb:
+            return isData ? .dataLSB : .lsb
+        case CIVFrame.ModeCode.usb:
+            return isData ? .dataUSB : .usb
+        case CIVFrame.ModeCode.am:
+            return .am
+        case CIVFrame.ModeCode.cw:
+            return .cw
+        case CIVFrame.ModeCode.cwR:
+            return .cwR
+        case CIVFrame.ModeCode.rtty:
+            return .rtty
+        case CIVFrame.ModeCode.rttyR:
+            return .rttyR
+        case CIVFrame.ModeCode.fm:
+            return isData ? .dataFM : .fm
+        case CIVFrame.ModeCode.wfm:
+            return .wfm
         default:
             throw RigError.invalidResponse
         }

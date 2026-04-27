@@ -92,7 +92,9 @@ public struct RigctldCommandParser {
             throw ParseError.unknownCommand(input)
         }
 
-        let char = commandChar.first!
+        guard let char = commandChar.first else {
+            throw ParseError.unknownCommand(input)
+        }
         let args = parts.dropFirst().map(String.init)
 
         switch char {

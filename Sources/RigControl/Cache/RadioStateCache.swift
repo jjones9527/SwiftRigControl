@@ -24,14 +24,24 @@ import Foundation
 /// ```
 public actor RadioStateCache {
 
+    /// Type-erased interface for reading the timestamp of any `CachedValue<T>`
+    /// without needing to know T. This avoids Mirror reflection.
+    private protocol CachedValueBox {
+        /// Age of this cache entry in seconds
+        var age: TimeInterval { get }
+    }
+
     /// Cached value with timestamp
-    private struct CachedValue<T> {
+    private struct CachedValue<T>: CachedValueBox {
         let value: T
         let timestamp: Date
 
+        /// Age of this entry in seconds
+        var age: TimeInterval { Date().timeIntervalSince(timestamp) }
+
         /// Check if the cached value is still valid
         func isValid(maxAge: TimeInterval) -> Bool {
-            Date().timeIntervalSince(timestamp) < maxAge
+            age < maxAge
         }
     }
 
@@ -158,19 +168,11 @@ public actor RadioStateCache {
     /// - Parameter key: Cache key to check
     /// - Returns: Age in seconds, or nil if key not found
     public func age(of key: String) -> TimeInterval? {
-        guard let cached = cache[key] else {
+        // CachedValueBox erases the generic parameter while keeping timestamp accessible.
+        guard let box = cache[key] as? any CachedValueBox else {
             return nil
         }
-
-        // Use type erasure to access timestamp
-        let mirror = Mirror(reflecting: cached)
-        for child in mirror.children {
-            if child.label == "timestamp", let timestamp = child.value as? Date {
-                return Date().timeIntervalSince(timestamp)
-            }
-        }
-
-        return nil
+        return box.age
     }
 }
 
