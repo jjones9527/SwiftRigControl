@@ -5,6 +5,89 @@ All notable changes to SwiftRigControl will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - v1.3.0
+
+### Added
+
+#### Radio Support
+- **9 new radio models** identified via hamlib comparison:
+  - **Icom:** IC-7760 (HF/6m flagship, 200W), IC-7300 MK2 (HF/6m SDR, 100W)
+  - **Yaesu Legacy:** FT-1000MP (HF, 200W, dual RX), FT-857 (HF/VHF/UHF, 100W), FT-897 (HF/VHF/UHF, 100W), FT-450 (HF/6m, 100W)
+  - **Kenwood Legacy:** TS-850S (HF, 100W, ATU), TS-570D (HF/6m, 100W, ATU), TS-570S (HF, 100W)
+
+#### Level Controls API
+- **New `CATProtocol` methods** for hardware-level controls:
+  - `setAFGain(_:)` / `getAFGain()` — AF gain (volume), 0–255 scale
+  - `setRFGain(_:)` / `getRFGain()` — RF gain (receiver sensitivity), 0–255 scale
+  - `setSquelch(_:)` / `getSquelch()` — Squelch level, 0–255 scale
+  - `setPreamp(_:)` / `getPreamp()` — Preamplifier selection (0=off, 1=AMP1, 2=AMP2)
+  - `setAttenuator(_:)` / `getAttenuator()` — Attenuator level in dB
+  - `setPowerState(_:)` / `getPowerState()` — Remote power on/off (PS command)
+- **New `RigController` convenience methods** wrapping the above with caching support:
+  - `setAFGain(_:)` / `afGain(cached:)`
+  - `setRFGain(_:)` / `rfGain(cached:)`
+  - `setSquelch(_:)` / `squelch(cached:)`
+  - `setPreamp(_:)` / `preamp(cached:)`
+  - `setAttenuator(_:)` / `attenuator(cached:)`
+  - `setPowerState(_:)` / `getPowerState()`
+
+#### DSP Controls API
+- **New `CATProtocol` methods** for DSP control:
+  - `setAGC(_:)` / `getAGC()` — AGC mode (`.fast`, `.mid`, `.slow`, `.off`, `.auto`)
+  - `setNoiseBlanker(_:)` / `getNoiseBlanker()` — Noise blanker on/off
+  - `setNoiseReduction(_:level:)` / `getNoiseReduction()` — DSP noise reduction with level
+  - `setIFFilter(_:)` / `getIFFilter()` — IF filter selection (`.filter1`–`.filter3`)
+- **New types:**
+  - `AGCMode` enum: `.off`, `.fast`, `.mid`, `.slow`, `.auto`
+  - `IFFilter` enum: `.filter1` (wide), `.filter2` (mid), `.filter3` (narrow)
+- **RigController DSP methods** with caching:
+  - `setAGC(_:)` / `agc(cached:)`
+  - `setNoiseBlanker(_:)` / `noiseBlanker(cached:)`
+  - `setNoiseReduction(_:level:)` / `noiseReduction(cached:)`
+  - `setIFFilter(_:)` / `ifFilter(cached:)`
+
+#### Protocol Implementations
+
+**Yaesu CAT Protocol** (`YaesuCATProtocol+LevelControls.swift`):
+- AF gain: `AG0nnn` / `AG0` query
+- RF gain: `RGnnn` / `RG` query
+- Squelch: `SQ0nnn` / `SQ0` query
+- Preamp: `PA0n` — 0=IPO (off), 1=AMP1, 2=AMP2
+- Attenuator: `RAnn` — 0→00, 6→01, 12→02, 18→03
+- AGC: `GTnnn` — 000=fast, 001=mid, 002=slow, 003=auto
+- Noise blanker: `NB0` / `NB1`
+- Noise reduction: `NR0` / `NR1` / `NR2`
+- IF filter: `SHnn` — filter1→07, filter2→05, filter3→02
+- Power state: `PS1` / `PS0`
+- Memory: `MCnnn`
+
+**Kenwood Protocol** (`KenwoodProtocol+LevelControls.swift`):
+- Same command set as Yaesu with differences:
+  - Preamp: `PA` (not `PA0`) — single stage, level>0 enables
+  - AGC: 0=off, 1=fast, 2=mid, 3=slow
+
+**Elecraft Protocol** (`ElecraftProtocol+LevelControls.swift`):
+- K2/K3/K4-aware with full isK2 branching:
+  - AF gain: `AGnnn` (no "0" suffix, unlike Yaesu/Kenwood)
+  - Squelch: `SQnnn` (no "0" suffix)
+  - Attenuator: K2 uses 10/20 dB steps; K3/K4 use 6 dB steps
+  - AGC: K2 supports fast(0)/slow(1) only; K3/K4 add mid(1)
+  - IF filter: K2 uses `FW` command (Hz); K3/K4 use `BW` command (10Hz units)
+  - K2 SET commands do not echo — uses 50ms delay instead of `receiveResponse()`
+  - Memory: `MC` with K2 10-channel limit vs 100 for K3/K4
+
+### Changed
+
+- `CATProtocol` extended from 12 to 31 methods; all new methods have default implementations throwing `.unsupportedOperation` for graceful degradation
+- `YaesuCATProtocol.sendCommand` / `receiveResponse` changed from `private` to `internal` access to support extension files
+- `KenwoodProtocol.sendCommand` / `receiveResponse` changed from `private` to `internal` access to support extension files
+
+### Fixed
+
+- `IcomCIVProtocol+MemoryChannels.swift`: Non-exhaustive switch in `getMemoryChannelCount()` fixed by adding `case .ic7760, .ic7300mk2: return 99`
+
+---
+
 ## [1.0.4] - 2026-01-14
 
 ### Added
@@ -977,35 +1060,17 @@ Both changes are compile-time safe - your code will not compile until fixed.
 - Documentation: ~3,300 lines
 - Total: ~12,600 lines
 
-## [Unreleased]
-
-### Planned for v1.1.0
-- S-meter reading support
-- TX meter reading (power, SWR, ALC)
-- Additional radio models
-- RIT/XIT (clarifier) support
-- Antenna selection
-
-### Planned for v1.2.0
-- Channel memory operations
-- Scanning functionality
-- Preamp/attenuator control
-- Filter selection
-- Band stacking registers
-
-### Planned for v2.0.0
-- Network rig control (rigctld protocol)
-- Audio routing integration
-- Automatic radio detection
-- CI/CD pipeline
-- Performance optimizations
-
 ## Version History
 
-- **1.0.0** (2025-11-19) - Initial production release
+| Version | Date | Highlights |
+|---------|------|------------|
+| 1.3.0 | (upcoming) | Level/DSP controls, 9 new radios |
+| 1.2.0 | 2025-12-19 | Memory channel operations |
+| 1.1.0 | 2025-11-19 | Signal strength, RIT/XIT, caching |
+| 1.0.4 | 2026-01-14 | K2 fixes, LGPL license, hardware tests |
+| 1.0.2 | 2025-11-24 | Frequency validation, ITU regions |
+| 1.0.0 | 2025-11-19 | Initial production release |
 
 ---
-
-**Note:** This is the initial v1.0.0 release. Future versions will continue to document changes in this file following the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
 For detailed information about the v1.0.0 release, see [RELEASE_NOTES_v1.0.0.md](RELEASE_NOTES_v1.0.0.md).

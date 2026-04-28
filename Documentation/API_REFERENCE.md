@@ -440,6 +440,290 @@ let xitState = try await rig.getXIT()
 print("XIT: \(xitState.description)")  // "ON (-1000 Hz)" or "OFF"
 ```
 
+#### Level Controls (v1.3.0)
+
+##### setAFGain(_:)
+
+```swift
+public func setAFGain(_ level: Int) async throws
+```
+
+Sets the audio frequency (AF) gain (volume).
+
+**Parameters:**
+- `level`: AF gain level (0–255)
+
+**Throws:** `RigError` if operation fails
+
+**Example:**
+```swift
+try await rig.setAFGain(128)  // ~50% volume
+```
+
+##### afGain(cached:)
+
+```swift
+public func afGain(cached: Bool = true) async throws -> Int
+```
+
+Reads the current AF gain level.
+
+**Returns:** AF gain level (0–255)
+
+##### setRFGain(_:)
+
+```swift
+public func setRFGain(_ level: Int) async throws
+```
+
+Sets the RF gain (receiver sensitivity).
+
+**Parameters:**
+- `level`: RF gain level (0–255)
+
+**Example:**
+```swift
+try await rig.setRFGain(200)  // High RF gain
+```
+
+##### rfGain(cached:)
+
+```swift
+public func rfGain(cached: Bool = true) async throws -> Int
+```
+
+Reads the current RF gain level.
+
+**Returns:** RF gain level (0–255)
+
+##### setSquelch(_:)
+
+```swift
+public func setSquelch(_ level: Int) async throws
+```
+
+Sets the squelch level.
+
+**Parameters:**
+- `level`: Squelch level (0–255)
+
+**Example:**
+```swift
+try await rig.setSquelch(0)    // Open squelch
+try await rig.setSquelch(100)  // Moderate squelch
+```
+
+##### squelch(cached:)
+
+```swift
+public func squelch(cached: Bool = true) async throws -> Int
+```
+
+Reads the current squelch level.
+
+**Returns:** Squelch level (0–255)
+
+##### setPreamp(_:)
+
+```swift
+public func setPreamp(_ level: Int) async throws
+```
+
+Sets the preamplifier state.
+
+**Parameters:**
+- `level`: Preamp level (0 = off, 1 = preamp 1, 2 = preamp 2)
+
+**Throws:**
+- `RigError.unsupportedOperation` - Radio doesn't support preamp control
+
+**Example:**
+```swift
+try await rig.setPreamp(1)  // Enable preamp 1
+try await rig.setPreamp(0)  // Disable preamp
+```
+
+##### preamp(cached:)
+
+```swift
+public func preamp(cached: Bool = true) async throws -> Int
+```
+
+Reads the current preamp state (0 = off, 1 = preamp 1, 2 = preamp 2).
+
+##### setAttenuator(_:)
+
+```swift
+public func setAttenuator(_ level: Int) async throws
+```
+
+Sets the attenuator level.
+
+**Parameters:**
+- `level`: Attenuation level — protocol-specific. Elecraft K2: 0/10/20 dB; K3/K4: 0/6/12/18 dB; Yaesu/Kenwood: 0/6/12/18 dB.
+
+**Throws:**
+- `RigError.unsupportedOperation` - Radio doesn't support attenuator control
+
+**Example:**
+```swift
+try await rig.setAttenuator(6)   // 6 dB attenuation
+try await rig.setAttenuator(0)   // No attenuation
+```
+
+##### attenuator(cached:)
+
+```swift
+public func attenuator(cached: Bool = true) async throws -> Int
+```
+
+Reads the current attenuator level in dB.
+
+##### setPowerState(_:)
+
+```swift
+public func setPowerState(_ on: Bool) async throws
+```
+
+Controls radio power state (soft power on/off via CAT).
+
+**Parameters:**
+- `on`: `true` to power on, `false` to power off
+
+**Throws:**
+- `RigError.unsupportedOperation` - Radio doesn't support remote power control
+
+**Example:**
+```swift
+try await rig.setPowerState(true)   // Power on
+try await rig.setPowerState(false)  // Power off (standby)
+```
+
+##### getPowerState()
+
+```swift
+public func getPowerState() async throws -> Bool
+```
+
+Reads the current power state.
+
+**Returns:** `true` if radio is on, `false` if in standby
+
+#### DSP Controls (v1.3.0)
+
+##### setAGC(_:)
+
+```swift
+public func setAGC(_ mode: AGCMode) async throws
+```
+
+Sets the AGC (Automatic Gain Control) mode.
+
+**Parameters:**
+- `mode`: AGC mode
+
+**Throws:**
+- `RigError.unsupportedOperation` - Radio doesn't support AGC control
+
+**Example:**
+```swift
+try await rig.setAGC(.fast)
+try await rig.setAGC(.slow)
+try await rig.setAGC(.off)
+```
+
+##### agc(cached:)
+
+```swift
+public func agc(cached: Bool = true) async throws -> AGCMode
+```
+
+Reads the current AGC mode.
+
+**Returns:** Current `AGCMode` (`.fast`, `.mid`, `.slow`, `.off`, `.auto`)
+
+**Note:** Available AGC modes vary by radio — Elecraft K2 supports only `.fast` and `.slow`; most other radios add `.mid`.
+
+##### setNoiseBlanker(_:)
+
+```swift
+public func setNoiseBlanker(_ enabled: Bool) async throws
+```
+
+Enables or disables the noise blanker.
+
+**Parameters:**
+- `enabled`: `true` to enable, `false` to disable
+
+**Example:**
+```swift
+try await rig.setNoiseBlanker(true)
+```
+
+##### noiseBlanker(cached:)
+
+```swift
+public func noiseBlanker(cached: Bool = true) async throws -> Bool
+```
+
+Reads the noise blanker state.
+
+##### setNoiseReduction(_:level:)
+
+```swift
+public func setNoiseReduction(_ enabled: Bool, level: Int = 5) async throws
+```
+
+Controls the DSP noise reduction.
+
+**Parameters:**
+- `enabled`: `true` to enable, `false` to disable
+- `level`: NR level (0–10). Levels 1–5 select NR stage 1; levels 6–10 select NR stage 2 (on radios that support it).
+
+**Example:**
+```swift
+try await rig.setNoiseReduction(true, level: 3)
+try await rig.setNoiseReduction(false)
+```
+
+##### noiseReduction(cached:)
+
+```swift
+public func noiseReduction(cached: Bool = true) async throws -> Bool
+```
+
+Reads the noise reduction state.
+
+##### setIFFilter(_:)
+
+```swift
+public func setIFFilter(_ filter: IFFilter) async throws
+```
+
+Selects the IF (intermediate frequency) filter bandwidth.
+
+**Parameters:**
+- `filter`: Filter selection (`.filter1`, `.filter2`, `.filter3`)
+
+**Example:**
+```swift
+try await rig.setIFFilter(.filter1)  // Widest
+try await rig.setIFFilter(.filter3)  // Narrowest (CW)
+```
+
+**Approximate bandwidths (protocol-dependent):**
+- `.filter1` ≈ 2700 Hz (standard SSB)
+- `.filter2` ≈ 2100 Hz (narrow SSB)
+- `.filter3` ≈ 500 Hz (CW)
+
+##### ifFilter(cached:)
+
+```swift
+public func ifFilter(cached: Bool = true) async throws -> IFFilter
+```
+
+Reads the current IF filter selection.
+
 #### Memory Channel Operations (v1.2.0)
 
 Memory channels allow storing complete radio configurations (frequency, mode, name, and optional parameters) in non-volatile memory for quick recall. SwiftRigControl provides a universal memory channel model that works across all radio manufacturers.
@@ -670,18 +954,20 @@ print("Dual receiver: \(caps.hasDualReceiver)")
 
 All supported radios are available as static properties on `RadioDefinition`.
 
-### Icom Radios (25 models)
+### Icom Radios (27 models)
 
 ```swift
 // Flagship & High-End HF
 .icomIC7851         // HF/6m flagship with spectrum scope, 200W
 .icomIC7800         // HF/6m flagship dual receiver, 200W
+.icomIC7760         // HF/6m flagship SDR, 200W (new in v1.3.0)
 .icomIC7700         // HF/6m high-end, 200W
 .icomIC7610         // HF/6m SDR with dual receiver, 100W
 .icomIC7600         // HF/6m high-performance dual receiver, 100W
 
 // Popular HF Transceivers
 .icomIC7300         // HF/6m all-mode SDR, 100W
+.icomIC7300mk2      // HF/6m all-mode SDR (revised), 100W (new in v1.3.0)
 .icomIC7410         // HF/6m all-mode, 100W
 .icomIC7200         // HF/6m mid-range, 100W
 .icomIC756PROIII    // HF/6m dual receiver, 100W
@@ -724,9 +1010,10 @@ All supported radios are available as static properties on `RadioDefinition`.
 .elecraftKX3        // HF/6m portable, 15W
 ```
 
-### Yaesu Radios (10 models)
+### Yaesu Radios (14 models)
 
 ```swift
+// Modern (2010+)
 .yaesuFTDX10        // HF/6m, 100W
 .yaesuFT991A        // HF/VHF/UHF, 100W
 .yaesuFT710         // HF/6m AESS, 100W
@@ -737,11 +1024,18 @@ All supported radios are available as static properties on `RadioDefinition`.
 .yaesuFT857D        // HF/VHF/UHF mobile, 100W
 .yaesuFT897D        // HF/VHF/UHF base/mobile, 100W
 .yaesuFT450D        // HF/6m budget, 100W
+
+// Legacy (Pre-2005) — new in v1.3.0
+.yaesuFT1000MP      // HF flagship, 200W, dual receiver
+.yaesuFT857         // HF/VHF/UHF mobile, 100W
+.yaesuFT897         // HF/VHF/UHF portable, 100W
+.yaesuFT450         // HF/6m, 100W
 ```
 
-### Kenwood Radios (12 models)
+### Kenwood Radios (15 models)
 
 ```swift
+// Modern
 .kenwoodTS890S      // HF/6m, 100W, dual RX
 .kenwoodTS990S      // HF/6m flagship, 200W, dual RX
 .kenwoodTS590SG     // HF/6m, 100W
@@ -754,6 +1048,11 @@ All supported radios are available as static properties on `RadioDefinition`.
 .kenwoodTMV71       // VHF/UHF, 50W
 .kenwoodTHD74       // VHF/UHF handheld, 5W
 .kenwoodTHD72A      // VHF/UHF handheld, 5W
+
+// Legacy HF — new in v1.3.0
+.kenwoodTS850S      // HF, 100W, ATU
+.kenwoodTS570D      // HF/6m, 100W, ATU
+.kenwoodTS570S      // HF, 100W
 ```
 
 ---
@@ -1004,6 +1303,54 @@ Different radios support different channel counts:
 - Most Yaesu: 1-99 or 1-117
 - Most Kenwood: 0-99 or 0-299
 
+### AGCMode (v1.3.0)
+
+```swift
+public enum AGCMode: String, Sendable, CaseIterable {
+    case off    // AGC disabled
+    case fast   // Fast AGC
+    case mid    // Medium AGC
+    case slow   // Slow AGC
+    case auto   // Automatic AGC (radio-selected)
+}
+```
+
+Available modes vary by radio. Elecraft K2 supports only `.fast` and `.slow`; most Yaesu/Kenwood radios support `.fast`, `.mid`, `.slow`. Some radios support `.auto`.
+
+**Usage:**
+```swift
+try await rig.setAGC(.slow)   // Slow AGC for SSB voice
+try await rig.setAGC(.fast)   // Fast AGC for CW
+let current = try await rig.agc()
+```
+
+### IFFilter (v1.3.0)
+
+```swift
+public enum IFFilter: Int, Sendable, CaseIterable {
+    case filter1 = 1  // Widest (≈2700 Hz SSB)
+    case filter2 = 2  // Medium (≈2100 Hz)
+    case filter3 = 3  // Narrowest (≈500 Hz CW)
+}
+```
+
+Selects the IF filter bandwidth. Exact bandwidths depend on the radio model and installed filter options.
+
+**Protocol-specific bandwidths:**
+
+| Filter | Yaesu/Kenwood | Elecraft K3/K4 (BW) | Elecraft K2 (FW) |
+|--------|---------------|---------------------|------------------|
+| filter1 | SH07 (~2700 Hz) | 2700 Hz | 2700 Hz |
+| filter2 | SH05 (~2100 Hz) | 2100 Hz | 2100 Hz |
+| filter3 | SH02 (~500 Hz) | 500 Hz | 500 Hz |
+
+**Usage:**
+```swift
+try await rig.setIFFilter(.filter1)  // Wide for SSB
+try await rig.setIFFilter(.filter3)  // Narrow for CW
+let current = try await rig.ifFilter()
+```
+
 ### RigCapabilities
 
 ```swift
@@ -1191,34 +1538,78 @@ do {
 
 ### CATProtocol
 
-The base protocol that all radio protocols implement.
+The base protocol that all radio protocols implement. All methods beyond the core set have default implementations that throw `.unsupportedOperation`, so protocols only need to implement what the hardware supports.
 
 ```swift
 public protocol CATProtocol: Actor {
     var transport: any SerialTransport { get }
     var capabilities: RigCapabilities { get }
 
+    // Connection
     func connect() async throws
     func disconnect() async
 
+    // Frequency
     func setFrequency(_ hz: UInt64, vfo: VFO) async throws
     func getFrequency(vfo: VFO) async throws -> UInt64
 
+    // Mode
     func setMode(_ mode: Mode, vfo: VFO) async throws
     func getMode(vfo: VFO) async throws -> Mode
 
+    // PTT
     func setPTT(_ enabled: Bool) async throws
     func getPTT() async throws -> Bool
 
+    // VFO
     func selectVFO(_ vfo: VFO) async throws
 
+    // Split
     func setSplit(_ enabled: Bool) async throws
     func getSplit() async throws -> Bool
 
+    // RF Power
     func setPower(_ value: Int) async throws
     func getPower() async throws -> Int
 
+    // S-Meter
     func getSignalStrength() async throws -> SignalStrength
+
+    // RIT/XIT (v1.1.0)
+    func setRIT(_ state: RITXITState) async throws
+    func getRIT() async throws -> RITXITState
+    func setXIT(_ state: RITXITState) async throws
+    func getXIT() async throws -> RITXITState
+
+    // Memory Channels (v1.2.0)
+    func setMemoryChannel(_ channel: MemoryChannel) async throws
+    func getMemoryChannel(_ number: Int) async throws -> MemoryChannel
+    func getMemoryChannelCount() async throws -> Int
+    func clearMemoryChannel(_ number: Int) async throws
+
+    // Level Controls (v1.3.0)
+    func setAFGain(_ level: Int) async throws
+    func getAFGain() async throws -> Int
+    func setRFGain(_ level: Int) async throws
+    func getRFGain() async throws -> Int
+    func setSquelch(_ level: Int) async throws
+    func getSquelch() async throws -> Int
+    func setPreamp(_ level: Int) async throws
+    func getPreamp() async throws -> Int
+    func setAttenuator(_ level: Int) async throws
+    func getAttenuator() async throws -> Int
+    func setPowerState(_ on: Bool) async throws
+    func getPowerState() async throws -> Bool
+
+    // DSP Controls (v1.3.0)
+    func setAGC(_ mode: AGCMode) async throws
+    func getAGC() async throws -> AGCMode
+    func setNoiseBlanker(_ enabled: Bool) async throws
+    func getNoiseBlanker() async throws -> Bool
+    func setNoiseReduction(_ enabled: Bool, level: Int) async throws
+    func getNoiseReduction() async throws -> Bool
+    func setIFFilter(_ filter: IFFilter) async throws
+    func getIFFilter() async throws -> IFFilter
 }
 ```
 
@@ -1339,15 +1730,36 @@ Cache entries expire after 500ms by default. Used internally by `RigController`.
 
 ## Version History
 
-### v1.1.0 (Current)
+### v1.3.0 (Current)
+- ✅ Level controls: AF gain, RF gain, squelch, preamp, attenuator
+- ✅ DSP controls: AGC, noise blanker, noise reduction, IF filter
+- ✅ Power state control (remote on/off)
+- ✅ Level control implemented for Yaesu, Kenwood, and Elecraft protocols
+- ✅ New radio models: IC-7760, IC-7300 MK2, FT-1000MP, FT-857, FT-897, FT-450, TS-850S, TS-570D, TS-570S
+- ✅ CATProtocol extended to 31 methods with graceful default fallbacks
+
+### v1.2.0
+- ✅ Memory channel operations (set, get, clear, recall)
+- ✅ Universal MemoryChannel model (CTCSS, DCS, duplex, split)
+- ✅ Icom CI-V memory channel implementation (all 25 models)
+- ✅ Yaesu/Kenwood/Elecraft memory channel support
+
+### v1.1.0
 - ✅ Signal strength monitoring
+- ✅ RIT/XIT incremental tuning control
 - ✅ Performance caching (10-20x faster)
 - ✅ Batch configuration API
 - ✅ Cache invalidation control
 
+### v1.0.4
+- ✅ Elecraft K2 power control and PTT timing fixes
+- ✅ LGPL v3.0 licensing
+- ✅ GitHub issue/PR templates
+- ✅ Hardware test suite (IC-7600, IC-7100, IC-9700, K2 verified)
+
 ### v1.0.2
 - ✅ Comprehensive frequency validation
-- ✅ ITU regional band support
+- ✅ ITU regional band support (Region 1/2/3)
 - ✅ Amateur band validation
 - ✅ Extended Icom radio database
 
