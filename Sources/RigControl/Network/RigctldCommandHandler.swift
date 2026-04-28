@@ -158,6 +158,15 @@ public actor RigctldCommandHandler {
         case .getLevel(let name):
             return try await getLevel(name: name, command: command)
 
+        // Power state
+        case .setPowerStat(let on):
+            try await rigController.setPowerState(on)
+            return .ok(command: command)
+
+        case .getPowerStat:
+            let on = try await rigController.getPowerState()
+            return RigctldResponse(value: on ? "1" : "0", command: command)
+
         // Information commands
         case .dumpCapabilities:
             return await dumpCapabilities()
@@ -254,11 +263,64 @@ public actor RigctldCommandHandler {
 
     // MARK: - Level Control
 
-    /// Set a level value (supports AGC, NB, NR)
+    /// Set a level value
     private func setLevel(name: String, value: String, command: RigctldCommand) async throws -> RigctldResponse {
         let normalized = name.uppercased()
 
         switch normalized {
+        case "AF":
+            // AF gain: Hamlib uses 0.0-1.0 float, we use 0-255
+            guard let floatVal = Double(value) else {
+                throw RigError.invalidParameter("Invalid AF value: \(value)")
+            }
+            let level = Int(floatVal * 255.0)
+            try await rigController.setAFGain(min(max(level, 0), 255))
+            return .ok(command: command)
+
+        case "RF":
+            // RF gain: Hamlib uses 0.0-1.0 float, we use 0-255
+            guard let floatVal = Double(value) else {
+                throw RigError.invalidParameter("Invalid RF value: \(value)")
+            }
+            let level = Int(floatVal * 255.0)
+            try await rigController.setRFGain(min(max(level, 0), 255))
+            return .ok(command: command)
+
+        case "SQL":
+            // Squelch: Hamlib uses 0.0-1.0 float, we use 0-255
+            guard let floatVal = Double(value) else {
+                throw RigError.invalidParameter("Invalid SQL value: \(value)")
+            }
+            let level = Int(floatVal * 255.0)
+            try await rigController.setSquelch(min(max(level, 0), 255))
+            return .ok(command: command)
+
+        case "PREAMP":
+            // Preamp: integer stage number (0=off, 1=preamp1, 2=preamp2)
+            guard let stage = Int(value) else {
+                throw RigError.invalidParameter("Invalid PREAMP value: \(value)")
+            }
+            try await rigController.setPreamp(stage)
+            return .ok(command: command)
+
+        case "ATT":
+            // Attenuator: dB value (0=off, 6=6dB, 10=10dB, etc.)
+            guard let dB = Int(value) else {
+                throw RigError.invalidParameter("Invalid ATT value: \(value)")
+            }
+            try await rigController.setAttenuator(dB)
+            return .ok(command: command)
+
+        case "RFPOWER":
+            // RF output power: Hamlib uses 0.0-1.0 normalized float
+            guard let floatVal = Double(value) else {
+                throw RigError.invalidParameter("Invalid RFPOWER value: \(value)")
+            }
+            let caps = await rigController.capabilities
+            let watts = Int(floatVal * Double(caps.maxPower))
+            try await rigController.setPower(min(max(watts, 0), caps.maxPower))
+            return .ok(command: command)
+
         case "AGC":
             // Parse AGC value - Hamlib uses numeric codes
             // Map common values: 0=OFF, 1=FAST, 2=MEDIUM/MID, 3=SLOW
@@ -335,11 +397,43 @@ public actor RigctldCommandHandler {
         }
     }
 
-    /// Get a level value (supports AGC, NB, NR, IF filter)
+    /// Get a level value
     private func getLevel(name: String, command: RigctldCommand) async throws -> RigctldResponse {
         let normalized = name.uppercased()
 
         switch normalized {
+        case "AF":
+            // AF gain: return 0.0-1.0 float (Hamlib convention)
+            let level = try await rigController.afGain()
+            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
+
+        case "RF":
+            // RF gain: return 0.0-1.0 float
+            let level = try await rigController.rfGain()
+            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
+
+        case "SQL":
+            // Squelch: return 0.0-1.0 float
+            let level = try await rigController.squelch()
+            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
+
+        case "PREAMP":
+            // Preamp: return integer stage (0, 1, 2)
+            let stage = try await rigController.preamp()
+            return RigctldResponse(value: String(stage), command: command)
+
+        case "ATT":
+            // Attenuator: return dB value
+            let dB = try await rigController.attenuator()
+            return RigctldResponse(value: String(dB), command: command)
+
+        case "RFPOWER":
+            // RF output power: return 0.0-1.0 normalized float
+            let watts = try await rigController.power()
+            let caps = await rigController.capabilities
+            let normalized = Double(watts) / Double(caps.maxPower)
+            return RigctldResponse(value: String(format: "%.6f", min(max(normalized, 0.0), 1.0)), command: command)
+
         case "AGC":
             let agc = try await rigController.agc()
             // Map AGCSpeed to numeric value for Hamlib compatibility
@@ -459,6 +553,11 @@ public actor RigctldCommandHandler {
         if caps.powerControl {
             lines.append("Max power: \(caps.maxPower) W")
         }
+
+        // Level capabilities
+        lines.append("Has set level: AF RF SQL PREAMP ATT RFPOWER AGC NB NR IF")
+        lines.append("Has get level: AF RF SQL PREAMP ATT RFPOWER AGC NB NR IF")
+        lines.append("Has set powerstat: Yes")
 
         return RigctldResponse(data: lines, command: .dumpCapabilities)
     }

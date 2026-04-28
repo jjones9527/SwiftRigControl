@@ -163,11 +163,11 @@ public enum RigctldCommand: Sendable, Equatable {
     // MARK: - Level Commands
 
     /// Set level (L or \set_level)
-    /// Currently supports AGC level
+    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR, IF/IFFILTER
     case setLevel(name: String, value: String)
 
     /// Get level (l or \get_level)
-    /// Currently supports AGC level
+    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR, IF/IFFILTER
     case getLevel(name: String)
 
     // MARK: - Information Commands
@@ -181,9 +181,17 @@ public enum RigctldCommand: Sendable, Equatable {
     /// Check VFO mode (\chk_vfo)
     case checkVFO
 
+    // MARK: - Power State
+
+    /// Set power state (\set_powerstat) — remote on/off
+    case setPowerStat(on: Bool)
+
+    /// Get power state (\get_powerstat)
+    case getPowerStat
+
     // MARK: - Protocol Control
 
-    /// Set extended response protocol (\set_powerstat or protocol extension)
+    /// Set extended response protocol (\set_ext_response)
     case setExtendedResponse(enabled: Bool)
 
     /// Quit connection (q or \quit)
@@ -210,6 +218,8 @@ public enum RigctldCommand: Sendable, Equatable {
         case .mW2power: return "mW2power"
         case .setLevel: return "set_level"
         case .getLevel: return "get_level"
+        case .setPowerStat: return "set_powerstat"
+        case .getPowerStat: return "get_powerstat"
         case .dumpCapabilities: return "dump_caps"
         case .dumpState: return "dump_state"
         case .checkVFO: return "chk_vfo"

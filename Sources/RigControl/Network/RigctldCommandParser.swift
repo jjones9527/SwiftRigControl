@@ -370,8 +370,21 @@ public struct RigctldCommandParser {
         case "chk_vfo":
             return .checkVFO
 
+        // Power state control
+        case "set_powerstat":
+            guard let onStr = args.first else {
+                throw ParseError.missingParameter("power state")
+            }
+            guard let on = Int(onStr) else {
+                throw ParseError.invalidParameter("power state", value: onStr)
+            }
+            return .setPowerStat(on: on != 0)
+
+        case "get_powerstat":
+            return .getPowerStat
+
         // Protocol control
-        case "set_ext_response", "set_powerstat":
+        case "set_ext_response":
             guard let enabledStr = args.first else {
                 throw ParseError.missingParameter("enabled")
             }
