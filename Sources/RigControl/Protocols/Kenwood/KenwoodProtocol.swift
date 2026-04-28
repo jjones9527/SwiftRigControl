@@ -434,7 +434,7 @@ public actor KenwoodProtocol: CATProtocol {
     // MARK: - Private Methods
 
     /// Sends a command to the radio.
-    private func sendCommand(_ command: String) async throws {
+    func sendCommand(_ command: String) async throws {
         var data = command.data(using: .ascii) ?? Data()
         // Add terminator (semicolon)
         data.append(KenwoodProtocol.terminator)
@@ -443,7 +443,7 @@ public actor KenwoodProtocol: CATProtocol {
     }
 
     /// Receives a response from the radio.
-    private func receiveResponse() async throws -> String {
+    func receiveResponse() async throws -> String {
         // Read until semicolon
         let data = try await transport.readUntil(
             terminator: KenwoodProtocol.terminator,
