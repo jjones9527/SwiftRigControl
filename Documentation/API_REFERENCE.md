@@ -614,85 +614,91 @@ Reads the current power state.
 ##### setAGC(_:)
 
 ```swift
-public func setAGC(_ mode: AGCMode) async throws
+public func setAGC(_ speed: AGCSpeed) async throws
 ```
 
-Sets the AGC (Automatic Gain Control) mode.
+Sets the AGC (Automatic Gain Control) speed.
 
 **Parameters:**
-- `mode`: AGC mode
+- `speed`: AGC speed (`.off`, `.fast`, `.medium`, `.slow`, `.auto`)
 
 **Throws:**
 - `RigError.unsupportedOperation` - Radio doesn't support AGC control
 
 **Example:**
 ```swift
-try await rig.setAGC(.fast)
-try await rig.setAGC(.slow)
-try await rig.setAGC(.off)
+try await rig.setAGC(.fast)    // CW/digital modes
+try await rig.setAGC(.slow)    // Weak signal SSB DX
+try await rig.setAGC(.off)     // Manual RF gain only
 ```
 
 ##### agc(cached:)
 
 ```swift
-public func agc(cached: Bool = true) async throws -> AGCMode
+public func agc(cached: Bool = true) async throws -> AGCSpeed
 ```
 
-Reads the current AGC mode.
+Reads the current AGC speed.
 
-**Returns:** Current `AGCMode` (`.fast`, `.mid`, `.slow`, `.off`, `.auto`)
+**Returns:** Current `AGCSpeed`
 
-**Note:** Available AGC modes vary by radio — Elecraft K2 supports only `.fast` and `.slow`; most other radios add `.mid`.
+**Note:** Available speeds vary by radio. Elecraft K2: `.fast`/`.slow` only. Most Icom/Kenwood: `.off`/`.fast`/`.medium`/`.slow`. Select Yaesu models add `.auto`.
 
 ##### setNoiseBlanker(_:)
 
 ```swift
-public func setNoiseBlanker(_ enabled: Bool) async throws
+public func setNoiseBlanker(_ config: NoiseBlanker) async throws
 ```
 
-Enables or disables the noise blanker.
+Sets the noise blanker state and optional level.
 
 **Parameters:**
-- `enabled`: `true` to enable, `false` to disable
+- `config`: `NoiseBlanker` configuration
 
 **Example:**
 ```swift
-try await rig.setNoiseBlanker(true)
+try await rig.setNoiseBlanker(.enabled(level: 5))  // Enable with level
+try await rig.setNoiseBlanker(.enabled())           // Enable (simple on/off radios)
+try await rig.setNoiseBlanker(.off)                 // Disable
 ```
 
 ##### noiseBlanker(cached:)
 
 ```swift
-public func noiseBlanker(cached: Bool = true) async throws -> Bool
+public func noiseBlanker(cached: Bool = true) async throws -> NoiseBlanker
 ```
 
 Reads the noise blanker state.
 
-##### setNoiseReduction(_:level:)
+**Returns:** Current `NoiseBlanker` configuration
+
+##### setNoiseReduction(_:)
 
 ```swift
-public func setNoiseReduction(_ enabled: Bool, level: Int = 5) async throws
+public func setNoiseReduction(_ config: NoiseReduction) async throws
 ```
 
-Controls the DSP noise reduction.
+Sets the DSP noise reduction state and level.
 
 **Parameters:**
-- `enabled`: `true` to enable, `false` to disable
-- `level`: NR level (0–10). Levels 1–5 select NR stage 1; levels 6–10 select NR stage 2 (on radios that support it).
+- `config`: `NoiseReduction` configuration
 
 **Example:**
 ```swift
-try await rig.setNoiseReduction(true, level: 3)
-try await rig.setNoiseReduction(false)
+try await rig.setNoiseReduction(.enabled(level: 8))   // Enable with level
+try await rig.setNoiseReduction(.enabled(level: 15))  // Maximum NR
+try await rig.setNoiseReduction(.off)                 // Disable
 ```
 
 ##### noiseReduction(cached:)
 
 ```swift
-public func noiseReduction(cached: Bool = true) async throws -> Bool
+public func noiseReduction(cached: Bool = true) async throws -> NoiseReduction
 ```
 
 Reads the noise reduction state.
+
+**Returns:** Current `NoiseReduction` configuration
 
 ##### setIFFilter(_:)
 
@@ -707,7 +713,7 @@ Selects the IF (intermediate frequency) filter bandwidth.
 
 **Example:**
 ```swift
-try await rig.setIFFilter(.filter1)  // Widest
+try await rig.setIFFilter(.filter1)  // Widest (SSB)
 try await rig.setIFFilter(.filter3)  // Narrowest (CW)
 ```
 
@@ -1303,25 +1309,84 @@ Different radios support different channel counts:
 - Most Yaesu: 1-99 or 1-117
 - Most Kenwood: 0-99 or 0-299
 
-### AGCMode (v1.3.0)
+### AGCSpeed (v1.3.0)
 
 ```swift
-public enum AGCMode: String, Sendable, CaseIterable {
-    case off    // AGC disabled
-    case fast   // Fast AGC
-    case mid    // Medium AGC
-    case slow   // Slow AGC
-    case auto   // Automatic AGC (radio-selected)
+public enum AGCSpeed: String, Sendable, Codable, CaseIterable {
+    case off    // AGC disabled (manual RF gain control)
+    case fast   // Fast AGC — CW, digital modes, contest
+    case medium // Medium AGC — general SSB, AM
+    case slow   // Slow AGC — weak signal DX, QRP
+    case auto   // Automatic selection by mode (select Yaesu radios only)
 }
 ```
 
-Available modes vary by radio. Elecraft K2 supports only `.fast` and `.slow`; most Yaesu/Kenwood radios support `.fast`, `.mid`, `.slow`. Some radios support `.auto`.
+**Usage:**
+```swift
+try await rig.setAGC(.fast)    // CW/digital modes
+try await rig.setAGC(.slow)    // Weak signal SSB DX
+let current = try await rig.agc()
+```
+
+### NoiseBlanker (v1.3.0)
+
+```swift
+public enum NoiseBlanker: Sendable, Equatable {
+    case off
+    case enabled(level: Int? = nil)  // level: 0-10 on supported radios
+
+    var isEnabled: Bool
+    var level: Int?
+}
+```
 
 **Usage:**
 ```swift
-try await rig.setAGC(.slow)   // Slow AGC for SSB voice
-try await rig.setAGC(.fast)   // Fast AGC for CW
-let current = try await rig.agc()
+try await rig.setNoiseBlanker(.enabled(level: 5))  // NB with level control
+try await rig.setNoiseBlanker(.enabled())           // Simple on/off radios
+try await rig.setNoiseBlanker(.off)
+let nb = try await rig.noiseBlanker()
+```
+
+### NoiseReduction (v1.3.0)
+
+```swift
+public enum NoiseReduction: Sendable, Equatable {
+    case off
+    case enabled(level: Int)  // level: 0-15 typical, some radios 0-255
+
+    var isEnabled: Bool
+    var level: Int?
+}
+```
+
+**Usage:**
+```swift
+try await rig.setNoiseReduction(.enabled(level: 8))
+try await rig.setNoiseReduction(.off)
+let nr = try await rig.noiseReduction()
+```
+
+### NoiseControlConfig (v1.3.0)
+
+Convenience struct for configuring NB and NR together.
+
+```swift
+public struct NoiseControlConfig: Sendable, Equatable {
+    public var blanker: NoiseBlanker
+    public var reduction: NoiseReduction
+
+    public static let off: NoiseControlConfig     // Both off
+    public static let light: NoiseControlConfig   // NB 3, NR 5
+    public static let medium: NoiseControlConfig  // NB 5, NR 8
+    public static let heavy: NoiseControlConfig   // NB 8, NR 12
+}
+```
+
+**Usage:**
+```swift
+try await rig.setNoiseBlanker(NoiseControlConfig.medium.blanker)
+try await rig.setNoiseReduction(NoiseControlConfig.medium.reduction)
 ```
 
 ### IFFilter (v1.3.0)
@@ -1602,12 +1667,12 @@ public protocol CATProtocol: Actor {
     func getPowerState() async throws -> Bool
 
     // DSP Controls (v1.3.0)
-    func setAGC(_ mode: AGCMode) async throws
-    func getAGC() async throws -> AGCMode
-    func setNoiseBlanker(_ enabled: Bool) async throws
-    func getNoiseBlanker() async throws -> Bool
-    func setNoiseReduction(_ enabled: Bool, level: Int) async throws
-    func getNoiseReduction() async throws -> Bool
+    func setAGC(_ speed: AGCSpeed) async throws
+    func getAGC() async throws -> AGCSpeed
+    func setNoiseBlanker(_ config: NoiseBlanker) async throws
+    func getNoiseBlanker() async throws -> NoiseBlanker
+    func setNoiseReduction(_ config: NoiseReduction) async throws
+    func getNoiseReduction() async throws -> NoiseReduction
     func setIFFilter(_ filter: IFFilter) async throws
     func getIFFilter() async throws -> IFFilter
 }
