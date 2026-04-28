@@ -312,29 +312,31 @@ public actor RigctldCommandHandler {
             return .ok(command: command)
 
         case "RFPOWER":
-            // RF output power: Hamlib uses 0.0-1.0 normalized float
+            // RF output power: Hamlib uses 0.0-1.0 normalized float, minimum 0.05
             guard let floatVal = Double(value) else {
                 throw RigError.invalidParameter("Invalid RFPOWER value: \(value)")
             }
             let caps = await rigController.capabilities
-            let watts = Int(floatVal * Double(caps.maxPower))
+            // Hamlib enforces a 0.05 minimum — radios reject 0W
+            let normalized = max(0.05, min(1.0, floatVal))
+            let watts = Int(normalized * Double(caps.maxPower))
             try await rigController.setPower(min(max(watts, 0), caps.maxPower))
             return .ok(command: command)
 
         case "AGC":
-            // Parse AGC value - Hamlib uses numeric codes
-            // Map common values: 0=OFF, 1=FAST, 2=MEDIUM/MID, 3=SLOW
+            // Hamlib CI-V AGC codes: OFF=0, SUPERFAST=1, FAST=2, SLOW=3, USER=4, MID=5, AUTO=6
+            // Also accept string names for convenience
             let agcSpeed: AGCSpeed
             switch value {
             case "0", "OFF":
                 agcSpeed = .off
-            case "1", "FAST":
+            case "1", "SUPERFAST", "2", "FAST":
                 agcSpeed = .fast
-            case "2", "MID", "MEDIUM":
-                agcSpeed = .medium
             case "3", "SLOW":
                 agcSpeed = .slow
-            case "4", "AUTO":
+            case "5", "MID", "MEDIUM":
+                agcSpeed = .medium
+            case "6", "AUTO":
                 agcSpeed = .auto
             default:
                 throw RigError.invalidParameter("Invalid AGC value: \(value)")
@@ -428,22 +430,22 @@ public actor RigctldCommandHandler {
             return RigctldResponse(value: String(dB), command: command)
 
         case "RFPOWER":
-            // RF output power: return 0.0-1.0 normalized float
+            // RF output power: return 0.0-1.0 normalized float, minimum 0.05
             let watts = try await rigController.power()
             let caps = await rigController.capabilities
             let normalized = Double(watts) / Double(caps.maxPower)
-            return RigctldResponse(value: String(format: "%.6f", min(max(normalized, 0.0), 1.0)), command: command)
+            return RigctldResponse(value: String(format: "%.6f", min(max(normalized, 0.05), 1.0)), command: command)
 
         case "AGC":
             let agc = try await rigController.agc()
-            // Map AGCSpeed to numeric value for Hamlib compatibility
+            // Return Hamlib CI-V AGC codes: OFF=0, FAST=2, SLOW=3, MID=5, AUTO=6
             let value: String
             switch agc {
-            case .off: value = "0"
-            case .fast: value = "1"
-            case .medium: value = "2"
-            case .slow: value = "3"
-            case .auto: value = "4"
+            case .off:    value = "0"
+            case .fast:   value = "2"
+            case .slow:   value = "3"
+            case .medium: value = "5"
+            case .auto:   value = "6"
             }
             return RigctldResponse(value: value, command: command)
 

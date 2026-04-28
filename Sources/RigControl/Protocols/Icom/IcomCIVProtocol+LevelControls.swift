@@ -409,14 +409,22 @@ extension IcomCIVProtocol {
 
     /// Sets the front-end attenuator via CI-V command `0x11`.
     ///
-    /// - Parameter dB: 0 (off), 6, 12, or 18. Not all steps available on every model.
+    /// Valid dB values vary by model:
+    /// - IC-7100, IC-705: 0, 6, 12, 18
+    /// - IC-7300, IC-7610, IC-7851, IC-7800: 0, 10, 20
+    /// - IC-9700: 0, 3, 6, 9, 12
     public func setAttenuator(_ dB: Int) async throws {
         let code: UInt8
         switch dB {
         case 0:  code = CIVFrame.AttenuatorCode.off
+        case 3:  code = CIVFrame.AttenuatorCode.dB3
         case 6:  code = CIVFrame.AttenuatorCode.dB6
+        case 9:  code = CIVFrame.AttenuatorCode.dB9
+        case 10: code = CIVFrame.AttenuatorCode.dB10
         case 12: code = CIVFrame.AttenuatorCode.dB12
         case 18: code = CIVFrame.AttenuatorCode.dB18
+        case 20: code = CIVFrame.AttenuatorCode.dB20
+        case 30: code = CIVFrame.AttenuatorCode.dB30
         default: throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB")
         }
         let frame = CIVFrame(
@@ -441,9 +449,14 @@ extension IcomCIVProtocol {
         guard let byte = response.data.first else { throw RigError.invalidResponse }
         switch byte {
         case CIVFrame.AttenuatorCode.off:  return 0
+        case CIVFrame.AttenuatorCode.dB3:  return 3
         case CIVFrame.AttenuatorCode.dB6:  return 6
+        case CIVFrame.AttenuatorCode.dB9:  return 9
+        case CIVFrame.AttenuatorCode.dB10: return 10
         case CIVFrame.AttenuatorCode.dB12: return 12
         case CIVFrame.AttenuatorCode.dB18: return 18
+        case CIVFrame.AttenuatorCode.dB20: return 20
+        case CIVFrame.AttenuatorCode.dB30: return 30
         default: throw RigError.invalidResponse
         }
     }

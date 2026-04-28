@@ -69,29 +69,30 @@ extension IcomCIVProtocol {
 
     // MARK: - AGC Mapping
 
-    /// Maps AGCSpeed enum to radio-specific code.
+    /// Maps AGCSpeed enum to radio-specific CI-V byte.
     ///
+    /// Uses canonical Hamlib/rigctld byte values: OFF=0x00, FAST=0x02, SLOW=0x03, MID=0x05, AUTO=0x06.
     /// Returns nil if the speed is not supported by this radio model.
     private func agcCode(for speed: AGCSpeed) -> UInt8? {
         switch radioModel {
         case .ic7600, .ic7300, .ic7610, .ic7851, .ic7800, .ic7700:
             // These radios don't support AGC OFF
             switch speed {
-            case .off: return nil  // Not supported
-            case .fast: return 1
-            case .medium: return 2
-            case .slow: return 3
-            case .auto: return nil  // Not supported
+            case .off:    return nil  // Not supported
+            case .fast:   return CIVFrame.AGCCode.fast   // 0x02
+            case .medium: return CIVFrame.AGCCode.mid    // 0x05
+            case .slow:   return CIVFrame.AGCCode.slow   // 0x03
+            case .auto:   return nil  // Not supported
             }
 
         case .ic9700, .ic7100, .ic705:
             // These radios support AGC OFF
             switch speed {
-            case .off: return 0
-            case .fast: return 1
-            case .medium: return 2
-            case .slow: return 3
-            case .auto: return nil  // Not supported
+            case .off:    return CIVFrame.AGCCode.off    // 0x00
+            case .fast:   return CIVFrame.AGCCode.fast   // 0x02
+            case .medium: return CIVFrame.AGCCode.mid    // 0x05
+            case .slow:   return CIVFrame.AGCCode.slow   // 0x03
+            case .auto:   return nil  // Not supported
             }
 
         default:
@@ -99,25 +100,27 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Maps radio-specific code to AGCSpeed enum.
+    /// Maps CI-V AGC byte to AGCSpeed enum.
+    ///
+    /// Uses canonical Hamlib/rigctld byte values: OFF=0x00, FAST=0x02, SLOW=0x03, MID=0x05, AUTO=0x06.
     private func agcSpeed(from code: UInt8) -> AGCSpeed? {
         switch radioModel {
         case .ic7600, .ic7300, .ic7610, .ic7851, .ic7800, .ic7700:
-            // No AGC OFF support
+            // No AGC OFF support on these models
             switch code {
-            case 1: return .fast
-            case 2: return .medium
-            case 3: return .slow
+            case CIVFrame.AGCCode.fast:   return .fast
+            case CIVFrame.AGCCode.mid:    return .medium
+            case CIVFrame.AGCCode.slow:   return .slow
             default: return nil
             }
 
         case .ic9700, .ic7100, .ic705:
             // Has AGC OFF support
             switch code {
-            case 0: return .off
-            case 1: return .fast
-            case 2: return .medium
-            case 3: return .slow
+            case CIVFrame.AGCCode.off:    return .off
+            case CIVFrame.AGCCode.fast:   return .fast
+            case CIVFrame.AGCCode.mid:    return .medium
+            case CIVFrame.AGCCode.slow:   return .slow
             default: return nil
             }
 

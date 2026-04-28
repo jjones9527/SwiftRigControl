@@ -209,17 +209,31 @@ extension CIVFrame {
 
     /// Attenuator level codes (used with `Command.attenuator` 0x11).
     ///
-    /// Controls the front-end RF attenuator. Not all dB steps are available on
-    /// every radio model — consult the radio's manual.
+    /// The dB value is BCD-encoded as the sub-command byte following 0x11.
+    /// Not all steps are available on every radio model — consult the manual.
+    ///
+    /// - IC-7100, IC-705: 0, 6, 12, 18 dB
+    /// - IC-7300, IC-7610, IC-7851, IC-7800: 0, 10, 20 dB
+    /// - IC-9700: 0, 3, 6, 9, 12 dB
     public enum AttenuatorCode {
         /// Attenuator off — full receive sensitivity (0x00)
         public static let off: UInt8 = 0x00
-        /// 6 dB attenuation (0x06)
+        /// 3 dB attenuation — IC-9700 only (0x03)
+        public static let dB3: UInt8 = 0x03
+        /// 6 dB attenuation — IC-7100, IC-705, IC-9700 (0x06)
         public static let dB6: UInt8 = 0x06
-        /// 12 dB attenuation (0x12)
+        /// 9 dB attenuation — IC-9700 only (0x09)
+        public static let dB9: UInt8 = 0x09
+        /// 10 dB attenuation — IC-7300, IC-7610, IC-7851, IC-7800 (0x10)
+        public static let dB10: UInt8 = 0x10
+        /// 12 dB attenuation — IC-7100, IC-705, IC-9700 (0x12)
         public static let dB12: UInt8 = 0x12
-        /// 18 dB attenuation (0x18)
+        /// 18 dB attenuation — IC-7100, IC-705 (0x18)
         public static let dB18: UInt8 = 0x18
+        /// 20 dB attenuation — IC-7300, IC-7610, IC-7851, IC-7800 (0x20)
+        public static let dB20: UInt8 = 0x20
+        /// 30 dB attenuation — IC-7800 only (0x30)
+        public static let dB30: UInt8 = 0x30
     }
 
     /// Announce sub-commands (used with `Command.announce` 0x13).
@@ -352,16 +366,25 @@ extension CIVFrame {
         public static let preamp2: UInt8 = 0x02
     }
 
-    /// AGC time-constant codes (used with `FunctionCode.agc`).
+    /// AGC time-constant codes (used with `FunctionCode.agc` = 0x16/0x12).
     ///
-    /// Controls how quickly the receiver's gain responds to changes in signal strength.
+    /// These are the canonical CI-V AGC byte values as used by Hamlib/rigctld.
+    /// Note the non-sequential ordering: FAST=0x02, SLOW=0x03, MID=0x05.
     public enum AGCCode {
-        /// Fast AGC — rapid gain recovery; recommended for CW and digital modes (0x01)
-        public static let fast: UInt8 = 0x01
-        /// Medium AGC — balanced recovery; suitable for most modes (0x02)
-        public static let mid: UInt8 = 0x02
+        /// AGC off — no automatic gain control (0x00)
+        public static let off: UInt8 = 0x00
+        /// Superfast AGC — very rapid gain recovery (0x01)
+        public static let superFast: UInt8 = 0x01
+        /// Fast AGC — rapid gain recovery; recommended for CW and digital modes (0x02)
+        public static let fast: UInt8 = 0x02
         /// Slow AGC — gradual recovery; recommended for SSB and AM voice (0x03)
         public static let slow: UInt8 = 0x03
+        /// User-defined AGC time constant (0x04)
+        public static let user: UInt8 = 0x04
+        /// Medium AGC — balanced recovery; suitable for most modes (0x05)
+        public static let mid: UInt8 = 0x05
+        /// Auto AGC — radio selects speed based on mode (0x06)
+        public static let auto: UInt8 = 0x06
     }
 
     /// Advanced-settings sub-commands (used with `Command.advancedSettings` 0x1A).
