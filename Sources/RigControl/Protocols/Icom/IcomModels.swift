@@ -58,6 +58,32 @@ extension RadioDefinition {
         )
     }
 
+    /// Icom IC-7300MK2 HF/6m SDR transceiver — successor to the IC-7300 (2025)
+    ///
+    /// Shares the default CI-V address 0x94 with the IC-7300. If both radios are on the
+    /// same CI-V bus, set a custom address on one of them.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x94)
+    /// - Returns: RadioDefinition for IC-7300MK2
+    public static func icomIC7300MK2(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7300MK2",
+            defaultBaudRate: 115200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7300MK2,
+            civAddress: civAddress ?? IcomRadioModel.ic7300mk2.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7300mk2,
+                    commandSet: StandardIcomCommandSet.ic7300,
+                    capabilities: RadioCapabilitiesDatabase.icomIC7300MK2
+                )
+            }
+        )
+    }
+
     /// Icom IC-7300 HF/6m all-mode transceiver
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x94)
@@ -76,6 +102,32 @@ extension RadioDefinition {
                     radioModel: .ic7300,
                     commandSet: StandardIcomCommandSet.ic7300,
                     capabilities: RadioCapabilitiesDatabase.icomIC7300
+                )
+            }
+        )
+    }
+
+    /// Icom IC-7760 HF/6m 200W flagship SDR transceiver (2024)
+    ///
+    /// The IC-7760 is Icom's 2024 dual-receiver SDR flagship with a default CI-V
+    /// address of 0xB0. It uses the same command set as the IC-7610.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xB0)
+    /// - Returns: RadioDefinition for IC-7760
+    public static func icomIC7760(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-7760",
+            defaultBaudRate: 115200,
+            capabilities: RadioCapabilitiesDatabase.icomIC7760,
+            civAddress: civAddress ?? IcomRadioModel.ic7760.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic7760,
+                    commandSet: StandardIcomCommandSet.ic7610,  // Same command set as IC-7610
+                    capabilities: RadioCapabilitiesDatabase.icomIC7760
                 )
             }
         )

@@ -162,6 +162,8 @@ extension IcomCIVProtocol {
             return 109  // Similar to IC-9700
         case .ic9100, .ic7000:
             return 99
+        case .ic7760, .ic7300mk2:
+            return 99  // Same as IC-7610/IC-7300
         case .ic7610, .ic7700, .ic7410, .ic7400, .ic7200, .ic751, .ic735, .ic718:
             return 99
         case .ic7851, .ic7850, .ic7800:

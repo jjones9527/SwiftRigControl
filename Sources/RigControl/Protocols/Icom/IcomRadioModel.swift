@@ -25,11 +25,17 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7600 HF/6m 100W transceiver with dual receiver
     case ic7600 = "IC-7600"
 
+    /// IC-7760 HF/6m 200W flagship SDR transceiver with dual receiver (2024)
+    case ic7760 = "IC-7760"
+
     /// IC-7610 HF/6m 100W SDR transceiver with dual receiver and spectrum scope
     case ic7610 = "IC-7610"
 
     /// IC-7300 HF/6m 100W SDR transceiver with spectrum scope
     case ic7300 = "IC-7300"
+
+    /// IC-7300MK2 HF/6m 100W SDR transceiver — successor to IC-7300 (2025)
+    case ic7300mk2 = "IC-7300MK2"
 
     /// IC-7851 HF/6m 200W flagship transceiver
     case ic7851 = "IC-7851"
@@ -181,9 +187,11 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     public var defaultCIVAddress: UInt8 {
         switch self {
         // HF Transceivers
-        case .ic7600: return 0x7A
-        case .ic7610: return 0x98
-        case .ic7300: return 0x94
+        case .ic7600:    return 0x7A
+        case .ic7760:    return 0xB0
+        case .ic7610:    return 0x98
+        case .ic7300:    return 0x94
+        case .ic7300mk2: return 0x94  // Same default as IC-7300; set a custom address if both are on the same bus
         case .ic7851: return 0x8E
         case .ic7850: return 0x8E
         case .ic7800: return 0x6A
@@ -267,7 +275,8 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio has dual receivers
     public var hasDualReceiver: Bool {
         switch self {
-        case .ic7600, .ic7610, .ic7851, .ic7850, .ic7800, .ic756, .ic756pro, .ic756proII, .ic756proIII,
+        case .ic7600, .ic7760, .ic7610, .ic7851, .ic7850, .ic7800,
+             .ic756, .ic756pro, .ic756proII, .ic756proIII,
              .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h, .id4100, .id5100:
             return true
         default:
@@ -278,7 +287,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio has spectrum scope capability
     public var hasSpectrumScope: Bool {
         switch self {
-        case .ic7610, .ic7300, .ic9700, .ic7851:
+        case .ic7760, .ic7610, .ic7300, .ic7300mk2, .ic9700, .ic7851:
             return true
         default:
             return false

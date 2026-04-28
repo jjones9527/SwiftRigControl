@@ -302,6 +302,110 @@ public protocol CATProtocol: Actor {
     /// - Throws: `RigError.unsupportedOperation` if IF filter control not supported
     func getIFFilter() async throws -> IFFilter
 
+    // MARK: - AF / RF / Squelch / Preamp / Attenuator
+
+    /// Sets the AF (audio) output gain.
+    ///
+    /// Controls the speaker/headphone volume level using a 0–255 scale.
+    /// Maps to CI-V command `0x14 0x01` on Icom radios.
+    ///
+    /// - Parameter level: Gain level from 0 (mute) to 255 (maximum)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func setAFGain(_ level: Int) async throws
+
+    /// Gets the current AF (audio) output gain.
+    ///
+    /// - Returns: Gain level from 0 to 255
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getAFGain() async throws -> Int
+
+    /// Sets the RF (receiver) gain.
+    ///
+    /// Controls the sensitivity of the receiver's RF front end.
+    /// Lower values reduce sensitivity and help prevent overloading from strong nearby signals.
+    /// Maps to CI-V command `0x14 0x02` on Icom radios.
+    ///
+    /// - Parameter level: Gain level from 0 (minimum) to 255 (maximum)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func setRFGain(_ level: Int) async throws
+
+    /// Gets the current RF (receiver) gain.
+    ///
+    /// - Returns: Gain level from 0 to 255
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getRFGain() async throws -> Int
+
+    /// Sets the squelch level.
+    ///
+    /// On FM/VHF/UHF radios this is the carrier squelch threshold.
+    /// On HF radios it may control a noise or S-meter squelch.
+    /// Maps to CI-V command `0x14 0x03` on Icom radios.
+    ///
+    /// - Parameter level: Squelch level from 0 (open) to 255 (maximum / tightest)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func setSquelch(_ level: Int) async throws
+
+    /// Gets the current squelch level.
+    ///
+    /// - Returns: Squelch level from 0 to 255
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getSquelch() async throws -> Int
+
+    /// Sets the preamplifier stage.
+    ///
+    /// Enables an RF preamplifier to boost weak-signal receive sensitivity.
+    /// Not all radios have two preamp stages; check `RigCapabilities`.
+    /// Maps to CI-V command `0x16 0x02` on Icom radios.
+    ///
+    /// - Parameter level: 0 = off, 1 = Preamp 1 (+10 dB), 2 = Preamp 2 (+20 dB)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    /// - Throws: `RigError.invalidParameter` if level is out of range for this radio
+    func setPreamp(_ level: Int) async throws
+
+    /// Gets the current preamplifier state.
+    ///
+    /// - Returns: 0 = off, 1 = Preamp 1, 2 = Preamp 2
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getPreamp() async throws -> Int
+
+    /// Sets the front-end attenuator.
+    ///
+    /// Reduces the RF gain ahead of the first mixer to prevent overloading from strong signals.
+    /// Available steps vary by radio model (typically 0, 6, 12, 18 dB).
+    /// Maps to CI-V command `0x11` on Icom radios.
+    ///
+    /// - Parameter dB: Attenuation in dB — 0 (off) or a model-specific value (6, 12, 18, 20)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    /// - Throws: `RigError.invalidParameter` if the dB value is not supported by this radio
+    func setAttenuator(_ dB: Int) async throws
+
+    /// Gets the current attenuator level.
+    ///
+    /// - Returns: Attenuation in dB (0 = off)
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getAttenuator() async throws -> Int
+
+    // MARK: - Power State
+
+    /// Powers the radio on or puts it in standby mode.
+    ///
+    /// Not all radios support remote power control via CAT.
+    /// Some support standby (low-power state) but not full power-off/on.
+    /// Maps to CI-V command `0x18` on Icom radios.
+    ///
+    /// - Parameter on: `true` to power on / wake from standby, `false` for standby/off
+    /// - Throws: `RigError.unsupportedOperation` if the radio does not support remote power control
+    func setPowerState(_ on: Bool) async throws
+
+    /// Gets the current power state of the radio.
+    ///
+    /// Implementations typically probe the radio with a lightweight read command;
+    /// a successful response means the radio is on, a timeout means it is off or in standby.
+    ///
+    /// - Returns: `true` if the radio is powered on and responding
+    /// - Throws: `RigError.unsupportedOperation` if not supported
+    func getPowerState() async throws -> Bool
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -445,6 +549,66 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getIFFilter() async throws -> IFFilter {
         throw RigError.unsupportedOperation("IF filter control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setAFGain(_ level: Int) async throws {
+        throw RigError.unsupportedOperation("AF gain control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getAFGain() async throws -> Int {
+        throw RigError.unsupportedOperation("AF gain control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setRFGain(_ level: Int) async throws {
+        throw RigError.unsupportedOperation("RF gain control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getRFGain() async throws -> Int {
+        throw RigError.unsupportedOperation("RF gain control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setSquelch(_ level: Int) async throws {
+        throw RigError.unsupportedOperation("Squelch control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getSquelch() async throws -> Int {
+        throw RigError.unsupportedOperation("Squelch control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setPreamp(_ level: Int) async throws {
+        throw RigError.unsupportedOperation("Preamp control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getPreamp() async throws -> Int {
+        throw RigError.unsupportedOperation("Preamp control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setAttenuator(_ dB: Int) async throws {
+        throw RigError.unsupportedOperation("Attenuator control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getAttenuator() async throws -> Int {
+        throw RigError.unsupportedOperation("Attenuator control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func setPowerState(_ on: Bool) async throws {
+        throw RigError.unsupportedOperation("Remote power control not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getPowerState() async throws -> Bool {
+        throw RigError.unsupportedOperation("Remote power state query not supported")
     }
 
     /// Default connect implementation just opens the transport

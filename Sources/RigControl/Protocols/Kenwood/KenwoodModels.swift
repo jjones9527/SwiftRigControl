@@ -169,4 +169,54 @@ extension RadioDefinition {
             )
         }
     )
+
+    // MARK: - Legacy HF Radios
+
+    /// Kenwood TS-850S HF 100W transceiver with internal ATU
+    ///
+    /// Default baud rate is 1200 — significantly lower than modern Kenwood radios.
+    public static let kenwoodTS850S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-850S",
+        defaultBaudRate: 1200,
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS850S,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS850S
+            )
+        }
+    )
+
+    /// Kenwood TS-570D HF/6m 100W transceiver with ATU and DSP
+    ///
+    /// Default baud rate is 4800. Includes 6m coverage (unlike the TS-570S).
+    public static let kenwoodTS570D = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-570D",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS570D,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS570D
+            )
+        }
+    )
+
+    /// Kenwood TS-570S HF-only 100W transceiver with DSP (no 6m, no ATU)
+    ///
+    /// Default baud rate is 4800. Budget sibling of the TS-570D — HF bands only.
+    public static let kenwoodTS570S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-570S",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.kenwoodTS570S,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.kenwoodTS570S
+            )
+        }
+    )
 }

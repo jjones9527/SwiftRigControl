@@ -295,4 +295,66 @@ extension RadioDefinition {
             )
         }
     )
+
+    // MARK: - Legacy Models (Pre-2005)
+
+    /// Yaesu FT-1000MP HF 200W flagship transceiver with dual receiver
+    ///
+    /// Default baud rate is 4800 — lower than modern Yaesu radios.
+    public static let yaesuFT1000MP = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-1000MP",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT1000MP,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT1000MP
+            )
+        }
+    )
+
+    /// Yaesu FT-857 HF/VHF/UHF 100W compact mobile transceiver (non-D version)
+    public static let yaesuFT857 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-857",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT857,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT857
+            )
+        }
+    )
+
+    /// Yaesu FT-897 HF/VHF/UHF 100W base/portable transceiver (non-D version)
+    ///
+    /// Default baud rate is 4800 — this model predates modern Yaesu high-speed CAT.
+    public static let yaesuFT897 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-897",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT897,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT897
+            )
+        }
+    )
+
+    /// Yaesu FT-450 HF/6m 100W transceiver (non-D version, predecessor to FT-450D)
+    public static let yaesuFT450 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-450",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.yaesuFT450,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.yaesuFT450
+            )
+        }
+    )
 }
