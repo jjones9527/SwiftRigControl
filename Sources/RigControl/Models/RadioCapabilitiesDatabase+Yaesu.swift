@@ -123,7 +123,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Yaesu FT-710 AESS - HF/6m transceiver
@@ -238,7 +242,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Yaesu FTDX-101D - HF/6m transceiver with dual receiver
@@ -357,7 +365,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: false,  // No built-in ATU
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Yaesu FT-897D - HF/VHF/UHF 100W base/mobile transceiver
@@ -398,7 +410,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,  // FT-897D has built-in ATU
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Yaesu FT-450D - HF/6m 100W budget transceiver

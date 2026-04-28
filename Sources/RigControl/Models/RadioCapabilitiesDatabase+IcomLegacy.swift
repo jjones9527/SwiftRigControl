@@ -109,7 +109,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: false,  // IC-706MKIIG supports CTCSS but not DCS
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000]
     )
 
     /// Icom IC-756 - HF/6m base station transceiver (original model)
@@ -226,7 +230,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: false,  // IC-910H CTCSS only (no DCS)
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000]
     )
 
     /// Icom IC-970 VHF/UHF all-mode transceiver with satellite mode
@@ -300,7 +308,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // FM only, no mode filter
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
     // MARK: - Icom D-STAR Mobiles
@@ -326,7 +338,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
     /// Icom ID-4100 - VHF/UHF D-STAR mobile transceiver
@@ -350,7 +366,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
     // MARK: - Icom Receivers

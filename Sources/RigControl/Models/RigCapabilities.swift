@@ -164,6 +164,23 @@ public struct RigCapabilities: Sendable, Codable {
     /// Some radios only support RIT (affects both RX/TX), not separate XIT
     public let supportsXIT: Bool
 
+    /// Radio supports CTCSS (Continuous Tone-Coded Squelch System) tone encoding/decoding
+    /// Applicable to FM-capable radios with repeater access features
+    public let supportsCTCSS: Bool
+
+    /// Radio supports DCS (Digital-Coded Squelch) encoding/decoding
+    /// Applicable to FM-capable radios with repeater access features
+    public let supportsDCS: Bool
+
+    /// Radio supports duplex offset (repeater +/- offset) configuration
+    /// Applicable to FM-capable radios used with repeaters
+    public let supportsDuplex: Bool
+
+    /// Available VFO tuning steps in Hz
+    /// Empty means the radio uses a continuous tuner with no fixed steps
+    /// Common values: [1, 10, 100, 1000, 5000, 9000, 10000, 12500, 25000, 50000, 100000]
+    public let availableTuningSteps: [Double]
+
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,
@@ -180,7 +197,11 @@ public struct RigCapabilities: Sendable, Codable {
         powerUnits: PowerUnits = .percentage,
         region: AmateurRadioRegion = .region2,
         supportsRIT: Bool = true,
-        supportsXIT: Bool = true
+        supportsXIT: Bool = true,
+        supportsCTCSS: Bool = false,
+        supportsDCS: Bool = false,
+        supportsDuplex: Bool = false,
+        availableTuningSteps: [Double] = []
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -198,6 +219,10 @@ public struct RigCapabilities: Sendable, Codable {
         self.region = region
         self.supportsRIT = supportsRIT
         self.supportsXIT = supportsXIT
+        self.supportsCTCSS = supportsCTCSS
+        self.supportsDCS = supportsDCS
+        self.supportsDuplex = supportsDuplex
+        self.availableTuningSteps = availableTuningSteps
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

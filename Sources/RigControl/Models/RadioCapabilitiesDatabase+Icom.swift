@@ -29,7 +29,11 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: false,
         supportsSignalStrength: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -281,7 +285,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-7100 must switch to VFO before operations (.currentOnly model)
         requiresModeFilter: false,  // IC-7100 rejects mode commands with filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -349,7 +357,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-705 must switch to VFO before operations (.currentOnly model)
         requiresModeFilter: false,  // IC-705 rejects mode commands with filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Icom IC-703 - Portable HF/6m 10W QRP transceiver

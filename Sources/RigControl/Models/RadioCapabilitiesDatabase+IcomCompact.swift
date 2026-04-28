@@ -189,7 +189,11 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-9100 requires VFO selection (no_xchg flag in Hamlib)
         requiresModeFilter: true,  // IC-9100 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Icom IC-7200 - HF/6m all-mode transceiver

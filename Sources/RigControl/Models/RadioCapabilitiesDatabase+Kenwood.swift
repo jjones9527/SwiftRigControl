@@ -149,7 +149,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,  // Simultaneous VHF/UHF
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
     /// Kenwood TS-480SAT - HF/6m all-mode transceiver
@@ -230,7 +234,11 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
     )
 
     /// Kenwood TS-590S - HF/6m transceiver (earlier version of TS-590SG)
