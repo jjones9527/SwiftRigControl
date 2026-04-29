@@ -35,10 +35,18 @@ public protocol CIVCommandSet: Sendable {
 
     // MARK: - Mode Commands
 
-    /// Format a mode set command.
+    /// Format a mode set command for normal (non-data) modes.
     /// - Parameter mode: The operating mode code to set (e.g., 0x00 for LSB)
     /// - Returns: Command bytes and data bytes
     func setModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8])
+
+    /// Format a mode set command for DATA modes (DATA-USB, DATA-LSB, DATA-FM).
+    ///
+    /// On targetable radios uses `C_SEND_SEL_MODE (0x26)` with explicit data-flag byte (Hamlib approach).
+    /// On non-targetable radios falls back to `C_SET_MODE (0x06)` with filter byte `0x00`.
+    /// - Parameter mode: The base mode code (e.g., `0x01` for USB → DATA-USB)
+    /// - Returns: Command bytes and data bytes
+    func setDataModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8])
 
     /// Format a mode read command.
     /// - Returns: Command bytes

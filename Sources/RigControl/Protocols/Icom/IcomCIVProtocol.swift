@@ -150,7 +150,6 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         // Select the appropriate VFO first (if radio requires AND supports it)
-        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
         if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
@@ -158,26 +157,18 @@ public actor IcomCIVProtocol: CATProtocol {
         // Convert Mode enum to Icom mode code
         let modeCode = try modeToIcomCode(mode)
 
-        // Data modes use filter byte 0x00; voice/CW/RTTY modes use the command set default (FIL1)
-        let frame: CIVFrame
-        if isDataMode(mode) && capabilities.requiresModeFilter {
-            // DATA mode: send mode byte + filter byte 0x00 (FilterCode.data)
-            // This tells the radio to engage the DATA sub-mode (flat audio path)
-            frame = CIVFrame(
-                to: civAddress,
-                command: [CIVFrame.Command.setMode],
-                data: [modeCode, CIVFrame.FilterCode.data]
-            )
+        // Choose the correct command path based on mode type and radio capability:
+        // - DATA modes on targetable radios: use 0x26 [mode, data_flag=0x01, filter] (Hamlib-preferred)
+        // - DATA modes on non-targetable radios: use 0x06 [mode, 0x00] (filter byte = DATA marker)
+        // - Normal modes: delegate to command set (handles filter byte presence per radio)
+        let (command, data): ([UInt8], [UInt8])
+        if isDataMode(mode) {
+            (command, data) = commandSet.setDataModeCommand(mode: modeCode)
         } else {
-            // Voice/CW/RTTY mode: delegate to command set (handles filter byte presence per radio)
-            let (command, data) = commandSet.setModeCommand(mode: modeCode)
-            frame = CIVFrame(
-                to: civAddress,
-                command: command,
-                data: data
-            )
+            (command, data) = commandSet.setModeCommand(mode: modeCode)
         }
 
+        let frame = CIVFrame(to: civAddress, command: command, data: data)
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
@@ -188,28 +179,33 @@ public actor IcomCIVProtocol: CATProtocol {
 
     public func getMode(vfo: VFO) async throws -> Mode {
         // Select the appropriate VFO first (if radio requires AND supports it)
-        // Some radios (IC-7600, IC-7100, IC-705) operate on current VFO/band only
         if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
             try await selectVFO(vfo)
         }
 
-        // Get command formatting from command set
-        let command = commandSet.readModeCommand()
-
-        let frame = CIVFrame(
-            to: civAddress,
-            command: command
-        )
-
+        let frame = CIVFrame(to: civAddress, command: commandSet.readModeCommand())
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // Parse mode code from response
-        let modeCode = try commandSet.parseModeResponse(response)
+        // Parse mode code. Two possible response formats:
+        // - 0x04 response: data[0]=mode, data[1]=filter (0x00=DATA, 0x01-0x03=FIL1-3)
+        // - 0x26 response (targetable): data[0]=mode, data[1]=data_flag (0x01=DATA), data[2]=filter
+        let modeCode: UInt8
+        let isData: Bool
 
-        // Extract filter byte if present (second data byte); FilterCode.data (0x00) = DATA mode
-        let filterByte: UInt8 = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
-        return try icomCodeToMode(modeCode, filterByte: filterByte)
+        if response.command.count == 1 && response.command[0] == CIVFrame.Command.targetableMode {
+            // 0x26 response: [mode, data_flag, filter]
+            guard response.data.count >= 2 else { throw RigError.invalidResponse }
+            modeCode = response.data[0]
+            isData = response.data[1] == 0x01
+        } else {
+            // 0x04 response: [mode] or [mode, filter]
+            modeCode = try commandSet.parseModeResponse(response)
+            let filterByte: UInt8 = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
+            isData = (filterByte == CIVFrame.FilterCode.data)
+        }
+
+        return try icomCodeToMode(modeCode, isData: isData)
     }
 
     // MARK: - PTT Control
@@ -467,12 +463,12 @@ public actor IcomCIVProtocol: CATProtocol {
         }
     }
 
-    /// Converts an Icom mode code + filter byte pair to a Mode enum.
+    /// Converts an Icom mode code to a Mode enum.
     ///
-    /// When the filter byte is `FilterCode.data` (0x00), the radio is in DATA mode
-    /// for that base mode. All other filter values (0x01–0x03) indicate voice mode.
-    internal func icomCodeToMode(_ code: UInt8, filterByte: UInt8 = CIVFrame.FilterCode.fil1) throws -> Mode {
-        let isData = (filterByte == CIVFrame.FilterCode.data)
+    /// The `isData` flag is derived from either:
+    /// - The filter byte being `0x00` (legacy `0x06` command)
+    /// - The data-flag byte being `0x01` (modern `0x26` targetable command)
+    internal func icomCodeToMode(_ code: UInt8, isData: Bool = false) throws -> Mode {
         switch code {
         case CIVFrame.ModeCode.lsb:
             return isData ? .dataLSB : .lsb

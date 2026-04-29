@@ -103,19 +103,43 @@ extension IcomRadioCommandSet {
 
     // MARK: - Mode Commands
 
-    /// Default mode set command implementation.
+    /// Whether this radio supports VFO-targeted mode commands via 0x26.
+    ///
+    /// Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800, IC-7851) use
+    /// `C_SEND_SEL_MODE (0x26)` which carries a 3-byte payload:
+    /// `[mode_byte, data_flag (0x01=DATA / 0x00=normal), filter_byte]`.
+    /// This is the Hamlib-preferred path for DATA mode on modern radios.
+    public var supportsTargetableMode: Bool {
+        vfoModel == .targetable
+    }
+
+    /// Default mode set command for normal (non-data) modes.
     ///
     /// Handles filter byte based on `requiresModeFilter`:
-    /// - If true: Sends mode + filter byte (0x01 = FIL1, default filter per IC-7600 manual)
-    /// - If false: Sends mode only (IC-7100 family)
+    /// - If true: Sends mode + filter byte (0x01 = FIL1, default filter)
+    /// - If false: Sends mode only (IC-7100 family — NAKs if filter byte sent)
     public func setModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
         if requiresModeFilter {
-            // Standard: mode + filter byte
-            // Per IC-7600 CI-V manual: Valid filter codes are 01=FIL1, 02=FIL2, 03=FIL3
-            // Using 0x01 (FIL1) as default - 0x00 is NOT valid and causes NAK response
-            return ([CIVFrame.Command.setMode], [mode, 0x01])
+            return ([CIVFrame.Command.setMode], [mode, CIVFrame.FilterCode.fil1])
         } else {
-            // IC-7100 family: mode only (NAKs if filter byte sent)
+            return ([CIVFrame.Command.setMode], [mode])
+        }
+    }
+
+    /// Mode set command for DATA modes using the explicit data-flag byte.
+    ///
+    /// On targetable radios, Hamlib uses `C_SEND_SEL_MODE (0x26)` with:
+    /// `[mode_byte, data_flag, filter_byte]` where `data_flag = 0x01` for DATA mode.
+    /// On non-targetable radios, falls back to `C_SET_MODE (0x06)` with filter byte `0x00`.
+    public func setDataModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
+        if supportsTargetableMode {
+            // Targetable: 0x26 [mode, data_flag=0x01, filter=FIL1]
+            return ([CIVFrame.Command.targetableMode], [mode, 0x01, CIVFrame.FilterCode.fil1])
+        } else if requiresModeFilter {
+            // Non-targetable with filter: 0x06 [mode, filter=0x00 (DATA)]
+            return ([CIVFrame.Command.setMode], [mode, CIVFrame.FilterCode.data])
+        } else {
+            // IC-7100 family: 0x06 [mode] only — data mode set via 0x1A 0x06 separately
             return ([CIVFrame.Command.setMode], [mode])
         }
     }

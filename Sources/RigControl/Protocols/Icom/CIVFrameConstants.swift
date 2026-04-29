@@ -73,6 +73,10 @@ extension CIVFrame {
         public static let txBand: UInt8 = 0x1E
         /// RIT/XIT control — see `RITXITCode` (0x21)
         public static let ritXit: UInt8 = 0x21
+        /// Targetable set/get frequency (VFO-addressed, modern radios) (0x25)
+        public static let targetableFrequency: UInt8 = 0x25
+        /// Targetable set/get mode + data flag + filter (VFO-addressed, modern radios) (0x26)
+        public static let targetableMode: UInt8 = 0x26
     }
 
     /// VFO selection sub-commands (used with `Command.selectVFO` 0x07).
