@@ -5,15 +5,18 @@ All notable changes to SwiftRigControl will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - v1.3.0
+## [1.3.0] - 2026-04-28
 
 ### Added
 
 #### Radio Support
-- **9 new radio models** identified via hamlib comparison:
-  - **Icom:** IC-7760 (HF/6m flagship, 200W), IC-7300 MK2 (HF/6m SDR, 100W)
+- **11 new radio models** (9 from Hamlib comparison + 2 new):
+  - **Icom:** IC-7760 (HF/6m flagship, 200W), IC-7300 MK2 (HF/6m SDR, 100W), IC-9000 (VHF/UHF all-mode, dual RX), IC-2820H (VHF/UHF FM/D-STAR)
   - **Yaesu Legacy:** FT-1000MP (HF, 200W, dual RX), FT-857 (HF/VHF/UHF, 100W), FT-897 (HF/VHF/UHF, 100W), FT-450 (HF/6m, 100W)
   - **Kenwood Legacy:** TS-850S (HF, 100W, ATU), TS-570D (HF/6m, 100W, ATU), TS-570S (HF, 100W)
+- **Ten-Tec protocol family** — two new protocol implementations:
+  - **TenTecOrionProtocol**: Full CAT for Orion (TT-565), Orion II (TT-599), Eagle — hybrid ASCII/binary `*`/`?`/`@` framing, 4-byte big-endian frequency, 7-mode support (USB/LSB/CW/CW-R/AM/FM/RTTY), PTT, split, S-meter
+  - **TenTecLegacyProtocol**: ASCII set-only protocol for Jupiter (TT-538), Pegasus (TT-550) — `N<freq>`, `M<mode>`, CR-terminated; cached frequency/mode (no query commands)
 
 #### Level Controls API
 - **New `CATProtocol` methods** for hardware-level controls:
@@ -84,6 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### Hamlib/rigctld Compatibility Audit
+- **AGC byte values corrected** to match Hamlib CI-V constants: OFF=0x00, FAST=0x02, SLOW=0x03, MID=0x05, AUTO=0x06 (was wrong sequential 1/2/3)
+- **Attenuator steps expanded** to cover all models: 3/6/9/12 dB for IC-9700; 10/20 dB for IC-7300/7610; 30 dB added for IC-7800
+- **RFPOWER minimum floor**: Both get and set now enforce 0.05 minimum (radios reject 0W, matching Hamlib behavior)
+- **rigctld AGC numeric codes** aligned with Hamlib wire codes: FAST→2, SLOW→3, MID→5, AUTO→6
+- **DATA mode command routing**: DATA-USB/LSB/FM now uses CI-V command 0x26 (`C_SEND_SEL_MODE`) with `data_flag=0x01` on targetable radios (IC-7300, IC-7610, IC-7760, IC-7300MK2), rather than using filter byte 0x00 on command 0x04. Non-targetable radios use 0x04 with filter byte as before.
 - `IcomCIVProtocol+MemoryChannels.swift`: Non-exhaustive switch in `getMemoryChannelCount()` fixed by adding `case .ic7760, .ic7300mk2: return 99`
 
 ---
@@ -1064,7 +1073,7 @@ Both changes are compile-time safe - your code will not compile until fixed.
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.3.0 | (upcoming) | Level/DSP controls, 9 new radios |
+| 1.3.0 | 2026-04-28 | Level/DSP controls, 11 new radios, Ten-Tec protocol, rigctld audit |
 | 1.2.0 | 2025-12-19 | Memory channel operations |
 | 1.1.0 | 2025-11-19 | Signal strength, RIT/XIT, caching |
 | 1.0.4 | 2026-01-14 | K2 fixes, LGPL license, hardware tests |
