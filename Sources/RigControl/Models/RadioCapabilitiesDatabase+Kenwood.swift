@@ -510,29 +510,40 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true
     )
 
-    /// Kenwood TH-D72A - Dual-band handheld with APRS and GPS
+    /// Kenwood TH-D72A / TH-D72 - Dual-band handheld with APRS and GPS
+    ///
+    /// Frequency ranges and TX limits from Hamlib thd72.c (rx_range_list2 / tx_range_list2).
+    /// Tuning steps from thd72tuningstep[]. CTCSS/DCS/duplex per hardware capability.
+    /// Power is discrete: 5 W (High), 500 mW (Mid), 50 mW (Low) — see THD72Protocol.setPower().
     public static let kenwoodTHD72A = RigCapabilities(
         hasVFOB: true,
-        hasSplit: false,
+        hasSplit: true,   // VMC/BC split supported per thd72_set_split_vfo
         powerControl: true,
-        maxPower: 5,  // 5W handheld
-        supportedModes: [.fm, .fmN],
+        maxPower: 5,
+        supportedModes: [.fm, .fmN, .am],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
         detailedFrequencyRanges: [
-            // Airband receive
-            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
-            // 2m band
+            // Airband receive (118–174 MHz per rx_range_list2)
+            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.am], canTransmit: false),
+            DetailedFrequencyRange(min: 136_000_000, max: 143_999_999, modes: [.fm], canTransmit: false),
+            // 2m TX band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
-            // General receive
-            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
-            // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            // General VHF receive
+            DetailedFrequencyRange(min: 148_000_001, max: 319_999_999, modes: [.fm], canTransmit: false),
+            // 320–524 MHz receive band (per rx_range_list2)
+            DetailedFrequencyRange(min: 320_000_000, max: 429_999_999, modes: [.fm], canTransmit: false),
+            // 70cm TX band
+            DetailedFrequencyRange(min: 430_000_000, max: 440_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
-            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
+            DetailedFrequencyRange(min: 440_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
         ],
-        hasDualReceiver: true,  // Full duplex capable
+        hasDualReceiver: true,
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
 }

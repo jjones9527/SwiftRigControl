@@ -157,13 +157,33 @@ extension RadioDefinition {
     )
 
     /// Kenwood TH-D72A dual-band handheld with APRS and GPS
+    ///
+    /// Uses THD72Protocol (CR-terminated, FO-string based) rather than the
+    /// standard semicolon Kenwood CAT used by HF transceivers.
     public static let kenwoodTHD72A = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D72A",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A,
         protocolFactory: { transport in
-            KenwoodProtocol(
+            THD72Protocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A
+            )
+        }
+    )
+
+    /// Kenwood TH-D72 dual-band handheld with APRS and GPS (non-A variant)
+    ///
+    /// Identical protocol and capabilities to the TH-D72A. The A suffix denotes
+    /// the North American market version; the protocol command set is the same.
+    public static let kenwoodTHD72 = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TH-D72",
+        defaultBaudRate: 9600,
+        capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A,
+        protocolFactory: { transport in
+            THD72Protocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A
             )

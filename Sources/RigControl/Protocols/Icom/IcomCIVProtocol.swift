@@ -175,6 +175,24 @@ public actor IcomCIVProtocol: CATProtocol {
         guard response.isAck else {
             throw RigError.commandFailed("Radio rejected mode \(mode)")
         }
+
+        // IC-7100 and IC-705: the base 0x06 command does not activate the DATA sub-mode.
+        // A second command (0x1A 0x06) is required to enable or clear the data flag.
+        // This must also be sent with 0x00 when switching away from a data mode, otherwise
+        // the radio remains in DATA sub-mode.
+        if radioModel == .ic7100 || radioModel == .ic705 {
+            let dataModeFlag: UInt8 = isDataMode(mode) ? 0x01 : 0x00
+            let dataModeFrame = CIVFrame(
+                to: civAddress,
+                command: [0x1A, 0x06],
+                data: [dataModeFlag, CIVFrame.FilterCode.fil1]
+            )
+            try await sendFrame(dataModeFrame)
+            let dataModeResponse = try await receiveFrame()
+            guard dataModeResponse.isAck else {
+                throw RigError.commandFailed("Radio rejected data mode flag for mode \(mode)")
+            }
+        }
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
