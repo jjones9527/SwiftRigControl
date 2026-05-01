@@ -59,9 +59,12 @@ extension IcomRadioCommandSet {
 
         case .mainSub:
             // Main/Sub receiver architecture (2-state: Main or Sub only)
-            // Returns nil if user tries to use VFO A/B on a 2-state Main/Sub radio
-            guard let vfoCode = VFOCodeHelper.mainSubCode(for: vfo) else {
-                return nil
+            // .main/.sub map directly; .a/.b fall back to Main/Sub (A=Main, B=Sub)
+            // so that callers using the conventional VFO A/B API still get a valid selection.
+            let vfoCode: UInt8
+            switch vfo {
+            case .main, .a: vfoCode = CIVFrame.VFOSelect.main  // 0xD0
+            case .sub, .b:  vfoCode = CIVFrame.VFOSelect.sub   // 0xD1
             }
             return ([CIVFrame.Command.selectVFO], [vfoCode])
 

@@ -7,7 +7,7 @@ import Foundation
 ///
 /// ## Key IC-7600 Characteristics:
 /// - CI-V Address: 0x7A (default, user-configurable)
-/// - VFO Model: .targetable (can specify VFO in commands)
+/// - VFO Model: .mainSub (Main/Sub receivers; VFO A/B map to Main/Sub)
 /// - Command Echo: NO (radio does not echo commands)
 /// - Mode Filter: YES (requires filter byte in mode commands)
 /// - Dual Receiver: YES (Main and Sub bands)
