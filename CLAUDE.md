@@ -19,6 +19,34 @@ sanity check** — when in doubt about protocol framing, response parsing,
 mode codes, or radio quirks, cross-check against Hamlib's C source before
 shipping. Note divergences explicitly in code comments with a brief reason.
 
+### Local Hamlib reference
+
+A shallow clone of Hamlib lives at `~/Developer/hamlib` (outside this
+repo). Use it for grep, read, and cross-reference without web fetches:
+
+```
+~/Developer/hamlib/rigs/icom/        Icom CI-V family
+  icom.c                              Common Icom code (frame, set_mode, etc.)
+  ic7100.c, ic7600.c                  Per-model files
+  ic9100.c                            Also covers IC-9700 (shared CI-V family)
+  ic7300.c                            Also references IC-9700
+  frame.c                             CI-V framing helpers
+~/Developer/hamlib/rigs/kenwood/     Kenwood + Elecraft (K-series uses
+                                      Kenwood-derived text protocol)
+~/Developer/hamlib/rigs/yaesu/       Yaesu CAT family
+~/Developer/hamlib/rigs/tentec/      Ten-Tec
+~/Developer/hamlib/rigs/dummy/       Generic in-memory dummy rig (Model 1)
+~/Developer/hamlib/tests/            rigctl, rigctld, test programs
+```
+
+To refresh it: `git -C ~/Developer/hamlib pull`. If it isn't present,
+clone with `git clone --depth=1 https://github.com/Hamlib/Hamlib.git
+~/Developer/hamlib` (~21 MB shallow).
+
+When citing Hamlib precedent in commit messages or code comments,
+quote the file and line (e.g. "matches `ic7600.c:842`"), not just
+"Hamlib does it this way."
+
 ---
 
 ## Current release
