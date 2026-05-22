@@ -1,5 +1,7 @@
 # SwiftRigControl
 
+[![CI](https://github.com/jjones9527/SwiftRigControl/actions/workflows/ci.yml/badge.svg)](https://github.com/jjones9527/SwiftRigControl/actions/workflows/ci.yml)
+
 A native Swift library for controlling amateur radio transceivers on macOS.
 
 **Current release:** v1.0.6

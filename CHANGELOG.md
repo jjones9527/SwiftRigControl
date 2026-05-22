@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Continuous integration** — `.github/workflows/ci.yml` runs
+  `swift build` (library with warnings-as-errors, then all
+  targets) and `swift test --parallel` on every push and pull
+  request, using the latest-stable Xcode on `macos-15`. README
+  carries a CI status badge. CONTRIBUTING.md documents how to
+  reproduce the CI gate locally.
 - `RadioDefinition.VerificationStatus` enum (`.hardware` /
   `.definition`) capturing how thoroughly a radio definition has
   been validated. Defaults to `.definition` for backward

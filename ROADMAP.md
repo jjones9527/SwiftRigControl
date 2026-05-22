@@ -151,13 +151,17 @@ phase depends on them.
 
 ### 1.1 Continuous integration
 
-- [ ] Add `.github/workflows/ci.yml` running on push and PR:
-  - [ ] `swift build` on macOS-14 runner.
-  - [ ] `swift test` (excluding hardware-gated suites).
-  - [ ] Build with `-warnings-as-errors`.
-  - [ ] Cache `.build` between runs.
-- [ ] Add status badge to README.
-- [ ] Document local equivalent in CONTRIBUTING.md.
+- [x] Add `.github/workflows/ci.yml` running on push and PR:
+  - [x] `swift build` on macOS runner (`macos-15`, latest-stable Xcode).
+  - [x] `swift test --parallel` (hardware suites auto-skip via
+        `.enabled(if:)` env-var gates).
+  - [x] Library built with `-Xswiftc -warnings-as-errors`; other
+        targets built without to allow transient warnings in
+        debug-tool executables.
+  - [x] Cache `.build` between runs keyed on `Package.resolved` +
+        `Package.swift`.
+- [x] Add status badge to README.
+- [x] Document local-equivalent commands in CONTRIBUTING.md.
 
 ### 1.2 Executable target evacuation
 

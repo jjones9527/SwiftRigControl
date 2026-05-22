@@ -110,9 +110,9 @@ Areas where contributions are particularly welcome:
 
 ### Prerequisites
 
-- macOS 13.0 or later
-- Xcode 15.0 or later
-- Swift 5.9 or later
+- macOS 14 or later
+- Xcode 17 or later (for Swift 6.2 tools)
+- Swift 6.2 or later, language mode `.v6` (strict concurrency)
 - Git
 
 ### Clone and Build
@@ -125,12 +125,30 @@ cd SwiftRigControl
 # Build the project
 swift build
 
-# Run tests
+# Run tests (hardware suites auto-skip when env vars are absent)
 swift test
 
 # Open in Xcode (optional)
 open Package.swift
 ```
+
+### Matching CI locally
+
+GitHub Actions runs the same gate that CI enforces. Reproduce it
+locally before pushing:
+
+```bash
+# Library must build with warnings treated as errors
+swift build --target RigControl -Xswiftc -warnings-as-errors
+
+# Everything else builds without -warnings-as-errors
+swift build
+
+# Full test suite (parallel)
+swift test --parallel
+```
+
+A green local run of these three commands is what CI checks.
 
 ### Project Structure
 
