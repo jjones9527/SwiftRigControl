@@ -227,7 +227,13 @@ with no serial port, no XPC helper, and no hardware.
 
 ### 1.4 Remove deprecated API surface
 
-Source-breaking; gates the next major version.
+Source-breaking *in the strict sense*. Project policy: deprecation
+removals stay in the **v1.0.x** line. Each item had carried a formal
+`@available(*, deprecated)` marker for at least one release, so
+callers who heeded the warnings are already migrated. Reserve
+major-version bumps for genuinely scope-changing API rewrites
+(e.g. introducing capability-trait protocols in Phase 5), not
+for cleanup of long-deprecated surface.
 
 - [x] **Deleted `IcomCIVProtocol.init(transport:civAddress:capabilities:)`.**
       Callers must now construct an explicit command set
@@ -244,10 +250,9 @@ Source-breaking; gates the next major version.
       `.full`-defaulting variants on Yaesu, Kenwood, Elecraft, THD72,
       Ten-Tec Orion / Legacy). Construction is now exclusively the
       job of concrete-type inits and `RadioDefinition.protocolFactory`.
-- [x] CHANGELOG `[Unreleased]` has a BREAKING entry with migration
-      snippets for each deletion.
-- [ ] **Tag as v2.0.0-alpha.1** — held pending explicit user OK.
-      Tagging changes downstream consumer expectations.
+- [x] CHANGELOG `[Unreleased]` has migration snippets for each
+      deletion. The CHANGELOG explicitly notes that the next
+      release stays in the v1.0.x line.
 
 **Phase 1 exit criteria:** CI green, library compile time
 substantially reduced for consumers, mock-driven SwiftUI demo

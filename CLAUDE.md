@@ -62,6 +62,22 @@ the reconciliation. The next release will be `v1.0.7` (patch) or
 Going forward: **`CHANGELOG.md` heading versions must match the git
 tag they ship under.** No more aspirational labels.
 
+### Versioning policy
+
+This project keeps releases in the **v1.0.x line** even when
+removing previously-deprecated API. Rationale: every breaking
+removal is gated by a formal `@available(*, deprecated)` marker
+that lives in at least one release before the deletion. Callers
+who heeded the deprecation warning are already migrated; bumping
+the major version on top of that is ceremony, not signal.
+
+Reserve a major-version bump (v2.0.0) for *genuinely scope-
+changing* API rewrites — splitting `CATProtocol` into capability
+traits (Phase 5), reworking `RadioDefinition` into a discriminated
+type, or anything that requires a non-trivial migration even for
+code that never relied on a deprecated symbol. When that day
+comes, ship a v2.0.0-alpha first; until then, v1.0.x is the line.
+
 ---
 
 ## Architecture at a glance

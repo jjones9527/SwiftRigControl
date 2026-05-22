@@ -17,7 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed (BREAKING — bumps next release to v2.0.0)
+### Removed
+The items below are source-breaking *in the strict sense*, but each
+had carried a formal `@available(*, deprecated)` marker since
+v1.0.x. Callers who heeded the deprecation warnings are already
+migrated. The next release will stay in the **v1.0.x** line per
+project policy: breaking changes are gated by a formal deprecation
+period, not by a major-version bump.
+
 - `IcomCIVProtocol.init(transport:civAddress:capabilities:)` — the
   legacy two-arg-plus-caps initializer deprecated since v1.0.x.
   **Migration:** pass an explicit command set.
