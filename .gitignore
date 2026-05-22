@@ -7,6 +7,11 @@
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 
+# Nested SwiftPM project for developer tools
+Tools/SwiftRigControlTools/.build/
+Tools/SwiftRigControlTools/.swiftpm/
+Tools/SwiftRigControlTools/Package.resolved
+
 # Xcode
 xcuserdata/
 DerivedData/

@@ -28,20 +28,29 @@ SwiftRigControl ships with **~80 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
-  validator in `HardwareValidation/`. Frequency, mode, PTT, and at
-  least one read-back operation confirmed working.
+  validator in `Tools/SwiftRigControlTools/HardwareValidation/`.
+  Frequency, mode, PTT, and at least one read-back operation
+  confirmed working.
 - **Definition** — protocol, capabilities, and command set are
   implemented (typically cross-referenced against the manufacturer
   manual and Hamlib source), but **no real-radio verification has been
   performed**. These may work; they have not been proven.
 
-| Radio        | Status     | Validator                          |
-| ------------ | ---------- | ---------------------------------- |
-| Icom IC-7100 | Hardware   | `HardwareValidation/IC7100Validator` |
-| Icom IC-7600 | Hardware   | `HardwareValidation/IC7600Validator` |
-| Icom IC-9700 | Hardware   | `HardwareValidation/IC9700Validator` |
-| Elecraft K2  | Hardware   | `HardwareValidation/K2Validator`     |
-| *all others* | Definition | —                                    |
+| Radio        | Status     | Validator                                                          |
+| ------------ | ---------- | ------------------------------------------------------------------ |
+| Icom IC-7100 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`    |
+| Icom IC-7600 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`    |
+| Icom IC-9700 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`    |
+| Elecraft K2  | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`        |
+| *all others* | Definition | —                                                                  |
+
+Validators live in a separate SwiftPM project so library consumers
+don't transitively compile them. To run one:
+
+```bash
+cd Tools/SwiftRigControlTools
+IC7600_SERIAL_PORT="/dev/cu.usbserial-XXXX" swift run IC7600Validator
+```
 
 If you use SwiftRigControl with a Definition-status radio and confirm
 that core operations (frequency, mode, PTT) work, please open an issue

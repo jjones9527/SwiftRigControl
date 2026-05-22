@@ -67,3 +67,12 @@ jobs:
         # auto-skip when those are absent — exactly the case on CI.
         # Unit and protocol (MockTransport) suites run unconditionally.
         run: swift test --parallel
+
+      - name: Build tools subproject
+        # Tools/SwiftRigControlTools/ is a separate SwiftPM project
+        # that houses hardware validators, interactive validators, and
+        # debug tools. It is NOT pulled by library consumers, but we
+        # still want to know if a library change breaks one of the
+        # tools — building it on CI catches that.
+        working-directory: Tools/SwiftRigControlTools
+        run: swift build

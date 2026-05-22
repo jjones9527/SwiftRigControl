@@ -146,9 +146,47 @@ swift build
 
 # Full test suite (parallel)
 swift test --parallel
+
+# Tools subproject (hardware validators + debug tools)
+( cd Tools/SwiftRigControlTools && swift build )
 ```
 
-A green local run of these three commands is what CI checks.
+A green local run of these four commands is what CI checks.
+
+### Repository layout
+
+```
+SwiftRigControl/                      Main SwiftPM package
+├── Package.swift                     Library, XPC, Helper
+├── Sources/
+│   ├── RigControl/                   The library
+│   ├── RigControlXPC/                XPC client/server (sandboxed apps)
+│   └── RigControlHelper/             XPC helper executable
+├── Tests/RigControlTests/            Unit + protocol + hardware suites
+└── Tools/
+    └── SwiftRigControlTools/         Separate SwiftPM project — NOT
+        │                              pulled by library consumers
+        ├── Package.swift
+        ├── HardwareValidation/       Per-radio smoke tests
+        ├── InteractiveValidators/    stdin-driven manual validators
+        └── Debugging/                Vendor- and command-specific tools
+```
+
+### Running developer tools
+
+```bash
+cd Tools/SwiftRigControlTools
+
+# List available tools
+swift package describe | grep "Type: executable"
+
+# Run a hardware validator (needs the radio's serial port)
+IC7100_SERIAL_PORT="/dev/cu.usbserial-XXXX" swift run IC7100Validator
+K2_SERIAL_PORT="/dev/cu.usbserial-XXXX"     swift run K2Validator
+
+# Interactive validators (need stdin)
+IC9700_SERIAL_PORT="/dev/cu.usbserial-XXXX" swift run IC9700InteractiveValidator
+```
 
 ### Project Structure
 

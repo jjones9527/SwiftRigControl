@@ -58,8 +58,13 @@ Sources/RigControl/
 Sources/RigControlXPC/  XPC client/server for Mac App Store sandboxed apps
 Sources/RigControlHelper/ XPC helper executable
 
-HardwareValidation/    Per-radio validators (real-hardware smoke tests)
 Tests/RigControlTests/ Unit, protocol (MockTransport), and hardware suites
+
+Tools/SwiftRigControlTools/  Separate SwiftPM project — NOT pulled by
+                             library consumers. Contains:
+  HardwareValidation/        Per-radio smoke tests (real hardware)
+  InteractiveValidators/     stdin-driven manual validators
+  Debugging/                 Vendor- and command-specific debug tools
 ```
 
 **Two equally important consumers:** third-party Swift apps integrating
@@ -141,7 +146,7 @@ The README and ROADMAP advertise specific radios as "verified."
 **A radio is only "verified" if at least one operation in each
 major feature group (frequency, mode, PTT, signal strength) has
 been exercised against the real hardware** and the result captured
-in `HardwareValidation/<Radio>Validator/`.
+in `Tools/SwiftRigControlTools/HardwareValidation/<Radio>Validator/`.
 
 Currently verified on real hardware:
 - Icom IC-7100, IC-7600, IC-9700
@@ -252,7 +257,7 @@ as pending, the work is not finished.
 | Add a new vendor protocol | New folder under `Protocols/<Vendor>/`, conform to `CATProtocol` |
 | Add a new top-level operation | Extend `CATProtocol` + add default `throw unsupported` impl + extend `RigController` |
 | Add a new rigctld command | `Network/RigctldCommandHandler.swift` + parser update |
-| Add a hardware validator | `HardwareValidation/<Radio>Validator/`, register in `Package.swift` |
+| Add a hardware validator | `Tools/SwiftRigControlTools/HardwareValidation/<Radio>Validator/`, register in `Tools/SwiftRigControlTools/Package.swift` |
 | Bump version | `CHANGELOG.md`, `ROADMAP.md`, README badges |
 
 ---

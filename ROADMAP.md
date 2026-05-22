@@ -60,12 +60,12 @@ safer, and more ergonomic API.
 Only these are exercised against real hardware. All other
 definitions are **paper-only** until proven otherwise.
 
-| Radio          | Verifier target                          | Notes |
-| -------------- | ---------------------------------------- | ----- |
-| Icom IC-7100   | `HardwareValidation/IC7100Validator`     | HF/VHF/UHF, 100W |
-| Icom IC-7600   | `HardwareValidation/IC7600Validator`     | HF/6m dual receiver |
-| Icom IC-9700   | `HardwareValidation/IC9700Validator`     | VHF/UHF/1.2GHz |
-| Elecraft K2    | `HardwareValidation/K2Validator`         | HF QRP |
+| Radio          | Verifier target                                                   | Notes |
+| -------------- | ----------------------------------------------------------------- | ----- |
+| Icom IC-7100   | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`   | HF/VHF/UHF, 100W |
+| Icom IC-7600   | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`   | HF/6m dual receiver |
+| Icom IC-9700   | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`   | VHF/UHF/1.2GHz |
+| Elecraft K2    | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`       | HF QRP |
 
 ### Gaps measured against the north star
 
@@ -167,20 +167,28 @@ phase depends on them.
 
 Decision: move debug-tool executables out of the consumed package.
 
-- [ ] Inventory the 16 executable targets; categorize each as
-      *keep*, *archive*, or *consolidate*.
-- [ ] Create `Tools/SwiftRigControlTools/Package.swift` as a
-      separate SwiftPM project that depends on the library by
+- [x] Inventory complete: 16 executables grouped as Hardware
+      Validators (5), Interactive Validators (8, stdin-driven),
+      and Elecraft Debug Tools (3). All retained — none archived.
+- [x] Created `Tools/SwiftRigControlTools/Package.swift` as a
+      separate SwiftPM project depending on the parent via
       `.package(path: "../..")`.
-- [ ] Move keepers; archive the rest to `Tools/Archived/`.
-- [ ] Remove the 16 `.executable` products from main
-      `Package.swift`. Keep `RigControlHelper` (it's a real
-      shipping component).
-- [ ] Update CONTRIBUTING + README to show new tool invocation.
+- [x] Moved all 16 executables + `ValidationHelpers` shared library
+      under `Tools/SwiftRigControlTools/` with three subfolders
+      (`HardwareValidation/`, `InteractiveValidators/`,
+      `Debugging/`).
+- [x] Removed 16 `.executable` products and `ValidationHelpers`
+      target from the main `Package.swift`. Kept `RigControlHelper`
+      (real shipping component).
+- [x] Updated README, CLAUDE.md, ROADMAP, and the moved
+      `HardwareValidation/README.md` to show new invocation
+      (`cd Tools/SwiftRigControlTools && swift run <Tool>`).
 
-**Acceptance:** a downstream consumer pulling
-`SwiftRigControl` via SPM compiles only `RigControl`,
-`RigControlXPC`, and `RigControlHelper`.
+**Acceptance met:** main package now declares 3 products
+(`RigControl`, `RigControlXPC`, `RigControlHelper`). Downstream
+consumers no longer transitively compile the 16 debug executables.
+`swift build --target RigControl` completes in ~0.2s on a warm
+cache vs. ~5s before.
 
 ### 1.3 Ship a real mock transport
 

@@ -3,6 +3,14 @@
 
 import PackageDescription
 
+// SwiftRigControl: the library consumers depend on.
+//
+// This package intentionally ships only the runtime artifacts: the
+// RigControl library, the XPC helper library, and the XPC helper
+// executable. Hardware validators, interactive validators, and
+// vendor-specific debug tools live in a separate SwiftPM project at
+// `Tools/SwiftRigControlTools/` so they don't bloat downstream
+// consumers' build times.
 let package = Package(
     name: "SwiftRigControl",
     platforms: [
@@ -26,38 +34,6 @@ let package = Package(
             name: "RigControlHelper",
             targets: ["RigControlHelper"]
         ),
-
-        // MARK: - Hardware Validation Tools
-        //
-        // Standalone executables for field-testing real hardware.
-        // Run with: swift run <ToolName>
-        // Requires environment variables for serial port configuration.
-
-        .executable(name: "IC7100Validator", targets: ["IC7100Validator"]),
-        .executable(name: "IC7600Validator", targets: ["IC7600Validator"]),
-        .executable(name: "IC9700Validator", targets: ["IC9700Validator"]),
-        .executable(name: "K2Validator", targets: ["K2Validator"]),
-        .executable(name: "RigctldEmulator", targets: ["RigctldEmulator"]),
-
-        // MARK: - Interactive Debug Tools
-        //
-        // Tools that require stdin (readLine) for user-confirmatory hardware testing.
-        // These cannot run under XCTest because it captures stdout and blocks stdin.
-
-        .executable(name: "IC7100ManualValidation", targets: ["IC7100ManualValidation"]),
-        .executable(name: "IC7600ManualValidation", targets: ["IC7600ManualValidation"]),
-        .executable(name: "IC7600ModeDebug", targets: ["IC7600ModeDebug"]),
-        .executable(name: "IC9700ManualValidation", targets: ["IC9700ManualValidation"]),
-        .executable(name: "IC9700InteractiveValidator", targets: ["IC9700InteractiveValidator"]),
-        .executable(name: "IC9700NRDebug", targets: ["IC9700NRDebug"]),
-        .executable(name: "IC7100PTTTest", targets: ["IC7100PTTTest"]),
-        .executable(name: "IC7100RITDebug", targets: ["IC7100RITDebug"]),
-
-        // MARK: - Elecraft Debug Tools
-
-        .executable(name: "K2NewCommandsTest", targets: ["K2NewCommandsTest"]),
-        .executable(name: "K2PowerDebug", targets: ["K2PowerDebug"]),
-        .executable(name: "K2PTTDebug", targets: ["K2PTTDebug"]),
     ],
     targets: [
         // MARK: - Core Libraries
@@ -80,103 +56,6 @@ let package = Package(
             name: "RigControlHelper",
             dependencies: ["RigControl", "RigControlXPC"],
             path: "Sources/RigControlHelper"
-        ),
-
-        // MARK: - Hardware Validation Shared Library
-
-        .target(
-            name: "ValidationHelpers",
-            dependencies: ["RigControl"],
-            path: "HardwareValidation/Shared"
-        ),
-
-        // MARK: - Hardware Validators
-
-        .executableTarget(
-            name: "IC7100Validator",
-            dependencies: ["RigControl", "ValidationHelpers"],
-            path: "HardwareValidation/IC7100Validator"
-        ),
-        .executableTarget(
-            name: "IC7600Validator",
-            dependencies: ["RigControl", "ValidationHelpers"],
-            path: "HardwareValidation/IC7600Validator"
-        ),
-        .executableTarget(
-            name: "IC9700Validator",
-            dependencies: ["RigControl", "ValidationHelpers"],
-            path: "HardwareValidation/IC9700Validator"
-        ),
-        .executableTarget(
-            name: "K2Validator",
-            dependencies: ["RigControl", "ValidationHelpers"],
-            path: "HardwareValidation/K2Validator"
-        ),
-        .executableTarget(
-            name: "RigctldEmulator",
-            dependencies: ["RigControl"],
-            path: "HardwareValidation/RigctldEmulator"
-        ),
-
-        // MARK: - Interactive Debug Tools (Icom)
-
-        .executableTarget(
-            name: "IC7100ManualValidation",
-            dependencies: ["RigControl"],
-            path: "Sources/IC7100ManualValidation"
-        ),
-        .executableTarget(
-            name: "IC7100PTTTest",
-            dependencies: ["RigControl"],
-            path: "Sources/IC7100PTTTest"
-        ),
-        .executableTarget(
-            name: "IC7100RITDebug",
-            dependencies: ["RigControl"],
-            path: "Sources/IC7100RITDebug"
-        ),
-        .executableTarget(
-            name: "IC7600ManualValidation",
-            dependencies: ["RigControl"],
-            path: "Sources/IC7600ManualValidation"
-        ),
-        .executableTarget(
-            name: "IC7600ModeDebug",
-            dependencies: ["RigControl"],
-            path: "Sources/IC7600ModeDebug"
-        ),
-        .executableTarget(
-            name: "IC9700ManualValidation",
-            dependencies: ["RigControl"],
-            path: "Sources/IC9700ManualValidation"
-        ),
-        .executableTarget(
-            name: "IC9700InteractiveValidator",
-            dependencies: ["RigControl"],
-            path: "Sources/IC9700InteractiveValidator"
-        ),
-        .executableTarget(
-            name: "IC9700NRDebug",
-            dependencies: ["RigControl"],
-            path: "Sources/IC9700NRDebug"
-        ),
-
-        // MARK: - Interactive Debug Tools (Elecraft)
-
-        .executableTarget(
-            name: "K2NewCommandsTest",
-            dependencies: ["RigControl"],
-            path: "Examples/Debugging/K2NewCommandsTest"
-        ),
-        .executableTarget(
-            name: "K2PowerDebug",
-            dependencies: ["RigControl"],
-            path: "Examples/Debugging/K2PowerDebug"
-        ),
-        .executableTarget(
-            name: "K2PTTDebug",
-            dependencies: ["RigControl"],
-            path: "Examples/Debugging/K2PTTDebug"
         ),
 
         // MARK: - Tests

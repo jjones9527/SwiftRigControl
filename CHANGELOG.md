@@ -17,13 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING for tool users (not library consumers).** All 16
+  developer-tool executables — hardware validators, interactive
+  validators, and Elecraft debug tools — moved out of the main
+  package into a separate SwiftPM project at
+  `Tools/SwiftRigControlTools/`. Library consumers pulling
+  SwiftRigControl via SPM now compile only `RigControl`,
+  `RigControlXPC`, and `RigControlHelper` (3 products) instead of
+  19. To run a validator or debug tool, `cd Tools/SwiftRigControlTools`
+  first. No source code or radio support changed; this is purely a
+  package layout change.
+
 ### Added
 - **Continuous integration** — `.github/workflows/ci.yml` runs
   `swift build` (library with warnings-as-errors, then all
   targets) and `swift test --parallel` on every push and pull
-  request, using the latest-stable Xcode on `macos-15`. README
-  carries a CI status badge. CONTRIBUTING.md documents how to
-  reproduce the CI gate locally.
+  request, using the latest-stable Xcode on `macos-15`. The Tools
+  subproject is built in a follow-on step. README carries a CI
+  status badge. CONTRIBUTING.md documents how to reproduce the CI
+  gate locally.
 - `RadioDefinition.VerificationStatus` enum (`.hardware` /
   `.definition`) capturing how thoroughly a radio definition has
   been validated. Defaults to `.definition` for backward
