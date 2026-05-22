@@ -9,6 +9,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 ## Features
 
 - ✅ **Modern Swift**: Swift 6.2 strict concurrency, async/await, actors
+- ✅ **Dummy radio**: Develop and preview SwiftUI apps with no hardware via `RadioDefinition.dummy()` (Hamlib Model 1 equivalent)
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
@@ -190,6 +191,42 @@ dependencies: [
 Or in Xcode: File → Add Package Dependencies → Enter repository URL
 
 ## Quick Start
+
+### Develop without hardware (SwiftUI previews, demos, tutorials)
+
+SwiftRigControl ships an in-memory **dummy radio** — the Swift
+analogue of Hamlib's Model 1. It implements the full `RigController`
+API but holds state in memory instead of talking to a serial port,
+so you can build, preview, and demo apps with no rig connected.
+
+```swift
+import RigControl
+
+// No radio? No problem.
+let rig = try RigController(radio: .dummy(), connection: .mock)
+try await rig.connect()
+
+try await rig.setFrequency(14_230_000, vfo: .a)
+try await rig.setMode(.usb, vfo: .a)
+let f = try await rig.frequency()   // 14_230_000
+```
+
+Override capabilities to simulate a different rig (VHF-only, QRP,
+receive-only):
+
+```swift
+let vhf = RigCapabilities(
+    supportedModes: [.fm, .fmN],
+    frequencyRange: FrequencyRange(min: 144_000_000, max: 148_000_000)
+)
+let rig = try RigController(
+    radio: .dummy(name: "2m FM Mobile", capabilities: vhf),
+    connection: .mock
+)
+```
+
+See `Examples/BasicUsage/DummyRadioExample.swift` for the full pattern
+including a SwiftUI preview snippet.
 
 ### Basic Usage (Non-Sandboxed Apps)
 

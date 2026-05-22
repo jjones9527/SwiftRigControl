@@ -190,18 +190,40 @@ consumers no longer transitively compile the 16 debug executables.
 `swift build --target RigControl` completes in ~0.2s on a warm
 cache vs. ~5s before.
 
-### 1.3 Ship a real mock transport
+### 1.3 Ship a real mock transport — and an in-memory dummy radio
 
-- [ ] Promote `Tests/RigControlTests/Support/MockTransport.swift`
-      into `Sources/RigControl/Transport/MockSerialTransport.swift`
-      as a public `Sendable` actor.
-- [ ] Wire `ConnectionType.mock` to construct it instead of
-      throwing.
-- [ ] Add a `RigController.makeMock(radio:)` convenience that
-      returns a controller backed by a scriptable mock for use
-      in SwiftUI previews and demo apps.
-- [ ] Add an example in `Examples/BasicUsage/` showing a SwiftUI
-      preview driven by the mock.
+Hamlib precedent: Model 1 ("Dummy") is a generic in-memory rig that
+exercises the full `RIG` API without any serial protocol. Source:
+`rigs/dummy/dummy.c`. App developers use it for development and CI.
+SwiftRigControl ships the equivalent.
+
+- [x] **Public `MockSerialTransport`** under
+      `Sources/RigControl/Transport/MockSerialTransport.swift`.
+      Scriptable byte-level transport for protocol-level testing.
+      Roughly the existing test fixture's behavior, promoted to a
+      stable public actor with full doc-comments.
+- [x] **Public `DummyCATProtocol`** under
+      `Sources/RigControl/Protocols/Dummy/DummyCATProtocol.swift`.
+      Direct `CATProtocol` conformer holding frequency, mode, PTT,
+      VFO, power, split, RIT/XIT, DSP, level controls, memory state
+      as actor-isolated fields. The Swift analogue of Hamlib Model 1.
+- [x] **`RadioDefinition.dummy(name:capabilities:)`** factory and
+      a new `.dummy` Manufacturer case so dummy rigs are honest
+      about what they are.
+- [x] **`ConnectionType.mock` wired** to `MockSerialTransport`
+      (instead of throwing). When paired with `.dummy()` the
+      transport is ignored; when paired with a real radio it lets
+      you script byte-level responses for protocol testing.
+- [x] **`Examples/BasicUsage/DummyRadioExample.swift`** reference
+      file plus a SwiftUI preview-pattern snippet in its trailing
+      comments.
+- [x] **Tests:** 22 new tests across `MockSerialTransportTests`
+      (10) and `DummyCATProtocolTests` (12). Full suite now
+      222/222 passing.
+
+**Acceptance met:** a SwiftUI `#Preview` can construct a working
+`RigController` via `RadioDefinition.dummy()` and `ConnectionType.mock`
+with no serial port, no XPC helper, and no hardware.
 
 ### 1.4 Remove deprecated API surface
 

@@ -1,4 +1,22 @@
-# Basic Usage Example
+# Basic Usage Examples
+
+Two reference files live in this directory:
+
+- **`BasicUsageExample.swift`** — talks to a real Icom IC-9700 over a
+  serial port. The rest of this README documents that example.
+- **`DummyRadioExample.swift`** — talks to an in-memory dummy radio
+  (`RadioDefinition.dummy()`) — no hardware required. Use this
+  pattern for SwiftUI previews, demo apps, tutorials, and
+  app-side integration tests. See the file's inline comments and
+  the SwiftUI preview snippet at the bottom for the recommended
+  pattern.
+
+Both are reference snippets, not registered executables in
+`Package.swift`. Copy the relevant pieces into your own app.
+
+---
+
+## BasicUsageExample.swift — real IC-9700
 
 This example demonstrates the basic usage of SwiftRigControl with an Icom IC-9700.
 

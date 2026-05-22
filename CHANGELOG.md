@@ -28,8 +28,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   19. To run a validator or debug tool, `cd Tools/SwiftRigControlTools`
   first. No source code or radio support changed; this is purely a
   package layout change.
+- `ConnectionType.mock` now constructs an in-memory transport
+  instead of throwing `RigError.unsupportedOperation`. Existing
+  code that catches the throw will no longer see it; existing
+  code that avoided `.mock` because it threw can now use it.
 
 ### Added
+- **Dummy radio (`RadioDefinition.dummy(name:capabilities:)`)** — the
+  Swift analogue of Hamlib's Model 1 ("Dummy") rig. A new
+  `DummyCATProtocol` actor holds frequency, mode, PTT, VFO, power,
+  split, RIT/XIT, DSP, level-controls, and memory-channel state in
+  memory and answers reads with what was written. Use it for
+  SwiftUI previews, demo apps, tutorials, and integration tests of
+  app code that should not require real hardware. New `.dummy` case
+  on `RadioDefinition.Manufacturer`.
+- **Public `MockSerialTransport`** — the test-fixture mock transport
+  promoted to a stable public API. Scriptable byte-level transport
+  for protocol-level testing in downstream projects. Lives at
+  `Sources/RigControl/Transport/MockSerialTransport.swift`.
+- `Examples/BasicUsage/DummyRadioExample.swift` reference file
+  demonstrating the dummy radio pattern and a SwiftUI preview
+  snippet.
 - **Continuous integration** — `.github/workflows/ci.yml` runs
   `swift build` (library with warnings-as-errors, then all
   targets) and `swift test --parallel` on every push and pull

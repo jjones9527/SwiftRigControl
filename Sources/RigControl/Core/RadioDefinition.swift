@@ -35,6 +35,11 @@ public struct RadioDefinition: Sendable {
         case kenwood = "Kenwood"
         case xiegu = "Xiegu"
         case tentec = "Ten-Tec"
+
+        /// Generic in-memory dummy radio (no real manufacturer). Used
+        /// by `RadioDefinition.dummy(...)` for previews, demo apps,
+        /// and tutorials. The Swift analogue of Hamlib's Model 1.
+        case dummy = "Dummy"
     }
 
     /// Indicates how thoroughly a radio definition has been validated.
@@ -112,9 +117,19 @@ public struct RadioDefinition: Sendable {
 
 /// Represents different ways to connect to a radio.
 public enum ConnectionType {
-    /// Serial port connection
+    /// Serial port connection over a `/dev/cu.*` device.
     case serial(path: String, baudRate: Int? = nil)
 
-    /// Mock connection for testing
+    /// In-memory transport with no real I/O.
+    ///
+    /// Pair with `RadioDefinition.dummy(...)` for SwiftUI previews,
+    /// demo apps, and tutorials — the controller behaves like a real
+    /// radio you can `setFrequency` / `setMode` / `setPTT` against,
+    /// but never touches a serial port.
+    ///
+    /// Pair with a real radio definition (e.g. `.icomIC7600()`) for
+    /// protocol-level testing: the radio's `CATProtocol` actually
+    /// runs and produces byte sequences you can inspect through the
+    /// underlying ``MockSerialTransport``.
     case mock
 }

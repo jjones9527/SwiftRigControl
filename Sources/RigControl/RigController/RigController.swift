@@ -95,7 +95,11 @@ public actor RigController {
     public init(radio: RadioDefinition, connection: ConnectionType) throws {
         self.radio = radio
 
-        // Create the appropriate transport
+        // Create the appropriate transport. For .mock, we hand the
+        // radio's protocolFactory a MockSerialTransport — for a dummy
+        // radio that transport is a no-op (DummyCATProtocol ignores
+        // it), and for a real radio it lets you script byte-level
+        // responses for protocol testing.
         let transport: any SerialTransport
         switch connection {
         case .serial(let path, let baudRate):
@@ -104,12 +108,9 @@ public actor RigController {
             transport = IOKitSerialPort(configuration: config)
 
         case .mock:
-            throw RigError.unsupportedOperation(
-                "Mock transport is only available in test builds. Use .serial(path:baudRate:) for actual hardware."
-            )
+            transport = MockSerialTransport()
         }
 
-        // Create the protocol instance
         self.proto = radio.createProtocol(transport: transport)
     }
 
