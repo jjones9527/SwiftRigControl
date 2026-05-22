@@ -23,6 +23,7 @@ extension RigController {
         guard connected else { throw RigError.notConnected }
         try await proto.setAFGain(level)
         await stateCache.invalidate("af_gain")
+        emit(.levelChanged(kind: .afGain, value: level))
     }
 
     /// Gets the current AF gain.
@@ -57,6 +58,7 @@ extension RigController {
         guard connected else { throw RigError.notConnected }
         try await proto.setRFGain(level)
         await stateCache.invalidate("rf_gain")
+        emit(.levelChanged(kind: .rfGain, value: level))
     }
 
     /// Gets the current RF gain.
@@ -92,6 +94,7 @@ extension RigController {
         guard connected else { throw RigError.notConnected }
         try await proto.setSquelch(level)
         await stateCache.invalidate("squelch")
+        emit(.levelChanged(kind: .squelch, value: level))
     }
 
     /// Gets the current squelch level.
@@ -125,6 +128,7 @@ extension RigController {
         guard connected else { throw RigError.notConnected }
         try await proto.setPreamp(level)
         await stateCache.invalidate("preamp")
+        emit(.levelChanged(kind: .preamp, value: level))
     }
 
     /// Gets the current preamplifier stage.
@@ -161,6 +165,7 @@ extension RigController {
         guard connected else { throw RigError.notConnected }
         try await proto.setAttenuator(dB)
         await stateCache.invalidate("attenuator")
+        emit(.levelChanged(kind: .attenuator, value: dB))
     }
 
     /// Gets the current attenuator level in dB (0 = off).
@@ -195,6 +200,7 @@ extension RigController {
     public func setPowerState(_ on: Bool) async throws {
         guard connected else { throw RigError.notConnected }
         try await proto.setPowerState(on)
+        emit(.powerStateChanged(on: on))
     }
 
     /// Returns `true` if the radio is powered on and responding.

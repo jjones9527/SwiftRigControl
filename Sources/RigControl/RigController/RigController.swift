@@ -85,6 +85,16 @@ public actor RigController {
     /// Cache entries expire after a configurable time period (default: 500ms).
     internal let stateCache = RadioStateCache()
 
+    /// Active subscribers to the ``events`` stream. Keyed by UUID so
+    /// individual subscribers can deregister on cancellation without
+    /// scanning the collection.
+    internal var eventSubscribers: [UUID: AsyncStream<RigStateEvent>.Continuation] = [:]
+
+    /// Most recent connection state. Replayed to new subscribers so
+    /// SwiftUI views that subscribe after `connect()` still see the
+    /// right initial value.
+    internal var connectionState: ConnectionState = .disconnected
+
     /// Initializes a new rig controller.
     ///
     /// - Parameters:

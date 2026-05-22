@@ -13,5 +13,6 @@ extension RigController {
             throw RigError.notConnected
         }
         try await proto.selectVFO(vfo)
+        emit(.vfoSelected(vfo))
     }
 }

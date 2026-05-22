@@ -42,8 +42,8 @@ extension RigController {
             throw RigError.notConnected
         }
         try await proto.setAGC(speed)
-        // Invalidate cached AGC setting
         await stateCache.invalidate("agc_speed")
+        emit(.agcChanged(speed))
     }
 
     /// Gets the current AGC speed.
@@ -114,6 +114,7 @@ extension RigController {
         }
         try await proto.setNoiseBlanker(config)
         await stateCache.invalidate("noise_blanker")
+        emit(.noiseBlankerChanged(config))
     }
 
     /// Gets the current noise blanker configuration.
@@ -179,6 +180,7 @@ extension RigController {
         }
         try await proto.setNoiseReduction(config)
         await stateCache.invalidate("noise_reduction")
+        emit(.noiseReductionChanged(config))
     }
 
     /// Gets the current noise reduction configuration.
@@ -240,6 +242,7 @@ extension RigController {
         }
         try await proto.setIFFilter(filter)
         await stateCache.invalidate("if_filter")
+        emit(.ifFilterChanged(filter))
     }
 
     /// Gets the current IF filter selection.

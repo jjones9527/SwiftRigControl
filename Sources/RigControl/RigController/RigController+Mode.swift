@@ -21,8 +21,8 @@ extension RigController {
             throw RigError.notConnected
         }
         try await proto.setMode(mode, vfo: vfo)
-        // Invalidate cached mode for this VFO
         await stateCache.invalidate("mode_\(vfo)")
+        emit(.modeChanged(vfo: vfo, mode: mode))
     }
 
     /// Gets the current operating mode of the specified VFO.

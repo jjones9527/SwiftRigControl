@@ -25,6 +25,7 @@ extension RigController {
             throw RigError.notConnected
         }
         try await proto.setPTT(enabled)
+        emit(.pttChanged(enabled: enabled))
     }
 
     /// Gets the current PTT state.

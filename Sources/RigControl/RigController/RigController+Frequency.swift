@@ -24,8 +24,8 @@ extension RigController {
             throw RigError.notConnected
         }
         try await proto.setFrequency(hz, vfo: vfo)
-        // Invalidate cached frequency for this VFO
         await stateCache.invalidate("freq_\(vfo)")
+        emit(.frequencyChanged(vfo: vfo, hz: hz))
     }
 
     /// Gets the current operating frequency of the specified VFO.

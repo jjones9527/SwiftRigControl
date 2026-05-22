@@ -269,21 +269,41 @@ forces apps to poll; we should let SwiftUI apps observe.
 
 The proposed `RigStateObserver` callback protocol from the old
 roadmap is workable, but `AsyncStream` is more idiomatic for
-Swift 6 / SwiftUI. Recommendation: ship both, with the stream
-as primary.
+Swift 6 / SwiftUI. Recommendation: ship the stream first; defer
+the callback protocol until a user asks for it.
 
-- [ ] Define a `RigStateEvent` enum:
-      `.frequencyChanged(VFO, UInt64)`,
-      `.modeChanged(VFO, Mode)`,
-      `.pttChanged(Bool)`,
-      `.signalStrengthChanged(SignalStrength)`,
-      `.connectionStateChanged(ConnectionState)`.
-- [ ] Add `RigController.events: AsyncStream<RigStateEvent>`.
-- [ ] All `set*` paths on `RigController` emit the corresponding
-      event after a successful write (and after cache invalidation).
-- [ ] Define `RigStateObserver` protocol for callback-style
-      consumers; bridge it on top of the AsyncStream.
-- [ ] Unit tests with `MockSerialTransport` proving event delivery.
+- [x] **`RigStateEvent` enum** with 16 cases covering frequency,
+      mode, PTT, VFO selection, power, split, RIT/XIT, signal
+      strength, AGC, NB, NR, IF filter, level controls (unified
+      via a `LevelKind` discriminator), power state, and
+      `ConnectionState`. New `ConnectionState` enum with
+      `.disconnected`, `.connecting`, `.connected`, `.degraded`,
+      `.reconnecting` cases — the latter two populated by 2.3.
+- [x] **`RigController.events: AsyncStream<RigStateEvent>`**.
+      Each access returns a fresh stream; the controller fans
+      every emission out to all active subscribers. Per-subscriber
+      `.bufferingNewest(64)` policy bounds memory under slow
+      consumers. Subscribers auto-deregister on cancellation via
+      `onTermination`. New subscribers see a replay of the current
+      `ConnectionState` so SwiftUI views that subscribe lazily
+      still get the right initial state.
+- [x] **All `set*` paths on `RigController` emit** after the
+      underlying protocol acknowledges (and after cache
+      invalidation). Setters that fail do NOT emit. Memory channel
+      operations deliberately omitted — they're app-managed state,
+      not radio-state-change events.
+- [x] **`connect()` / `disconnect()` emit
+      `.connectionStateChanged`**, including a `.connecting`
+      transition that flips to `.disconnected` if the underlying
+      protocol's `connect()` throws.
+- [x] **Deferred:** `RigStateObserver` callback protocol. The
+      `AsyncStream` API is the right shape for Swift 6 / SwiftUI;
+      a callback bridge adds complexity for users who can't use
+      async, and no one has asked for it yet. Reopen if requested.
+- [x] **Tests:** 12 new tests in `RigControllerEventsTests`
+      covering connection lifecycle, state-change emission,
+      ordering, multi-subscriber fan-out, cancellation cleanup,
+      no-dedupe policy, and failed-set non-emission.
 
 ### 2.2 Polled state broadcaster
 

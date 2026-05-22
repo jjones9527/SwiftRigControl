@@ -10,6 +10,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 - ✅ **Modern Swift**: Swift 6.2 strict concurrency, async/await, actors
 - ✅ **Dummy radio**: Develop and preview SwiftUI apps with no hardware via `RadioDefinition.dummy()` (Hamlib Model 1 equivalent)
+- ✅ **Event stream**: `RigController.events` as `AsyncStream<RigStateEvent>` — push-style state updates for SwiftUI with no polling loop in user code
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
@@ -227,6 +228,37 @@ let rig = try RigController(
 
 See `Examples/BasicUsage/DummyRadioExample.swift` for the full pattern
 including a SwiftUI preview snippet.
+
+### Push-style state updates (no polling)
+
+`RigController.events` is an `AsyncStream<RigStateEvent>` that fires
+whenever the radio's state changes. SwiftUI views and `@Observable`
+view models can react to state changes without a polling loop:
+
+```swift
+Task {
+    for await event in rig.events {
+        switch event {
+        case .frequencyChanged(let vfo, let hz):
+            viewModel.frequency[vfo] = hz
+        case .modeChanged(let vfo, let mode):
+            viewModel.mode[vfo] = mode
+        case .pttChanged(let on):
+            viewModel.transmitting = on
+        case .connectionStateChanged(let state):
+            viewModel.connectionState = state
+        default:
+            break
+        }
+    }
+}
+```
+
+Multiple subscribers can observe the same controller simultaneously
+(each `rig.events` access returns its own stream; the controller
+fans events out). Buffering is bounded — slow consumers see the most
+recent 64 events. See `Examples/BasicUsage/DummyRadioExample.swift`
+for the full `@Observable` view-model pattern.
 
 ### Basic Usage (Non-Sandboxed Apps)
 

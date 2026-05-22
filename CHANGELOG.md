@@ -17,6 +17,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Push-style event stream (`RigController.events`).** New
+  `AsyncStream<RigStateEvent>` that fires whenever a `set*` call
+  on `RigController` succeeds. SwiftUI apps can drive `@Observable`
+  view models from the stream with no polling loop in user code.
+  Multiple subscribers are supported (each `events` access returns
+  a fresh stream; the controller fans events out). Per-subscriber
+  `.bufferingNewest(64)` policy bounds memory; subscribers
+  auto-deregister on cancellation. New subscribers see a replay of
+  the current connection state so views that subscribe lazily get
+  the right initial value.
+- **`RigStateEvent` enum** with cases for frequency, mode, PTT,
+  VFO, power, split, RIT/XIT, signal strength, AGC, NB, NR, IF
+  filter, level controls (unified via a `LevelKind` discriminator),
+  power state, and connection-state transitions. Equatable +
+  Sendable.
+- **`ConnectionState` enum** (`.disconnected`, `.connecting`,
+  `.connected`, `.degraded(reason:)`, `.reconnecting(attempt:)`).
+  Phase 2.1 emits the first three; `.degraded` and `.reconnecting`
+  are populated by Phase 2.3's connection-health monitor.
+- `Examples/BasicUsage/DummyRadioExample.swift` gained an inline
+  `@Observable` SwiftUI view-model pattern showing the
+  event-stream consumption idiom.
+
 ### Removed
 The items below are source-breaking *in the strict sense*, but each
 had carried a formal `@available(*, deprecated)` marker since

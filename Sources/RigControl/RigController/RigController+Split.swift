@@ -33,6 +33,7 @@ extension RigController {
         }
 
         try await proto.setSplit(enabled)
+        emit(.splitChanged(enabled: enabled))
     }
 
     /// Gets the current split operation state.

@@ -99,18 +99,46 @@ struct DummyRadioExample {
 
 // MARK: - SwiftUI preview pattern (illustrative)
 //
-// In a SwiftUI app you typically expose the RigController as an
-// observable property on a view model, then construct a dummy-backed
-// controller for previews:
+// In a SwiftUI app, drive a view model from RigController.events.
+// The dummy radio makes this work in #Preview with no hardware:
 //
+//   @Observable
 //   @MainActor
-//   final class RadioViewModel: ObservableObject {
-//       @Published var frequency: UInt64 = 0
-//       @Published var mode: Mode = .usb
+//   final class RadioViewModel {
+//       var frequency: UInt64 = 0
+//       var mode: Mode = .usb
+//       var transmitting: Bool = false
+//       var connectionState: ConnectionState = .disconnected
 //
 //       private let rig: RigController
+//       private var eventTask: Task<Void, Never>?
 //
-//       init(rig: RigController) { self.rig = rig }
+//       init(rig: RigController) {
+//           self.rig = rig
+//           self.eventTask = Task { [weak self] in
+//               for await event in rig.events {
+//                   guard let self else { return }
+//                   switch event {
+//                   case .frequencyChanged(_, let hz):
+//                       self.frequency = hz
+//                   case .modeChanged(_, let mode):
+//                       self.mode = mode
+//                   case .pttChanged(let on):
+//                       self.transmitting = on
+//                   case .connectionStateChanged(let state):
+//                       self.connectionState = state
+//                   default:
+//                       break
+//                   }
+//               }
+//           }
+//       }
+//
+//       deinit { eventTask?.cancel() }
+//
+//       func setFrequency(_ hz: UInt64) async {
+//           try? await rig.setFrequency(hz, vfo: .a)
+//       }
 //
 //       static var preview: RadioViewModel {
 //           let rig = try! RigController(radio: .dummy(), connection: .mock)
@@ -124,3 +152,5 @@ struct DummyRadioExample {
 //   }
 //
 // No hardware required, no XPC helper required, no serial port required.
+// The view model never polls — events arrive only when state changes,
+// and the SwiftUI view re-renders automatically via @Observable.

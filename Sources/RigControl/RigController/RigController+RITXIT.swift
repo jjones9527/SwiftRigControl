@@ -38,8 +38,8 @@ extension RigController {
         }
 
         try await proto.setRIT(state)
-        // Invalidate cached RIT state
         await stateCache.invalidate("rit_state")
+        emit(.ritChanged(state))
     }
 
     /// Gets the current RIT state.
@@ -118,8 +118,8 @@ extension RigController {
         }
 
         try await proto.setXIT(state)
-        // Invalidate cached XIT state
         await stateCache.invalidate("xit_state")
+        emit(.xitChanged(state))
     }
 
     /// Gets the current XIT state.

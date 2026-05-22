@@ -31,6 +31,7 @@ extension RigController {
         }
 
         try await proto.setPower(watts)
+        emit(.powerChanged(watts))
     }
 
     /// Gets the current RF power level.
