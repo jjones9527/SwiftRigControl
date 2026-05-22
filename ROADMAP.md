@@ -229,15 +229,25 @@ with no serial port, no XPC helper, and no hardware.
 
 Source-breaking; gates the next major version.
 
-- [ ] Delete `IcomCIVProtocol.init(transport:civAddress:capabilities:)`.
-- [ ] Delete the six deprecated `RadioDefinition` static properties
-      (`.icomIC9700`, `.icomIC7300`, etc.); the function-style
-      factory methods remain.
-- [ ] Remove the satisfying-only `IcomCIVProtocol.init(transport:)`
-      that calls `preconditionFailure` — replace by relaxing the
-      `CATProtocol` requirement (see Phase 5).
-- [ ] CHANGELOG: BREAKING entry, migration snippet.
-- [ ] Tag as v2.0.0-alpha.1.
+- [x] **Deleted `IcomCIVProtocol.init(transport:civAddress:capabilities:)`.**
+      Callers must now construct an explicit command set
+      (`StandardIcomCommandSet`, `IC7100CommandSet`, etc.) and pass
+      it via the modern init.
+- [x] **Deleted the six deprecated `RadioDefinition` static
+      properties** (`.icomIC9700`, `.icomIC7300`, `.icomIC7600`,
+      `.icomIC7100`, `.icomIC7610`, `.icomIC705`). The function-style
+      factory methods (`.icomIC9700()` with an optional
+      `civAddress:` parameter) remain.
+- [x] **Deleted the `init(transport:)` requirement from `CATProtocol`**
+      and the satisfying-only single-arg inits on every conformer
+      (Icom's `preconditionFailure`-throwing variant; the
+      `.full`-defaulting variants on Yaesu, Kenwood, Elecraft, THD72,
+      Ten-Tec Orion / Legacy). Construction is now exclusively the
+      job of concrete-type inits and `RadioDefinition.protocolFactory`.
+- [x] CHANGELOG `[Unreleased]` has a BREAKING entry with migration
+      snippets for each deletion.
+- [ ] **Tag as v2.0.0-alpha.1** — held pending explicit user OK.
+      Tagging changes downstream consumer expectations.
 
 **Phase 1 exit criteria:** CI green, library compile time
 substantially reduced for consumers, mock-driven SwiftUI demo

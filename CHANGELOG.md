@@ -17,6 +17,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING — bumps next release to v2.0.0)
+- `IcomCIVProtocol.init(transport:civAddress:capabilities:)` — the
+  legacy two-arg-plus-caps initializer deprecated since v1.0.x.
+  **Migration:** pass an explicit command set.
+  ```swift
+  // Before
+  let proto = IcomCIVProtocol(
+      transport: transport,
+      civAddress: 0xA2,
+      capabilities: .full
+  )
+  // After
+  let proto = IcomCIVProtocol(
+      transport: transport,
+      civAddress: 0xA2,
+      radioModel: .ic9700,
+      commandSet: StandardIcomCommandSet(civAddress: 0xA2),
+      capabilities: .full
+  )
+  ```
+  In most cases you should not be calling this initializer
+  directly — use `RadioDefinition.icomIC9700()` (etc.) and let
+  `RigController` build the protocol for you.
+- Six deprecated `RadioDefinition` static properties:
+  `.icomIC9700`, `.icomIC7300`, `.icomIC7600`, `.icomIC7100`,
+  `.icomIC7610`, `.icomIC705`. **Migration:** add `()` —
+  `.icomIC9700()`, `.icomIC7600()`, etc. Each now accepts an
+  optional `civAddress:` parameter for non-default bus addresses.
+  ```swift
+  // Before
+  let rig = RigController(radio: .icomIC9700, connection: …)
+  // After
+  let rig = try RigController(radio: .icomIC9700(), connection: …)
+  // Or with a custom CI-V address:
+  let rig = try RigController(radio: .icomIC9700(civAddress: 0xA3), connection: …)
+  ```
+- `CATProtocol.init(transport:)` requirement and the
+  satisfying-only single-arg inits on every conformer
+  (`IcomCIVProtocol`, `YaesuCATProtocol`, `KenwoodProtocol`,
+  `THD72Protocol`, `ElecraftProtocol`, `TenTecOrionProtocol`,
+  `TenTecLegacyProtocol`). The Icom variant called
+  `preconditionFailure` at runtime; the others picked arbitrary
+  default capabilities. None had real call sites.
+  **Migration:** if you were constructing a protocol with the
+  one-arg init (you almost certainly were not), pass an explicit
+  capabilities value via the radio's `init(transport:capabilities:)`
+  (or, for Icom and Ten-Tec Orion, the longer per-radio init).
+  Construction is now exclusively the job of concrete-type inits
+  and `RadioDefinition.protocolFactory`.
+
 ### Changed
 - **BREAKING for tool users (not library consumers).** All 16
   developer-tool executables — hardware validators, interactive

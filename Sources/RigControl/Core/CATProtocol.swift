@@ -12,10 +12,13 @@ public protocol CATProtocol: Actor {
     /// The capabilities of this radio
     var capabilities: RigCapabilities { get }
 
-    /// Initializes a new CAT protocol instance.
-    ///
-    /// - Parameter transport: The serial transport to use for communication
-    init(transport: any SerialTransport)
+    // NOTE: `CATProtocol` intentionally has no init requirement.
+    // Different concrete protocols need very different inputs
+    // (capabilities, CI-V address, radio model, command set, etc.)
+    // and a one-size-fits-all initializer led to conformers having
+    // to declare unused inits that either picked arbitrary defaults
+    // or crashed. Construction belongs to concrete types and to
+    // `RadioDefinition`'s `protocolFactory`.
 
     /// Connects to the radio and performs any initialization required.
     ///

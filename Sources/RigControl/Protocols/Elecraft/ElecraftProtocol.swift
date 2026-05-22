@@ -50,12 +50,6 @@ public actor ElecraftProtocol: CATProtocol {
         self.isK2 = capabilities.maxPower <= 15
     }
 
-    public init(transport: any SerialTransport) {
-        self.transport = transport
-        self.capabilities = .full
-        self.isK2 = false
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {

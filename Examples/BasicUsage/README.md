@@ -120,16 +120,16 @@ Example completed successfully!
 
 For IC-7300:
 ```swift
-let rig = RigController(
-    radio: .icomIC7300,
+let rig = try RigController(
+    radio: .icomIC7300(),
     connection: .serial(path: "/dev/cu.IC7300", baudRate: 115200)
 )
 ```
 
 For IC-705:
 ```swift
-let rig = RigController(
-    radio: .icomIC705,
+let rig = try RigController(
+    radio: .icomIC705(),
     connection: .serial(path: "/dev/cu.IC705", baudRate: 19200)
 )
 ```

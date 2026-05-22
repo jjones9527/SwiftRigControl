@@ -259,29 +259,4 @@ extension RadioDefinition {
         )
     }
 
-    // MARK: - Backward Compatibility
-
-    /// Legacy IC-9700 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC9700(civAddress:) function instead")
-    public static let icomIC9700 = icomIC9700()
-
-    /// Legacy IC-7300 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC7300(civAddress:) function instead")
-    public static let icomIC7300 = icomIC7300()
-
-    /// Legacy IC-7600 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC7600(civAddress:) function instead")
-    public static let icomIC7600 = icomIC7600()
-
-    /// Legacy IC-7100 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC7100(civAddress:) function instead")
-    public static let icomIC7100 = icomIC7100()
-
-    /// Legacy IC-7610 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC7610(civAddress:) function instead")
-    public static let icomIC7610 = icomIC7610()
-
-    /// Legacy IC-705 definition (static property for backward compatibility)
-    @available(*, deprecated, message: "Use icomIC705(civAddress:) function instead")
-    public static let icomIC705 = icomIC705()
 }

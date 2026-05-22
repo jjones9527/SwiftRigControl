@@ -49,12 +49,6 @@ public actor TenTecOrionProtocol: CATProtocol {
         self.capabilities = capabilities
     }
 
-    public init(transport: any SerialTransport) {
-        self.transport = transport
-        self.radioModel = .orion
-        self.capabilities = RadioCapabilitiesDatabase.tenTecOrion
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {

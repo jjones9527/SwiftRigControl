@@ -43,11 +43,6 @@ public actor THD72Protocol: CATProtocol {
         self.capabilities = capabilities
     }
 
-    public init(transport: any SerialTransport) {
-        self.transport = transport
-        self.capabilities = RadioCapabilitiesDatabase.kenwoodTHD72A
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {

@@ -33,11 +33,6 @@ public actor KenwoodProtocol: CATProtocol {
         self.capabilities = capabilities
     }
 
-    public init(transport: any SerialTransport) {
-        self.transport = transport
-        self.capabilities = .full
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {

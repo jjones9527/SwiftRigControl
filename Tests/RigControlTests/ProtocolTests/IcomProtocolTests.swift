@@ -8,9 +8,17 @@ import Testing
 
     init() async throws {
         mockTransport = MockTransport()
+        // The byte sequences these tests assert against come from a
+        // generic Icom-CI-V radio (targetable VFO model, FIL1 byte on
+        // mode commands, no echo). That matches StandardIcomCommandSet
+        // — the original test fixture used the legacy single-init form
+        // that synthesised exactly this command set. Keep the explicit
+        // construction now that the legacy init is gone.
         icomProtocol = IcomCIVProtocol(
             transport: mockTransport,
             civAddress: 0xA2,
+            radioModel: .ic9700,
+            commandSet: StandardIcomCommandSet(civAddress: 0xA2),
             capabilities: .full
         )
         try await icomProtocol.connect()

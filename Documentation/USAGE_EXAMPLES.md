@@ -7,6 +7,13 @@ This document provides comprehensive examples for common amateur radio control s
 > examples below work against the current release, `v1.0.6`. See
 > `CHANGELOG.md`'s top-of-file note for the reconciliation.
 
+> **API style note (post-v2.0):** Examples below sometimes show the
+> legacy static-property form (`.icomIC9700`, `.icomIC7600`, etc.).
+> These properties were removed in v2.0 in favor of function-style
+> factories that accept an optional CI-V address:
+> `.icomIC9700()`, `.icomIC7600(civAddress: 0x7B)`. Read each `.icomXxx`
+> example as `.icomXxx()` and add a CI-V address argument if needed.
+
 ## Table of Contents
 
 1. [Basic Operations](#basic-operations)

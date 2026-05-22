@@ -16,7 +16,7 @@ import Foundation
 ///
 /// ```swift
 /// let rig = try RigController(
-///     radio: .icomIC9700,
+///     radio: .icomIC9700(),
 ///     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
 /// )
 ///

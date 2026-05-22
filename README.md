@@ -234,8 +234,8 @@ including a SwiftUI preview snippet.
 import RigControl
 
 // Create a rig controller
-let rig = RigController(
-    radio: .icomIC9700,
+let rig = try RigController(
+    radio: .icomIC9700(),
     connection: .serial(path: "/dev/cu.usbserial-A1B2C3", baudRate: 115200)
 )
 

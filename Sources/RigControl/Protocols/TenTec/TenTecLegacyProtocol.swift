@@ -53,11 +53,6 @@ public actor TenTecLegacyProtocol: CATProtocol {
         self.capabilities = capabilities
     }
 
-    public init(transport: any SerialTransport) {
-        self.transport = transport
-        self.capabilities = RadioCapabilitiesDatabase.tenTecJupiter
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {

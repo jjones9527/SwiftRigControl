@@ -49,43 +49,6 @@ public actor IcomCIVProtocol: CATProtocol {
         self.capabilities = capabilities
     }
 
-    /// Initializes a new Icom CI-V protocol instance (legacy compatibility).
-    ///
-    /// - Parameters:
-    ///   - transport: The serial transport to use
-    ///   - civAddress: The CI-V address of the radio (e.g., 0xA2 for IC-9700)
-    ///   - capabilities: The capabilities of this radio model
-    @available(*, deprecated, message: "Use init(transport:civAddress:radioModel:commandSet:capabilities:) for better radio-specific support")
-    public init(transport: any SerialTransport, civAddress: UInt8, capabilities: RigCapabilities) {
-        self.transport = transport
-        self.civAddress = civAddress
-        self.capabilities = capabilities
-
-        // Try to infer radio model from CI-V address (legacy behavior)
-        // This is imperfect since addresses are user-configurable
-        self.radioModel = IcomRadioModel.allCases.first { $0.defaultCIVAddress == civAddress } ?? .ic7300
-
-        // Create a standard command set based on capabilities
-        // Use targetable VFO model as legacy default
-        self.commandSet = StandardIcomCommandSet(
-            civAddress: civAddress,
-            vfoModel: capabilities.requiresVFOSelection ? .targetable : .none,
-            requiresModeFilter: capabilities.requiresModeFilter,
-            echoesCommands: false  // Legacy default
-        )
-    }
-
-    /// Required by `CATProtocol` but not usable for Icom radios.
-    ///
-    /// Always triggers a `fatalError` at runtime. This initializer exists only to satisfy the
-    /// `CATProtocol` requirement; all call-sites must use
-    /// `init(transport:civAddress:radioModel:commandSet:capabilities:)` instead.
-    ///
-    /// - Important: Do not call this initializer directly. Use the designated Icom initializer.
-    public init(transport: any SerialTransport) {
-        preconditionFailure("Use init(transport:civAddress:radioModel:commandSet:capabilities:) for Icom radios")
-    }
-
     // MARK: - Connection
 
     public func connect() async throws {
