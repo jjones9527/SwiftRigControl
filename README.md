@@ -2,26 +2,56 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
+**Current release:** v1.0.6
+
 ## Features
 
-- ✅ **Modern Swift**: Built with Swift 5.9+, using async/await and actors
+- ✅ **Modern Swift**: Swift 6.2 strict concurrency, async/await, actors
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: Comprehensive unit tests with mock transport support
-- ✅ **Frequency Validation**: Safety-critical validation with amateur band support (v1.0.2)
-- ✅ **S-Meter Reading**: Real-time signal strength monitoring (v1.1.0)
-- ✅ **Performance Caching**: 10-20x faster queries with intelligent caching (v1.1.0)
-- ✅ **Batch Configuration**: Set multiple parameters in one call (v1.1.0)
-- ✅ **RIT/XIT Support**: Receiver/Transmitter incremental tuning across all protocols (v1.1.0)
-- ✅ **Memory Channels**: Universal memory channel model with manufacturer-specific features (v1.2.0)
+- ✅ **Well-Tested**: 192 tests on Swift Testing framework with mock transport
+- ✅ **Frequency Validation**: Safety-critical validation with amateur band support
+- ✅ **S-Meter Reading**: Real-time signal strength monitoring
+- ✅ **Performance Caching**: 10-20x faster queries with intelligent caching
+- ✅ **Batch Configuration**: Set multiple parameters in one call
+- ✅ **RIT/XIT Support**: Receiver/Transmitter incremental tuning across all protocols
+- ✅ **Memory Channels**: Universal memory channel model with manufacturer-specific features
+- ✅ **Level & DSP Controls**: AF/RF gain, squelch, preamp, attenuator, AGC, NB, NR, IF filter
 - ✅ **Open Source**: LGPL v3.0 licensed
+
+## Hardware verification status
+
+SwiftRigControl ships with **~80 radio definitions**, but only a subset
+has been validated against real hardware. Status categories:
+
+- **Hardware** — exercised against the real radio via the matching
+  validator in `HardwareValidation/`. Frequency, mode, PTT, and at
+  least one read-back operation confirmed working.
+- **Definition** — protocol, capabilities, and command set are
+  implemented (typically cross-referenced against the manufacturer
+  manual and Hamlib source), but **no real-radio verification has been
+  performed**. These may work; they have not been proven.
+
+| Radio        | Status     | Validator                          |
+| ------------ | ---------- | ---------------------------------- |
+| Icom IC-7100 | Hardware   | `HardwareValidation/IC7100Validator` |
+| Icom IC-7600 | Hardware   | `HardwareValidation/IC7600Validator` |
+| Icom IC-9700 | Hardware   | `HardwareValidation/IC9700Validator` |
+| Elecraft K2  | Hardware   | `HardwareValidation/K2Validator`     |
+| *all others* | Definition | —                                    |
+
+If you use SwiftRigControl with a Definition-status radio and confirm
+that core operations (frequency, mode, PTT) work, please open an issue
+or PR so we can promote it.
 
 ## Supported Radios
 
-**80 radio models across 5 manufacturers**
+**~80 radio definitions across 6 manufacturers.** Radios marked
+*Hardware* in the table above are field-tested; all others are
+definition-only.
 
-### Icom (CI-V Protocol) - 38 models ✅
+### Icom (CI-V Protocol) — 38 models
 
 **Flagship & High-End HF:**
 - **IC-7851** - HF/6m flagship with spectrum scope (200W, CI-V: 0x8E)
@@ -62,7 +92,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **IC-R8600** - Wideband receiver (10kHz-3GHz, CI-V: 0x96)
 - **IC-R75** - HF receiver (30kHz-60MHz, CI-V: 0x5A)
 
-### Yaesu (CAT Protocol) - 21 models ✅
+### Yaesu (CAT Protocol) — 21 models
 
 **Flagship HF:**
 - **FTDX-9000** - HF/6m 200W/400W flagship (38400 baud)
@@ -93,7 +123,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **FT-818** - HF/VHF/UHF portable (38400 baud)
 - **FT-817** - HF/VHF/UHF portable QRP (38400 baud)
 
-### Elecraft (Text-Based Protocol) - 6 models ✅
+### Elecraft (Text-Based Protocol) — 6 models
 
 **High-Performance:**
 - **K4** - HF/6m SDR transceiver (100W, 38400 baud)
@@ -105,14 +135,14 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - **KX2** - HF portable (12W, 38400 baud)
 - **K2** - HF transceiver (15W, 4800 baud)
 
-### Xiegu (CI-V Compatible) - 3 models ✅
+### Xiegu (CI-V Compatible) — 3 models
 
 **Budget HF:**
 - **G90** - HF 20W SDR transceiver (19200 baud, CI-V: 0xA4)
 - **X6100** - HF/6m 10W portable SDR (19200 baud, CI-V: 0xA4)
 - **X6200** - HF/6m 8W portable SDR (19200 baud, CI-V: 0xA4)
 
-### Kenwood (Text-Based Protocol) - 12 models ✅
+### Kenwood (Text-Based Protocol) — 12 models
 
 **HF Flagships:**
 - **TS-990S** - HF/6m flagship with dual receiver (200W, 115200 baud)
@@ -212,7 +242,7 @@ if signal.isStrongSignal {
 }
 ```
 
-### Batch Configuration (v1.1.0)
+### Batch Configuration
 
 ```swift
 // Set up for FT8 on 20m in one call
@@ -229,7 +259,7 @@ try await rig.configure(frequency: 7_074_000)
 try await rig.configure(mode: .cw)
 ```
 
-### Performance Caching (v1.1.0)
+### Performance Caching
 
 ```swift
 // Cached reads are 10-20x faster (default behavior)
@@ -243,7 +273,7 @@ let freshFreq = try await rig.frequency(cached: false)
 await rig.invalidateCache()
 ```
 
-### Frequency Validation (v1.0.2)
+### Frequency Validation
 
 SwiftRigControl includes comprehensive frequency validation to prevent invalid commands and ensure safe operation:
 
@@ -470,7 +500,7 @@ Common patterns:
 | **PTT Off** | Cmd 0x1C 0x00 0x00 | `RX;` | `TX0;` | `TX0;` |
 | **VFO Select** | Cmd 0x07 | `FT0;`/`FT1;` | `FT0;`/`FT1;` | `FR0;`/`FR1;` |
 | **Split On** | Cmd 0x0F 0x01 | `FT1;` | `FT1;` | `FT1;` |
-| **S-Meter** (v1.1.0) | Cmd 0x15 0x02 | `SM0;` | `RM5;` | `SM0;` |
+| **S-Meter** | Cmd 0x15 0x02 | `SM0;` | `RM5;` | `SM0;` |
 | **Response** | Echo + ACK/NAK | Echo command | Echo command | Echo command |
 
 ### Supported Modes by Manufacturer
@@ -659,8 +689,9 @@ See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.m
 **We currently support:**
 - Icom CI-V protocol (38 radios)
 - Yaesu CAT protocol (21 radios)
-- Kenwood text protocol (12 radios)
+- Kenwood text protocol (12 radios, includes TH-D72/TH-D74)
 - Elecraft text protocol (6 radios)
+- Ten-Tec protocol (5 radios — Orion family + Legacy)
 - Xiegu (CI-V compatible) (3 radios)
 
 Adding a radio using an existing protocol typically takes 30-60 minutes!

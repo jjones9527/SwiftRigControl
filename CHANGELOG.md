@@ -5,6 +5,22 @@ All notable changes to SwiftRigControl will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Version-numbering note (Phase 0 reconciliation, 2026-05-22):**
+> The actual released git tags are `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`,
+> `v1.0.4`, and `v1.0.6` (1.0.5 was skipped). The `[1.1.0]`, `[1.2.0]`,
+> and `[1.3.0]` headings that appear below describe **real shipped work
+> that was bundled into the `v1.0.6` release tag on 2026-04-30**, not
+> separately released versions. They are preserved here as historical
+> feature batches. Going forward, version numbers in this file match
+> the git tag they ship under. The next release will be `v1.0.7` (patch)
+> or `v1.1.0` (minor) — see ROADMAP.md.
+
+## [Unreleased]
+
+### Fixed
+- IC-7600: send Main/Sub selection before mode changes to ensure the
+  command targets the intended receiver (commit `3931887`).
+
 ## [1.3.0] - 2026-04-28
 
 ### Added

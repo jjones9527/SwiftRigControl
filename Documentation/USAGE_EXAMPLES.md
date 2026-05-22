@@ -2,6 +2,11 @@
 
 This document provides comprehensive examples for common amateur radio control scenarios using SwiftRigControl.
 
+> **Version-label note:** Inline `(vX.Y.Z)` tags below mark when a
+> feature was *implemented*, not which git tag it shipped under. All
+> examples below work against the current release, `v1.0.6`. See
+> `CHANGELOG.md`'s top-of-file note for the reconciliation.
+
 ## Table of Contents
 
 1. [Basic Operations](#basic-operations)

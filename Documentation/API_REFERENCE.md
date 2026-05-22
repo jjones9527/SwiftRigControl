@@ -2,6 +2,11 @@
 
 Complete API documentation for SwiftRigControl library.
 
+> **Version-label note:** Inline `(vX.Y.Z)` tags throughout this file
+> mark when a feature was *implemented*, not which git tag it shipped
+> under. All features below ship under the current release, `v1.0.6`.
+> See `CHANGELOG.md`'s top-of-file note for the reconciliation.
+
 ## Table of Contents
 
 1. [Core Classes](#core-classes)
