@@ -2,6 +2,11 @@
 
 Professional-grade standalone validation tools for testing Icom radios with SwiftRigControl.
 
+> **Location note:** these tools live in the
+> `Tools/SwiftRigControlTools/` SwiftPM project, not the main
+> SwiftRigControl package. Library consumers do not pull them
+> transitively. To use them, `cd Tools/SwiftRigControlTools` first.
+
 ## Overview
 
 These tools provide comprehensive hardware validation for supported radios. They are designed for:
@@ -27,8 +32,8 @@ Each validator is a standalone executable that tests all major radio functions u
 ### Prerequisites
 
 1. Radio connected via USB serial
-2. Swift 6.2+ installed
-3. macOS 13+ (Ventura or later)
+2. Swift 6.2+ installed (Xcode 17+)
+3. macOS 14+
 
 ### Find Your Serial Port
 
