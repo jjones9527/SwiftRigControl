@@ -18,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Polled state broadcaster (`startPolling` / `stopPolling`).**
+  Read-only state the radio doesn't push (signal strength,
+  front-panel-driven frequency/mode/PTT changes) can now be
+  sampled on a configurable cadence and fanned through the same
+  `events` stream as setter-driven changes. New
+  `PollingConfiguration` struct exposes per-field intervals with
+  sensible defaults (200 ms S-meter, 1 s frequency, 2 s mode,
+  100 ms PTT) plus `.uniform(every:)` and `.disabled`
+  convenience helpers. Emission policy: `signalStrength` emits
+  every poll; `frequency` / `mode` / `ptt` emit only on actual
+  change. `disconnect()` stops polling automatically. Transient
+  per-cycle errors are swallowed so a single timeout doesn't
+  kill the poller. New `isPolling` accessor.
 - **Push-style event stream (`RigController.events`).** New
   `AsyncStream<RigStateEvent>` that fires whenever a `set*` call
   on `RigController` succeeds. SwiftUI apps can drive `@Observable`

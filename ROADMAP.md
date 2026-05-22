@@ -307,16 +307,37 @@ the callback protocol until a user asks for it.
 
 ### 2.2 Polled state broadcaster
 
-Some state (signal strength, SWR, frequency drift, PTT from
-front-panel mic) the radio does not push. Provide an opt-in
-poller.
+Some state (signal strength, frequency, mode, PTT from front-panel
+mic) the radio does not push. Provide an opt-in poller that fans
+sampled values through the same `events` stream as setter-driven
+changes — UI doesn't care whether a change came from a `set` or a
+poll.
 
-- [ ] `RigController.startPolling(interval:fields:)` /
-      `stopPolling()`.
-- [ ] Configurable per-field intervals (SignalStrength at 200ms,
-      frequency at 1s, etc.).
-- [ ] Polling emits the same `RigStateEvent`s — UI doesn't care
-      whether a change came from a `set` or a poll.
+- [x] **`RigController.startPolling(_:)` / `stopPolling()` /
+      `isPolling`**. Each enabled field gets its own `Task` stored
+      on the actor keyed by name. `disconnect()` stops polling
+      automatically. Calling `start` while already polling replaces
+      the previous batch.
+- [x] **`PollingConfiguration` struct** with per-field intervals
+      (signalStrength, frequency, mode, ptt). Defaults are tuned
+      for a typical UI: 200 ms S-meter, 1 s frequency, 2 s mode,
+      100 ms PTT. Convenience helpers:
+      `PollingConfiguration.uniform(every:)` and
+      `PollingConfiguration.disabled`.
+- [x] **Emission policy:**
+      `signalStrength` emits every poll (continuous monitoring data);
+      `frequency`, `mode`, `ptt` emit only when the value differs
+      from the previous sample.
+- [x] **Per-cycle error handling:** transient failures are
+      swallowed so a single timeout doesn't kill the poller.
+      Persistent failure escalates to `.connectionStateChanged(.degraded(...))`
+      via Phase 2.3's connection-health monitor.
+- [x] **Tests:** 10 new tests in `RigControllerPollingTests`
+      using fast 50–100 ms intervals against the dummy radio.
+      Covers lifecycle, configuration shapes, signal-strength
+      always-emit, frequency/PTT change-only emission, and the
+      "front-panel mic PTT" scenario where the protocol's PTT
+      flips without going through `RigController.setPTT`.
 
 ### 2.3 Connection health
 

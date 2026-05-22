@@ -95,6 +95,11 @@ public actor RigController {
     /// right initial value.
     internal var connectionState: ConnectionState = .disconnected
 
+    /// Active per-field polling tasks (Phase 2.2). Keyed by field
+    /// name so individual fields can be retuned without restarting
+    /// the entire poller. Empty when polling is stopped.
+    internal var pollingTasks: [String: Task<Void, Never>] = [:]
+
     /// Initializes a new rig controller.
     ///
     /// - Parameters:

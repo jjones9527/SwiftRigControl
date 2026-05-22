@@ -26,10 +26,13 @@ extension RigController {
     }
 
     /// Disconnects from the radio.
-    /// Emits `.connectionStateChanged(.disconnected)` after the
-    /// underlying transport closes and the cache is cleared.
+    /// Stops the periodic poller (if running) since polling a closed
+    /// transport is pointless, then emits
+    /// `.connectionStateChanged(.disconnected)` after the underlying
+    /// transport closes and the cache is cleared.
     public func disconnect() async {
         guard connected else { return }
+        stopPollingInternal()
         await proto.disconnect()
         connected = false
         await stateCache.invalidate()

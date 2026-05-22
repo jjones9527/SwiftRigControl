@@ -11,6 +11,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Modern Swift**: Swift 6.2 strict concurrency, async/await, actors
 - ✅ **Dummy radio**: Develop and preview SwiftUI apps with no hardware via `RadioDefinition.dummy()` (Hamlib Model 1 equivalent)
 - ✅ **Event stream**: `RigController.events` as `AsyncStream<RigStateEvent>` — push-style state updates for SwiftUI with no polling loop in user code
+- ✅ **Polled state broadcaster**: opt-in `startPolling()` for S-meter monitoring and front-panel-driven changes; per-field intervals; events fan into the same stream
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
@@ -259,6 +260,20 @@ Multiple subscribers can observe the same controller simultaneously
 fans events out). Buffering is bounded — slow consumers see the most
 recent 64 events. See `Examples/BasicUsage/DummyRadioExample.swift`
 for the full `@Observable` view-model pattern.
+
+For state the radio doesn't push (S-meter, front-panel knob and mic
+PTT), opt into the polled broadcaster:
+
+```swift
+await rig.startPolling()   // sensible defaults: 200 ms S-meter,
+                            // 1 s frequency, 2 s mode, 100 ms PTT
+// ... events arrive on rig.events as state changes ...
+await rig.stopPolling()
+```
+
+Polled values feed the same `events` stream, so consumer code
+doesn't have to distinguish setter-driven from poll-driven changes.
+`disconnect()` stops polling automatically.
 
 ### Basic Usage (Non-Sandboxed Apps)
 
