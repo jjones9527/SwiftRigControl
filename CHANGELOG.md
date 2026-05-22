@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `RadioDefinition.VerificationStatus` enum (`.hardware` /
+  `.definition`) capturing how thoroughly a radio definition has
+  been validated. Defaults to `.definition` for backward
+  compatibility — new radio additions are paper-only until
+  promoted explicitly.
+- `RadioDefinition.verificationStatus` property and convenience
+  `RigController.verificationStatus` accessor so apps can show
+  honest "Hardware verified" vs. "Definition only" badges in UI.
+- IC-7100, IC-7600, IC-9700, and K2 are marked `.hardware`;
+  every other shipping radio defaults to `.definition`.
+- `VerificationStatusTests` suite (8 tests) guarding against
+  accidental promotion or demotion.
+
 ### Fixed
 - IC-7600: send Main/Sub selection before mode changes to ensure the
   command targets the intended receiver (commit `3931887`).

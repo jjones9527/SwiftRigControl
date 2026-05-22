@@ -8,6 +8,7 @@ extension RadioDefinition {
         model: "K2",
         defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.elecraftK2,
+        verificationStatus: .hardware,
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,

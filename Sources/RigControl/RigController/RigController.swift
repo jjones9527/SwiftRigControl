@@ -125,6 +125,17 @@ public actor RigController {
         radio.fullName
     }
 
+    /// How thoroughly this radio has been validated against real hardware.
+    ///
+    /// SwiftRigControl ships definitions for many more radios than the
+    /// maintainers own. Use this to tell users whether the radio they
+    /// selected has been exercised against real hardware
+    /// (``RadioDefinition/VerificationStatus/hardware``) or is
+    /// definition-only (``RadioDefinition/VerificationStatus/definition``).
+    public var verificationStatus: RadioDefinition.VerificationStatus {
+        radio.verificationStatus
+    }
+
     // MARK: - Radio-Specific Protocol Access
 
     /// Access to the underlying protocol for radio-specific operations.

@@ -124,9 +124,12 @@ This is blocking for all subsequent phases; it costs about a day.
       "Verified" column with one of: *Hardware*, *Definition*.
 - [ ] **Update README's "Hardware-Verified" section** to match the
       four-radio table above (IC-7100, IC-7600, IC-9700, K2).
-- [ ] **Add a `verificationStatus` field to `RadioDefinition`** so
-      the library can answer "is this radio hardware-verified?" at
-      runtime. Surface in `RigController.radioName` debug output.
+- [x] **Add a `verificationStatus` field to `RadioDefinition`.**
+      New `VerificationStatus` enum (`.hardware` / `.definition`).
+      Defaults to `.definition`; IC-7100, IC-7600, IC-9700, K2
+      promoted to `.hardware`. Surfaced via
+      `RigController.verificationStatus`. Guarded by 8-test
+      `VerificationStatusTests` suite.
 - [ ] **Sweep inline `(vX.Y.Z)` tags** in `Documentation/API_REFERENCE.md`
       and `USAGE_EXAMPLES.md`. Leave them as historical breadcrumbs
       but add a note at the top of each file pointing to the

@@ -46,6 +46,7 @@ extension RadioDefinition {
             defaultBaudRate: 19200,
             capabilities: RadioCapabilitiesDatabase.icomIC7600,
             civAddress: civAddress ?? IcomRadioModel.ic7600.defaultCIVAddress,
+            verificationStatus: .hardware,
             protocolFactory: { transport in
                 IcomCIVProtocol(
                     transport: transport,
@@ -169,6 +170,7 @@ extension RadioDefinition {
             defaultBaudRate: 19200,
             capabilities: RadioCapabilitiesDatabase.icomIC7100,
             civAddress: civAddress ?? IcomRadioModel.ic7100.defaultCIVAddress,
+            verificationStatus: .hardware,
             protocolFactory: { transport in
                 IcomCIVProtocol(
                     transport: transport,
@@ -192,6 +194,7 @@ extension RadioDefinition {
             defaultBaudRate: 19200,  // Factory default is 19200 baud
             capabilities: RadioCapabilitiesDatabase.icomIC9700,
             civAddress: civAddress ?? IcomRadioModel.ic9700.defaultCIVAddress,
+            verificationStatus: .hardware,
             protocolFactory: { transport in
                 IcomCIVProtocol(
                     transport: transport,

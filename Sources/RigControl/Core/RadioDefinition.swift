@@ -17,6 +17,14 @@ public struct RadioDefinition: Sendable {
     /// CI-V address (for Icom radios)
     public let civAddress: UInt8?
 
+    /// How thoroughly this radio definition has been validated.
+    ///
+    /// See ``VerificationStatus`` for the meaning of each value. A
+    /// ``VerificationStatus/definition`` radio may work — but no one
+    /// from the SwiftRigControl project has verified it against the
+    /// real hardware.
+    public let verificationStatus: VerificationStatus
+
     /// Protocol factory closure
     private let protocolFactory: @Sendable (any SerialTransport) -> any CATProtocol
 
@@ -29,13 +37,55 @@ public struct RadioDefinition: Sendable {
         case tentec = "Ten-Tec"
     }
 
+    /// Indicates how thoroughly a radio definition has been validated.
+    ///
+    /// SwiftRigControl ships definitions for many more radios than the
+    /// maintainers own. This field lets callers (and the UI of apps
+    /// built on top) tell users whether a given radio has actually been
+    /// exercised against real hardware, or whether it is paper-only.
+    public enum VerificationStatus: String, Sendable, CaseIterable {
+        /// Exercised against the real radio via the matching validator
+        /// in `HardwareValidation/`. Frequency, mode, PTT, and at least
+        /// one read-back operation are confirmed working.
+        case hardware
+
+        /// Protocol, capabilities, and command set are implemented —
+        /// typically cross-referenced against the manufacturer manual
+        /// and Hamlib source — but no real-hardware verification has
+        /// been performed. May work; not proven.
+        case definition
+
+        /// Human-readable label suitable for UI display.
+        public var displayName: String {
+            switch self {
+            case .hardware:   return "Hardware verified"
+            case .definition: return "Definition only"
+            }
+        }
+    }
+
     /// Initializes a new radio definition.
+    ///
+    /// - Parameters:
+    ///   - manufacturer: Radio manufacturer (Icom, Yaesu, etc.).
+    ///   - model: Radio model name (e.g. "IC-7600").
+    ///   - defaultBaudRate: Default CAT baud rate for this radio.
+    ///   - capabilities: Radio capability flags and limits.
+    ///   - civAddress: CI-V bus address for Icom radios; `nil` otherwise.
+    ///   - verificationStatus: How thoroughly this definition has been
+    ///     validated. Defaults to ``VerificationStatus/definition``.
+    ///     Set to ``VerificationStatus/hardware`` only for radios that
+    ///     have been exercised against the real hardware via a
+    ///     `HardwareValidation/` validator.
+    ///   - protocolFactory: Closure that builds a `CATProtocol`
+    ///     conformer over a given transport.
     public init(
         manufacturer: Manufacturer,
         model: String,
         defaultBaudRate: Int,
         capabilities: RigCapabilities,
         civAddress: UInt8? = nil,
+        verificationStatus: VerificationStatus = .definition,
         protocolFactory: @escaping @Sendable (any SerialTransport) -> any CATProtocol
     ) {
         self.manufacturer = manufacturer
@@ -43,6 +93,7 @@ public struct RadioDefinition: Sendable {
         self.defaultBaudRate = defaultBaudRate
         self.capabilities = capabilities
         self.civAddress = civAddress
+        self.verificationStatus = verificationStatus
         self.protocolFactory = protocolFactory
     }
 
