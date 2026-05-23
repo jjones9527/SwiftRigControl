@@ -391,16 +391,30 @@ hardware. Phase 2 is complete.
 
 ### 3.1 DocC catalog
 
-- [ ] Create `Sources/RigControl/RigControl.docc/`.
-- [ ] Landing article: "What is SwiftRigControl?"
-- [ ] Tutorial: "Your first radio app" (10 minutes, mock + real).
-- [ ] How-to articles:
-      "Adding a new radio",
-      "Migrating from Hamlib",
-      "Working with capabilities",
-      "Using the rigctld bridge",
-      "Driving SwiftUI with `RigController.events`".
-- [ ] Symbol pages for every top-level public type.
+- [x] Created `Sources/RigControl/RigControl.docc/` with curated
+      organization:
+      - `RigControl.md` — landing page with `Topics` grouping
+        every top-level public symbol (controller, definitions,
+        events, transports, models, protocols, network, errors).
+      - `Articles/GettingStartedWithDummy.md` — develop without
+        hardware (the SwiftUI preview pattern, recommended view
+        model, capability-override examples).
+      - `Articles/ReactiveState.md` — the `RigController.events`
+        story (push + poll + health, emission policy, buffering,
+        subscriber lifecycle, a complete `@Observable` example).
+      - `Articles/VerificationStatus.md` — what `.hardware` vs
+        `.definition` means, current status table, promotion
+        criteria.
+      - `Articles/AddingRadios.md` — condensed contributor guide
+        (decision tree, recipe, Hamlib cross-check rule).
+      - `Articles/HamlibMigration.md` — idiom-by-idiom mapping
+        for C-Hamlib users.
+- [x] Symbol pages for every top-level public type are linked
+      from the landing page's `Topics` section so the docs site
+      surfaces them at the root.
+- [ ] DocC plugin + `swift package generate-documentation`
+      command — deferred to 3.3 (alongside the GitHub Pages
+      workflow that uses it).
 
 ### 3.2 Symbol-level DocC coverage
 

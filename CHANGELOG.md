@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **DocC catalog (`Sources/RigControl/RigControl.docc/`)** with a
+  curated landing page (every top-level public symbol grouped by
+  topic) plus five articles: Getting started without hardware,
+  Reactive state and the events stream, Verification status,
+  Adding a new radio, and Migrating from Hamlib. Xcode users get
+  inline Quick Help and the Documentation Viewer immediately;
+  GitHub Pages hosting lands in a follow-up commit.
 - **Connection-health monitor (`startHealthMonitor` /
   `stopHealthMonitor`).** Periodic `getFrequency` heartbeat at the
   configured `heartbeatInterval` (default 5 s). After
