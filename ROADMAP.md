@@ -439,14 +439,38 @@ hardware. Phase 2 is complete.
       `HealthMonitorConfiguration`, `RetryPolicy` init,
       `TenTecOrionProtocol` init, `TenTecLegacyProtocol` init,
       `THD72Protocol` init, `IC9700CommandSet` init.
-- [ ] **CI lint** to fail build on regressions — ships in the
-      Phase 3.3 follow-up commit alongside the GitHub Pages
+- [x] **CI lint** wired into `.github/workflows/ci.yml` as the
+      first gate: a single `python3 Scripts/check-public-docs.py`
+      step runs before the build/test steps, so doc regressions
+      surface fast. The DocC build step that runs later (with
+      `--warnings-as-errors`) catches a separate class of issue
+      — broken symbol cross-references and parameter-name
+      mismatches — that the lint can't see.
+
+### 3.3 DocC tooling and hosting
+
+- [x] **SwiftDocCPlugin dependency** added to `Package.swift`.
+      Build-time-only — never linked into any product. CLAUDE.md's
+      "no external dependencies" rule was updated to make the
+      build-time-plugin exception explicit.
+- [x] **DocC build step in CI** (`swift package generate-documentation
+      --warnings-as-errors`) catches broken symbol references,
+      missing parameter docs, and similar issues that the Swift
+      compiler ignores.
+- [x] **CI lint** (`Scripts/check-public-docs.py`) wired as a
+      gating step.
+- [x] **Power-API rename.** Discovered while clearing DocC warnings:
+      the `setPower(_ watts:)` parameter name was misleading because
+      Icom radios accept a 0–255 percentage scale (`PowerUnits.percentage`),
+      not watts. Renamed the parameter to `level` across `CATProtocol`,
+      every conformer, and `RigController`. Added a deprecated
+      `setPower(watts:)` shim so source compatibility is preserved
+      for callers that used the explicit label.
+- [ ] **GitHub Pages workflow** — held pending Pages enablement on
+      the repo. The workflow file is ready to ship once the user
+      confirms `Settings → Pages → Source: GitHub Actions` is on.
+- [ ] **README link to hosted docs** — ships with the Pages
       workflow.
-
-### 3.3 Hosting
-
-- [ ] GitHub Pages workflow: build DocC on tag, publish.
-- [ ] README link to hosted docs.
 
 **Phase 3 exit criteria:** opening Xcode Quick Help on any
 public symbol returns a useful answer; the GitHub Pages site

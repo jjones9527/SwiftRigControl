@@ -175,12 +175,12 @@ public actor DummyCATProtocol: CATProtocol {
 
     // MARK: - Power
 
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         try requireConnected()
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
-        powerLevel = max(0, min(watts, capabilities.maxPower))
+        powerLevel = max(0, min(level, capabilities.maxPower))
     }
 
     public func getPower() async throws -> Int {

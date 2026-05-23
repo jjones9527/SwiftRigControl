@@ -17,7 +17,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`setPower` parameter renamed** from `watts` to `level` across
+  `CATProtocol`, every conformer (`IcomCIVProtocol`,
+  `YaesuCATProtocol`, `KenwoodProtocol`, `THD72Protocol`,
+  `ElecraftProtocol`, `DummyCATProtocol`), and `RigController`.
+  Reason: the parameter was misleadingly named — Icom radios
+  accept a 0–255 percentage scale (`PowerUnits.percentage`), not
+  watts. The new name is unit-neutral; callers should consult
+  `RigCapabilities.powerUnits` to interpret. Most call sites use
+  the unlabeled form (`rig.setPower(50)`) and are unaffected. The
+  labeled form (`rig.setPower(watts: 50)`) is preserved by a
+  `@available(*, deprecated, renamed:)` shim — callers see a
+  warning, code keeps compiling.
+
 ### Added
+- **SwiftDocCPlugin** (Apple, build-time only) declared as the
+  package's first external dependency. Enables
+  `swift package generate-documentation` for CI and local doc
+  builds. Not linked into any product; downstream consumers pay
+  one extra `git fetch` at resolve time and nothing else.
+  CLAUDE.md's "no external dependencies" rule was updated to
+  document the build-time-plugin exception.
+- **CI doc gates.** `.github/workflows/ci.yml` now runs the
+  inheritance-aware public-symbol audit
+  (`Scripts/check-public-docs.py`) as the first gate and a
+  `--warnings-as-errors` DocC build later in the pipeline. Doc
+  regressions surface before the longer build/test steps.
+- **`Package.resolved` is no longer tracked.** Library convention:
+  consumers should resolve fresh against the package's version
+  requirements. `docs-build/` (local DocC output) is also ignored
+  now.
 - **Symbol-level DocC sweep.** Every public declaration in
   `Sources/RigControl/` now has a doc comment, or inherits one
   from a `CATProtocol` / `SerialTransport` / `CIVCommandSet`

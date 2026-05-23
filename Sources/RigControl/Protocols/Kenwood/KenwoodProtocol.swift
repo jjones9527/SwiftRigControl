@@ -168,13 +168,14 @@ public actor KenwoodProtocol: CATProtocol {
 
     // MARK: - Power Control
 
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Convert watts to percentage (000-100)
-        let percentage = min(max((watts * 100) / capabilities.maxPower, 0), 100)
+        // Kenwood radios use PowerUnits.watts; `level` is interpreted as
+        // watts and converted to the radio's 000–100 percentage protocol.
+        let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
         let command = String(format: "PC%03d", percentage)
 
         try await sendCommand(command)

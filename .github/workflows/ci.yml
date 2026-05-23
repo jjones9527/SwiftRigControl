@@ -45,6 +45,15 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
+      - name: Check public-symbol documentation
+        # Inheritance-aware audit: flags any public declaration in
+        # Sources/RigControl/ that lacks a /// doc comment, excluding
+        # declarations DocC inherits documentation for via protocol
+        # conformance (CATProtocol, SerialTransport, CIVCommandSet).
+        # Run early so doc regressions surface before the longer
+        # build/test steps.
+        run: python3 Scripts/check-public-docs.py
+
       - name: Build (library only, warnings as errors)
         # Hardware-validator executables and debug tools build cleanly
         # too, but the library is what consumers depend on — gate on it
@@ -54,6 +63,20 @@ jobs:
           swift build \
             --target RigControl \
             -Xswiftc -warnings-as-errors
+
+      - name: Build DocC (warnings as errors)
+        # Surfaces broken symbol cross-references, missing parameter
+        # docs, and other DocC issues that the regular Swift compiler
+        # silently ignores. SwiftDocCPlugin is a build-time-only
+        # dependency declared in Package.swift; see CLAUDE.md's
+        # "build-time-only dependencies" exception.
+        run: |
+          swift package \
+            --allow-writing-to-directory ./docs-build \
+            generate-documentation \
+            --target RigControl \
+            --warnings-as-errors \
+            --output-path ./docs-build
 
       - name: Build all targets
         # Catch regressions in XPC, helper, and validators without

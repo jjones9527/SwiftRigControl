@@ -132,8 +132,19 @@ extension points (capabilities, command sets, observers) accessible.
   new code. No completion handlers.
 - **Structured concurrency.** Prefer `Task { }` only at API boundaries;
   inside the library, await directly.
-- **No external dependencies.** Zero-dependency is a feature. Do not
-  add SwiftPM dependencies without explicit discussion.
+- **No external dependencies at link time.** Zero runtime
+  dependencies is a feature. The library, `RigControlXPC`, and
+  `RigControlHelper` must not link any third-party package.
+
+  **Build-time-only plugins are the one exception.** SPM plugins
+  (e.g., Apple's `SwiftDocCPlugin`) provide commands like
+  `swift package generate-documentation` without ever being linked
+  into the products consumers ship. They cost downstream consumers
+  one extra `git fetch` at resolve time and nothing else. Add such
+  plugins only when they provide concrete CI / developer value —
+  documentation generation, lint orchestration, etc. — and never
+  when the same capability is achievable with a small in-repo
+  script (see `Scripts/`).
 
 ---
 

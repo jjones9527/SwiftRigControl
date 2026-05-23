@@ -4,8 +4,12 @@
 # Swift Package Manager
 /.build
 /Packages
+Package.resolved
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+# Local DocC build output (CI also writes here; outside CI it's churn)
+docs-build/
 
 # Nested SwiftPM project for developer tools
 Tools/SwiftRigControlTools/.build/

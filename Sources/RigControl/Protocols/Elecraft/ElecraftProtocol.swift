@@ -246,19 +246,21 @@ public actor ElecraftProtocol: CATProtocol {
 
     // MARK: - Power Control
 
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
+        // Elecraft radios use PowerUnits.watts; `level` is interpreted
+        // as watts and translated per K-series quirks.
         let command: String
         if isK2 {
             // K2: Use direct watts (000-015 for QRP, 000-150 for K2/100 with QRO)
             // Per KIO2 Pgmrs Ref rev E: PCnnn; where nnn is watts, not percentage
-            command = String(format: "PC%03d", watts)
+            command = String(format: "PC%03d", level)
         } else {
             // K3/K4: Use percentage (000-100)
-            let percentage = min(max((watts * 100) / capabilities.maxPower, 0), 100)
+            let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
             command = String(format: "PC%03d", percentage)
         }
 

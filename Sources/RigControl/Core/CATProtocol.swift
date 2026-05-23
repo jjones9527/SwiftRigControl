@@ -91,13 +91,24 @@ public protocol CATProtocol: Actor {
 
     /// Sets the RF power level.
     ///
-    /// The unit and range depend on the radio's protocol. Icom CI-V radios use a
-    /// 0–255 percentage scale (see `RigCapabilities.powerUnits`), not watts.
-    /// Check `RigCapabilities` for the specific radio's power representation.
+    /// The interpretation of `level` depends on the radio. Check
+    /// ``RigCapabilities/powerUnits``:
     ///
-    /// - Parameter watts: Power level in the radio's native units (0 to capabilities.maxPower)
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support power control
-    func setPower(_ watts: Int) async throws
+    /// - ``PowerUnits/percentage`` — `level` is a 0–255 value that
+    ///   maps to 0–100% of the radio's rated output. This is how
+    ///   most CI-V and CAT command sets are wired internally; almost
+    ///   every radio currently in the capabilities database is in
+    ///   this group.
+    /// - ``PowerUnits/watts(max:)`` — `level` is integer wattage
+    ///   from 0 to the max associated with the case.
+    ///
+    /// In every case the upper bound is also exposed as
+    /// ``RigCapabilities/maxPower``.
+    ///
+    /// - Parameter level: Power level in the radio's native units.
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if power control
+    ///   is not supported by this radio.
+    func setPower(_ level: Int) async throws
 
     /// Gets the current RF power level.
     ///
@@ -450,7 +461,7 @@ public protocol CATProtocol: Actor {
 /// Extension providing default implementations for optional operations
 extension CATProtocol {
     /// Default implementation throws unsupported error
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         throw RigError.unsupportedOperation("Power control not supported")
     }
 

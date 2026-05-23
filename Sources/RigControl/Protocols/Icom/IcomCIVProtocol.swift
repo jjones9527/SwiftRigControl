@@ -256,13 +256,14 @@ public actor IcomCIVProtocol: CATProtocol {
 
     // MARK: - Power Control
 
-    public func setPower(_ value: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Get command formatting from command set
-        let (command, data) = commandSet.setPowerCommand(value: value)
+        // `level` is a 0–255 percentage on Icom (PowerUnits.percentage),
+        // not watts. See CATProtocol.setPower's doc comment.
+        let (command, data) = commandSet.setPowerCommand(value: level)
 
         let frame = CIVFrame(
             to: civAddress,

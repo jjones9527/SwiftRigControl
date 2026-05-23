@@ -131,29 +131,30 @@ public actor THD72Protocol: CATProtocol {
 
     /// Sets RF power output.
     ///
-    /// The TH-D72 has three discrete power levels:
-    /// - High  (5 W)   — selected when `watts` > 1
-    /// - Mid   (500 mW) — selected when `watts` > 0 and ≤ 1
-    /// - Low   (50 mW)  — selected when `watts` == 0
+    /// The TH-D72 has three discrete power levels; `level` is
+    /// interpreted as watts (PowerUnits.watts) and quantised:
+    /// - High  (5 W)    — `level > 1`
+    /// - Mid   (500 mW) — `level > 0` and `level ≤ 1`
+    /// - Low   (50 mW)  — `level == 0`
     ///
     /// This matches the threshold logic Hamlib uses for this radio.
-    public func setPower(_ watts: Int) async throws {
+    public func setPower(_ level: Int) async throws {
         guard capabilities.powerControl else {
             throw RigError.unsupportedOperation("Power control not supported")
         }
         // Threshold mapping mirrors Hamlib thd72_set_level RFPOWER:
-        //   val.f <= 0.01 → level 2 (50 mW)
-        //   val.f <= 0.10 → level 1 (500 mW)
-        //   else          → level 0 (5 W)
-        let level: Int
-        if watts == 0 {
-            level = 2
-        } else if watts <= 1 {
-            level = 1
+        //   val.f <= 0.01 → step 2 (50 mW)
+        //   val.f <= 0.10 → step 1 (500 mW)
+        //   else          → step 0 (5 W)
+        let step: Int
+        if level == 0 {
+            step = 2
+        } else if level <= 1 {
+            step = 1
         } else {
-            level = 0
+            step = 0
         }
-        try await sendCommand("PC 0,\(level)")
+        try await sendCommand("PC 0,\(step)")
         _ = try await receiveResponse()
     }
 

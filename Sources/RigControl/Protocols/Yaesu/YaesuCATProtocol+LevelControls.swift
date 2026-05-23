@@ -450,7 +450,8 @@ extension YaesuCATProtocol {
     ///
     /// Command: `MCnnn;` — Recalls channel nnn (001–999, model-dependent range).
     ///
-    /// - Parameter number: Memory channel number (1-based)
+    /// - Parameter channel: Memory channel to store (channel number
+    ///   determines the slot; 1–999, model-dependent range).
     /// - Throws: `RigError.invalidParameter` if out of range
     public func setMemoryChannel(_ channel: MemoryChannel) async throws {
         guard channel.number >= 1, channel.number <= 999 else {
