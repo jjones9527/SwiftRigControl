@@ -466,11 +466,24 @@ hardware. Phase 2 is complete.
       every conformer, and `RigController`. Added a deprecated
       `setPower(watts:)` shim so source compatibility is preserved
       for callers that used the explicit label.
-- [ ] **GitHub Pages workflow** — held pending Pages enablement on
-      the repo. The workflow file is ready to ship once the user
-      confirms `Settings → Pages → Source: GitHub Actions` is on.
-- [ ] **README link to hosted docs** — ships with the Pages
-      workflow.
+- [x] **GitHub Pages deploy** wired into `ci.yml`. The existing
+      DocC build step now uses `--transform-for-static-hosting
+      --hosting-base-path SwiftRigControl` so the output is
+      ready-to-host. On push to `main`, three additional steps
+      (`actions/configure-pages`, `actions/upload-pages-artifact`,
+      `actions/deploy-pages`) publish to GitHub Pages under the
+      `github-pages` environment. PR builds and tag builds still
+      compile docs (with warnings-as-errors) but don't deploy.
+- [x] **README links to hosted docs** — a Docs badge under the
+      title and a paragraph at the top of the Documentation
+      section both point to
+      `https://jjones9527.github.io/SwiftRigControl/documentation/rigcontrol/`.
+
+**Phase 3 exit criteria met:** opening Xcode's Quick Help on any
+public symbol returns a useful answer (Phase 3.1 + 3.2), CI fails
+on undocumented additions and broken DocC references (Phase 3.3a),
+and the hosted DocC site is the canonical reference, regenerated
+on every push to main (Phase 3.3b). Phase 3 is complete.
 
 **Phase 3 exit criteria:** opening Xcode Quick Help on any
 public symbol returns a useful answer; the GitHub Pages site

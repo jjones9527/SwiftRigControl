@@ -1,6 +1,7 @@
 # SwiftRigControl
 
 [![CI](https://github.com/jjones9527/SwiftRigControl/actions/workflows/ci.yml/badge.svg)](https://github.com/jjones9527/SwiftRigControl/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-DocC-blue)](https://jjones9527.github.io/SwiftRigControl/documentation/rigcontrol/)
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
@@ -771,9 +772,16 @@ swift test --filter IntegrationTests
 
 ## Documentation
 
+The canonical reference is the **[hosted DocC site](https://jjones9527.github.io/SwiftRigControl/documentation/rigcontrol/)** —
+built from `Sources/RigControl/RigControl.docc/` on every push to
+main. Includes the landing page, curated topic groups, and full
+symbol-level reference plus articles on the reactive event stream,
+the dummy radio, verification status, adding radios, and Hamlib
+migration.
+
 ### For App Developers
 
-- **[API Reference](Documentation/API_REFERENCE.md)** - Complete API documentation
+- **[API Reference](Documentation/API_REFERENCE.md)** - Complete API documentation (markdown form; see DocC site above for symbol-linked version)
 - **[Usage Examples](Documentation/USAGE_EXAMPLES.md)** - Common use cases and patterns
 - **[Troubleshooting Guide](Documentation/TROUBLESHOOTING.md)** - Problem solving
 - **[Serial Port Guide](Documentation/SERIAL_PORT_GUIDE.md)** - Connection setup

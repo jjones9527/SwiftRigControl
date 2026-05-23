@@ -12,11 +12,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+# Permissions are required by actions/deploy-pages. We grant them at
+# the workflow level so they're available to the deploy step, but
+# `pages: write` and `id-token: write` are only consumed when the
+# deploy step actually runs (push to main).
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-test:
     name: Build & test (macOS)
     runs-on: macos-15
     timeout-minutes: 20
+
+    # Publish the DocC site to GitHub Pages on push to main only. The
+    # environment is what wires actions/deploy-pages to the GitHub
+    # Pages target; the `url` field surfaces the deployed URL in the
+    # job summary.
+    environment:
+      name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'github-pages' || '' }}
+      url: ${{ steps.deploy-docs.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -64,19 +81,49 @@ jobs:
             --target RigControl \
             -Xswiftc -warnings-as-errors
 
-      - name: Build DocC (warnings as errors)
+      - name: Build DocC (warnings as errors, hosting-ready)
         # Surfaces broken symbol cross-references, missing parameter
         # docs, and other DocC issues that the regular Swift compiler
         # silently ignores. SwiftDocCPlugin is a build-time-only
         # dependency declared in Package.swift; see CLAUDE.md's
         # "build-time-only dependencies" exception.
+        #
+        # --transform-for-static-hosting rewrites internal links to
+        # work under a sub-path (required for GitHub Pages, which
+        # serves the site at /SwiftRigControl/...). Even on PR
+        # builds where we don't deploy, building with this flag
+        # catches link-rewriting regressions early.
         run: |
           swift package \
             --allow-writing-to-directory ./docs-build \
             generate-documentation \
             --target RigControl \
             --warnings-as-errors \
+            --transform-for-static-hosting \
+            --hosting-base-path SwiftRigControl \
             --output-path ./docs-build
+
+      # ---- GitHub Pages deploy (push to main only) ----
+      # The remaining steps only run on `push` to `main`. PRs and tag
+      # pushes build docs but don't publish them. The CI gates above
+      # have already enforced lint, library warnings-as-errors, tests,
+      # tools, and DocC warnings-as-errors, so anything published here
+      # has passed the same bar as a merge.
+
+      - name: Configure Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs-build
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: deploy-docs
+        uses: actions/deploy-pages@v4
 
       - name: Build all targets
         # Catch regressions in XPC, helper, and validators without

@@ -32,6 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **Hosted DocC site** at
+  https://jjones9527.github.io/SwiftRigControl/documentation/rigcontrol/
+  — generated and published on every push to `main` by the
+  existing CI workflow. PR builds and tag builds still compile
+  docs (with `--warnings-as-errors`) but don't deploy. The DocC
+  build now uses `--transform-for-static-hosting
+  --hosting-base-path SwiftRigControl` so links work under the
+  sub-path GitHub Pages serves us at. README gained a Docs badge
+  and a paragraph at the top of the Documentation section.
 - **SwiftDocCPlugin** (Apple, build-time only) declared as the
   package's first external dependency. Enables
   `swift package generate-documentation` for CI and local doc
