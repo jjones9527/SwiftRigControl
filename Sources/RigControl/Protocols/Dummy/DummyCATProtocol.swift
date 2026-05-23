@@ -115,6 +115,9 @@ public actor DummyCATProtocol: CATProtocol {
     /// through ``startScan(_:)`` / ``stopScan()``.
     private var scanState: ScanKind? = nil
 
+    /// Selected antenna (1-based). Defaults to ANT 1.
+    private var antennaIndex: Int = 1
+
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
     /// Lets tests simulate "the radio went away" without yanking a
@@ -386,6 +389,29 @@ public actor DummyCATProtocol: CATProtocol {
     /// no scan is running. Not part of `CATProtocol`.
     public var activeScan: ScanKind? {
         scanState
+    }
+
+    // MARK: - Antenna selection
+
+    public func selectAntenna(_ index: Int) async throws {
+        try requireConnected()
+        guard capabilities.antennaCount > 1 else {
+            throw RigError.unsupportedOperation("Antenna selection not supported by this radio")
+        }
+        guard (1...capabilities.antennaCount).contains(index) else {
+            throw RigError.invalidParameter(
+                "Antenna index \(index) out of range (1...\(capabilities.antennaCount))"
+            )
+        }
+        antennaIndex = index
+    }
+
+    public func getAntenna() async throws -> Int {
+        try requireConnected()
+        guard capabilities.antennaCount > 1 else {
+            throw RigError.unsupportedOperation("Antenna selection not supported by this radio")
+        }
+        return antennaIndex
     }
 
     // MARK: - RIT / XIT

@@ -257,7 +257,10 @@ extension RadioCapabilitiesDatabase {
         supportsSelectedMemoryScan: false,
         supportsPriorityScan: true,
         supportsProgrammedScan: true,
-        supportsDeltaFScan: true
+        supportsDeltaFScan: true,
+        // Antennas — IC-7600 has two switchable antenna jacks
+        // (HF). Per Hamlib IC7600_ANTS = RIG_ANT_1 | RIG_ANT_2.
+        antennaCount: 2
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -349,7 +352,11 @@ extension RadioCapabilitiesDatabase {
         supportsSelectedMemoryScan: true,
         supportsPriorityScan: true,
         supportsProgrammedScan: false,
-        supportsDeltaFScan: false
+        supportsDeltaFScan: false,
+        // Antennas — IC-7100 has two HF antenna jacks. Per Hamlib
+        // IC7100_HF_ANTS = RIG_ANT_1 | RIG_ANT_2. The VHF/UHF
+        // jack is fixed and not software-selectable.
+        antennaCount: 2
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver

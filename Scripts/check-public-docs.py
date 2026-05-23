@@ -32,6 +32,7 @@ CONFORMANCE = {
     "setCWSpeed","getCWSpeed","setCWPitch","getCWPitch",
     "setBreakIn","getBreakIn","sendCW","stopCW",
     "startScan","stopScan",
+    "selectAntenna","getAntenna",
     "connect","disconnect","open","close","write","read","readUntil","flush",
     "isOpen","transport","capabilities",
     "setModeCommand","setDataModeCommand","readModeCommand","parseModeResponse",

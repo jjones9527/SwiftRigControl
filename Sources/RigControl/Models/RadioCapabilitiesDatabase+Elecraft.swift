@@ -91,7 +91,15 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        // Antennas — K2 supports ANT 1/2 when the KAT-2 internal
+        // tuner is installed; K2/100 with the external KAT100 also
+        // exposes multiple antenna ports through the radio's CAT.
+        // Per Hamlib K2_ANTS = RIG_ANT_1 | RIG_ANT_2. Operators
+        // without the tuner installed will see a commandFailed at
+        // runtime when calling selectAntenna — the radio rejects
+        // the AN command without the optional hardware.
+        antennaCount: 2
     )
 
     /// Elecraft K3S - HF/6m transceiver (enhanced K3)

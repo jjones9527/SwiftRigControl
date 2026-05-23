@@ -624,8 +624,44 @@ Each item is gated on a Hamlib cross-check (read `rigs/<vendor>/
 
 ### 4.4 Antenna and band stack
 
-- [ ] `selectAntenna(_ index: Int)` for radios with multi-ANT.
-- [ ] Band stacking register read/write where supported.
+- [x] **`CATProtocol` methods**: `selectAntenna(_ index: Int)`
+      and `getAntenna() -> Int`. 1-based indexing to match
+      operator and front-panel labels ("ANT 1", "ANT 2"). Both
+      default to throw `.unsupported`.
+- [x] **`RigCapabilities.antennaCount: Int`** carries both the
+      "supports antenna selection" bit and the upper bound on
+      valid indices. Default `1` (single fixed jack). Clamped
+      to `≥1` on construction.
+- [x] **`IcomCIVProtocol` implementation**
+      (`IcomCIVProtocol+Antenna.swift`) using `C_CTL_ANT` (0x12)
+      with 0-based byte on the wire. Public API stays 1-based.
+- [x] **`ElecraftProtocol` implementation**
+      (`ElecraftProtocol+Antenna.swift`) using Kenwood-derived
+      `AN<n>;` form for the K2. Skips ACK wait on K2 (matches
+      the existing setPower pattern — K2 doesn't echo SET).
+- [x] **Per-radio capability promotion**, each Hamlib-verified:
+      - IC-7100 → 2 (Hamlib `IC7100_HF_ANTS`)
+      - IC-7600 → 2 (Hamlib `IC7600_ANTS`)
+      - IC-9700 → 1 (per-band hardware jacks, no SW selection)
+      - K2 → 2 (Hamlib `K2_ANTS`; requires KAT-2 internal tuner
+        or KAT100 external — operators without the tuner see
+        `commandFailed` at runtime, matching Hamlib's posture)
+- [x] **`DummyCATProtocol`** stores `antennaIndex` and gates on
+      the capability flag like a real radio (unlike scan, which
+      is permissive — antenna selection has stricter semantics
+      because indexing matters).
+- [x] **`RigController` facade**: `selectAntenna(_:)` /
+      `antenna()`.
+- [x] **Tests**: 12 new in `AntennaTests` covering dummy
+      roundtrip, single-antenna unsupported, out-of-range
+      throws, before-connect throws, antennaCount clamping,
+      capability promotion for all four verified radios, and
+      Icom capability gating against synthetic radio caps.
+- [ ] **Band stacking register read/write** deferred. Hamlib
+      models only band-select (`RIG_PARM_BANDSELECT` →
+      `0x1A 0x01 <band>`); the richer per-band-per-stack model
+      varies per radio in poorly-documented ways and is not
+      safe to ship without hardware verification. Tracked.
 
 ### 4.5 Rigctld bridge coverage
 

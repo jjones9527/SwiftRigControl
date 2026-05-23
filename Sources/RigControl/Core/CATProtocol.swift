@@ -561,6 +561,35 @@ public protocol CATProtocol: Actor {
     ///   does not support scanning at all.
     func stopScan() async throws
 
+    // MARK: - Antenna selection (Phase 4.4)
+    //
+    // Mirrors Hamlib's rig_set_ant / rig_get_ant. Indexing is
+    // 1-based to match how Icom CI-V (and the operator's mental
+    // model) refer to ANT 1, ANT 2, etc. Hamlib uses 0-based bit
+    // indices internally; we convert at the protocol boundary.
+
+    /// Selects the active antenna.
+    ///
+    /// Most modern Icoms with multiple antenna jacks (IC-7100,
+    /// IC-7600, IC-7610, IC-9100) accept antenna 1 or 2 with the
+    /// `0x12` CI-V command. Radios with a single antenna jack
+    /// (IC-9700, K2) throw ``RigError/unsupportedOperation(_:)``.
+    ///
+    /// - Parameter index: Antenna number (1-based). The valid
+    ///   range is `1...capabilities.antennaCount`.
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
+    ///   does not support antenna selection (i.e.
+    ///   `antennaCount <= 1`); ``RigError/invalidParameter(_:)``
+    ///   if `index` is out of range.
+    func selectAntenna(_ index: Int) async throws
+
+    /// Reads the currently-selected antenna.
+    ///
+    /// - Returns: The active antenna number (1-based).
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
+    ///   does not support antenna selection.
+    func getAntenna() async throws -> Int
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -844,6 +873,16 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func stopScan() async throws {
         throw RigError.unsupportedOperation("Scanning not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func selectAntenna(_ index: Int) async throws {
+        throw RigError.unsupportedOperation("Antenna selection not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getAntenna() async throws -> Int {
+        throw RigError.unsupportedOperation("Antenna selection not supported")
     }
 
     /// Default connect implementation just opens the transport

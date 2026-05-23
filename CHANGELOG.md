@@ -32,6 +32,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **Antenna selection API (Phase 4.4).** Two new accessors on
+  `CATProtocol` and `RigController`:
+  - `selectAntenna(_ index: Int)` — choose ANT 1 / ANT 2 / etc.
+  - `antenna()` — read the currently-selected antenna
+
+  Indexing is 1-based to match operator and front-panel labels.
+  New `RigCapabilities.antennaCount` carries both the
+  "supports selection" bit and the upper bound on valid
+  indices; default `1` (single fixed jack).
+
+  Per-radio promotion cross-checked against Hamlib's
+  per-radio `*_ANTS` macros:
+  - IC-7100: 2 (HF jacks; VHF/UHF fixed)
+  - IC-7600: 2
+  - IC-9700: 1 (per-band hardware jacks; no SW selection)
+  - K2: 2 (requires KAT-2 internal tuner or KAT100 external;
+    radios without the tuner installed see `commandFailed` at
+    runtime)
+
+  Implementations:
+  - `IcomCIVProtocol+Antenna.swift` uses `C_CTL_ANT` (`0x12`)
+    with 0-based byte on the wire (matching Hamlib's
+    `icom_set_ant`).
+  - `ElecraftProtocol+Antenna.swift` uses the Kenwood-derived
+    `AN<n>;` form for the K2. K2 SET commands don't echo, so
+    the implementation skips the ACK wait on the K2 path
+    (matches the existing `setPower` pattern).
+
+  Band-stacking register read/write was scoped in but deferred —
+  Hamlib only models band-select, and the richer per-band
+  registers vary in poorly-documented ways. Tracked.
+
+  12 new tests in `AntennaTests` cover dummy roundtrip,
+  single-antenna unsupported, out-of-range invalid parameter,
+  before-connect throws, antennaCount clamp, all four verified
+  radios' capability promotion, and Icom protocol-level gating.
+
 - **Scanning API (Phase 4.3).** Two new accessors on `CATProtocol`
   and `RigController`:
   - `startScan(_:)` — start a scan of the requested kind

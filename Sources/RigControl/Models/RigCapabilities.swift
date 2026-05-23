@@ -264,6 +264,19 @@ public struct RigCapabilities: Sendable, Codable {
     /// (``ScanKind/deltaF``).
     public let supportsDeltaFScan: Bool
 
+    // MARK: - Antenna (Phase 4.4)
+
+    /// Number of software-selectable antennas the radio has.
+    ///
+    /// `1` (the default) means a single fixed antenna jack —
+    /// ``CATProtocol/selectAntenna(_:)`` will throw
+    /// ``RigError/unsupportedOperation(_:)``. `2+` means the radio
+    /// accepts antenna selection with indices `1...antennaCount`.
+    ///
+    /// Mirrors Hamlib's per-radio `RIG_ANT_*` set (e.g.
+    /// `IC7600_ANTS = RIG_ANT_1 | RIG_ANT_2` → `antennaCount = 2`).
+    public let antennaCount: Int
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -306,7 +319,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportsSelectedMemoryScan: Bool = false,
         supportsPriorityScan: Bool = false,
         supportsProgrammedScan: Bool = false,
-        supportsDeltaFScan: Bool = false
+        supportsDeltaFScan: Bool = false,
+        antennaCount: Int = 1
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -342,6 +356,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsPriorityScan = supportsPriorityScan
         self.supportsProgrammedScan = supportsProgrammedScan
         self.supportsDeltaFScan = supportsDeltaFScan
+        self.antennaCount = max(1, antennaCount)
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)
