@@ -224,6 +224,54 @@ public struct RigctldCommandParser {
         case "q":
             return .quit
 
+        // Function toggles (Phase 4.5) — Hamlib `U`/`u` short forms
+        case "U":
+            guard args.count >= 2 else {
+                throw ParseError.missingParameter("func name and value")
+            }
+            guard let v = Int(args[1]) else {
+                throw ParseError.invalidParameter("func value", value: args[1])
+            }
+            return .setFunc(name: args[0], enabled: v != 0)
+
+        case "u":
+            guard let name = args.first else {
+                throw ParseError.missingParameter("func name")
+            }
+            return .getFunc(name: name)
+
+        // Antenna (Phase 4.5) — Hamlib `Y`/`y` short forms
+        case "Y":
+            guard let antStr = args.first, let ant = Int(antStr) else {
+                throw ParseError.missingParameter("antenna")
+            }
+            let option = args.count > 1 ? Int(args[1]) : nil
+            return .setAntenna(antenna: ant, option: option)
+
+        case "y":
+            guard let antStr = args.first, let ant = Int(antStr) else {
+                throw ParseError.missingParameter("antenna")
+            }
+            return .getAntenna(antenna: ant)
+
+        // Scanning (Phase 4.5) — Hamlib `g` short form
+        case "g":
+            guard let fct = args.first else {
+                throw ParseError.missingParameter("scan function")
+            }
+            let ch = args.count > 1 ? (Int(args[1]) ?? 0) : 0
+            return .scan(function: fct, channel: ch)
+
+        // CW send (Phase 4.5) — Hamlib `b` short form takes
+        // free-form text. Join all remaining args back with spaces
+        // so multi-word messages survive the tokenizer.
+        case "b":
+            let text = args.joined(separator: " ")
+            guard !text.isEmpty else {
+                throw ParseError.missingParameter("morse text")
+            }
+            return .sendMorse(text: text)
+
         default:
             throw ParseError.unknownCommand(String(char))
         }
@@ -396,6 +444,55 @@ public struct RigctldCommandParser {
 
         case "quit", "q":
             return .quit
+
+        // MARK: Phase 4.5 — function toggles, antenna, scan, CW
+
+        case "set_func":
+            guard args.count >= 2 else {
+                throw ParseError.missingParameter("func name and value")
+            }
+            guard let v = Int(args[1]) else {
+                throw ParseError.invalidParameter("func value", value: args[1])
+            }
+            return .setFunc(name: args[0], enabled: v != 0)
+
+        case "get_func":
+            guard let name = args.first else {
+                throw ParseError.missingParameter("func name")
+            }
+            return .getFunc(name: name)
+
+        case "set_ant":
+            guard let antStr = args.first, let ant = Int(antStr) else {
+                throw ParseError.missingParameter("antenna")
+            }
+            let option = args.count > 1 ? Int(args[1]) : nil
+            return .setAntenna(antenna: ant, option: option)
+
+        case "get_ant":
+            guard let antStr = args.first, let ant = Int(antStr) else {
+                throw ParseError.missingParameter("antenna")
+            }
+            return .getAntenna(antenna: ant)
+
+        case "scan":
+            guard let fct = args.first else {
+                throw ParseError.missingParameter("scan function")
+            }
+            let ch = args.count > 1 ? (Int(args[1]) ?? 0) : 0
+            return .scan(function: fct, channel: ch)
+
+        case "send_morse":
+            // The args were tokenized on spaces; rejoin to recover
+            // multi-word messages like "CQ CQ DE VA3ZTF".
+            let text = args.joined(separator: " ")
+            guard !text.isEmpty else {
+                throw ParseError.missingParameter("morse text")
+            }
+            return .sendMorse(text: text)
+
+        case "stop_morse":
+            return .stopMorse
 
         default:
             throw ParseError.unknownCommand(String(commandName))

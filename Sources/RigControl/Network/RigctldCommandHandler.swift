@@ -186,6 +186,45 @@ public actor RigctldCommandHandler {
         case .quit:
             // This is handled at the session level
             return .ok(command: command)
+
+        // Function toggles (Phase 4.5)
+        case .setFunc(let name, let enabled):
+            return try await setFunc(name: name, enabled: enabled, command: command)
+
+        case .getFunc(let name):
+            return try await getFunc(name: name, command: command)
+
+        // Antenna selection (Phase 4.5)
+        case .setAntenna(let antenna, _):
+            // The optional `option` arg carries per-radio quirks
+            // (RX-only routing on some radios) that we don't model.
+            try await rigController.selectAntenna(antenna)
+            return .ok(command: command)
+
+        case .getAntenna(_):
+            // Hamlib's get_ant returns four fields:
+            //   <AntCurr> <Option> <AntTx> <AntRx>
+            // We populate AntCurr from the radio and set the rest
+            // to 0/AntCurr — sufficient for clients that care only
+            // about the active antenna.
+            let ant = try await rigController.antenna()
+            let line = "\(ant)\n0\n\(ant)\n\(ant)"
+            return RigctldResponse(value: line, command: command)
+
+        // Scanning (Phase 4.5)
+        case .scan(let function, _):
+            // `channel` is parsed but ignored — CATProtocol.startScan
+            // doesn't model per-call scan channels.
+            return try await runScan(function: function, command: command)
+
+        // CW (Phase 4.5)
+        case .sendMorse(let text):
+            try await rigController.sendCW(text)
+            return .ok(command: command)
+
+        case .stopMorse:
+            try await rigController.stopCW()
+            return .ok(command: command)
         }
     }
 
@@ -394,6 +433,21 @@ public actor RigctldCommandHandler {
             try await rigController.setIFFilter(filter)
             return .ok(command: command)
 
+        // CW levels (Phase 4.5)
+        case "KEYSPD":
+            guard let wpm = Int(value) else {
+                throw RigError.invalidParameter("Invalid KEYSPD value: \(value)")
+            }
+            try await rigController.setCWSpeed(CWSpeed(wpm: wpm))
+            return .ok(command: command)
+
+        case "CWPITCH":
+            guard let hz = Int(value) else {
+                throw RigError.invalidParameter("Invalid CWPITCH value: \(value)")
+            }
+            try await rigController.setCWPitch(CWPitch(hz: hz))
+            return .ok(command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
@@ -479,9 +533,123 @@ public actor RigctldCommandHandler {
             let value = String(filter.rawValue)
             return RigctldResponse(value: value, command: command)
 
+        // MARK: TX meters (Phase 4.5)
+        // Hamlib expects floats per the RIG_LEVEL_* spec in
+        // include/hamlib/rig.h. We return six-digit precision and
+        // honor each meter's documented range.
+
+        case "SWR":
+            let reading = try await rigController.swr()
+            // Hamlib: SWR is the X:1 ratio as a float ≥ 1.0.
+            let ratio = reading.swrRatio ?? 1.0
+            return RigctldResponse(value: String(format: "%.6f", ratio), command: command)
+
+        case "ALC":
+            let reading = try await rigController.alc()
+            return RigctldResponse(value: String(format: "%.6f", reading.normalized), command: command)
+
+        case "RFPOWER_METER":
+            // Fraction of max output, 0.0…1.0.
+            let reading = try await rigController.rfPowerOut()
+            return RigctldResponse(value: String(format: "%.6f", reading.normalized), command: command)
+
+        case "RFPOWER_METER_WATTS":
+            // Actual watts (Hamlib's RFPOWER_METER_WATTS).
+            let reading = try await rigController.rfPowerOut()
+            let watts = reading.watts ?? 0
+            return RigctldResponse(value: String(format: "%.6f", watts), command: command)
+
+        case "COMP_METER":
+            let reading = try await rigController.comp()
+            // Hamlib expects dB (float).
+            let dB = reading.dB ?? 0
+            return RigctldResponse(value: String(format: "%.6f", dB), command: command)
+
+        case "VD_METER":
+            let reading = try await rigController.voltage()
+            let v = reading.volts ?? 0
+            return RigctldResponse(value: String(format: "%.6f", v), command: command)
+
+        case "ID_METER":
+            let reading = try await rigController.current()
+            let a = reading.amps ?? 0
+            return RigctldResponse(value: String(format: "%.6f", a), command: command)
+
+        // MARK: CW levels (Phase 4.5)
+
+        case "KEYSPD":
+            let speed = try await rigController.cwSpeed()
+            return RigctldResponse(value: String(speed.wpm), command: command)
+
+        case "CWPITCH":
+            let pitch = try await rigController.cwPitch()
+            return RigctldResponse(value: String(pitch.hz), command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
+    }
+
+    // MARK: - Function toggles (Phase 4.5)
+
+    private func setFunc(name: String, enabled: Bool, command: RigctldCommand) async throws -> RigctldResponse {
+        let normalized = name.uppercased()
+        switch normalized {
+        case "SBKIN":
+            // Semi break-in. Setting SBKIN=1 selects semi; SBKIN=0
+            // turns break-in off (unless FBKIN is already on, in
+            // which case the operator's intent is ambiguous and we
+            // honor the literal request: off).
+            try await rigController.setBreakIn(enabled ? .semi : .off)
+            return .ok(command: command)
+
+        case "FBKIN":
+            // Full break-in.
+            try await rigController.setBreakIn(enabled ? .full : .off)
+            return .ok(command: command)
+
+        default:
+            return .error(.notImplemented, command: command)
+        }
+    }
+
+    private func getFunc(name: String, command: RigctldCommand) async throws -> RigctldResponse {
+        let normalized = name.uppercased()
+        switch normalized {
+        case "SBKIN":
+            let mode = try await rigController.breakIn()
+            return RigctldResponse(value: mode == .semi ? "1" : "0", command: command)
+
+        case "FBKIN":
+            let mode = try await rigController.breakIn()
+            return RigctldResponse(value: mode == .full ? "1" : "0", command: command)
+
+        default:
+            return .error(.notImplemented, command: command)
+        }
+    }
+
+    // MARK: - Scanning (Phase 4.5)
+
+    private func runScan(function: String, command: RigctldCommand) async throws -> RigctldResponse {
+        let normalized = function.uppercased()
+        if normalized == "STOP" {
+            try await rigController.stopScan()
+            return .ok(command: command)
+        }
+        let kind: ScanKind
+        switch normalized {
+        case "VFO":   kind = .vfo
+        case "MEM":   kind = .memory
+        case "SLCT":  kind = .selectedMemory
+        case "PRIO":  kind = .priority
+        case "PROG":  kind = .programmed
+        case "DELTA": kind = .deltaF
+        default:
+            return .error(.invalidParam, command: command)
+        }
+        try await rigController.startScan(kind)
+        return .ok(command: command)
     }
 
     // MARK: - Error Mapping

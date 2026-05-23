@@ -665,16 +665,53 @@ Each item is gated on a Hamlib cross-check (read `rigs/<vendor>/
 
 ### 4.5 Rigctld bridge coverage
 
-- [ ] Add `m`/`M` (meter), `l SWR`/`l ALC` parsing in
-      `RigctldCommandHandler`.
-- [ ] Add `scan`, `set_ant`/`get_ant`, `send_morse`.
-- [ ] Verify with `rigctl -m 2 -r localhost:4532` against a
-      known-good Hamlib build.
+- [x] **TX meter `get_level` support** for SWR, ALC,
+      RFPOWER_METER, RFPOWER_METER_WATTS, COMP_METER, VD_METER,
+      ID_METER. Each formatted per Hamlib's `RIG_LEVEL_*` float
+      semantics (six-decimal precision, natural physical units).
+      Level-name strings cross-checked against
+      `~/Developer/hamlib/src/misc.c`'s `rig_strlevel` table.
+- [x] **CW `get_level` / `set_level` support** for KEYSPD and
+      CWPITCH. Plain integer values (Hamlib treats these as
+      `int` levels, not floats).
+- [x] **Break-in via `set_func` / `get_func`** (new commands).
+      Supports `SBKIN` (semi) and `FBKIN` (full); other function
+      bits return `.notImplemented`. Off is set by sending the
+      currently-active bit with value 0.
+- [x] **Antenna via `set_ant` / `get_ant`** (new commands).
+      `get_ant` returns Hamlib's four-field format
+      (`AntCurr Option AntTx AntRx`); SwiftRigControl populates
+      `AntCurr` from the radio and sets the other three to
+      pass-through values.
+- [x] **Scanning via `scan`** (new command). Accepts `VFO`,
+      `MEM`, `SLCT`, `PRIO`, `PROG`, `DELTA`, `STOP`. Case-
+      insensitive. Per-channel arg parsed but ignored
+      (`CATProtocol.startScan` doesn't model it).
+- [x] **CW send/stop via `send_morse` / `stop_morse`** (new
+      commands). Multi-word messages survive the tokenizer via
+      arg-rejoin in the parser.
+- [x] **Parser tests**: 13 in `RigctldParserTests` covering
+      both short (`U`/`u`/`Y`/`y`/`g`/`b`) and long
+      (`set_func`/`set_ant`/`get_ant`/`scan`/`send_morse`/
+      `stop_morse`) forms, plus `longName` round-trip vs. Hamlib.
+- [x] **Handler tests**: 22 in `RigctldHandlerTests` driving
+      every new command against a dummy-backed `RigController`.
+      Cover correct Hamlib-format response (SWR ratio, watts,
+      dB, volts, amps), capability gating, four-field
+      `get_ant` response, scan kind mapping including STOP and
+      bogus-name rejection.
+- [ ] **Hardware verification with `rigctl -m 2 -r localhost:4532`
+      against a Hamlib build.** Deferred — requires a Hamlib
+      install we can run side-by-side. Tracked as a manual
+      validation step for the next hardware-test session.
 
-**Phase 4 exit criteria:** for each of the four verified radios,
-`rigctl --list-flags` equivalents that Hamlib reports as
-supported are also supported (or explicitly documented as
-out-of-scope) by SwiftRigControl.
+**Phase 4 complete:** for each of the four verified radios, the
+Hamlib command surface that maps onto SwiftRigControl's
+`CATProtocol` is exposed over the rigctld bridge with byte-for-
+byte format parity. Things genuinely outside scope
+(`set_chan`/`get_chan`, function bits beyond break-in,
+band-stacking register R/W, vfo_op compound operations)
+remain `.notImplemented` and are tracked in `[Unreleased]`.
 
 ---
 

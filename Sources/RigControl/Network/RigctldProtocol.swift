@@ -163,12 +163,57 @@ public enum RigctldCommand: Sendable, Equatable {
     // MARK: - Level Commands
 
     /// Set level (L or \set_level)
-    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR, IF/IFFILTER
+    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR,
+    /// IF/IFFILTER, KEYSPD, CWPITCH.
     case setLevel(name: String, value: String)
 
     /// Get level (l or \get_level)
-    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR, IF/IFFILTER
+    /// Supports: AF, RF, SQL, PREAMP, ATT, RFPOWER, AGC, NB, NR,
+    /// IF/IFFILTER, KEYSPD, CWPITCH, SWR, ALC, RFPOWER_METER,
+    /// RFPOWER_METER_WATTS, COMP_METER, VD_METER, ID_METER.
     case getLevel(name: String)
+
+    // MARK: - Function toggles (Phase 4.5)
+
+    /// Set a function bit (`U` or `\set_func`). SwiftRigControl
+    /// currently supports `SBKIN` (semi break-in on/off) and
+    /// `FBKIN` (full break-in on/off). Other Hamlib function bits
+    /// return `.notImplemented`.
+    case setFunc(name: String, enabled: Bool)
+
+    /// Get a function bit (`u` or `\get_func`). See `setFunc`
+    /// for the supported names.
+    case getFunc(name: String)
+
+    // MARK: - Antenna (Phase 4.5)
+
+    /// Set antenna (`Y` or `\set_ant`). The Hamlib signature is
+    /// `set_ant <Antenna> [<Option>]`; the optional second
+    /// argument carries per-radio quirks (RX-only routing) that
+    /// SwiftRigControl does not yet model.
+    case setAntenna(antenna: Int, option: Int?)
+
+    /// Get antenna (`y` or `\get_ant`). The Hamlib signature is
+    /// `get_ant <Antenna>` returning four fields; the input
+    /// `antenna` acts as a hint to the radio when there are
+    /// RX-only antennas.
+    case getAntenna(antenna: Int)
+
+    // MARK: - Scanning (Phase 4.5)
+
+    /// Start/stop a scan (`g` or `\scan`). Format: `scan <fct>
+    /// <ch>`. `fct` is one of VFO / MEM / SLCT / PRIO / PROG /
+    /// DELTA / STOP. `ch` (scan-channel hint) is parsed but
+    /// ignored — `CATProtocol.startScan(_:)` doesn't model it.
+    case scan(function: String, channel: Int)
+
+    // MARK: - CW (Phase 4.5)
+
+    /// Send a CW message (`b` or `\send_morse`).
+    case sendMorse(text: String)
+
+    /// Abort any CW message in flight (`\stop_morse`).
+    case stopMorse
 
     // MARK: - Information Commands
 
@@ -218,6 +263,13 @@ public enum RigctldCommand: Sendable, Equatable {
         case .mW2power: return "mW2power"
         case .setLevel: return "set_level"
         case .getLevel: return "get_level"
+        case .setFunc: return "set_func"
+        case .getFunc: return "get_func"
+        case .setAntenna: return "set_ant"
+        case .getAntenna: return "get_ant"
+        case .scan: return "scan"
+        case .sendMorse: return "send_morse"
+        case .stopMorse: return "stop_morse"
         case .setPowerStat: return "set_powerstat"
         case .getPowerStat: return "get_powerstat"
         case .dumpCapabilities: return "dump_caps"

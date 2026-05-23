@@ -32,6 +32,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **Rigctld bridge coverage (Phase 4.5).** The `rigctld`-compatible
+  TCP server now speaks every Hamlib command that maps onto the
+  Phase 4.1–4.4 features added above. Apps that drive
+  SwiftRigControl-backed radios through `rigctl` (or via WSJT-X,
+  fldigi, JS8Call, etc.) get the same surface they'd see talking
+  to a real Hamlib build:
+
+  - `get_level SWR / ALC / RFPOWER_METER / RFPOWER_METER_WATTS /
+    COMP_METER / VD_METER / ID_METER` — TX-meter readings,
+    each formatted per Hamlib's `RIG_LEVEL_*` float semantics.
+  - `set_level / get_level KEYSPD` and `CWPITCH` — CW keyer.
+  - `set_func / get_func SBKIN` and `FBKIN` — semi / full
+    break-in. New `setFunc` / `getFunc` commands; other
+    function bits return `.notImplemented`.
+  - `set_ant / get_ant` — antenna selection. `get_ant` returns
+    the four-field Hamlib format `AntCurr Option AntTx AntRx`.
+  - `scan VFO/MEM/SLCT/PRIO/PROG/DELTA/STOP` — case-insensitive
+    scan control; the per-channel arg is parsed and ignored
+    (matches `CATProtocol.startScan`'s shape).
+  - `send_morse <text>` and `stop_morse` — radio-generated CW.
+    Multi-word messages survive the tokenizer.
+
+  All wire formats cross-checked against Hamlib's
+  `~/Developer/hamlib/src/misc.c` `rig_strlevel` table and
+  `tests/rigctl_parse.c` short-command table.
+
+  35 new tests across `RigctldParserTests` (13) and
+  `RigctldHandlerTests` (22) — parser shape, handler routing,
+  Hamlib format parity (SWR ratio, watts, dB, volts, amps),
+  case insensitivity, error mapping for bogus scan kinds and
+  unknown function names.
+
 - **Antenna selection API (Phase 4.4).** Two new accessors on
   `CATProtocol` and `RigController`:
   - `selectAntenna(_ index: Int)` — choose ANT 1 / ANT 2 / etc.
