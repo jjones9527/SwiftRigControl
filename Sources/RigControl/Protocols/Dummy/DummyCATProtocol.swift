@@ -83,6 +83,12 @@ public actor DummyCATProtocol: CATProtocol {
     private var memoryChannels: [Int: MemoryChannel] = [:]
     private let memoryChannelCount: Int = 99
 
+    /// Test/preview helper. When non-nil, every operation on the
+    /// dummy throws this error instead of returning a normal value.
+    /// Lets tests simulate "the radio went away" without yanking a
+    /// USB cable. Not part of `CATProtocol`.
+    private var injectedFailure: RigError?
+
     // MARK: - Initialization
 
     /// Required by `CATProtocol`. Constructs a dummy with the full
@@ -108,6 +114,9 @@ public actor DummyCATProtocol: CATProtocol {
         // real protocols — anything observing the transport state
         // (e.g. a `MockSerialTransport` wired in for inspection) sees
         // the same lifecycle a real protocol would produce.
+        if let injectedFailure {
+            throw injectedFailure
+        }
         try await transport.open()
         connected = true
     }
@@ -211,6 +220,14 @@ public actor DummyCATProtocol: CATProtocol {
     /// Has no analogue on real radios; not part of `CATProtocol`.
     public func simulateSignalStrength(raw: Int) {
         sMeterRaw = max(0, min(raw, 241))
+    }
+
+    /// Test/preview helper — when set, every operation throws this
+    /// error instead of returning normally. Pass `nil` to clear.
+    /// Use to simulate "the radio went away" for connection-health
+    /// and reconnect tests. Not part of `CATProtocol`.
+    public func simulateFailure(_ error: RigError?) {
+        injectedFailure = error
     }
 
     // MARK: - RIT / XIT
@@ -369,6 +386,9 @@ public actor DummyCATProtocol: CATProtocol {
     // MARK: - Private helpers
 
     private func requireConnected() throws {
+        if let injectedFailure {
+            throw injectedFailure
+        }
         guard connected else {
             throw RigError.notConnected
         }

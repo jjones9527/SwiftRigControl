@@ -18,6 +18,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Connection-health monitor (`startHealthMonitor` /
+  `stopHealthMonitor`).** Periodic `getFrequency` heartbeat at the
+  configured `heartbeatInterval` (default 5 s). After
+  `degradeAfter` consecutive failures (default 3), transitions
+  the connection to `.degraded(reason:)`; a subsequent successful
+  probe transitions back to `.connected`. Optional `RetryPolicy`
+  drives automatic reconnection with exponential backoff —
+  `initialDelay × multiplier^(attempt-1)`, capped at `maxDelay`,
+  bounded by `maxAttempts` (nil = retry forever). State
+  transitions fan through the same `events` stream as setter and
+  polling events. `disconnect()` stops the monitor automatically.
+  New `isMonitoringHealth` accessor.
+- **`RigController.HealthMonitorConfiguration` / `RetryPolicy`
+  structs** for tuning. Auto-reconnect is opt-in (`retryPolicy`
+  defaults to nil) — apps that want manual reconnect can subscribe
+  to `.degraded` and call `connect()` themselves.
+- **`DummyCATProtocol.simulateFailure(_:)` test helper** that flips
+  the dummy into "always-throw" mode and back. Used by the
+  health-monitor tests to exercise failure paths deterministically;
+  also useful for app-side integration tests that need to simulate
+  "the radio went away."
 - **Polled state broadcaster (`startPolling` / `stopPolling`).**
   Read-only state the radio doesn't push (signal strength,
   front-panel-driven frequency/mode/PTT changes) can now be

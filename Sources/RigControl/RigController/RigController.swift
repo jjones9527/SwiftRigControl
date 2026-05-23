@@ -100,6 +100,10 @@ public actor RigController {
     /// the entire poller. Empty when polling is stopped.
     internal var pollingTasks: [String: Task<Void, Never>] = [:]
 
+    /// Active connection-health monitor task (Phase 2.3). `nil`
+    /// when the monitor is stopped.
+    internal var healthMonitorTask: Task<Void, Never>?
+
     /// Initializes a new rig controller.
     ///
     /// - Parameters:

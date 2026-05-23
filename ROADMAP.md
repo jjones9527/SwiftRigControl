@@ -341,19 +341,47 @@ poll.
 
 ### 2.3 Connection health
 
-- [ ] `ConnectionState` enum: `.disconnected`, `.connecting`,
-      `.connected`, `.degraded(reason)`, `.reconnecting(attempt)`.
-- [ ] Heartbeat: lightweight periodic read; on N timeouts mark
-      degraded.
-- [ ] Optional auto-reconnect with `RetryPolicy` struct
-      (max attempts, backoff).
-- [ ] All state transitions emit `.connectionStateChanged`.
+- [x] `ConnectionState` enum: `.disconnected`, `.connecting`,
+      `.connected`, `.degraded(reason)`, `.reconnecting(attempt)`
+      — shipped in Phase 2.1 with the event stream. Phase 2.3
+      populates `.degraded` and `.reconnecting`.
+- [x] **Heartbeat:** `getFrequency` probe at the configured
+      `heartbeatInterval` (default 5 s). On `degradeAfter`
+      consecutive failures (default 3), transition to
+      `.degraded(reason:)`. A subsequent successful probe
+      transitions back to `.connected`.
+- [x] **Optional auto-reconnect:** `RetryPolicy` struct with
+      `maxAttempts` (nil = forever), `initialDelay`, `maxDelay`,
+      and `multiplier`. Delay between attempts is
+      `min(initialDelay × multiplier^(attempt-1), maxDelay)`.
+      When configured, the monitor tears down on `.degraded` and
+      drives `.reconnecting(attempt: N)` transitions until either
+      success (`.connected`) or exhaustion (`.disconnected`).
+- [x] **All state transitions emit `.connectionStateChanged`**
+      and flow through the same `events` stream as setter and
+      polling events.
+- [x] **`startHealthMonitor(_:)` / `stopHealthMonitor()` /
+      `isMonitoringHealth`.** `disconnect()` stops the monitor
+      automatically. Restart-replaces-monitor semantics.
+- [x] **Test helper on `DummyCATProtocol`:**
+      `simulateFailure(_:)` flips the dummy into "always-throw"
+      mode and back. Lets tests deterministically exercise the
+      failure path without real I/O.
+- [x] **Tests:** 10 new tests in `RigControllerHealthTests`
+      covering lifecycle, degradation, recovery, auto-reconnect
+      success and exhaustion, and `RetryPolicy` backoff math.
 
-**Phase 2 exit criteria:** a SwiftUI app can write
+**Phase 2 exit criteria met:** a SwiftUI app can write
 ```swift
-ForEach(rig.events) { event in ... }
+for await event in rig.events { ... }
 ```
-and render real-time radio state with no polling loop in user code.
+and render real-time radio state with no polling loop in user
+code. The dummy radio + dummy event-stream pattern means apps
+can develop, preview, and integration-test against the full
+event surface (frequency, mode, PTT, signal strength, AGC, NB,
+NR, IF filter, levels, RIT/XIT, power state, connection
+lifecycle including degraded and reconnecting) with no real
+hardware. Phase 2 is complete.
 
 ---
 

@@ -12,6 +12,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Dummy radio**: Develop and preview SwiftUI apps with no hardware via `RadioDefinition.dummy()` (Hamlib Model 1 equivalent)
 - ✅ **Event stream**: `RigController.events` as `AsyncStream<RigStateEvent>` — push-style state updates for SwiftUI with no polling loop in user code
 - ✅ **Polled state broadcaster**: opt-in `startPolling()` for S-meter monitoring and front-panel-driven changes; per-field intervals; events fan into the same stream
+- ✅ **Connection-health monitor**: opt-in `startHealthMonitor()` with heartbeat probing and optional exponential-backoff auto-reconnect; degraded and reconnecting states fan into the same stream
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
@@ -274,6 +275,28 @@ await rig.stopPolling()
 Polled values feed the same `events` stream, so consumer code
 doesn't have to distinguish setter-driven from poll-driven changes.
 `disconnect()` stops polling automatically.
+
+For long-running sessions where the radio could disappear (USB
+cable yanked, RF interference, etc.), enable the connection-health
+monitor — optionally with auto-reconnect:
+
+```swift
+// Heartbeat only — surfaces .degraded on the events stream when
+// the radio stops responding, recovers to .connected when it
+// answers again.
+await rig.startHealthMonitor()
+
+// Or with auto-reconnect: exponential backoff, retries forever.
+await rig.startHealthMonitor(.init(
+    heartbeatInterval: 5,
+    degradeAfter: 3,
+    retryPolicy: RigController.RetryPolicy()
+))
+```
+
+State transitions emit `.connectionStateChanged(.degraded(...))`
+and `.connectionStateChanged(.reconnecting(attempt: N))` so UI can
+show a "Reconnecting…" indicator without any extra plumbing.
 
 ### Basic Usage (Non-Sandboxed Apps)
 
