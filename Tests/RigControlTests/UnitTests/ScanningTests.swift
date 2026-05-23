@@ -13,7 +13,7 @@ import Testing
     @Test func startThenStopRoundtrip() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         #expect(await proto.activeScan == nil)
         try await rig.startScan(.memory)
@@ -25,7 +25,7 @@ import Testing
     @Test func startScanReplacesPreviousKind() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         try await rig.startScan(.vfo)
         #expect(await proto.activeScan == .vfo)

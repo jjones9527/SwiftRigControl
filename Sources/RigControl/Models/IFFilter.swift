@@ -115,9 +115,9 @@ public enum FilterWidth: String, Sendable, Codable, CustomStringConvertible {
 ///
 /// ## Usage
 /// ```swift
-/// // Set custom filter width by index (IC-7600)
-/// if let icomProtocol = rig.protocol as? IcomCIVProtocol {
-///     try await icomProtocol.setFilterWidthIC7600(25)  // Index 0-49
+/// // Set custom filter width by index (IC-7600).
+/// if case .icom(let icom) = await rig.vendorExtensions {
+///     try await icom.setFilterWidthIC7600(25)  // Index 0-49
 /// }
 /// ```
 public struct IFFilterConfig: Sendable, Equatable {

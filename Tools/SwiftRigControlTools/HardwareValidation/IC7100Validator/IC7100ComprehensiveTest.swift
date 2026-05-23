@@ -338,7 +338,7 @@ struct IC7100ComprehensiveTest {
             // Test 12: RF Controls (IC-7100 Specific)
             print("📻 Test 12: RF Controls (Attenuator, Preamp, AGC, NB)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -387,7 +387,7 @@ struct IC7100ComprehensiveTest {
             // Test 13: Audio/DSP Controls (IC-7100 Specific)
             print("🎛️  Test 13: Audio/DSP Controls (PBT, Notch, Filters)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -436,7 +436,7 @@ struct IC7100ComprehensiveTest {
             // Test 14: Transmit Controls (IC-7100 Specific)
             print("📤 Test 14: Transmit Controls (VOX, Compression, Break-in)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -491,7 +491,7 @@ struct IC7100ComprehensiveTest {
             // Test 15: Display Controls (IC-7100 Specific)
             print("💡 Test 15: Display Controls (LCD, Dial Lock)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1

@@ -48,7 +48,7 @@ struct IC7600ManualValidation {
             print("✓ Connected\n")
 
             // Get protocol
-            let proto = await rig.protocol
+            let proto = await rig.rawProtocol
             guard let icomProtocol = proto as? IcomCIVProtocol else {
                 print("❌ Error: Could not access Icom protocol")
                 return

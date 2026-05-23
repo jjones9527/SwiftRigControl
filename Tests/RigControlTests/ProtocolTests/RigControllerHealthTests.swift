@@ -76,7 +76,7 @@ import Testing
 
     @Test func consecutiveFailuresTransitionToDegraded() async throws {
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         // 50 ms heartbeat, degrade after 2 consecutive failures.
         // Window: ~250 ms is comfortably enough for 2 probes +
@@ -112,7 +112,7 @@ import Testing
 
     @Test func recoveryFromDegradedEmitsConnected() async throws {
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         await rig.startHealthMonitor(.init(
             heartbeatInterval: 0.05,
@@ -190,7 +190,7 @@ import Testing
 
     @Test func autoReconnectAttemptsAndRecovers() async throws {
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         // Aggressive timing for the test: 50 ms heartbeat, degrade
         // after 1 failure, 50 ms reconnect delays.
@@ -252,7 +252,7 @@ import Testing
 
     @Test func autoReconnectGivesUpAfterMaxAttempts() async throws {
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         // 2 attempts then give up. With 50 ms delays, we expect
         // .degraded → .reconnecting(1) → .reconnecting(2) → .disconnected

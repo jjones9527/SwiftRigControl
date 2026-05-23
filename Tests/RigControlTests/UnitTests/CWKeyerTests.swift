@@ -141,7 +141,7 @@ import Testing
     @Test func dummySendCWStoresMessage() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         try await rig.sendCW("CQ CQ DE VA3ZTF")
         #expect(await proto.lastSentCW == "CQ CQ DE VA3ZTF")
@@ -154,7 +154,7 @@ import Testing
     @Test func dummyTruncatesCWAt30Chars() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         try await rig.sendCW(String(repeating: "A", count: 100))
         let sent = await proto.lastSentCW
@@ -164,7 +164,7 @@ import Testing
     @Test func dummyStripsNonASCII() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         try await rig.sendCW("HÉLLO")
         // É is stripped; remaining ASCII reaches the radio.

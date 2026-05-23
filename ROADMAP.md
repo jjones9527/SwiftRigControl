@@ -776,13 +776,45 @@ concrete protocol's conformance list is its capability contract:
 
 ### 5.2 Typed extension access
 
-Replace `RigController.protocol: any CATProtocol` with a
-discriminated `RigController.vendorExtensions` that returns
-a typed handle:
-
-- [ ] `enum VendorExtensions { case icom(IcomExtensions), elecraft(...), ... }`
-- [ ] `IcomExtensions` exposes `setAttenuator`, `setPreamp`,
-      `setBandEdge`, etc. without casting.
+- [x] **New `VendorExtensions` enum** with one case per supported
+      vendor protocol, each carrying the concrete actor:
+      `.icom(IcomCIVProtocol)`, `.elecraft(ElecraftProtocol)`,
+      `.yaesu(YaesuCATProtocol)`, `.kenwood(KenwoodProtocol)`,
+      `.thd72(THD72Protocol)`, `.tentecOrion(TenTecOrionProtocol)`,
+      `.tentecLegacy(TenTecLegacyProtocol)`,
+      `.dummy(DummyCATProtocol)`, plus
+      `.unknown(any CATProtocol)` for forward compatibility.
+- [x] **`RigController.vendorExtensions: VendorExtensions`**
+      replaces the stringly-typed `as?` cast. Pattern-match the
+      enum to reach the vendor's protocol actor:
+      `if case .icom(let icom) = await rig.vendorExtensions { ... }`.
+      The compiler enforces exhaustiveness — when a new vendor
+      gets added, every call site is told to handle the new case.
+- [x] **`RigController.protocol` renamed to `RigController.rawProtocol`**
+      with a strengthened doc-comment that it's an explicit escape
+      hatch for cases the vendor-extension enum doesn't cover
+      (hardware validators, custom simulators, debugging). The doc
+      explicitly notes that anything reached through `rawProtocol`
+      is unversioned and may change between releases without a
+      deprecation cycle.
+- [x] **No curated `IcomExtensions` / `ElecraftExtensions` facades
+      ship in this phase.** The roadmap originally called for them;
+      design-discussion conclusion was that hand-curating a subset
+      of the ~30 Icom-specific methods would commit us to a
+      forever contract we don't have enough data to design well
+      yet. The whole concrete protocol actor is accessible through
+      the `.icom(let icom)` case, which is the same level of
+      access apps had before — just typed.
+- [x] **Bulk rename of every internal call site** from
+      `rig.protocol` to `rig.rawProtocol` across Tests, Tools, and
+      Examples (50+ call sites). The new `vendorExtensions`
+      pattern is demonstrated in the updated `RigController` and
+      `IFFilter` doc comments.
+- [x] **6 new tests** in `VendorExtensionsTests`: enum-case
+      dispatch for dummy / Icom / Elecraft radios, `rawProtocol`
+      returns the same actor on repeated reads, vendorExtensions
+      and rawProtocol agree on the same actor instance,
+      switch-exhaustiveness compile-time guard.
 
 ### 5.3 Eliminate the `CATProtocol.init(transport:)` requirement
 

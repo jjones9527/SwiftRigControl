@@ -57,7 +57,7 @@ struct IC9700HardwareTests {
 
     /// Get Icom protocol instance
     private func getIcomProtocol() async throws -> IcomCIVProtocol {
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             throw RigError.unsupportedOperation("Not an Icom protocol")
         }

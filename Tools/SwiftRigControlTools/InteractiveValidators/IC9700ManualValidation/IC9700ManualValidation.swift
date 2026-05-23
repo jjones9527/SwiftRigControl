@@ -49,7 +49,7 @@ struct IC9700ManualValidation {
             try await rig.connect()
             print("\n✅ Connected to IC-9700\n")
 
-            let proto = await rig.protocol
+            let proto = await rig.rawProtocol
             guard let icomProtocol = proto as? IcomCIVProtocol else {
                 print("❌ Error: Not an Icom protocol")
                 await rig.disconnect()

@@ -73,6 +73,7 @@ For the SwiftUI / reactive-state pattern, see
 - ``RadioDefinition``
 - ``ConnectionType``
 - ``RigCapabilities``
+- ``VendorExtensions``
 
 ### Reactive state
 

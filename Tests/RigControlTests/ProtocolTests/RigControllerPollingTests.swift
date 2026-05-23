@@ -115,7 +115,7 @@ import Testing
         // Drive a frequency change between polls and confirm exactly
         // one event arrives for each unique value.
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         await rig.startPolling(.init(
             signalStrength: nil,
@@ -173,7 +173,7 @@ import Testing
         // (simulating front-panel mic PTT, which bypasses
         // RigController.setPTT).
         let rig = try await makeRig()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         await rig.startPolling(.init(
             signalStrength: nil,

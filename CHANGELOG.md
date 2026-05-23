@@ -32,6 +32,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Changed
+- **Typed `VendorExtensions` enum + `rawProtocol` rename (Phase 5.2).**
+  New `RigController.vendorExtensions: VendorExtensions` returns
+  a discriminated enum carrying the concrete protocol actor for
+  the radio's vendor. Pattern-match instead of casting:
+
+  ```swift
+  // Before:
+  if let icom = await rig.protocol as? IcomCIVProtocol {
+      try await icom.setAttenuatorIC9700(.dB12)
+  }
+
+  // After:
+  if case .icom(let icom) = await rig.vendorExtensions {
+      try await icom.setAttenuatorIC9700(.dB12)
+  }
+  ```
+
+  The discriminated enum gives the compiler switch-exhaustiveness
+  — adding a new vendor case forces every call site to handle it
+  (or explicitly opt out via `default:`).
+
+  **`RigController.protocol` renamed to `RigController.rawProtocol`**
+  (hard rename, no deprecation shim). The accessor still returns
+  the type-erased protocol actor for cases the vendor-extensions
+  enum doesn't cover (hardware validators that touch per-model
+  methods, custom simulators), but is now explicitly documented
+  as an unversioned escape hatch. Internal callers across Tests,
+  Tools, Examples and the IFFilter doc-comment example all
+  updated to the new name (50+ call sites).
+
+  Curated per-vendor facades (e.g. an `IcomExtensions` wrapping
+  only "common" methods) were considered and deliberately not
+  shipped — they'd commit us to a forever subset we don't have
+  data to design well yet. The whole concrete protocol actor is
+  accessible through `vendorExtensions`, which is the same level
+  of surface apps had before, now typed.
+
+  6 new tests in `VendorExtensionsTests` cover enum-case
+  dispatch per vendor, `rawProtocol` identity stability,
+  agreement between the two access paths, and the switch-
+  exhaustiveness compile-time guard.
+
 - **`CATProtocol` split into capability traits (Phase 5.1).** The
   fat protocol that carried ~40 methods with default-throw
   extensions has been refactored into a narrow universal core

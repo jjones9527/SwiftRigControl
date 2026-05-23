@@ -98,7 +98,7 @@ import Testing
     @Test func dummyServesSimulatedReadings() async throws {
         let rig = try RigController(radio: .dummy(), connection: .mock)
         try await rig.connect()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
 
         // Simulate transmitting at ~50 W with 1.5:1 SWR.
         await proto.simulateMeter(.rfPower, raw: 143)

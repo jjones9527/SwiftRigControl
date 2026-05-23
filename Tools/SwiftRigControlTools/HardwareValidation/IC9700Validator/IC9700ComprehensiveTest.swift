@@ -346,7 +346,7 @@ struct IC9700ComprehensiveTest {
             // Test 11: RF Controls (IC-9700 Specific)
             print("📻 Test 11: RF Controls (Attenuator, Preamp, AGC, NR)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -397,7 +397,7 @@ struct IC9700ComprehensiveTest {
             // Test 12: Audio/DSP Controls (IC-9700 Specific)
             print("🎛️  Test 12: Audio/DSP Controls (Notch, Monitor)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -442,7 +442,7 @@ struct IC9700ComprehensiveTest {
             // Test 13: Transmit Controls (IC-9700 Specific)
             print("📤 Test 13: Transmit Controls (VOX, Digital Squelch)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -480,7 +480,7 @@ struct IC9700ComprehensiveTest {
             // Test 14: Display and System Controls (IC-9700 Specific)
             print("💡 Test 14: Display and System Controls (Dial Lock)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1
@@ -507,7 +507,7 @@ struct IC9700ComprehensiveTest {
             // Test 15: Advanced Features (IC-9700 Specific)
             print("🛰️  Test 15: Advanced Features (Satellite Mode, Dual Watch)")
             do {
-                let proto = await rig.protocol
+                let proto = await rig.rawProtocol
                 guard let icomProtocol = proto as? IcomCIVProtocol else {
                     print("   ❌ Could not access Icom protocol\n")
                     testsFailed += 1

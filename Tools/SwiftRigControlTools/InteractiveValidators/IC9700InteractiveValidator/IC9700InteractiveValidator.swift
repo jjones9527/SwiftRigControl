@@ -335,7 +335,7 @@ class Validator {
             throw ValidationError.notConnected
         }
 
-        guard let proto = await rig.protocol as? IcomCIVProtocol else {
+        guard let proto = await rig.rawProtocol as? IcomCIVProtocol else {
             throw ValidationError.notIcomProtocol
         }
 

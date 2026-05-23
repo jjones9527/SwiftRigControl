@@ -39,7 +39,7 @@ struct IC7600ModeDebug {
             try await rig.connect()
             print("✅ Connected to IC-7600\n")
 
-            guard let proto = await rig.protocol as? IcomCIVProtocol else {
+            guard let proto = await rig.rawProtocol as? IcomCIVProtocol else {
                 print("❌ Not an Icom protocol")
                 return
             }

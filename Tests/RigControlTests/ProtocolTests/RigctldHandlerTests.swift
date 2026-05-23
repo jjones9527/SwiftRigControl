@@ -33,7 +33,7 @@ import Testing
 
     @Test func getLevelSWRReadsFromController() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // Hamlib SWR calibration: raw=48 → ratio=1.5.
         await proto.simulateMeter(.swr, raw: 48)
 
@@ -45,7 +45,7 @@ import Testing
 
     @Test func getLevelRFPowerMeterIsNormalized() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // raw=213 is the 100W breakpoint → normalized = 1.0.
         await proto.simulateMeter(.rfPower, raw: 213)
 
@@ -56,7 +56,7 @@ import Testing
 
     @Test func getLevelRFPowerMeterWattsIsWatts() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // raw=143 maps to 50W on the calibration curve.
         await proto.simulateMeter(.rfPower, raw: 143)
 
@@ -67,7 +67,7 @@ import Testing
 
     @Test func getLevelCompMeterReturnsDB() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // raw=130 → 15 dB compression.
         await proto.simulateMeter(.comp, raw: 130)
 
@@ -77,7 +77,7 @@ import Testing
 
     @Test func getLevelVDMeterReturnsVolts() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // raw=13 → 10 V.
         await proto.simulateMeter(.voltage, raw: 13)
 
@@ -87,7 +87,7 @@ import Testing
 
     @Test func getLevelIDMeterReturnsAmps() async throws {
         let (rig, handler) = try await makeHandler()
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         // raw=97 → 10 A.
         await proto.simulateMeter(.current, raw: 97)
 
@@ -204,7 +204,7 @@ import Testing
         let (rig, handler) = try await makeHandler()
         let response = await handler.handle(.scan(function: "MEM", channel: 0))
         #expect(response.returnCode == .ok)
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.activeScan == .memory)
     }
 
@@ -214,7 +214,7 @@ import Testing
 
         let response = await handler.handle(.scan(function: "STOP", channel: 0))
         #expect(response.returnCode == .ok)
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.activeScan == nil)
     }
 
@@ -228,7 +228,7 @@ import Testing
         let (rig, handler) = try await makeHandler()
         let response = await handler.handle(.scan(function: "vfo", channel: 0))
         #expect(response.returnCode == .ok)
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.activeScan == .vfo)
     }
 
@@ -238,7 +238,7 @@ import Testing
         let (rig, handler) = try await makeHandler()
         let response = await handler.handle(.sendMorse(text: "CQ DE VA3ZTF"))
         #expect(response.returnCode == .ok)
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.lastSentCW == "CQ DE VA3ZTF")
     }
 
@@ -248,7 +248,7 @@ import Testing
 
         let response = await handler.handle(.stopMorse)
         #expect(response.returnCode == .ok)
-        let proto = await rig.protocol as! DummyCATProtocol
+        let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.isSendingCW == false)
     }
 }

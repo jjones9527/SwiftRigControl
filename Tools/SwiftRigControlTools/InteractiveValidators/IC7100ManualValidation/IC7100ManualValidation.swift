@@ -46,7 +46,7 @@ struct IC7100ManualValidation {
             Foundation.exit(1)
         }
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             print("❌ Error: Not an Icom protocol")
             await rig.disconnect()

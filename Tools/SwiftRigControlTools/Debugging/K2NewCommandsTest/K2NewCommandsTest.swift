@@ -27,7 +27,7 @@ struct K2NewCommandsTest {
             try await rig.connect()
             print("✅ Connected to K2\n")
 
-            guard let proto = await rig.protocol as? ElecraftProtocol else {
+            guard let proto = await rig.rawProtocol as? ElecraftProtocol else {
                 print("❌ Not an Elecraft protocol")
                 return
             }

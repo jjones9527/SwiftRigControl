@@ -57,18 +57,24 @@ import Foundation
 ///
 /// ## Radio-Specific Extensions
 ///
-/// The `protocol` property exposes the underlying `CATProtocol` implementation.
-/// Cast it to a manufacturer-specific type to access commands that are outside
-/// the standard API:
+/// The ``vendorExtensions`` property returns a typed ``VendorExtensions``
+/// enum carrying the concrete protocol actor for the radio's vendor.
+/// Pattern-match to reach vendor-specific commands without a stringly-
+/// typed cast:
 ///
 /// ```swift
-/// if let icomProto = await rig.protocol as? IcomCIVProtocol {
-///     try await icomProto.setAttenuator(6)
+/// if case .icom(let icom) = await rig.vendorExtensions {
+///     try await icom.setAttenuator(6)
 /// }
 /// ```
 ///
-/// - Warning: Radio-specific commands are not portable.  Always guard the cast
-///   and document which radio models the code targets.
+/// For unusual cases the typed enum doesn't cover (hardware validators,
+/// custom test fixtures), use the ``rawProtocol`` escape hatch — but
+/// be aware that anything reached through it is unversioned and may
+/// change between releases.
+///
+/// - Warning: Vendor-specific commands are not portable across
+///   manufacturers. Document which radio models your code targets.
 public actor RigController {
     /// The radio being controlled
     public let radio: RadioDefinition
@@ -158,23 +164,45 @@ public actor RigController {
 
     // MARK: - Radio-Specific Protocol Access
 
-    /// Access to the underlying protocol for radio-specific operations.
+    /// Direct, type-erased access to the underlying CAT protocol
+    /// actor. Use this as an explicit escape hatch when the
+    /// typed ``vendorExtensions`` enum doesn't cover what you need.
     ///
-    /// This property provides access to the underlying CAT protocol implementation,
-    /// allowing access to radio-specific commands that are not part of the standard
-    /// RigController API.
+    /// **Prefer ``vendorExtensions`` for most cases.** That returns
+    /// a discriminated ``VendorExtensions`` enum carrying the
+    /// concrete protocol actor for the radio's vendor — no
+    /// stringly-typed `as?` cast required, and the compiler tells
+    /// you when a new vendor case appears that your code hasn't
+    /// handled.
     ///
-    /// For IC-7600 radios, cast to `IcomCIVProtocol` to access extended commands:
+    /// ## When to use `rawProtocol`
+    ///
+    /// - **Hardware validators** that touch every per-model method
+    ///   (the `Tools/SwiftRigControlTools/` validators use it).
+    /// - **Custom simulators or test fixtures** that need to reach
+    ///   methods not exposed by any vendor extension.
+    /// - **Debugging or one-off scripts** where the typed surface
+    ///   is overkill.
+    ///
+    /// Anything reached through `rawProtocol` is unversioned — the
+    /// surface may change between SwiftRigControl releases without
+    /// a deprecation cycle. If you find yourself touching it from
+    /// app code, consider opening an issue: it may belong on a
+    /// trait protocol or as a curated vendor extension.
+    ///
+    /// ## Example
+    ///
     /// ```swift
-    /// if let icomProto = await rig.protocol as? IcomCIVProtocol {
-    ///     try await icomProto.setAttenuator(6)
-    ///     try await icomProto.setPreamp(1)
+    /// // Almost always prefer:
+    /// if case .icom(let icom) = await rig.vendorExtensions {
+    ///     try await icom.setAttenuatorIC9700(.dB12)
     /// }
-    /// ```
     ///
-    /// - Warning: Radio-specific commands may not be portable across different models.
-    ///   Always check the protocol type before casting.
-    public var `protocol`: any CATProtocol {
+    /// // Escape hatch:
+    /// let raw = await rig.rawProtocol
+    /// // ... type-erased access, e.g. for a custom test fixture
+    /// ```
+    public var rawProtocol: any CATProtocol {
         proto
     }
 }

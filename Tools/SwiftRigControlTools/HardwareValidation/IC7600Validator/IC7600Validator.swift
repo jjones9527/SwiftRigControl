@@ -147,7 +147,7 @@ struct IC7600Validator {
             // Test DATA mode (IC-7600 specific - uses command 1A 06)
             // IC-7600 doesn't have separate mode codes for USB-D/LSB-D
             // Instead: Set base mode (USB/LSB) + enable DATA mode via 1A 06
-            let proto = await rig.protocol
+            let proto = await rig.rawProtocol
             guard let icomProtocol = proto as? IcomCIVProtocol else {
                 ValidationHelpers.printWarning("DATA mode test requires Icom protocol")
                 report.recordPass()
@@ -417,7 +417,7 @@ struct IC7600Validator {
     static func testRFControls(rig: RigController, report: inout ValidationHelpers.TestReport) async {
         ValidationHelpers.printTestSection("Test 11: RF Controls (Attenuator, Preamp, AGC)", icon: "📻")
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             report.recordFailure("RF Controls", error: "Could not access Icom protocol")
             ValidationHelpers.printError("Could not access Icom protocol\n")
@@ -498,7 +498,7 @@ struct IC7600Validator {
     static func testAudioDSPControls(rig: RigController, report: inout ValidationHelpers.TestReport) async {
         ValidationHelpers.printTestSection("Test 12: Audio/DSP Controls (PBT, Filters, Notch)", icon: "🎛️")
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             report.recordFailure("Audio/DSP controls", error: "Could not access Icom protocol")
             ValidationHelpers.printError("Could not access Icom protocol\n")
@@ -613,7 +613,7 @@ struct IC7600Validator {
     static func testTransmitControls(rig: RigController, report: inout ValidationHelpers.TestReport) async {
         ValidationHelpers.printTestSection("Test 13: Transmit Controls (Compression, Break-in)", icon: "📤")
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             report.recordFailure("Transmit controls", error: "Could not access Icom protocol")
             ValidationHelpers.printError("Could not access Icom protocol\n")
@@ -701,7 +701,7 @@ struct IC7600Validator {
     static func testDualReceiverAdvanced(rig: RigController, report: inout ValidationHelpers.TestReport) async {
         ValidationHelpers.printTestSection("Test 14: Dual Receiver Advanced Operations", icon: "🔀")
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             report.recordFailure("Dual receiver advanced", error: "Could not access Icom protocol")
             ValidationHelpers.printError("Could not access Icom protocol\n")
@@ -751,7 +751,7 @@ struct IC7600Validator {
     static func testSpecializedFeatures(rig: RigController, report: inout ValidationHelpers.TestReport) async {
         ValidationHelpers.printTestSection("Test 15: Specialized Features (Band Edge, Dial Lock)", icon: "🔧")
 
-        let proto = await rig.protocol
+        let proto = await rig.rawProtocol
         guard let icomProtocol = proto as? IcomCIVProtocol else {
             report.recordFailure("Specialized features", error: "Could not access Icom protocol")
             ValidationHelpers.printError("Could not access Icom protocol\n")
