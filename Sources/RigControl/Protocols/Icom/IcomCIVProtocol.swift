@@ -8,7 +8,30 @@ import Foundation
 /// ## Architecture
 /// Uses the CIVCommandSet protocol for radio-specific command formatting, allowing
 /// clean separation between transport/framing logic and radio-specific quirks.
-public actor IcomCIVProtocol: CATProtocol {
+public actor IcomCIVProtocol:
+    CATProtocol,
+    SupportsPower,
+    SupportsSplit,
+    SupportsSignalStrength,
+    SupportsRIT,
+    SupportsXIT,
+    SupportsAGC,
+    SupportsNoiseBlanker,
+    SupportsNoiseReduction,
+    SupportsIFFilter,
+    SupportsAFGain,
+    SupportsRFGain,
+    SupportsSquelch,
+    SupportsPreamp,
+    SupportsAttenuator,
+    SupportsRemotePowerState,
+    SupportsMemoryChannels,
+    SupportsTXMeters,
+    SupportsCWKeyer,
+    SupportsSendCW,
+    SupportsScanning,
+    SupportsAntenna
+{
     /// The serial transport for communication
     public let transport: any SerialTransport
 

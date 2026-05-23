@@ -31,7 +31,8 @@ extension RigController {
             throw RigError.notConnected
         }
 
-        try await proto.setMemoryChannel(channel)
+        let p = try requireTrait((any SupportsMemoryChannels).self, named: "Memory channel operations")
+        try await p.setMemoryChannel(channel)
         // Invalidate cached channel data
         await stateCache.invalidate("mem_\(channel.number)")
     }
@@ -58,7 +59,8 @@ extension RigController {
             throw RigError.notConnected
         }
 
-        return try await proto.getMemoryChannel(number)
+        let p = try requireTrait((any SupportsMemoryChannels).self, named: "Memory channel operations")
+        return try await p.getMemoryChannel(number)
     }
 
     /// Gets the total number of memory channels supported by the radio.
@@ -81,7 +83,8 @@ extension RigController {
             throw RigError.notConnected
         }
 
-        return try await proto.getMemoryChannelCount()
+        let p = try requireTrait((any SupportsMemoryChannels).self, named: "Memory channel operations")
+        return try await p.getMemoryChannelCount()
     }
 
     /// Clears (erases) a memory channel.
@@ -103,7 +106,8 @@ extension RigController {
             throw RigError.notConnected
         }
 
-        try await proto.clearMemoryChannel(number)
+        let p = try requireTrait((any SupportsMemoryChannels).self, named: "Memory channel operations")
+        try await p.clearMemoryChannel(number)
         // Invalidate cached channel data
         await stateCache.invalidate("mem_\(number)")
     }

@@ -736,18 +736,43 @@ current one.
 
 ### 5.1 Capability traits
 
-`CATProtocol` is approaching ~40 methods, most defaulted to
-`throw unsupportedOperation`. Split along feature seams:
+`CATProtocol` carried ~40 methods, most defaulted to
+`throw unsupportedOperation`. Split along feature seams so each
+concrete protocol's conformance list is its capability contract:
 
-- [ ] `CATProtocol` keeps only the universal core
-      (frequency, mode, PTT, VFO, connect/disconnect).
-- [ ] `SupportsPower`, `SupportsSplit`, `SupportsDSP`,
-      `SupportsMemoryChannels`, `SupportsRITXIT`,
-      `SupportsScanning`, `SupportsCWKeyer`, etc., as
-      separate protocols.
-- [ ] `RigController` extensions adopt the form:
-      `if let p = proto as? any SupportsDSP { ... } else { throw ... }`.
-- [ ] Migration is mechanical; do it once, with tests.
+- [x] **`CATProtocol` slimmed to the universal core**
+      (`transport`/`capabilities` + frequency, mode, PTT, VFO,
+      connect/disconnect). All other methods moved out; every
+      default-throw extension deleted.
+- [x] **21 new trait protocols** in
+      `Sources/RigControl/Core/CATProtocolTraits.swift`, each
+      `Supports<Feature>`-named: `SupportsPower`,
+      `SupportsSplit`, `SupportsSignalStrength`, `SupportsRIT`,
+      `SupportsXIT`, `SupportsAGC`, `SupportsNoiseBlanker`,
+      `SupportsNoiseReduction`, `SupportsIFFilter`,
+      `SupportsAFGain`, `SupportsRFGain`, `SupportsSquelch`,
+      `SupportsPreamp`, `SupportsAttenuator`,
+      `SupportsRemotePowerState`, `SupportsMemoryChannels`,
+      `SupportsTXMeters`, `SupportsCWKeyer`, `SupportsSendCW`,
+      `SupportsScanning`, `SupportsAntenna`. Each refines
+      `CATProtocol`.
+- [x] **Every concrete protocol declares its trait list:**
+      `IcomCIVProtocol`/`DummyCATProtocol` claim all 21;
+      `YaesuCATProtocol`/`KenwoodProtocol` claim 16 (power,
+      split, SS, RIT, XIT, AGC, NB, NR, IF, AF, RF, squelch,
+      preamp, attenuator, power-state, memory);
+      `ElecraftProtocol` adds `SupportsAntenna`; `THD72Protocol`
+      claims power/split/SS (handheld); `TenTecOrionProtocol`
+      claims split + SS; `TenTecLegacyProtocol` claims SS only
+      (no split in the legacy protocol).
+- [x] **`RigController` dispatches via `as? any SupportsX`**
+      using a new `requireTrait(_:named:)` helper. Error strings
+      match the old default-throw extensions verbatim — apps
+      catching `RigError.unsupportedOperation` and matching on
+      strings see no change.
+- [x] **Migration verified mechanical.** All 350 existing tests
+      pass without modification; DocC builds clean with the new
+      trait surface added to the catalog.
 
 ### 5.2 Typed extension access
 

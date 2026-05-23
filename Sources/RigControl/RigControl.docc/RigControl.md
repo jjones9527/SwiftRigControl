@@ -112,6 +112,35 @@ For the SwiftUI / reactive-state pattern, see
 - ``KenwoodProtocol``
 - ``TenTecOrionProtocol``
 
+### Capability trait protocols
+
+Each radio opts into the features it supports by conforming to
+the matching trait protocol. `RigController` checks the
+conformance at runtime and throws ``RigError/unsupportedOperation(_:)``
+when a feature isn't available.
+
+- ``SupportsPower``
+- ``SupportsSplit``
+- ``SupportsSignalStrength``
+- ``SupportsRIT``
+- ``SupportsXIT``
+- ``SupportsAGC``
+- ``SupportsNoiseBlanker``
+- ``SupportsNoiseReduction``
+- ``SupportsIFFilter``
+- ``SupportsAFGain``
+- ``SupportsRFGain``
+- ``SupportsSquelch``
+- ``SupportsPreamp``
+- ``SupportsAttenuator``
+- ``SupportsRemotePowerState``
+- ``SupportsMemoryChannels``
+- ``SupportsTXMeters``
+- ``SupportsCWKeyer``
+- ``SupportsSendCW``
+- ``SupportsScanning``
+- ``SupportsAntenna``
+
 ### Network
 
 - ``RigControlServer``

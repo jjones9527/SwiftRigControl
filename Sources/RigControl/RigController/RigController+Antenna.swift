@@ -24,7 +24,8 @@ extension RigController {
     ///     the K2) isn't installed.
     public func selectAntenna(_ index: Int) async throws {
         try requireConnected()
-        try await proto.selectAntenna(index)
+        let p = try requireTrait((any SupportsAntenna).self, named: "Antenna selection")
+        try await p.selectAntenna(index)
     }
 
     /// Reads the currently-selected antenna.
@@ -34,7 +35,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func antenna() async throws -> Int {
         try requireConnected()
-        return try await proto.getAntenna()
+        let p = try requireTrait((any SupportsAntenna).self, named: "Antenna selection")
+        return try await p.getAntenna()
     }
 
     /// Internal: shared guard.

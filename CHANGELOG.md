@@ -31,6 +31,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@available(*, deprecated, renamed:)` shim — callers see a
   warning, code keeps compiling.
 
+### Changed
+- **`CATProtocol` split into capability traits (Phase 5.1).** The
+  fat protocol that carried ~40 methods with default-throw
+  extensions has been refactored into a narrow universal core
+  (frequency, mode, PTT, VFO, connect/disconnect) plus 21
+  focused trait protocols (one per feature group:
+  `SupportsPower`, `SupportsSplit`, `SupportsAGC`,
+  `SupportsTXMeters`, `SupportsCWKeyer`, `SupportsAntenna`,
+  `SupportsScanning`, … — all `Supports<Feature>`-named under
+  `Sources/RigControl/Core/CATProtocolTraits.swift`).
+
+  Each concrete protocol now declares its supported features in
+  its conformance list — `IcomCIVProtocol`'s line carries 21
+  traits, `THD72Protocol`'s carries 3. Adding a new conformer
+  no longer means inheriting a throwing default for every
+  feature; the conformer opts in to exactly what it implements,
+  and the compiler enforces that.
+
+  `RigController` accessors now dispatch via
+  `try requireTrait((any SupportsX).self, named: "…")`. The
+  error message produced when a trait isn't conformed matches
+  what the old default-throw extension produced, verbatim — so
+  app code that catches `RigError.unsupportedOperation` and
+  matches on the message string sees no behavior change. The
+  150+ existing tests pass without modification.
+
+  This is a one-time architectural refactor done while the
+  library still has only one external user. The cost is paid
+  here so third-party adopters never have to migrate later.
+
 ### Added
 - **Rigctld bridge coverage (Phase 4.5).** The `rigctld`-compatible
   TCP server now speaks every Hamlib command that maps onto the

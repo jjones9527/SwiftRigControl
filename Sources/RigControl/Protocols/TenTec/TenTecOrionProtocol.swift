@@ -27,7 +27,11 @@ import Foundation
 /// ```
 ///
 /// Reference: Hamlib `rigs/tentec/orion.c`
-public actor TenTecOrionProtocol: CATProtocol {
+public actor TenTecOrionProtocol:
+    CATProtocol,
+    SupportsSplit,
+    SupportsSignalStrength
+{
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 

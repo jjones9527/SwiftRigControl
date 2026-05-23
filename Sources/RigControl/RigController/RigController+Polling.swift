@@ -193,7 +193,8 @@ extension RigController {
     /// Sample the S-meter and always emit. Continuous monitoring
     /// data — every sample is meaningful.
     private func pollSignalStrength() async throws {
-        let signal = try await proto.getSignalStrength()
+        let p = try requireTrait((any SupportsSignalStrength).self, named: "Signal strength reading")
+        let signal = try await p.getSignalStrength()
         await stateCache.store(signal, forKey: "signal_strength")
         emit(.signalStrengthChanged(signal))
     }

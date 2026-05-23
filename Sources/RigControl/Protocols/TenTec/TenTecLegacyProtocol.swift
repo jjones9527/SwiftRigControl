@@ -32,7 +32,10 @@ import Foundation
 /// 6-character zero-padded decimal ASCII string (matches Hamlib's implementation in `tentec.c`).
 ///
 /// Reference: Hamlib `rigs/tentec/tentec.c`
-public actor TenTecLegacyProtocol: CATProtocol {
+public actor TenTecLegacyProtocol:
+    CATProtocol,
+    SupportsSignalStrength
+{
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 

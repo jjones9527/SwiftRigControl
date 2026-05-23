@@ -10,7 +10,25 @@ import Foundation
 /// - `FA14230000;` - Set VFO A to 14.230 MHz
 /// - `MD2;` - Set mode to USB
 /// - `TX1;` - PTT on
-public actor YaesuCATProtocol: CATProtocol {
+public actor YaesuCATProtocol:
+    CATProtocol,
+    SupportsPower,
+    SupportsSplit,
+    SupportsSignalStrength,
+    SupportsRIT,
+    SupportsXIT,
+    SupportsAGC,
+    SupportsNoiseBlanker,
+    SupportsNoiseReduction,
+    SupportsIFFilter,
+    SupportsAFGain,
+    SupportsRFGain,
+    SupportsSquelch,
+    SupportsPreamp,
+    SupportsAttenuator,
+    SupportsRemotePowerState,
+    SupportsMemoryChannels
+{
     /// The serial transport for communication
     public let transport: any SerialTransport
 

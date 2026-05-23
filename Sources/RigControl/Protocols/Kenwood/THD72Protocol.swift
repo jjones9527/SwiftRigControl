@@ -28,7 +28,12 @@ import Foundation
 ///    | VFO (0=A, 1=B)
 /// ```
 /// Mode is the final field: 0 = FM, 1 = FM-N, 2 = AM.
-public actor THD72Protocol: CATProtocol {
+public actor THD72Protocol:
+    CATProtocol,
+    SupportsPower,
+    SupportsSplit,
+    SupportsSignalStrength
+{
 
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities

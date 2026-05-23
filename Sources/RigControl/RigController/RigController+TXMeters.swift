@@ -22,7 +22,8 @@ extension RigController {
     ///     ``RigCapabilities/supportsRFPowerMeter``).
     public func rfPowerOut() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getRFPowerOut()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "RF power meter")
+        return try await p.getRFPowerOut()
     }
 
     /// Reads the SWR meter. See ``MeterReading/swrRatio`` for the
@@ -32,7 +33,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func swr() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getSWR()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "SWR meter")
+        return try await p.getSWR()
     }
 
     /// Reads the ALC meter. Only ``MeterReading/normalized`` is
@@ -43,7 +45,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func alc() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getALC()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "ALC meter")
+        return try await p.getALC()
     }
 
     /// Reads the speech-compressor meter. See ``MeterReading/dB``
@@ -53,7 +56,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func comp() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getComp()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "Compressor meter")
+        return try await p.getComp()
     }
 
     /// Reads the drain / supply voltage meter. See
@@ -63,7 +67,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func voltage() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getVoltage()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "Voltage meter")
+        return try await p.getVoltage()
     }
 
     /// Reads the drain / collector current meter. See
@@ -73,7 +78,8 @@ extension RigController {
     ///   ``RigError/unsupportedOperation(_:)``.
     public func current() async throws -> MeterReading {
         try requireConnected()
-        return try await proto.getCurrent()
+        let p = try requireTrait((any SupportsTXMeters).self, named: "Current meter")
+        return try await p.getCurrent()
     }
 
     /// Internal: shared guard used by every TX-meter accessor.

@@ -32,7 +32,8 @@ extension RigController {
             throw RigError.unsupportedOperation("Split operation not supported by \(radio.fullName)")
         }
 
-        try await proto.setSplit(enabled)
+        let p = try requireTrait((any SupportsSplit).self, named: "Split operation")
+        try await p.setSplit(enabled)
         emit(.splitChanged(enabled: enabled))
     }
 
@@ -44,6 +45,7 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        return try await proto.getSplit()
+        let p = try requireTrait((any SupportsSplit).self, named: "Split operation")
+        return try await p.getSplit()
     }
 }

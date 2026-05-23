@@ -49,7 +49,8 @@ extension RigController {
             )
         }
 
-        try await proto.setPower(level)
+        let p = try requireTrait((any SupportsPower).self, named: "Power control")
+        try await p.setPower(level)
         emit(.powerChanged(level))
     }
 
@@ -81,6 +82,7 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        return try await proto.getPower()
+        let p = try requireTrait((any SupportsPower).self, named: "Power control")
+        return try await p.getPower()
     }
 }

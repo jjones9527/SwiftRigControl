@@ -21,7 +21,8 @@ extension RigController {
     ///   - `RigError.unsupportedOperation` if the radio does not support AF gain control
     public func setAFGain(_ level: Int) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setAFGain(level)
+        let p = try requireTrait((any SupportsAFGain).self, named: "AF gain control")
+        try await p.setAFGain(level)
         await stateCache.invalidate("af_gain")
         emit(.levelChanged(kind: .afGain, value: level))
     }
@@ -39,7 +40,8 @@ extension RigController {
             return value
         }
         if !cached { await stateCache.invalidate("af_gain") }
-        let value = try await proto.getAFGain()
+        let p = try requireTrait((any SupportsAFGain).self, named: "AF gain control")
+        let value = try await p.getAFGain()
         await stateCache.store(value, forKey: "af_gain")
         return value
     }
@@ -56,7 +58,8 @@ extension RigController {
     ///   - `RigError.unsupportedOperation` if not supported
     public func setRFGain(_ level: Int) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setRFGain(level)
+        let p = try requireTrait((any SupportsRFGain).self, named: "RF gain control")
+        try await p.setRFGain(level)
         await stateCache.invalidate("rf_gain")
         emit(.levelChanged(kind: .rfGain, value: level))
     }
@@ -74,7 +77,8 @@ extension RigController {
             return value
         }
         if !cached { await stateCache.invalidate("rf_gain") }
-        let value = try await proto.getRFGain()
+        let p = try requireTrait((any SupportsRFGain).self, named: "RF gain control")
+        let value = try await p.getRFGain()
         await stateCache.store(value, forKey: "rf_gain")
         return value
     }
@@ -92,7 +96,8 @@ extension RigController {
     ///   - `RigError.unsupportedOperation` if not supported
     public func setSquelch(_ level: Int) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setSquelch(level)
+        let p = try requireTrait((any SupportsSquelch).self, named: "Squelch control")
+        try await p.setSquelch(level)
         await stateCache.invalidate("squelch")
         emit(.levelChanged(kind: .squelch, value: level))
     }
@@ -110,7 +115,8 @@ extension RigController {
             return value
         }
         if !cached { await stateCache.invalidate("squelch") }
-        let value = try await proto.getSquelch()
+        let p = try requireTrait((any SupportsSquelch).self, named: "Squelch control")
+        let value = try await p.getSquelch()
         await stateCache.store(value, forKey: "squelch")
         return value
     }
@@ -126,7 +132,8 @@ extension RigController {
     ///   - `RigError.invalidParameter` if the level is out of range for this radio
     public func setPreamp(_ level: Int) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setPreamp(level)
+        let p = try requireTrait((any SupportsPreamp).self, named: "Preamp control")
+        try await p.setPreamp(level)
         await stateCache.invalidate("preamp")
         emit(.levelChanged(kind: .preamp, value: level))
     }
@@ -144,7 +151,8 @@ extension RigController {
             return value
         }
         if !cached { await stateCache.invalidate("preamp") }
-        let value = try await proto.getPreamp()
+        let p = try requireTrait((any SupportsPreamp).self, named: "Preamp control")
+        let value = try await p.getPreamp()
         await stateCache.store(value, forKey: "preamp")
         return value
     }
@@ -163,7 +171,8 @@ extension RigController {
     ///   - `RigError.invalidParameter` if the dB value is not available on this radio
     public func setAttenuator(_ dB: Int) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setAttenuator(dB)
+        let p = try requireTrait((any SupportsAttenuator).self, named: "Attenuator control")
+        try await p.setAttenuator(dB)
         await stateCache.invalidate("attenuator")
         emit(.levelChanged(kind: .attenuator, value: dB))
     }
@@ -181,7 +190,8 @@ extension RigController {
             return value
         }
         if !cached { await stateCache.invalidate("attenuator") }
-        let value = try await proto.getAttenuator()
+        let p = try requireTrait((any SupportsAttenuator).self, named: "Attenuator control")
+        let value = try await p.getAttenuator()
         await stateCache.store(value, forKey: "attenuator")
         return value
     }
@@ -199,7 +209,8 @@ extension RigController {
     ///   - `RigError.unsupportedOperation` if the radio does not support remote power control
     public func setPowerState(_ on: Bool) async throws {
         guard connected else { throw RigError.notConnected }
-        try await proto.setPowerState(on)
+        let p = try requireTrait((any SupportsRemotePowerState).self, named: "Remote power control")
+        try await p.setPowerState(on)
         emit(.powerStateChanged(on: on))
     }
 
@@ -213,6 +224,7 @@ extension RigController {
     ///   - `RigError.unsupportedOperation` if not supported
     public func getPowerState() async throws -> Bool {
         guard connected else { throw RigError.notConnected }
-        return try await proto.getPowerState()
+        let p = try requireTrait((any SupportsRemotePowerState).self, named: "Remote power state query")
+        return try await p.getPowerState()
     }
 }

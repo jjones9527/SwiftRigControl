@@ -45,7 +45,30 @@ import Foundation
 /// let m = try await rig.mode()            // .usb
 /// let tx = try await rig.isPTTEnabled()   // true
 /// ```
-public actor DummyCATProtocol: CATProtocol {
+public actor DummyCATProtocol:
+    CATProtocol,
+    SupportsPower,
+    SupportsSplit,
+    SupportsSignalStrength,
+    SupportsRIT,
+    SupportsXIT,
+    SupportsAGC,
+    SupportsNoiseBlanker,
+    SupportsNoiseReduction,
+    SupportsIFFilter,
+    SupportsAFGain,
+    SupportsRFGain,
+    SupportsSquelch,
+    SupportsPreamp,
+    SupportsAttenuator,
+    SupportsRemotePowerState,
+    SupportsMemoryChannels,
+    SupportsTXMeters,
+    SupportsCWKeyer,
+    SupportsSendCW,
+    SupportsScanning,
+    SupportsAntenna
+{
 
     /// A no-op transport used purely to satisfy `CATProtocol`'s
     /// `transport` requirement. The dummy holds all state internally

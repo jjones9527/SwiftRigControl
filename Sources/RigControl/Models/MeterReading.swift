@@ -3,9 +3,9 @@ import Foundation
 /// A single reading from one of the radio's transmit-side meters.
 ///
 /// `MeterReading` is the value returned by the
-/// ``CATProtocol/getRFPowerOut()``, ``CATProtocol/getSWR()``,
-/// ``CATProtocol/getALC()``, ``CATProtocol/getComp()``,
-/// ``CATProtocol/getVoltage()``, and ``CATProtocol/getCurrent()``
+/// ``SupportsTXMeters/getRFPowerOut()``, ``SupportsTXMeters/getSWR()``,
+/// ``SupportsTXMeters/getALC()``, ``SupportsTXMeters/getComp()``,
+/// ``SupportsTXMeters/getVoltage()``, and ``SupportsTXMeters/getCurrent()``
 /// methods, and by the matching ``RigController`` accessors.
 ///
 /// ## Reading interpretation

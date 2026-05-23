@@ -41,7 +41,8 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        try await proto.setAGC(speed)
+        let p = try requireTrait((any SupportsAGC).self, named: "AGC (Automatic Gain Control)")
+        try await p.setAGC(speed)
         await stateCache.invalidate("agc_speed")
         emit(.agcChanged(speed))
     }
@@ -79,7 +80,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("agc_speed")
         }
-        let value = try await proto.getAGC()
+        let p = try requireTrait((any SupportsAGC).self, named: "AGC (Automatic Gain Control)")
+        let value = try await p.getAGC()
         await stateCache.store(value, forKey: "agc_speed")
         return value
     }
@@ -112,7 +114,8 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        try await proto.setNoiseBlanker(config)
+        let p = try requireTrait((any SupportsNoiseBlanker).self, named: "Noise blanker")
+        try await p.setNoiseBlanker(config)
         await stateCache.invalidate("noise_blanker")
         emit(.noiseBlankerChanged(config))
     }
@@ -146,7 +149,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("noise_blanker")
         }
-        let value = try await proto.getNoiseBlanker()
+        let p = try requireTrait((any SupportsNoiseBlanker).self, named: "Noise blanker")
+        let value = try await p.getNoiseBlanker()
         await stateCache.store(value, forKey: "noise_blanker")
         return value
     }
@@ -178,7 +182,8 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        try await proto.setNoiseReduction(config)
+        let p = try requireTrait((any SupportsNoiseReduction).self, named: "Noise reduction")
+        try await p.setNoiseReduction(config)
         await stateCache.invalidate("noise_reduction")
         emit(.noiseReductionChanged(config))
     }
@@ -212,7 +217,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("noise_reduction")
         }
-        let value = try await proto.getNoiseReduction()
+        let p = try requireTrait((any SupportsNoiseReduction).self, named: "Noise reduction")
+        let value = try await p.getNoiseReduction()
         await stateCache.store(value, forKey: "noise_reduction")
         return value
     }
@@ -240,7 +246,8 @@ extension RigController {
         guard connected else {
             throw RigError.notConnected
         }
-        try await proto.setIFFilter(filter)
+        let p = try requireTrait((any SupportsIFFilter).self, named: "IF filter control")
+        try await p.setIFFilter(filter)
         await stateCache.invalidate("if_filter")
         emit(.ifFilterChanged(filter))
     }
@@ -272,7 +279,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("if_filter")
         }
-        let value = try await proto.getIFFilter()
+        let p = try requireTrait((any SupportsIFFilter).self, named: "IF filter control")
+        let value = try await p.getIFFilter()
         await stateCache.store(value, forKey: "if_filter")
         return value
     }

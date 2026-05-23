@@ -37,7 +37,8 @@ extension RigController {
             throw RigError.unsupportedOperation("RIT not supported by \(radioName)")
         }
 
-        try await proto.setRIT(state)
+        let p = try requireTrait((any SupportsRIT).self, named: "RIT (Receiver Incremental Tuning)")
+        try await p.setRIT(state)
         await stateCache.invalidate("rit_state")
         emit(.ritChanged(state))
     }
@@ -79,7 +80,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("rit_state")
         }
-        let value = try await proto.getRIT()
+        let p = try requireTrait((any SupportsRIT).self, named: "RIT (Receiver Incremental Tuning)")
+        let value = try await p.getRIT()
         await stateCache.store(value, forKey: "rit_state")
         return value
     }
@@ -117,7 +119,8 @@ extension RigController {
             throw RigError.unsupportedOperation("XIT not supported by \(radioName)")
         }
 
-        try await proto.setXIT(state)
+        let p = try requireTrait((any SupportsXIT).self, named: "XIT (Transmitter Incremental Tuning)")
+        try await p.setXIT(state)
         await stateCache.invalidate("xit_state")
         emit(.xitChanged(state))
     }
@@ -158,7 +161,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("xit_state")
         }
-        let value = try await proto.getXIT()
+        let p = try requireTrait((any SupportsXIT).self, named: "XIT (Transmitter Incremental Tuning)")
+        let value = try await p.getXIT()
         await stateCache.store(value, forKey: "xit_state")
         return value
     }

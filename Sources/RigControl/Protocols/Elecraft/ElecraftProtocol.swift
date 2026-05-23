@@ -18,7 +18,26 @@ import Foundation
 ///
 /// Other Elecraft radios (K3, K3S, K4, KX series) have faster processors and larger buffers,
 /// so they don't require these delays.
-public actor ElecraftProtocol: CATProtocol {
+public actor ElecraftProtocol:
+    CATProtocol,
+    SupportsPower,
+    SupportsSplit,
+    SupportsSignalStrength,
+    SupportsRIT,
+    SupportsXIT,
+    SupportsAGC,
+    SupportsNoiseBlanker,
+    SupportsNoiseReduction,
+    SupportsIFFilter,
+    SupportsAFGain,
+    SupportsRFGain,
+    SupportsSquelch,
+    SupportsPreamp,
+    SupportsAttenuator,
+    SupportsRemotePowerState,
+    SupportsMemoryChannels,
+    SupportsAntenna
+{
     /// The serial transport for communication
     public let transport: any SerialTransport
 

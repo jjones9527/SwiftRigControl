@@ -43,7 +43,8 @@ extension RigController {
         if !cached {
             await stateCache.invalidate("signal_strength")
         }
-        let value = try await proto.getSignalStrength()
+        let p = try requireTrait((any SupportsSignalStrength).self, named: "Signal strength reading")
+        let value = try await p.getSignalStrength()
         await stateCache.store(value, forKey: "signal_strength")
         return value
     }

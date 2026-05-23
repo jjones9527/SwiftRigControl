@@ -201,25 +201,25 @@ public struct RigCapabilities: Sendable, Codable {
     // ID_METER} bits for the same radio.
 
     /// Radio exposes an RF power output meter
-    /// (``CATProtocol/getRFPowerOut()``).
+    /// (``SupportsTXMeters/getRFPowerOut()``).
     public let supportsRFPowerMeter: Bool
 
-    /// Radio exposes an SWR meter (``CATProtocol/getSWR()``).
+    /// Radio exposes an SWR meter (``SupportsTXMeters/getSWR()``).
     public let supportsSWRMeter: Bool
 
-    /// Radio exposes an ALC meter (``CATProtocol/getALC()``).
+    /// Radio exposes an ALC meter (``SupportsTXMeters/getALC()``).
     public let supportsALCMeter: Bool
 
     /// Radio exposes a speech-compressor meter
-    /// (``CATProtocol/getComp()``).
+    /// (``SupportsTXMeters/getComp()``).
     public let supportsCompMeter: Bool
 
     /// Radio exposes a drain / supply voltage meter
-    /// (``CATProtocol/getVoltage()``).
+    /// (``SupportsTXMeters/getVoltage()``).
     public let supportsVoltageMeter: Bool
 
     /// Radio exposes a drain / collector current meter
-    /// (``CATProtocol/getCurrent()``).
+    /// (``SupportsTXMeters/getCurrent()``).
     public let supportsCurrentMeter: Bool
 
     // MARK: - CW keyer capabilities (Phase 4.2)
@@ -269,7 +269,7 @@ public struct RigCapabilities: Sendable, Codable {
     /// Number of software-selectable antennas the radio has.
     ///
     /// `1` (the default) means a single fixed antenna jack —
-    /// ``CATProtocol/selectAntenna(_:)`` will throw
+    /// ``SupportsAntenna/selectAntenna(_:)`` will throw
     /// ``RigError/unsupportedOperation(_:)``. `2+` means the radio
     /// accepts antenna selection with indices `1...antennaCount`.
     ///

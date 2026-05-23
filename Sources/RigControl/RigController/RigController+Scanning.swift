@@ -26,7 +26,8 @@ extension RigController {
     ///     `RigCapabilities.supports*Scan` flag to gate UI elements.
     public func startScan(_ kind: ScanKind) async throws {
         try requireConnected()
-        try await proto.startScan(kind)
+        let p = try requireTrait((any SupportsScanning).self, named: "Scanning")
+        try await p.startScan(kind)
     }
 
     /// Stops any scan currently in progress. Safe to call when no
@@ -37,7 +38,8 @@ extension RigController {
     ///   not support scanning at all.
     public func stopScan() async throws {
         try requireConnected()
-        try await proto.stopScan()
+        let p = try requireTrait((any SupportsScanning).self, named: "Scanning")
+        try await p.stopScan()
     }
 
     /// Internal: shared guard.

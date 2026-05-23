@@ -5,7 +5,7 @@ import Foundation
 /// Modeled directly on Hamlib's `RIG_SCAN_*` bitfield from
 /// `include/hamlib/rig.h`. Per-radio support varies — check
 /// the matching `RigCapabilities.supports*Scan` flag before
-/// calling ``CATProtocol/startScan(_:)``, or trap
+/// calling ``SupportsScanning/startScan(_:)``, or trap
 /// ``RigError/unsupportedOperation(_:)``.
 ///
 /// ## Per-verified-radio support

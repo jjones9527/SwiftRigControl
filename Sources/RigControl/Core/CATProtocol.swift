@@ -1,28 +1,48 @@
 import Foundation
 
-/// Protocol that all radio CAT (Computer Aided Transceiver) implementations must conform to.
+/// Universal CAT (Computer Aided Transceiver) operations that every
+/// supported radio implements.
 ///
-/// This protocol defines the standard operations that can be performed on a radio
-/// transceiver. Each radio manufacturer's protocol (Icom CI-V, Elecraft, Yaesu, Kenwood)
-/// implements this protocol with their specific command formats.
+/// `CATProtocol` is intentionally narrow — only operations every
+/// real amateur transceiver supports live here (frequency, mode,
+/// PTT, VFO selection). Optional radio features (power, split,
+/// RIT/XIT, DSP, levels, memory, TX meters, CW keyer, scanning,
+/// antenna) are declared as **capability trait protocols** in
+/// `CATProtocolTraits.swift` — see ``SupportsPower``,
+/// ``SupportsSplit``, ``SupportsAGC``, ``SupportsTXMeters``, etc.
+///
+/// ## Rationale for the trait split
+///
+/// Earlier versions of this protocol carried ~40 methods with
+/// default `throw .unsupportedOperation` extensions. That made
+/// the protocol fat and let conformers silently "support"
+/// features they didn't actually implement (by inheriting the
+/// throwing default). Splitting capabilities into focused traits
+/// means:
+///
+/// - Each concrete protocol's conformance list is the contract:
+///   `IcomCIVProtocol: CATProtocol, SupportsPower, SupportsSplit, …`
+///   tells the reader (and the compiler) exactly what it supports.
+/// - Adding a new feature later doesn't force every existing
+///   conformer to implement another method.
+/// - Third-party conformers (custom radios, simulators) get the
+///   same compiler check.
+///
+/// `RigController` dispatches each call via `as? any SupportsX`,
+/// throwing ``RigError/unsupportedOperation(_:)`` with the same
+/// error message the old defaults produced — so app code that
+/// calls `rig.setAGC(.fast)` sees identical behavior across the
+/// refactor boundary.
 public protocol CATProtocol: Actor {
-    /// The serial transport used for communication
+    /// The serial transport used for communication.
     var transport: any SerialTransport { get }
 
-    /// The capabilities of this radio
+    /// The capabilities of this radio.
     var capabilities: RigCapabilities { get }
-
-    // NOTE: `CATProtocol` intentionally has no init requirement.
-    // Different concrete protocols need very different inputs
-    // (capabilities, CI-V address, radio model, command set, etc.)
-    // and a one-size-fits-all initializer led to conformers having
-    // to declare unused inits that either picked arbitrary defaults
-    // or crashed. Construction belongs to concrete types and to
-    // `RadioDefinition`'s `protocolFactory`.
 
     /// Connects to the radio and performs any initialization required.
     ///
-    /// - Throws: `RigError` if connection fails
+    /// - Throws: ``RigError`` if connection fails.
     func connect() async throws
 
     /// Disconnects from the radio.
@@ -33,16 +53,16 @@ public protocol CATProtocol: Actor {
     /// Sets the operating frequency of the specified VFO.
     ///
     /// - Parameters:
-    ///   - hz: The desired frequency in Hertz
-    ///   - vfo: The VFO to set
-    /// - Throws: `RigError` if operation fails
+    ///   - hz: The desired frequency in Hertz.
+    ///   - vfo: The VFO to set.
+    /// - Throws: ``RigError`` if operation fails.
     func setFrequency(_ hz: UInt64, vfo: VFO) async throws
 
     /// Gets the current operating frequency of the specified VFO.
     ///
-    /// - Parameter vfo: The VFO to query
-    /// - Returns: The current frequency in Hertz
-    /// - Throws: `RigError` if operation fails
+    /// - Parameter vfo: The VFO to query.
+    /// - Returns: The current frequency in Hertz.
+    /// - Throws: ``RigError`` if operation fails.
     func getFrequency(vfo: VFO) async throws -> UInt64
 
     // MARK: - Mode Control
@@ -50,847 +70,53 @@ public protocol CATProtocol: Actor {
     /// Sets the operating mode of the specified VFO.
     ///
     /// - Parameters:
-    ///   - mode: The desired operating mode
-    ///   - vfo: The VFO to set
-    /// - Throws: `RigError` if operation fails
+    ///   - mode: The desired operating mode.
+    ///   - vfo: The VFO to set.
+    /// - Throws: ``RigError`` if operation fails.
     func setMode(_ mode: Mode, vfo: VFO) async throws
 
     /// Gets the current operating mode of the specified VFO.
     ///
-    /// - Parameter vfo: The VFO to query
-    /// - Returns: The current operating mode
-    /// - Throws: `RigError` if operation fails
+    /// - Parameter vfo: The VFO to query.
+    /// - Returns: The current operating mode.
+    /// - Throws: ``RigError`` if operation fails.
     func getMode(vfo: VFO) async throws -> Mode
 
     // MARK: - PTT Control
 
     /// Sets the Push-To-Talk (PTT) state.
     ///
-    /// When PTT is enabled (true), the radio will transmit.
-    /// When PTT is disabled (false), the radio will receive.
+    /// When PTT is enabled, the radio transmits; when disabled,
+    /// it receives.
     ///
-    /// - Parameter enabled: True to transmit, false to receive
-    /// - Throws: `RigError` if operation fails
+    /// - Parameter enabled: `true` to transmit, `false` to receive.
+    /// - Throws: ``RigError`` if operation fails.
     func setPTT(_ enabled: Bool) async throws
 
     /// Gets the current PTT state.
     ///
-    /// - Returns: True if transmitting, false if receiving
-    /// - Throws: `RigError` if operation fails
+    /// - Returns: `true` if transmitting, `false` if receiving.
+    /// - Throws: ``RigError`` if operation fails.
     func getPTT() async throws -> Bool
 
     // MARK: - VFO Control
 
     /// Selects which VFO is active.
     ///
-    /// - Parameter vfo: The VFO to select
-    /// - Throws: `RigError` if operation fails
+    /// - Parameter vfo: The VFO to select.
+    /// - Throws: ``RigError`` if operation fails.
     func selectVFO(_ vfo: VFO) async throws
-
-    // MARK: - Power Control
-
-    /// Sets the RF power level.
-    ///
-    /// The interpretation of `level` depends on the radio. Check
-    /// ``RigCapabilities/powerUnits``:
-    ///
-    /// - ``PowerUnits/percentage`` — `level` is a 0–255 value that
-    ///   maps to 0–100% of the radio's rated output. This is how
-    ///   most CI-V and CAT command sets are wired internally; almost
-    ///   every radio currently in the capabilities database is in
-    ///   this group.
-    /// - ``PowerUnits/watts(max:)`` — `level` is integer wattage
-    ///   from 0 to the max associated with the case.
-    ///
-    /// In every case the upper bound is also exposed as
-    /// ``RigCapabilities/maxPower``.
-    ///
-    /// - Parameter level: Power level in the radio's native units.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if power control
-    ///   is not supported by this radio.
-    func setPower(_ level: Int) async throws
-
-    /// Gets the current RF power level.
-    ///
-    /// - Returns: Power level in watts
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support power control
-    func getPower() async throws -> Int
-
-    // MARK: - Split Operation
-
-    /// Enables or disables split operation.
-    ///
-    /// In split mode, the radio transmits on one VFO while receiving on another.
-    /// Typically, receive on VFO A and transmit on VFO B.
-    ///
-    /// - Parameter enabled: True to enable split, false to disable
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support split
-    func setSplit(_ enabled: Bool) async throws
-
-    /// Gets the current split operation state.
-    ///
-    /// - Returns: True if split is enabled, false otherwise
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support split
-    func getSplit() async throws -> Bool
-
-    // MARK: - Signal Strength
-
-    /// Reads the current signal strength from the radio's S-meter.
-    ///
-    /// S-meter readings provide real-time signal strength information:
-    /// - S0 to S9 represent standard signal levels
-    /// - Above S9, readings are expressed as "S9 plus decibels" (e.g., S9+20)
-    ///
-    /// # Example
-    /// ```swift
-    /// let signal = try await protocol.getSignalStrength()
-    /// print("Signal: \(signal.description)")  // "S7" or "S9+20"
-    /// ```
-    ///
-    /// - Returns: Current signal strength reading
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support S-meter reading
-    func getSignalStrength() async throws -> SignalStrength
-
-    // MARK: - RIT/XIT (Receiver/Transmitter Incremental Tuning)
-
-    /// Sets the RIT (Receiver Incremental Tuning) state.
-    ///
-    /// RIT allows fine-tuning of the receiver frequency independently from the displayed
-    /// VFO frequency. This is useful for:
-    /// - Zero-beating CW signals
-    /// - Compensating for slight frequency offsets
-    /// - Contest and DX operation
-    ///
-    /// # Example
-    /// ```swift
-    /// // Enable RIT with +500 Hz offset
-    /// try await protocol.setRIT(RITXITState(enabled: true, offset: 500))
-    ///
-    /// // Disable RIT
-    /// try await protocol.setRIT(.disabled)
-    /// ```
-    ///
-    /// - Parameter state: The desired RIT state (enabled/disabled and offset)
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support RIT
-    func setRIT(_ state: RITXITState) async throws
-
-    /// Gets the current RIT state.
-    ///
-    /// - Returns: Current RIT state including enabled status and offset
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support RIT
-    func getRIT() async throws -> RITXITState
-
-    /// Sets the XIT (Transmitter Incremental Tuning) state.
-    ///
-    /// XIT allows fine-tuning of the transmitter frequency independently from the displayed
-    /// VFO frequency. This is useful for:
-    /// - Split operation in contests
-    /// - Working stations on slightly different frequencies
-    /// - Compensating for transmit frequency offsets
-    ///
-    /// # Example
-    /// ```swift
-    /// // Enable XIT with -1000 Hz offset
-    /// try await protocol.setXIT(RITXITState(enabled: true, offset: -1000))
-    ///
-    /// // Disable XIT
-    /// try await protocol.setXIT(.disabled)
-    /// ```
-    ///
-    /// - Parameter state: The desired XIT state (enabled/disabled and offset)
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support XIT
-    func setXIT(_ state: RITXITState) async throws
-
-    /// Gets the current XIT state.
-    ///
-    /// - Returns: Current XIT state including enabled status and offset
-    /// - Throws: `RigError.unsupportedOperation` if radio doesn't support XIT
-    func getXIT() async throws -> RITXITState
-
-    // MARK: - DSP Controls
-
-    /// Sets the AGC (Automatic Gain Control) speed.
-    ///
-    /// AGC controls how quickly the receiver responds to changes in signal strength.
-    /// Different speeds are optimal for different operating modes:
-    /// - **Fast**: Best for CW and digital modes
-    /// - **Medium**: Good general-purpose setting for SSB
-    /// - **Slow**: Preferred for weak signal SSB work and DXing
-    /// - **Off**: Disables AGC for manual gain control
-    ///
-    /// # Example
-    /// ```swift
-    /// // Set fast AGC for CW operation
-    /// try await protocol.setAGC(.fast)
-    ///
-    /// // Set slow AGC for weak signal SSB
-    /// try await protocol.setAGC(.slow)
-    /// ```
-    ///
-    /// - Parameter speed: The desired AGC speed
-    /// - Throws: `RigError.unsupportedOperation` if AGC control not supported
-    /// - Throws: `RigError.invalidParameter` if speed not supported by this radio
-    func setAGC(_ speed: AGCSpeed) async throws
-
-    /// Gets the current AGC speed.
-    ///
-    /// - Returns: Current AGC speed setting
-    /// - Throws: `RigError.unsupportedOperation` if AGC control not supported
-    func getAGC() async throws -> AGCSpeed
-
-    /// Sets the noise blanker configuration.
-    ///
-    /// Noise blanker removes impulse noise such as power line noise, ignition noise,
-    /// and static crashes. Different radios support different NB capabilities:
-    /// - Some radios have simple on/off control
-    /// - Others have adjustable NB level (0-10)
-    ///
-    /// # Example
-    /// ```swift
-    /// // Enable NB with level 5
-    /// try await protocol.setNoiseBlanker(.enabled(level: 5))
-    ///
-    /// // Disable NB
-    /// try await protocol.setNoiseBlanker(.off)
-    /// ```
-    ///
-    /// - Parameter config: The desired noise blanker configuration
-    /// - Throws: `RigError.unsupportedOperation` if NB not supported
-    /// - Throws: `RigError.invalidParameter` if level out of range for this radio
-    func setNoiseBlanker(_ config: NoiseBlanker) async throws
-
-    /// Gets the current noise blanker configuration.
-    ///
-    /// - Returns: Current noise blanker setting
-    /// - Throws: `RigError.unsupportedOperation` if NB not supported
-    func getNoiseBlanker() async throws -> NoiseBlanker
-
-    /// Sets the noise reduction configuration.
-    ///
-    /// Noise reduction uses DSP filtering to reduce continuous background noise
-    /// while preserving the desired signal. Higher levels provide better noise
-    /// reduction but may affect audio fidelity.
-    ///
-    /// # Example
-    /// ```swift
-    /// // Enable NR with level 8
-    /// try await protocol.setNoiseReduction(.enabled(level: 8))
-    ///
-    /// // Disable NR
-    /// try await protocol.setNoiseReduction(.off)
-    /// ```
-    ///
-    /// - Parameter config: The desired noise reduction configuration
-    /// - Throws: `RigError.unsupportedOperation` if NR not supported
-    /// - Throws: `RigError.invalidParameter` if level out of range for this radio
-    func setNoiseReduction(_ config: NoiseReduction) async throws
-
-    /// Gets the current noise reduction configuration.
-    ///
-    /// - Returns: Current noise reduction setting
-    /// - Throws: `RigError.unsupportedOperation` if NR not supported
-    func getNoiseReduction() async throws -> NoiseReduction
-
-    /// Sets the IF (Intermediate Frequency) filter selection.
-    ///
-    /// Selects which of the radio's preset IF filters to use (FIL1/FIL2/FIL3).
-    /// Each mode has independent filter settings. Narrower filters reduce adjacent
-    /// channel interference but may affect audio quality.
-    ///
-    /// # Example
-    /// ```swift
-    /// // Select narrow filter for weak signal work
-    /// try await protocol.setIFFilter(.filter3)
-    ///
-    /// // Select default filter
-    /// try await protocol.setIFFilter(.filter1)
-    /// ```
-    ///
-    /// - Parameter filter: The filter to select (filter1/filter2/filter3)
-    /// - Throws: `RigError.unsupportedOperation` if IF filter control not supported
-    func setIFFilter(_ filter: IFFilter) async throws
-
-    /// Gets the current IF filter selection.
-    ///
-    /// - Returns: Current IF filter setting
-    /// - Throws: `RigError.unsupportedOperation` if IF filter control not supported
-    func getIFFilter() async throws -> IFFilter
-
-    // MARK: - AF / RF / Squelch / Preamp / Attenuator
-
-    /// Sets the AF (audio) output gain.
-    ///
-    /// Controls the speaker/headphone volume level using a 0–255 scale.
-    /// Maps to CI-V command `0x14 0x01` on Icom radios.
-    ///
-    /// - Parameter level: Gain level from 0 (mute) to 255 (maximum)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func setAFGain(_ level: Int) async throws
-
-    /// Gets the current AF (audio) output gain.
-    ///
-    /// - Returns: Gain level from 0 to 255
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getAFGain() async throws -> Int
-
-    /// Sets the RF (receiver) gain.
-    ///
-    /// Controls the sensitivity of the receiver's RF front end.
-    /// Lower values reduce sensitivity and help prevent overloading from strong nearby signals.
-    /// Maps to CI-V command `0x14 0x02` on Icom radios.
-    ///
-    /// - Parameter level: Gain level from 0 (minimum) to 255 (maximum)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func setRFGain(_ level: Int) async throws
-
-    /// Gets the current RF (receiver) gain.
-    ///
-    /// - Returns: Gain level from 0 to 255
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getRFGain() async throws -> Int
-
-    /// Sets the squelch level.
-    ///
-    /// On FM/VHF/UHF radios this is the carrier squelch threshold.
-    /// On HF radios it may control a noise or S-meter squelch.
-    /// Maps to CI-V command `0x14 0x03` on Icom radios.
-    ///
-    /// - Parameter level: Squelch level from 0 (open) to 255 (maximum / tightest)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func setSquelch(_ level: Int) async throws
-
-    /// Gets the current squelch level.
-    ///
-    /// - Returns: Squelch level from 0 to 255
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getSquelch() async throws -> Int
-
-    /// Sets the preamplifier stage.
-    ///
-    /// Enables an RF preamplifier to boost weak-signal receive sensitivity.
-    /// Not all radios have two preamp stages; check `RigCapabilities`.
-    /// Maps to CI-V command `0x16 0x02` on Icom radios.
-    ///
-    /// - Parameter level: 0 = off, 1 = Preamp 1 (+10 dB), 2 = Preamp 2 (+20 dB)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    /// - Throws: `RigError.invalidParameter` if level is out of range for this radio
-    func setPreamp(_ level: Int) async throws
-
-    /// Gets the current preamplifier state.
-    ///
-    /// - Returns: 0 = off, 1 = Preamp 1, 2 = Preamp 2
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getPreamp() async throws -> Int
-
-    /// Sets the front-end attenuator.
-    ///
-    /// Reduces the RF gain ahead of the first mixer to prevent overloading from strong signals.
-    /// Available steps vary by radio model (typically 0, 6, 12, 18 dB).
-    /// Maps to CI-V command `0x11` on Icom radios.
-    ///
-    /// - Parameter dB: Attenuation in dB — 0 (off) or a model-specific value (6, 12, 18, 20)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    /// - Throws: `RigError.invalidParameter` if the dB value is not supported by this radio
-    func setAttenuator(_ dB: Int) async throws
-
-    /// Gets the current attenuator level.
-    ///
-    /// - Returns: Attenuation in dB (0 = off)
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getAttenuator() async throws -> Int
-
-    // MARK: - Power State
-
-    /// Powers the radio on or puts it in standby mode.
-    ///
-    /// Not all radios support remote power control via CAT.
-    /// Some support standby (low-power state) but not full power-off/on.
-    /// Maps to CI-V command `0x18` on Icom radios.
-    ///
-    /// - Parameter on: `true` to power on / wake from standby, `false` for standby/off
-    /// - Throws: `RigError.unsupportedOperation` if the radio does not support remote power control
-    func setPowerState(_ on: Bool) async throws
-
-    /// Gets the current power state of the radio.
-    ///
-    /// Implementations typically probe the radio with a lightweight read command;
-    /// a successful response means the radio is on, a timeout means it is off or in standby.
-    ///
-    /// - Returns: `true` if the radio is powered on and responding
-    /// - Throws: `RigError.unsupportedOperation` if not supported
-    func getPowerState() async throws -> Bool
-
-    // MARK: - Transmit-side meter readings
-    //
-    // Each method returns a `MeterReading` carrying the raw byte
-    // value the radio sent, a normalized 0..1+ fraction suitable for
-    // UI bars, and (where applicable) a typed physical-unit accessor
-    // — watts, volts, amps, dB, or X:1 ratio. See `MeterReading`'s
-    // doc comment for the per-meter rules.
-    //
-    // The capability gates on RigCapabilities (supportsRFPowerMeter,
-    // supportsSWRMeter, etc.) tell callers up front which meters
-    // are wired. Calling an unsupported one throws
-    // `RigError.unsupportedOperation`.
-
-    /// Reads the RF power output meter. Returns a ``MeterReading``
-    /// whose ``MeterReading/watts`` accessor gives the calibrated
-    /// output power in watts.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose an RF power meter.
-    func getRFPowerOut() async throws -> MeterReading
-
-    /// Reads the SWR meter. Returns a ``MeterReading`` whose
-    /// ``MeterReading/swrRatio`` accessor gives the X:1 ratio.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose an SWR meter.
-    func getSWR() async throws -> MeterReading
-
-    /// Reads the ALC (Automatic Level Control) meter. Only
-    /// ``MeterReading/normalized`` is meaningful — there's no
-    /// standard physical unit for ALC.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose an ALC meter.
-    func getALC() async throws -> MeterReading
-
-    /// Reads the speech-compressor meter. Returns a
-    /// ``MeterReading`` whose ``MeterReading/dB`` accessor gives
-    /// the compression amount in dB.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose a compressor meter.
-    func getComp() async throws -> MeterReading
-
-    /// Reads the drain / supply voltage meter. Returns a
-    /// ``MeterReading`` whose ``MeterReading/volts`` accessor gives
-    /// the voltage.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose a voltage meter.
-    func getVoltage() async throws -> MeterReading
-
-    /// Reads the drain / collector current meter. Returns a
-    /// ``MeterReading`` whose ``MeterReading/amps`` accessor gives
-    /// the current in amperes.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
-    ///   radio does not expose a current meter.
-    func getCurrent() async throws -> MeterReading
-
-    // MARK: - CW keyer (Phase 4.2)
-    //
-    // Mirrors Hamlib's RIG_LEVEL_KEYSPD / RIG_LEVEL_CWPITCH /
-    // RIG_LEVEL_BKINDL / send_morse / stop_morse, but uses typed
-    // value wrappers (CWSpeed, CWPitch, BreakInMode) instead of raw
-    // ints. Capability gates: supportsCWKeyer (speed/pitch/break-in)
-    // and supportsSendCW (text→Morse generation).
-
-    /// Sets the CW keyer speed in words per minute.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose a CW keyer.
-    func setCWSpeed(_ speed: CWSpeed) async throws
-
-    /// Reads the current CW keyer speed.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose a CW keyer.
-    func getCWSpeed() async throws -> CWSpeed
-
-    /// Sets the CW sidetone pitch in Hz.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose a CW keyer.
-    func setCWPitch(_ pitch: CWPitch) async throws
-
-    /// Reads the current CW sidetone pitch.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose a CW keyer.
-    func getCWPitch() async throws -> CWPitch
-
-    /// Sets the break-in mode (off / semi / full).
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose break-in control.
-    func setBreakIn(_ mode: BreakInMode) async throws
-
-    /// Reads the current break-in mode.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not expose break-in control.
-    func getBreakIn() async throws -> BreakInMode
-
-    /// Sends a CW (Morse code) message generated by the radio's
-    /// internal keyer.
-    ///
-    /// Most Icom radios cap the message at 30 ASCII characters;
-    /// SwiftRigControl truncates silently rather than failing, so
-    /// callers can pass longer strings without special handling.
-    ///
-    /// - Parameter text: ASCII message to send.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not support text→CW generation.
-    func sendCW(_ text: String) async throws
-
-    /// Aborts any CW transmission currently in progress.
-    /// Safe to call even if no message is active.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this radio
-    ///   does not support text→CW generation.
-    func stopCW() async throws
-
-    // MARK: - Scanning (Phase 4.3)
-    //
-    // Mirrors Hamlib's rig_scan(rig, vfo, scan, ch) op via a
-    // discriminated ScanKind enum. Per-radio support is gated by
-    // the supports*Scan flags on RigCapabilities; calling an
-    // unsupported kind throws .unsupportedOperation.
-
-    /// Starts a scan of the given kind. Returns immediately —
-    /// the radio runs the scan until a signal is found, the user
-    /// presses a front-panel button, or ``stopScan()`` is called.
-    ///
-    /// - Parameter kind: Which scan mode to run. See ``ScanKind``
-    ///   for the per-radio support matrix.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
-    ///   does not support this scan kind.
-    func startScan(_ kind: ScanKind) async throws
-
-    /// Stops any scan currently in progress. Safe to call when no
-    /// scan is active — the radio simply acknowledges.
-    ///
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
-    ///   does not support scanning at all.
-    func stopScan() async throws
-
-    // MARK: - Antenna selection (Phase 4.4)
-    //
-    // Mirrors Hamlib's rig_set_ant / rig_get_ant. Indexing is
-    // 1-based to match how Icom CI-V (and the operator's mental
-    // model) refer to ANT 1, ANT 2, etc. Hamlib uses 0-based bit
-    // indices internally; we convert at the protocol boundary.
-
-    /// Selects the active antenna.
-    ///
-    /// Most modern Icoms with multiple antenna jacks (IC-7100,
-    /// IC-7600, IC-7610, IC-9100) accept antenna 1 or 2 with the
-    /// `0x12` CI-V command. Radios with a single antenna jack
-    /// (IC-9700, K2) throw ``RigError/unsupportedOperation(_:)``.
-    ///
-    /// - Parameter index: Antenna number (1-based). The valid
-    ///   range is `1...capabilities.antennaCount`.
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
-    ///   does not support antenna selection (i.e.
-    ///   `antennaCount <= 1`); ``RigError/invalidParameter(_:)``
-    ///   if `index` is out of range.
-    func selectAntenna(_ index: Int) async throws
-
-    /// Reads the currently-selected antenna.
-    ///
-    /// - Returns: The active antenna number (1-based).
-    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
-    ///   does not support antenna selection.
-    func getAntenna() async throws -> Int
-
-    // MARK: - Memory Channel Operations
-
-    /// Stores a configuration to a memory channel.
-    ///
-    /// Writes the specified memory channel configuration to the radio's non-volatile memory.
-    /// The channel can be recalled later for quick frequency/mode changes.
-    ///
-    /// - Parameter channel: Memory channel configuration to store
-    /// - Throws: `RigError` if operation fails or memory channels not supported
-    func setMemoryChannel(_ channel: MemoryChannel) async throws
-
-    /// Reads a memory channel configuration from the radio.
-    ///
-    /// Retrieves the stored configuration for the specified memory channel number.
-    ///
-    /// - Parameter number: Memory channel number to read
-    /// - Returns: Memory channel configuration
-    /// - Throws: `RigError` if operation fails, channel empty, or not supported
-    func getMemoryChannel(_ number: Int) async throws -> MemoryChannel
-
-    /// Gets the total number of memory channels supported by the radio.
-    ///
-    /// Returns the maximum number of user-programmable memory channels.
-    /// This may not include special channels (call channels, program scan edges, etc.).
-    ///
-    /// - Returns: Number of memory channels (e.g., 100, 109, 200)
-    /// - Throws: `RigError.unsupportedOperation` if memory not supported
-    func getMemoryChannelCount() async throws -> Int
-
-    /// Clears (erases) a memory channel.
-    ///
-    /// Removes the configuration from the specified memory channel, making it empty.
-    ///
-    /// - Parameter number: Memory channel number to clear
-    /// - Throws: `RigError` if operation fails or not supported
-    func clearMemoryChannel(_ number: Int) async throws
 }
 
-/// Extension providing default implementations for optional operations
+// MARK: - Default lifecycle implementation
+
 extension CATProtocol {
-    /// Default implementation throws unsupported error
-    public func setPower(_ level: Int) async throws {
-        throw RigError.unsupportedOperation("Power control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getPower() async throws -> Int {
-        throw RigError.unsupportedOperation("Power control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setSplit(_ enabled: Bool) async throws {
-        throw RigError.unsupportedOperation("Split operation not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getSplit() async throws -> Bool {
-        throw RigError.unsupportedOperation("Split operation not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getSignalStrength() async throws -> SignalStrength {
-        throw RigError.unsupportedOperation("Signal strength reading not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setRIT(_ state: RITXITState) async throws {
-        throw RigError.unsupportedOperation("RIT (Receiver Incremental Tuning) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getRIT() async throws -> RITXITState {
-        throw RigError.unsupportedOperation("RIT (Receiver Incremental Tuning) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setXIT(_ state: RITXITState) async throws {
-        throw RigError.unsupportedOperation("XIT (Transmitter Incremental Tuning) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getXIT() async throws -> RITXITState {
-        throw RigError.unsupportedOperation("XIT (Transmitter Incremental Tuning) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setMemoryChannel(_ channel: MemoryChannel) async throws {
-        throw RigError.unsupportedOperation("Memory channel operations not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getMemoryChannel(_ number: Int) async throws -> MemoryChannel {
-        throw RigError.unsupportedOperation("Memory channel operations not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getMemoryChannelCount() async throws -> Int {
-        throw RigError.unsupportedOperation("Memory channel operations not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func clearMemoryChannel(_ number: Int) async throws {
-        throw RigError.unsupportedOperation("Memory channel operations not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setAGC(_ speed: AGCSpeed) async throws {
-        throw RigError.unsupportedOperation("AGC (Automatic Gain Control) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getAGC() async throws -> AGCSpeed {
-        throw RigError.unsupportedOperation("AGC (Automatic Gain Control) not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
-        throw RigError.unsupportedOperation("Noise blanker not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getNoiseBlanker() async throws -> NoiseBlanker {
-        throw RigError.unsupportedOperation("Noise blanker not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setNoiseReduction(_ config: NoiseReduction) async throws {
-        throw RigError.unsupportedOperation("Noise reduction not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getNoiseReduction() async throws -> NoiseReduction {
-        throw RigError.unsupportedOperation("Noise reduction not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setIFFilter(_ filter: IFFilter) async throws {
-        throw RigError.unsupportedOperation("IF filter control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getIFFilter() async throws -> IFFilter {
-        throw RigError.unsupportedOperation("IF filter control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setAFGain(_ level: Int) async throws {
-        throw RigError.unsupportedOperation("AF gain control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getAFGain() async throws -> Int {
-        throw RigError.unsupportedOperation("AF gain control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setRFGain(_ level: Int) async throws {
-        throw RigError.unsupportedOperation("RF gain control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getRFGain() async throws -> Int {
-        throw RigError.unsupportedOperation("RF gain control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setSquelch(_ level: Int) async throws {
-        throw RigError.unsupportedOperation("Squelch control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getSquelch() async throws -> Int {
-        throw RigError.unsupportedOperation("Squelch control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setPreamp(_ level: Int) async throws {
-        throw RigError.unsupportedOperation("Preamp control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getPreamp() async throws -> Int {
-        throw RigError.unsupportedOperation("Preamp control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setAttenuator(_ dB: Int) async throws {
-        throw RigError.unsupportedOperation("Attenuator control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getAttenuator() async throws -> Int {
-        throw RigError.unsupportedOperation("Attenuator control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setPowerState(_ on: Bool) async throws {
-        throw RigError.unsupportedOperation("Remote power control not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getPowerState() async throws -> Bool {
-        throw RigError.unsupportedOperation("Remote power state query not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getRFPowerOut() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("RF power meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getSWR() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("SWR meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getALC() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("ALC meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getComp() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("Compressor meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getVoltage() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("Voltage meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getCurrent() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("Current meter not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setCWSpeed(_ speed: CWSpeed) async throws {
-        throw RigError.unsupportedOperation("CW keyer speed not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getCWSpeed() async throws -> CWSpeed {
-        throw RigError.unsupportedOperation("CW keyer speed not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setCWPitch(_ pitch: CWPitch) async throws {
-        throw RigError.unsupportedOperation("CW pitch not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getCWPitch() async throws -> CWPitch {
-        throw RigError.unsupportedOperation("CW pitch not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func setBreakIn(_ mode: BreakInMode) async throws {
-        throw RigError.unsupportedOperation("Break-in not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getBreakIn() async throws -> BreakInMode {
-        throw RigError.unsupportedOperation("Break-in not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func sendCW(_ text: String) async throws {
-        throw RigError.unsupportedOperation("CW text send not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func stopCW() async throws {
-        throw RigError.unsupportedOperation("CW text send not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func startScan(_ kind: ScanKind) async throws {
-        throw RigError.unsupportedOperation("Scanning not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func stopScan() async throws {
-        throw RigError.unsupportedOperation("Scanning not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func selectAntenna(_ index: Int) async throws {
-        throw RigError.unsupportedOperation("Antenna selection not supported")
-    }
-
-    /// Default implementation throws unsupported error
-    public func getAntenna() async throws -> Int {
-        throw RigError.unsupportedOperation("Antenna selection not supported")
-    }
-
-    /// Default connect implementation just opens the transport
+    /// Default connect implementation just opens the transport.
     public func connect() async throws {
         try await transport.open()
     }
 
-    /// Default disconnect implementation just closes the transport
+    /// Default disconnect implementation just closes the transport.
     public func disconnect() async {
         await transport.close()
     }
