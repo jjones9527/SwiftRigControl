@@ -31,6 +31,7 @@ CONFORMANCE = {
     "getRFPowerOut","getSWR","getALC","getComp","getVoltage","getCurrent",
     "setCWSpeed","getCWSpeed","setCWPitch","getCWPitch",
     "setBreakIn","getBreakIn","sendCW","stopCW",
+    "startScan","stopScan",
     "connect","disconnect","open","close","write","read","readUntil","flush",
     "isOpen","transport","capabilities",
     "setModeCommand","setDataModeCommand","readModeCommand","parseModeResponse",

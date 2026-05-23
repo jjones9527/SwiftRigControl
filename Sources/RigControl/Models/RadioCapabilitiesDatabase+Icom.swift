@@ -45,7 +45,15 @@ extension RadioCapabilitiesDatabase {
         // CW keyer — IC-9700 has the full set
         // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
         supportsCWKeyer: true,
-        supportsSendCW: true
+        supportsSendCW: true,
+        // Scanning — IC-9700 supports MEM, PROG, SLCT per Hamlib
+        // IC9700_SCAN_OPS. No VFO/PRIO/DELTA on this radio.
+        supportsVFOScan: false,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: false,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: false
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -241,7 +249,15 @@ extension RadioCapabilitiesDatabase {
         // CW keyer — IC-7600 has the full set
         // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
         supportsCWKeyer: true,
-        supportsSendCW: true
+        supportsSendCW: true,
+        // Scanning — IC-7600 supports VFO, MEM, PROG, DELTA, PRIO
+        // per Hamlib IC7600_SCAN_OPS. No SLCT on this radio.
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: false,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -325,7 +341,15 @@ extension RadioCapabilitiesDatabase {
         // CW keyer — IC-7100 has the full set
         // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
         supportsCWKeyer: true,
-        supportsSendCW: true
+        supportsSendCW: true,
+        // Scanning — IC-7100 supports VFO, MEM, SLCT, PRIO per
+        // Hamlib IC7100_SCAN_OPS. No PROG/DELTA on this radio.
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: false,
+        supportsDeltaFScan: false
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver

@@ -586,11 +586,41 @@ Each item is gated on a Hamlib cross-check (read `rigs/<vendor>/
 
 ### 4.3 Scanning
 
-- [ ] `startScan(_ kind: ScanKind)` where `ScanKind` is
-      `.vfo`, `.memory`, `.programmed(edge1, edge2)`,
-      `.priority`.
-- [ ] `stopScan()`.
-- [ ] `setScanSpeed`, `setScanResume`.
+- [x] **`ScanKind` enum** with all six modes Hamlib defines
+      (VFO / memory / selectedMemory / priority / programmed /
+      deltaF). String-backed, `CaseIterable`, `Sendable`. The
+      roadmap originally called for `.programmed(edge1, edge2)`
+      with embedded edge channels; in practice Hamlib's per-call
+      edge parameter is rarely used (the radio remembers its
+      edges) and embedding it complicates the enum. The simpler
+      no-args case shipped; per-call edge selection is a follow-up.
+- [x] **`CATProtocol` methods** `startScan(_:)` / `stopScan()`,
+      both defaulting to throw `.unsupported`.
+- [x] **`RigCapabilities` flags**: six independent bools
+      (`supportsVFOScan`, `supportsMemoryScan`,
+      `supportsSelectedMemoryScan`, `supportsPriorityScan`,
+      `supportsProgrammedScan`, `supportsDeltaFScan`) mirroring
+      Hamlib's `RIG_SCAN_*` bitfield. Per-radio support varies
+      considerably; see `ScanKind`'s doc-comment matrix.
+- [x] **`IcomCIVProtocol` implementation**
+      (`IcomCIVProtocol+Scanning.swift`). Uses `0x0E` (C_CTL_SCAN)
+      with sub-commands `0x00`/`0x01`/`0x02`/`0x03` from
+      `icom_defs.h`. Unlike Hamlib, does NOT change the radio's
+      VFO/MEM mode under the user — silent side effects hide bugs;
+      callers should select the appropriate state first.
+- [x] **`DummyCATProtocol`** tracks scan state and exposes an
+      `activeScan` test helper.
+- [x] **`RigController` facade**: `startScan(_:)` / `stopScan()`.
+- [x] **Per-radio capability promotion** for IC-7100, IC-7600,
+      IC-9700, each cross-checked against the matching Hamlib
+      `IC{model}_SCAN_OPS` macro.
+- [x] **Tests**: 10 new in `ScanningTests` covering dummy
+      roundtrip, double-start replacement, idempotent stop,
+      pre-connect throws, full capability-gating, and the three
+      Icom per-radio matrices.
+- [ ] **`setScanSpeed` / `setScanResume`** deferred. Hamlib
+      exposes these as `RIG_LEVEL_*` settings; they're per-radio
+      quirky and rarely used from apps. Tracked separately.
 
 ### 4.4 Antenna and band stack
 

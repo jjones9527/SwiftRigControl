@@ -100,6 +100,7 @@ For the SwiftUI / reactive-state pattern, see
 - ``CWSpeed``
 - ``CWPitch``
 - ``BreakInMode``
+- ``ScanKind``
 
 ### Protocols
 

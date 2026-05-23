@@ -109,6 +109,12 @@ public actor DummyCATProtocol: CATProtocol {
     /// path; real radios update this themselves via timing.
     private var cwSending: Bool = false
 
+    /// Active scan kind, or nil when no scan is running. Tests read
+    /// via ``activeScan``. Real radios update this via the operator's
+    /// front-panel actions; the dummy reflects only what was set
+    /// through ``startScan(_:)`` / ``stopScan()``.
+    private var scanState: ScanKind? = nil
+
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
     /// Lets tests simulate "the radio went away" without yanking a
@@ -358,6 +364,28 @@ public actor DummyCATProtocol: CATProtocol {
     /// start/stop calls. Not part of `CATProtocol`.
     public var isSendingCW: Bool {
         cwSending
+    }
+
+    // MARK: - Scanning
+
+    public func startScan(_ kind: ScanKind) async throws {
+        try requireConnected()
+        // The dummy is permissive by default — any kind succeeds.
+        // The real protocols gate on capabilities; tests that need
+        // to verify capability gating should use IcomCIVProtocol
+        // with a stripped-down RigCapabilities instead.
+        scanState = kind
+    }
+
+    public func stopScan() async throws {
+        try requireConnected()
+        scanState = nil
+    }
+
+    /// Test/preview helper — currently-active scan kind, or nil if
+    /// no scan is running. Not part of `CATProtocol`.
+    public var activeScan: ScanKind? {
+        scanState
     }
 
     // MARK: - RIT / XIT

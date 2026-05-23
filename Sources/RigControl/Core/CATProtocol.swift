@@ -537,6 +537,30 @@ public protocol CATProtocol: Actor {
     ///   does not support text→CW generation.
     func stopCW() async throws
 
+    // MARK: - Scanning (Phase 4.3)
+    //
+    // Mirrors Hamlib's rig_scan(rig, vfo, scan, ch) op via a
+    // discriminated ScanKind enum. Per-radio support is gated by
+    // the supports*Scan flags on RigCapabilities; calling an
+    // unsupported kind throws .unsupportedOperation.
+
+    /// Starts a scan of the given kind. Returns immediately —
+    /// the radio runs the scan until a signal is found, the user
+    /// presses a front-panel button, or ``stopScan()`` is called.
+    ///
+    /// - Parameter kind: Which scan mode to run. See ``ScanKind``
+    ///   for the per-radio support matrix.
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
+    ///   does not support this scan kind.
+    func startScan(_ kind: ScanKind) async throws
+
+    /// Stops any scan currently in progress. Safe to call when no
+    /// scan is active — the radio simply acknowledges.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the radio
+    ///   does not support scanning at all.
+    func stopScan() async throws
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -810,6 +834,16 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func stopCW() async throws {
         throw RigError.unsupportedOperation("CW text send not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func startScan(_ kind: ScanKind) async throws {
+        throw RigError.unsupportedOperation("Scanning not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func stopScan() async throws {
+        throw RigError.unsupportedOperation("Scanning not supported")
     }
 
     /// Default connect implementation just opens the transport

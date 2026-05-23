@@ -32,6 +32,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **Scanning API (Phase 4.3).** Two new accessors on `CATProtocol`
+  and `RigController`:
+  - `startScan(_:)` — start a scan of the requested kind
+  - `stopScan()` — abort any scan in progress
+
+  New `ScanKind` enum covers all six Hamlib `RIG_SCAN_*` modes:
+  `.vfo`, `.memory`, `.selectedMemory`, `.priority`, `.programmed`,
+  `.deltaF`. The enum's doc comment carries a per-verified-radio
+  support matrix.
+
+  Six new capability flags on `RigCapabilities` (one per scan
+  kind) mirror Hamlib's bitfield. Per-radio promotion for
+  IC-7100 / IC-7600 / IC-9700 cross-checked against the matching
+  `IC{model}_SCAN_OPS` macros in `rigs/icom/`.
+
+  `IcomCIVProtocol` implementation uses CI-V `0x0E` (C_CTL_SCAN)
+  with sub-commands `0x00`–`0x03` per `icom_defs.h`. Unlike
+  Hamlib, does not silently change the radio's VFO/MEM mode under
+  the user — callers must select the appropriate state first.
+
+  `DummyCATProtocol` tracks active scan state with a new
+  `activeScan` test helper.
+
+  10 new tests in `ScanningTests` cover roundtrip, replacement
+  semantics, idempotent stop, before-connect throws, per-kind
+  capability gating, and the three Icom per-radio matrices.
+
 - **CW keyer API (Phase 4.2).** Six new typed accessors on
   `CATProtocol` and `RigController`:
   - `setCWSpeed(_:)` / `cwSpeed()` — keyer WPM

@@ -236,6 +236,34 @@ public struct RigCapabilities: Sendable, Codable {
     /// be told to *send* a message; others do both.
     public let supportsSendCW: Bool
 
+    // MARK: - Scan capabilities (Phase 4.3)
+    //
+    // Six independent flags mirroring the bits Hamlib defines in
+    // RIG_SCAN_* (rig.h). Per-radio support varies — see
+    // ScanKind's doc comment for the matrix on our verified radios.
+
+    /// Radio supports VFO scanning (``ScanKind/vfo``).
+    public let supportsVFOScan: Bool
+
+    /// Radio supports memory channel scanning (``ScanKind/memory``).
+    public let supportsMemoryScan: Bool
+
+    /// Radio supports selected-memory scanning
+    /// (``ScanKind/selectedMemory``).
+    public let supportsSelectedMemoryScan: Bool
+
+    /// Radio supports priority-channel watch
+    /// (``ScanKind/priority``).
+    public let supportsPriorityScan: Bool
+
+    /// Radio supports programmed (edge-to-edge) scanning
+    /// (``ScanKind/programmed``).
+    public let supportsProgrammedScan: Bool
+
+    /// Radio supports delta-frequency scanning
+    /// (``ScanKind/deltaF``).
+    public let supportsDeltaFScan: Bool
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -272,7 +300,13 @@ public struct RigCapabilities: Sendable, Codable {
         supportsVoltageMeter: Bool = false,
         supportsCurrentMeter: Bool = false,
         supportsCWKeyer: Bool = false,
-        supportsSendCW: Bool = false
+        supportsSendCW: Bool = false,
+        supportsVFOScan: Bool = false,
+        supportsMemoryScan: Bool = false,
+        supportsSelectedMemoryScan: Bool = false,
+        supportsPriorityScan: Bool = false,
+        supportsProgrammedScan: Bool = false,
+        supportsDeltaFScan: Bool = false
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -302,6 +336,12 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsCurrentMeter = supportsCurrentMeter
         self.supportsCWKeyer = supportsCWKeyer
         self.supportsSendCW = supportsSendCW
+        self.supportsVFOScan = supportsVFOScan
+        self.supportsMemoryScan = supportsMemoryScan
+        self.supportsSelectedMemoryScan = supportsSelectedMemoryScan
+        self.supportsPriorityScan = supportsPriorityScan
+        self.supportsProgrammedScan = supportsProgrammedScan
+        self.supportsDeltaFScan = supportsDeltaFScan
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)
