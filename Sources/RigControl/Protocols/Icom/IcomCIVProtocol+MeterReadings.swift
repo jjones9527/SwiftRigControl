@@ -182,4 +182,58 @@ extension IcomCIVProtocol {
         return UInt8(BCDEncoding.decodePower(response.data))
     }
 
+    // MARK: - CATProtocol typed meter accessors (Phase 4.1)
+    //
+    // Each method wraps the corresponding raw 0x15-subcommand reader
+    // above into a typed MeterReading with the standard piecewise-
+    // linear calibration applied. Capability gates live on
+    // RigCapabilities; per-radio definitions opt in.
+
+    public func getRFPowerOut() async throws -> MeterReading {
+        guard capabilities.supportsRFPowerMeter else {
+            throw RigError.unsupportedOperation("RF power meter not supported by this radio")
+        }
+        let raw = try await getRFPowerMeter()
+        return MeterReading.decode(kind: .rfPower, raw: Int(raw))
+    }
+
+    public func getSWR() async throws -> MeterReading {
+        guard capabilities.supportsSWRMeter else {
+            throw RigError.unsupportedOperation("SWR meter not supported by this radio")
+        }
+        let raw = try await getSWRMeter()
+        return MeterReading.decode(kind: .swr, raw: Int(raw))
+    }
+
+    public func getALC() async throws -> MeterReading {
+        guard capabilities.supportsALCMeter else {
+            throw RigError.unsupportedOperation("ALC meter not supported by this radio")
+        }
+        let raw = try await getALCMeter()
+        return MeterReading.decode(kind: .alc, raw: Int(raw))
+    }
+
+    public func getComp() async throws -> MeterReading {
+        guard capabilities.supportsCompMeter else {
+            throw RigError.unsupportedOperation("Compressor meter not supported by this radio")
+        }
+        let raw = try await getCOMPMeter()
+        return MeterReading.decode(kind: .comp, raw: Int(raw))
+    }
+
+    public func getVoltage() async throws -> MeterReading {
+        guard capabilities.supportsVoltageMeter else {
+            throw RigError.unsupportedOperation("Voltage meter not supported by this radio")
+        }
+        let raw = try await getVDMeter()
+        return MeterReading.decode(kind: .voltage, raw: Int(raw))
+    }
+
+    public func getCurrent() async throws -> MeterReading {
+        guard capabilities.supportsCurrentMeter else {
+            throw RigError.unsupportedOperation("Current meter not supported by this radio")
+        }
+        let raw = try await getIDMeter()
+        return MeterReading.decode(kind: .current, raw: Int(raw))
+    }
 }

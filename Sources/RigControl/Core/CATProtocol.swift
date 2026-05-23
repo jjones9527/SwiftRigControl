@@ -420,6 +420,66 @@ public protocol CATProtocol: Actor {
     /// - Throws: `RigError.unsupportedOperation` if not supported
     func getPowerState() async throws -> Bool
 
+    // MARK: - Transmit-side meter readings
+    //
+    // Each method returns a `MeterReading` carrying the raw byte
+    // value the radio sent, a normalized 0..1+ fraction suitable for
+    // UI bars, and (where applicable) a typed physical-unit accessor
+    // — watts, volts, amps, dB, or X:1 ratio. See `MeterReading`'s
+    // doc comment for the per-meter rules.
+    //
+    // The capability gates on RigCapabilities (supportsRFPowerMeter,
+    // supportsSWRMeter, etc.) tell callers up front which meters
+    // are wired. Calling an unsupported one throws
+    // `RigError.unsupportedOperation`.
+
+    /// Reads the RF power output meter. Returns a ``MeterReading``
+    /// whose ``MeterReading/watts`` accessor gives the calibrated
+    /// output power in watts.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose an RF power meter.
+    func getRFPowerOut() async throws -> MeterReading
+
+    /// Reads the SWR meter. Returns a ``MeterReading`` whose
+    /// ``MeterReading/swrRatio`` accessor gives the X:1 ratio.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose an SWR meter.
+    func getSWR() async throws -> MeterReading
+
+    /// Reads the ALC (Automatic Level Control) meter. Only
+    /// ``MeterReading/normalized`` is meaningful — there's no
+    /// standard physical unit for ALC.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose an ALC meter.
+    func getALC() async throws -> MeterReading
+
+    /// Reads the speech-compressor meter. Returns a
+    /// ``MeterReading`` whose ``MeterReading/dB`` accessor gives
+    /// the compression amount in dB.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose a compressor meter.
+    func getComp() async throws -> MeterReading
+
+    /// Reads the drain / supply voltage meter. Returns a
+    /// ``MeterReading`` whose ``MeterReading/volts`` accessor gives
+    /// the voltage.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose a voltage meter.
+    func getVoltage() async throws -> MeterReading
+
+    /// Reads the drain / collector current meter. Returns a
+    /// ``MeterReading`` whose ``MeterReading/amps`` accessor gives
+    /// the current in amperes.
+    ///
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if this
+    ///   radio does not expose a current meter.
+    func getCurrent() async throws -> MeterReading
+
     // MARK: - Memory Channel Operations
 
     /// Stores a configuration to a memory channel.
@@ -623,6 +683,36 @@ extension CATProtocol {
     /// Default implementation throws unsupported error
     public func getPowerState() async throws -> Bool {
         throw RigError.unsupportedOperation("Remote power state query not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getRFPowerOut() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("RF power meter not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getSWR() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("SWR meter not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getALC() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("ALC meter not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getComp() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("Compressor meter not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getVoltage() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("Voltage meter not supported")
+    }
+
+    /// Default implementation throws unsupported error
+    public func getCurrent() async throws -> MeterReading {
+        throw RigError.unsupportedOperation("Current meter not supported")
     }
 
     /// Default connect implementation just opens the transport

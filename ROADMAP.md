@@ -501,13 +501,46 @@ Each item is gated on a Hamlib cross-check (read `rigs/<vendor>/
 
 ### 4.1 TX-side metering
 
-- [ ] `getRFPowerOut()` — TX power meter (Icom: 0x15 0x11).
-- [ ] `getSWR()` — SWR meter (Icom: 0x15 0x12).
-- [ ] `getALC()` — ALC reading (Icom: 0x15 0x13).
-- [ ] `getCompression()` — speech compressor (Icom: 0x15 0x14).
-- [ ] `getIDMeter()` — drain current.
-- [ ] `getTemp()` — final transistor temp where available.
-- [ ] Capability flags per radio; default `throw unsupported`.
+- [x] **`MeterReading` model** — single value type carrying the
+      raw byte, a normalised 0..1+ value for UI bars, and a
+      typed physical-unit accessor (watts / X:1 ratio / volts /
+      amps / dB) selected by ``MeterReading/Kind``. Calibration
+      curves transcribed from Hamlib's `icom_default_*_cal`
+      tables in `rigs/icom/icom.c` so behavior matches Hamlib
+      exactly on Icom radios. `MeterReading.decode(kind:raw:)`
+      is the standard constructor; piecewise-linear interpolation
+      handles the non-breakpoint values.
+- [x] **`CATProtocol` methods**: `getRFPowerOut()`, `getSWR()`,
+      `getALC()`, `getComp()`, `getVoltage()`, `getCurrent()`.
+      Each defaults to `throw unsupported`; conformers opt in.
+- [x] **`RigCapabilities` flags**: `supportsRFPowerMeter`,
+      `supportsSWRMeter`, `supportsALCMeter`, `supportsCompMeter`,
+      `supportsVoltageMeter`, `supportsCurrentMeter`. All default
+      `false`; the three Icom flagships (IC-7100, IC-7600,
+      IC-9700) opt into all six per the Hamlib level lists.
+- [x] **`IcomCIVProtocol` implementation** wraps the existing raw
+      0x15-subcommand readers (`getRFPowerMeter()`, `getSWRMeter()`,
+      etc.) into typed `MeterReading` values, guarded by the
+      capability flags.
+- [x] **`DummyCATProtocol`** holds simulated raw values keyed by
+      ``MeterReading/Kind`` with sensible idle defaults (RF power 0,
+      SWR 1:1, voltage ~13.8 V, current ~1 A) and a
+      `simulateMeter(_:raw:)` test helper. Returns readings
+      unconditionally — the dummy is a simulator, not a real radio.
+- [x] **`RigController` facade** with six matching accessors
+      (`rfPowerOut()`, `swr()`, `alc()`, `comp()`, `voltage()`,
+      `current()`) under `RigController+TXMeters.swift`.
+- [x] **Tests**: 16 new in `MeterReadingTests` covering each
+      calibration curve at every Hamlib breakpoint, interpolation
+      between breakpoints, normalised value, typed-accessor nil
+      semantics for wrong kinds, the dummy-served path, idle
+      defaults, capability-gated unsupported error, and
+      verified-radio capability promotion.
+- [ ] **`getTemp()` deferred.** Hamlib has `RIG_LEVEL_TEMP_METER`
+      but Icom CI-V's 0x15 0x17 (TX final temp) is documented on
+      modern radios only and Hamlib's per-radio rfpower-cal tables
+      don't include it for IC-7100/7600/9700. Tracked as a
+      separate item; not blocking.
 
 ### 4.2 CW keyer
 

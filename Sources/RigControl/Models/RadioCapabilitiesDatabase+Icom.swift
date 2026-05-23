@@ -33,7 +33,15 @@ extension RadioCapabilitiesDatabase {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        // TX meters — IC-9700 supports the full Icom set
+        // (cross-checked against Hamlib IC9700_LEVELS).
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -217,7 +225,15 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-7600 MUST select Main/Sub before read/write operations
         requiresModeFilter: true,  // IC-7600 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // TX meters — IC-7600 supports the full Icom set
+        // (cross-checked against Hamlib IC7600_LEVELS).
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -289,7 +305,15 @@ extension RadioCapabilitiesDatabase {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        // TX meters — IC-7100 supports the full Icom set
+        // (cross-checked against Hamlib IC7100_LEVEL_ALL).
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver

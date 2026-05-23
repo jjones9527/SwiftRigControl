@@ -83,6 +83,19 @@ public actor DummyCATProtocol: CATProtocol {
     private var memoryChannels: [Int: MemoryChannel] = [:]
     private let memoryChannelCount: Int = 99
 
+    /// Simulated TX-meter raw values (0–241), one per
+    /// ``MeterReading/Kind``. Defaults are plausible idle readings
+    /// — RF power 0, SWR 0 (1:1), voltage ~13.8 V, current ~1 A,
+    /// etc. Tests / previews override via ``simulateMeter(_:raw:)``.
+    private var meterRaw: [MeterReading.Kind: Int] = [
+        .rfPower: 0, .swr: 0, .alc: 0, .comp: 0,
+        // Voltage default: ~13.8 V on the Icom Vd curve, which
+        // linearly maps (13, 10V) → (241, 16V). Solve for 13.8V → raw=157.
+        .voltage: 157,
+        // Current default: ~1 A on the Id curve (0, 0A) → (97, 10A).
+        .current: 10,
+    ]
+
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
     /// Lets tests simulate "the radio went away" without yanking a
@@ -228,6 +241,46 @@ public actor DummyCATProtocol: CATProtocol {
     /// and reconnect tests. Not part of `CATProtocol`.
     public func simulateFailure(_ error: RigError?) {
         injectedFailure = error
+    }
+
+    /// Test/preview helper — sets the simulated raw value the
+    /// dummy will return on the next read of the specified TX
+    /// meter. Has no analogue on real radios; not part of
+    /// `CATProtocol`.
+    public func simulateMeter(_ kind: MeterReading.Kind, raw: Int) {
+        meterRaw[kind] = max(0, min(raw, 255))
+    }
+
+    // MARK: - TX meters
+
+    public func getRFPowerOut() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .rfPower, raw: meterRaw[.rfPower] ?? 0)
+    }
+
+    public func getSWR() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .swr, raw: meterRaw[.swr] ?? 0)
+    }
+
+    public func getALC() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .alc, raw: meterRaw[.alc] ?? 0)
+    }
+
+    public func getComp() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .comp, raw: meterRaw[.comp] ?? 0)
+    }
+
+    public func getVoltage() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .voltage, raw: meterRaw[.voltage] ?? 0)
+    }
+
+    public func getCurrent() async throws -> MeterReading {
+        try requireConnected()
+        return MeterReading.decode(kind: .current, raw: meterRaw[.current] ?? 0)
     }
 
     // MARK: - RIT / XIT

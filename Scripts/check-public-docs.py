@@ -28,6 +28,7 @@ CONFORMANCE = {
     "setPreamp","getPreamp","setAttenuator","getAttenuator",
     "setPowerState","getPowerState",
     "setMemoryChannel","getMemoryChannel","getMemoryChannelCount","clearMemoryChannel",
+    "getRFPowerOut","getSWR","getALC","getComp","getVoltage","getCurrent",
     "connect","disconnect","open","close","write","read","readUntil","flush",
     "isOpen","transport","capabilities",
     "setModeCommand","setDataModeCommand","readModeCommand","parseModeResponse",

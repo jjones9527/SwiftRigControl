@@ -192,6 +192,36 @@ public struct RigCapabilities: Sendable, Codable {
     /// Common values: [1, 10, 100, 1000, 5000, 9000, 10000, 12500, 25000, 50000, 100000]
     public let availableTuningSteps: [Double]
 
+    // MARK: - Transmit-side meter capabilities (Phase 4.1)
+    //
+    // One bool per CATProtocol meter accessor. The defaults are
+    // `false` so radios automatically inherit a "no TX meters"
+    // posture; per-radio definitions opt in. The flags mirror
+    // Hamlib's RIG_LEVEL_{SWR,ALC,RFPOWER_METER,COMP_METER,VD_METER,
+    // ID_METER} bits for the same radio.
+
+    /// Radio exposes an RF power output meter
+    /// (``CATProtocol/getRFPowerOut()``).
+    public let supportsRFPowerMeter: Bool
+
+    /// Radio exposes an SWR meter (``CATProtocol/getSWR()``).
+    public let supportsSWRMeter: Bool
+
+    /// Radio exposes an ALC meter (``CATProtocol/getALC()``).
+    public let supportsALCMeter: Bool
+
+    /// Radio exposes a speech-compressor meter
+    /// (``CATProtocol/getComp()``).
+    public let supportsCompMeter: Bool
+
+    /// Radio exposes a drain / supply voltage meter
+    /// (``CATProtocol/getVoltage()``).
+    public let supportsVoltageMeter: Bool
+
+    /// Radio exposes a drain / collector current meter
+    /// (``CATProtocol/getCurrent()``).
+    public let supportsCurrentMeter: Bool
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -220,7 +250,13 @@ public struct RigCapabilities: Sendable, Codable {
         supportsCTCSS: Bool = false,
         supportsDCS: Bool = false,
         supportsDuplex: Bool = false,
-        availableTuningSteps: [Double] = []
+        availableTuningSteps: [Double] = [],
+        supportsRFPowerMeter: Bool = false,
+        supportsSWRMeter: Bool = false,
+        supportsALCMeter: Bool = false,
+        supportsCompMeter: Bool = false,
+        supportsVoltageMeter: Bool = false,
+        supportsCurrentMeter: Bool = false
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -242,6 +278,12 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsDCS = supportsDCS
         self.supportsDuplex = supportsDuplex
         self.availableTuningSteps = availableTuningSteps
+        self.supportsRFPowerMeter = supportsRFPowerMeter
+        self.supportsSWRMeter = supportsSWRMeter
+        self.supportsALCMeter = supportsALCMeter
+        self.supportsCompMeter = supportsCompMeter
+        self.supportsVoltageMeter = supportsVoltageMeter
+        self.supportsCurrentMeter = supportsCurrentMeter
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

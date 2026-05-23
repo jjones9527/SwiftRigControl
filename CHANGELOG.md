@@ -32,6 +32,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **TX-side metering API (Phase 4.1).** Six new typed accessors
+  on `CATProtocol` and `RigController`:
+  - `getRFPowerOut()` / `rfPowerOut()` — RF power output
+  - `getSWR()` / `swr()` — SWR
+  - `getALC()` / `alc()` — ALC
+  - `getComp()` / `comp()` — speech compressor
+  - `getVoltage()` / `voltage()` — supply voltage
+  - `getCurrent()` / `current()` — supply current
+
+  Each returns a new `MeterReading` value type with the raw byte
+  the radio sent, a normalised 0..1+ representation suitable for
+  UI bars, and a typed physical-unit accessor (`watts`,
+  `swrRatio`, `volts`, `amps`, `dB`). Calibration curves are
+  transcribed from Hamlib's `icom_default_*_cal` tables so
+  Swift readings match Hamlib's exactly on Icom radios.
+
+  Six new capability flags on `RigCapabilities`
+  (`supportsRFPowerMeter`, `supportsSWRMeter`, `supportsALCMeter`,
+  `supportsCompMeter`, `supportsVoltageMeter`,
+  `supportsCurrentMeter`) — all default `false`. The three
+  hardware-verified Icoms (IC-7100, IC-7600, IC-9700) opt into
+  all six; per-radio promotion cross-checked against the
+  matching Hamlib `IC{model}_LEVEL_ALL` macro. Calling an
+  unsupported meter throws `RigError.unsupportedOperation`.
+
+  `DummyCATProtocol` ships with sensible idle defaults (RF
+  power 0, SWR 1:1, voltage ~13.8 V, current ~1 A) and a
+  `simulateMeter(_:raw:)` test/preview helper so SwiftUI
+  previews can render meaningful meter UI without hardware.
+
 - **Hosted DocC site** at
   https://jjones9527.github.io/SwiftRigControl/documentation/rigcontrol/
   — generated and published on every push to `main` by the

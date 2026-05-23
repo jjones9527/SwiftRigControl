@@ -90,6 +90,7 @@ For the SwiftUI / reactive-state pattern, see
 - ``Mode``
 - ``VFO``
 - ``SignalStrength``
+- ``MeterReading``
 - ``RITXITState``
 - ``MemoryChannel``
 - ``AGCSpeed``
