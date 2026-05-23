@@ -418,13 +418,30 @@ hardware. Phase 2 is complete.
 
 ### 3.2 Symbol-level DocC coverage
 
-- [ ] Sweep every public symbol; add DocC comments with at least
-      `- Parameter`, `- Returns`, `- Throws`.
-- [ ] Add a runnable code snippet for every non-trivial public
-      method (frequency, mode, PTT, configure, signal strength,
-      memory channels).
-- [ ] CI lint: fail build on a public symbol missing
-      documentation (using SwiftLint or DocC's own checks).
+- [x] **Audit script** at `Scripts/check-public-docs.py` walks
+      every Swift file in `Sources/RigControl/`, flags any public
+      declaration that lacks a triple-slash doc comment, and
+      excludes declarations whose identifier matches a
+      `CATProtocol` / `SerialTransport` / `CIVCommandSet`
+      requirement (DocC inherits documentation from protocol
+      requirements automatically). Exits non-zero when issues
+      remain — ready to wire into CI in the next sub-phase.
+- [x] **Sweep complete.** From a baseline of 225 nominally
+      undocumented declarations, the inheritance-aware audit
+      identified 25 real gaps; all are now fixed. The script
+      now exits clean on `main`.
+- [x] **Doc comments added** to: `SerialConfiguration` `Parity`
+      enum + init, `IOKitSerialPort` non-macOS stub + init,
+      `RadioDefinition.Manufacturer`, `RigctldCommandParser` init,
+      `SignalStrength` `<`, three `RigCapabilities` inits,
+      `icomIC905`, every public field on
+      `RigController.PollingConfiguration` and
+      `HealthMonitorConfiguration`, `RetryPolicy` init,
+      `TenTecOrionProtocol` init, `TenTecLegacyProtocol` init,
+      `THD72Protocol` init, `IC9700CommandSet` init.
+- [ ] **CI lint** to fail build on regressions — ships in the
+      Phase 3.3 follow-up commit alongside the GitHub Pages
+      workflow.
 
 ### 3.3 Hosting
 

@@ -62,6 +62,7 @@ public struct RigctldCommandParser {
         }
     }
 
+    /// Creates a new parser. Stateless — one shared instance is fine.
     public init() {}
 
     /// Parse a command string into a RigctldCommand

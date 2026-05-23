@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Symbol-level DocC sweep.** Every public declaration in
+  `Sources/RigControl/` now has a doc comment, or inherits one
+  from a `CATProtocol` / `SerialTransport` / `CIVCommandSet`
+  requirement (DocC handles inheritance automatically). Net
+  additions: `SerialConfiguration` parity/init,
+  `RadioDefinition.Manufacturer`, the new Phase 2
+  `PollingConfiguration` and `HealthMonitorConfiguration` /
+  `RetryPolicy` fields, and a long tail of struct inits.
+- **`Scripts/check-public-docs.py`** — inheritance-aware audit
+  script that walks `Sources/RigControl/`, reports any public
+  declaration without a `///` doc comment, and exits non-zero
+  when issues remain. Ready for CI wiring in the next commit.
 - **DocC catalog (`Sources/RigControl/RigControl.docc/`)** with a
   curated landing page (every top-level public symbol grouped by
   topic) plus five articles: Getting started without hardware,

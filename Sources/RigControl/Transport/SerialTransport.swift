@@ -65,12 +65,29 @@ public struct SerialConfiguration: Sendable {
     /// Software flow control (XON/XOFF)
     public let softwareFlowControl: Bool
 
+    /// Serial-port parity setting. Almost every amateur-radio
+    /// CAT interface uses `.none`; check the manufacturer's
+    /// programmer reference if you're unsure.
     public enum Parity: String, Sendable {
+        /// No parity bit. Default for all SwiftRigControl-supported radios.
         case none
+        /// Even parity.
         case even
+        /// Odd parity.
         case odd
     }
 
+    /// Builds a new serial-port configuration.
+    ///
+    /// - Parameters:
+    ///   - path: Device path (e.g. `"/dev/cu.usbserial-A1B2C3"`).
+    ///   - baudRate: Bits per second. Each `RadioDefinition` ships
+    ///     a `defaultBaudRate` you can use here when unsure.
+    ///   - dataBits: Bits per character. 8 for every supported radio.
+    ///   - stopBits: Stop bits. 1 for every supported radio.
+    ///   - parity: Parity setting. `.none` for every supported radio.
+    ///   - hardwareFlowControl: Enable RTS/CTS hardware flow control.
+    ///   - softwareFlowControl: Enable XON/XOFF software flow control.
     public init(
         path: String,
         baudRate: Int = 9600,

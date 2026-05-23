@@ -8,6 +8,7 @@ public struct FrequencyRange: Sendable, Codable, Equatable {
     /// Maximum frequency in Hz
     public let max: UInt64
 
+    /// Creates a frequency range from min/max in Hz.
     public init(min: UInt64, max: UInt64) {
         self.min = min
         self.max = max
@@ -31,6 +32,16 @@ public struct DetailedFrequencyRange: Sendable, Codable, Equatable {
     /// Band name (e.g., "160m", "80m", "40m", "20m")
     public let bandName: String?
 
+    /// Creates a detailed frequency range with mode and transmit
+    /// flags attached.
+    ///
+    /// - Parameters:
+    ///   - min: Minimum frequency in Hz.
+    ///   - max: Maximum frequency in Hz.
+    ///   - modes: Modes the radio supports in this range.
+    ///   - canTransmit: Whether the radio is licensed to transmit
+    ///     in this range (some HF radios are RX-only on certain bands).
+    ///   - bandName: Optional band label for display ("20m", "70cm").
     public init(min: UInt64, max: UInt64, modes: Set<Mode>, canTransmit: Bool, bandName: String? = nil) {
         self.min = min
         self.max = max
@@ -181,6 +192,14 @@ public struct RigCapabilities: Sendable, Codable {
     /// Common values: [1, 10, 100, 1000, 5000, 9000, 10000, 12500, 25000, 50000, 100000]
     public let availableTuningSteps: [Double]
 
+    /// Creates a capability set. Every parameter has a sensible
+    /// default — the defaults describe a typical full-featured HF
+    /// transceiver. Override only the fields that differ for the
+    /// specific radio you're modeling.
+    ///
+    /// All capability flags are advisory: ``RigController`` and the
+    /// underlying ``CATProtocol`` consult them to decide whether to
+    /// attempt an operation or throw ``RigError/unsupportedOperation(_:)``.
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,

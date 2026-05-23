@@ -28,6 +28,8 @@ public struct RadioDefinition: Sendable {
     /// Protocol factory closure
     private let protocolFactory: @Sendable (any SerialTransport) -> any CATProtocol
 
+    /// The manufacturer of a radio. The raw value is a
+    /// human-readable name suitable for display in UI.
     public enum Manufacturer: String, Sendable {
         case icom = "Icom"
         case elecraft = "Elecraft"

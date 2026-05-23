@@ -48,6 +48,11 @@ public actor TenTecLegacyProtocol: CATProtocol {
     /// Cached current mode
     private var cachedMode: Mode = .usb
 
+    /// Creates a legacy Ten-Tec protocol instance (Jupiter, Pegasus).
+    ///
+    /// - Parameters:
+    ///   - transport: Serial transport to communicate over.
+    ///   - capabilities: Capability set for the chosen model.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities

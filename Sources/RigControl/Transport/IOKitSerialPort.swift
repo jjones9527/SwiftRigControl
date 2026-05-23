@@ -262,8 +262,10 @@ public actor IOKitSerialPort: SerialTransport {
 }
 
 #else
-// Non-macOS stub — all operations throw at runtime.
-// IOKitSerialPort requires macOS IOKit; it cannot be instantiated on other platforms.
+/// Non-macOS stub. SwiftRigControl is macOS-only by design, but the
+/// declaration is preserved here so cross-platform tooling (Linting,
+/// SourceKit indexers) doesn't trip on a missing symbol. Every method
+/// throws `RigError.serialPortError` if reached at runtime.
 public actor IOKitSerialPort: SerialTransport {
     public var isOpen: Bool { false }
 
@@ -271,6 +273,9 @@ public actor IOKitSerialPort: SerialTransport {
     ///
     /// On non-macOS platforms, calling this initializer is a programming error — all
     /// subsequent operations will throw `RigError.serialPortError`.
+    /// `IOKitSerialPort` is macOS-only; this initializer is marked
+    /// `@available(*, unavailable)` and will fail at compile time
+    /// on any other platform.
     @available(*, unavailable, message: "IOKitSerialPort is only available on macOS")
     public init(configuration: SerialConfiguration) {
         // Unreachable: @available(*, unavailable) prevents any call-site from reaching this.

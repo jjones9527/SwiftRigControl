@@ -25,10 +25,25 @@ extension RigController {
     /// failures filter out one-off timeouts that real radios
     /// sometimes emit under load.
     public struct HealthMonitorConfiguration: Sendable {
+        /// Seconds between heartbeat probes. Default 5 s. Lower
+        /// values surface failures sooner at the cost of more
+        /// traffic; higher values are kinder to slow CI-V buses.
         public var heartbeatInterval: TimeInterval
+
+        /// Consecutive probe failures required before the
+        /// connection transitions to `.degraded`. Filters out
+        /// occasional one-off timeouts that real radios emit
+        /// under load.
         public var degradeAfter: Int
+
+        /// If non-nil, the monitor automatically attempts to
+        /// reconnect from `.degraded` using this policy. If `nil`,
+        /// the connection stays in `.degraded` until either a
+        /// successful probe recovers it or the caller intervenes.
         public var retryPolicy: RetryPolicy?
 
+        /// Creates a configuration. Defaults: 5 s heartbeat, 3
+        /// failures to degrade, no auto-reconnect.
         public init(
             heartbeatInterval: TimeInterval = 5.0,
             degradeAfter: Int = 3,
@@ -61,6 +76,8 @@ extension RigController {
         /// Backoff multiplier (≥ 1.0).
         public var multiplier: Double
 
+        /// Creates a retry policy. Defaults retry forever with
+        /// 1 s/2 s/4 s/8 s/16 s/30 s/30 s/… backoff.
         public init(
             maxAttempts: Int? = nil,
             initialDelay: TimeInterval = 1.0,

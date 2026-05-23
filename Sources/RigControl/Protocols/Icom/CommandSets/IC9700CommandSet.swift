@@ -33,6 +33,8 @@ public struct IC9700CommandSet: IcomRadioCommandSet {
     public let echoesCommands = true  // IC-9700 echoes commands over USB
     public let powerUnits: PowerUnits = .percentage
 
+    /// Creates the IC-9700 command set. Stateless — one shared
+    /// instance is fine.
     public init() {}
 
     // All command methods inherited from IcomRadioCommandSet protocol extension!

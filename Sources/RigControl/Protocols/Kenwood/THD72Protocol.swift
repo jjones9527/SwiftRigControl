@@ -38,6 +38,13 @@ public actor THD72Protocol: CATProtocol {
     /// CR terminator used by TH-series Kenwood handhelds (EOM_TH in Hamlib).
     private static let terminator: UInt8 = 0x0D  // '\r'
 
+    /// Creates a TH-D72/TH-D72A protocol instance.
+    ///
+    /// - Parameters:
+    ///   - transport: Serial transport (typically the radio's
+    ///     virtual COM port over USB).
+    ///   - capabilities: Capability set; usually
+    ///     ``RadioCapabilitiesDatabase/kenwoodTHD72A``.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities

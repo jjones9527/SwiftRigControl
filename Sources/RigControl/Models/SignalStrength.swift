@@ -93,6 +93,7 @@ public struct SignalStrength: Sendable, Equatable, CustomStringConvertible {
 // MARK: - Comparable
 
 extension SignalStrength: Comparable {
+    /// Compares two readings by absolute signal strength in dB.
     public static func < (lhs: SignalStrength, rhs: SignalStrength) -> Bool {
         return lhs.decibels < rhs.decibels
     }

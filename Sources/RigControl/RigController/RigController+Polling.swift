@@ -29,11 +29,27 @@ extension RigController {
     ///   value actually changes. The poller compares against the
     ///   previous reading and stays quiet otherwise.
     public struct PollingConfiguration: Sendable {
+        /// Poll the S-meter at this interval (seconds). `nil` disables.
+        /// `signalStrength` is the one field that emits on every poll —
+        /// other fields emit only when the value changes.
         public var signalStrength: TimeInterval?
+
+        /// Poll frequency on every active VFO at this interval
+        /// (seconds). `nil` disables. Emits only on change.
         public var frequency: TimeInterval?
+
+        /// Poll mode on every active VFO at this interval (seconds).
+        /// `nil` disables. Emits only on change.
         public var mode: TimeInterval?
+
+        /// Poll PTT at this interval (seconds). `nil` disables.
+        /// Catches front-panel mic PTT that bypasses
+        /// ``RigController/setPTT(_:)``. Emits only on change.
         public var ptt: TimeInterval?
 
+        /// Creates a polling configuration with per-field intervals.
+        /// All parameters default to sensible "UI control panel"
+        /// values; pass `nil` for any field you don't want to poll.
         public init(
             signalStrength: TimeInterval? = 0.2,
             frequency: TimeInterval? = 1.0,

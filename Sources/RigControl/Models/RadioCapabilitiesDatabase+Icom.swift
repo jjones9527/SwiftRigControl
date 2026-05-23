@@ -424,6 +424,7 @@ extension RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
 
+    /// Icom IC-905 VHF/UHF/SHF all-mode transceiver.
     public static let icomIC905 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,

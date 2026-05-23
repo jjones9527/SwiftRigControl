@@ -43,6 +43,12 @@ public actor TenTecOrionProtocol: CATProtocol {
     /// Response timeout
     private let responseTimeout: TimeInterval = 2.0
 
+    /// Creates an Orion-family protocol instance.
+    ///
+    /// - Parameters:
+    ///   - transport: Serial transport to communicate over.
+    ///   - radioModel: Specific Orion-family model (Orion, Orion II, Eagle).
+    ///   - capabilities: Capability set for the chosen model.
     public init(transport: any SerialTransport, radioModel: TenTecModel, capabilities: RigCapabilities) {
         self.transport = transport
         self.radioModel = radioModel
