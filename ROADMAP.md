@@ -717,9 +717,22 @@ remain `.notImplemented` and are tracked in `[Unreleased]`.
 
 ## Phase 5 — Architectural refinement
 
-**Goal:** structural improvements that pay off as the library
-grows. Defer until pain is observable — premature abstraction
-is worse than no abstraction.
+**Goal:** structural improvements that lock in a stable shape
+for third-party consumers *before* they start depending on the
+current one.
+
+> **Re-evaluation (2026-05-23):** earlier roadmap text said
+> *"defer until pain is observable — premature abstraction is
+> worse than no abstraction."* That framing assumed the only
+> cost of a fat protocol or a leaky escape hatch is pain to the
+> library author. With stability commitments to third-party app
+> developers as a hard requirement, the cost of *deferring* a
+> refactor is much higher: it shifts the breakage to people who
+> can't easily migrate. While the library still has only one
+> external user (the project author's own apps), every
+> architectural decision we postpone is a future v2-breaking
+> change waiting to happen. So Phase 5 is being executed now,
+> in full, before any v1.1-stable release.
 
 ### 5.1 Capability traits
 
@@ -748,10 +761,15 @@ a typed handle:
 
 ### 5.3 Eliminate the `CATProtocol.init(transport:)` requirement
 
-Currently every conformer must implement an init that's never
-called (Icom's variant `preconditionFailure`s). Either drop the
-init requirement from the protocol, or replace with a
-factory-only pattern.
+- [x] **Done in Phase 1.4** (commit `6d8a954`). The
+      `init(transport:)` requirement was removed from
+      `CATProtocol` and the corresponding satisfying-only init
+      was deleted from every conformer (Icom's was a
+      `preconditionFailure`-throwing stub; others picked
+      arbitrary default capabilities). Construction is now
+      exclusively the job of concrete-type inits and
+      `RadioDefinition.protocolFactory`. Checked off here for
+      bookkeeping completeness.
 
 ---
 
