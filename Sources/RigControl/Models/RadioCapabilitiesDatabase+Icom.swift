@@ -41,7 +41,11 @@ extension RadioCapabilitiesDatabase {
         supportsALCMeter: true,
         supportsCompMeter: true,
         supportsVoltageMeter: true,
-        supportsCurrentMeter: true
+        supportsCurrentMeter: true,
+        // CW keyer — IC-9700 has the full set
+        // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
+        supportsCWKeyer: true,
+        supportsSendCW: true
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -233,7 +237,11 @@ extension RadioCapabilitiesDatabase {
         supportsALCMeter: true,
         supportsCompMeter: true,
         supportsVoltageMeter: true,
-        supportsCurrentMeter: true
+        supportsCurrentMeter: true,
+        // CW keyer — IC-7600 has the full set
+        // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
+        supportsCWKeyer: true,
+        supportsSendCW: true
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -313,7 +321,11 @@ extension RadioCapabilitiesDatabase {
         supportsALCMeter: true,
         supportsCompMeter: true,
         supportsVoltageMeter: true,
-        supportsCurrentMeter: true
+        supportsCurrentMeter: true,
+        // CW keyer — IC-7100 has the full set
+        // (KEYSPD/CWPITCH/BKIN/send_morse per Hamlib).
+        supportsCWKeyer: true,
+        supportsSendCW: true
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver

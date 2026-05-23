@@ -29,6 +29,8 @@ CONFORMANCE = {
     "setPowerState","getPowerState",
     "setMemoryChannel","getMemoryChannel","getMemoryChannelCount","clearMemoryChannel",
     "getRFPowerOut","getSWR","getALC","getComp","getVoltage","getCurrent",
+    "setCWSpeed","getCWSpeed","setCWPitch","getCWPitch",
+    "setBreakIn","getBreakIn","sendCW","stopCW",
     "connect","disconnect","open","close","write","read","readUntil","flush",
     "isOpen","transport","capabilities",
     "setModeCommand","setDataModeCommand","readModeCommand","parseModeResponse",

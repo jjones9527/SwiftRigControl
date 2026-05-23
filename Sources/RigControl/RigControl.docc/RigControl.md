@@ -97,6 +97,9 @@ For the SwiftUI / reactive-state pattern, see
 - ``NoiseBlanker``
 - ``NoiseReduction``
 - ``IFFilter``
+- ``CWSpeed``
+- ``CWPitch``
+- ``BreakInMode``
 
 ### Protocols
 

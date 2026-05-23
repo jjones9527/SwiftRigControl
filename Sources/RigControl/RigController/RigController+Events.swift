@@ -27,6 +27,17 @@ extension RigController {
     /// intermediate value (logging, recording), poll in a tight
     /// `Task` instead.
     ///
+    /// ## Registration is asynchronous
+    ///
+    /// Accessing `events` is `nonisolated` so it can be called from
+    /// any context, but the underlying subscriber registration runs
+    /// in a detached `Task` to hop onto the actor. In practice this
+    /// means a few hundred microseconds of lag before the new
+    /// subscriber is wired up. Code that subscribes and then
+    /// immediately triggers an emission may miss the first event.
+    /// The recommended pattern is to subscribe in `init` (or `task`
+    /// modifier in SwiftUI) and let the runtime settle naturally.
+    ///
     /// ## Example
     ///
     /// ```swift

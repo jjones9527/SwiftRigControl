@@ -182,9 +182,13 @@ import Testing
             ptt: 0.05
         ))
 
-        try await Task.sleep(nanoseconds: 100_000_000)  // settle
-
+        // Subscribe BEFORE settling, then wait for the registration
+        // task to run before we start mutating state. `rig.events`
+        // schedules registration in a detached Task; under parallel
+        // test load it can lag the first poll otherwise.
         let stream = rig.events
+        try await Task.sleep(nanoseconds: 100_000_000)  // settle + let subscriber register
+
         let collector = Task<[RigStateEvent], Never> {
             var collected: [RigStateEvent] = []
             for await event in stream {
@@ -195,16 +199,19 @@ import Testing
             }
             return collected
         }
+        // Brief yield so the for-await is in the iterator before
+        // we start firing events.
+        try await Task.sleep(nanoseconds: 10_000_000)
 
         // Flip PTT directly on the protocol — does NOT go through
         // RigController.setPTT (which would emit synchronously).
         try await proto.setPTT(true)
-        try await Task.sleep(nanoseconds: 150_000_000)
+        try await Task.sleep(nanoseconds: 200_000_000)
         try await proto.setPTT(false)
-        try await Task.sleep(nanoseconds: 150_000_000)
+        try await Task.sleep(nanoseconds: 200_000_000)
 
         let timeout = Task {
-            try await Task.sleep(nanoseconds: 500_000_000)
+            try await Task.sleep(nanoseconds: 800_000_000)
             collector.cancel()
         }
         defer { timeout.cancel() }

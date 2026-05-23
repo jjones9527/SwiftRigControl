@@ -544,11 +544,45 @@ Each item is gated on a Hamlib cross-check (read `rigs/<vendor>/
 
 ### 4.2 CW keyer
 
-- [ ] `setCWSpeed(_ wpm: Int)`, `getCWSpeed()`.
-- [ ] `setKeyerMemory(_ slot: Int, message: String)`.
-- [ ] `sendCWMemory(_ slot: Int)`, `stopCW()`.
-- [ ] `setCWPitch(_ hz: Int)`, `getCWPitch()`.
-- [ ] `setBreakIn(_ mode: BreakInMode)` — `off`/`semi`/`full`.
+- [x] **Typed value wrappers**: ``CWSpeed`` (wpm, clamped 6–48),
+      ``CWPitch`` (Hz, clamped 300–900), ``BreakInMode``
+      (off/semi/full). Both numeric wrappers conform to
+      `ExpressibleByIntegerLiteral` for ergonomic call sites
+      (`rig.setCWSpeed(28)`).
+- [x] **`CATProtocol` methods**: `setCWSpeed`/`getCWSpeed`,
+      `setCWPitch`/`getCWPitch`, `setBreakIn`/`getBreakIn`,
+      `sendCW(_ text:)`, `stopCW()`. All default to throw
+      `.unsupported`.
+- [x] **`RigCapabilities` flags**: `supportsCWKeyer` (covers
+      speed/pitch/break-in) and `supportsSendCW` (covers text→CW).
+      All three hardware-verified Icoms opt in.
+- [x] **`IcomCIVProtocol` implementation** in
+      `IcomCIVProtocol+CWKeyer.swift`. Uses the exact CI-V
+      command bytes from Hamlib `icom_defs.h`:
+      `0x14 0x0C` (KEYSPD), `0x14 0x09` (CWPITCH),
+      `0x16 0x47` (BKIN), `0x17` (send/stop CW).
+      Hamlib's full 43-entry `cw_lookup` table is transcribed so
+      WPM↔byte conversion is byte-identical to Hamlib. Pitch
+      uses the linear formula `(Hz-300) × 255 / 600`.
+- [x] **`DummyCATProtocol`** holds CW state with sensible defaults
+      (28 WPM, 600 Hz, semi break-in) plus `lastSentCW` and
+      `isSendingCW` test helpers so SwiftUI previews can render
+      realistic CW UI and tests can verify the send/stop path.
+- [x] **`RigController` facade** with eight matching accessors.
+- [x] **Tests**: 23 new in `CWKeyerTests`. Cover value-wrapper
+      clamping, integer-literal init, full Hamlib `cw_lookup`
+      cross-check at every breakpoint, decoder nearest-neighbor
+      rounding, pitch formula at breakpoints + clamps,
+      round-trip through dummy, ASCII truncation at 30 chars,
+      non-ASCII stripping, before-connect throw, capability gating.
+- [x] **Bonus fix:** pre-existing race in
+      `pttPolledChangesEmit` test (subscriber registration vs.
+      first poll) — subscribe-before-settle pattern documented
+      on `RigController.events` and applied to the test.
+- [ ] **Keyer memory write/recall** deferred. Hamlib doesn't
+      expose this; the per-radio CI-V byte sequences for the
+      8 keyer slots vary in non-obvious ways. Worth adding once
+      we have hardware to verify against, but not blocking.
 
 ### 4.3 Scanning
 

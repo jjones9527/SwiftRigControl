@@ -96,6 +96,19 @@ public actor DummyCATProtocol: CATProtocol {
         .current: 10,
     ]
 
+    // CW keyer state — defaults to typical contest operator values
+    // (28 WPM, 600 Hz sidetone, semi break-in).
+    private var cwSpeed: CWSpeed = CWSpeed(wpm: 28)
+    private var cwPitch: CWPitch = CWPitch(hz: 600)
+    private var breakInMode: BreakInMode = .semi
+    /// Last `sendCW` message — exposed via test helper so unit tests
+    /// can assert what was sent without rummaging through frames.
+    private var lastCWMessage: String = ""
+    /// True if a CW send is in progress (cleared by `stopCW`).
+    /// Tests can read this via ``isSendingCW`` to verify the abort
+    /// path; real radios update this themselves via timing.
+    private var cwSending: Bool = false
+
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
     /// Lets tests simulate "the radio went away" without yanking a
@@ -281,6 +294,70 @@ public actor DummyCATProtocol: CATProtocol {
     public func getCurrent() async throws -> MeterReading {
         try requireConnected()
         return MeterReading.decode(kind: .current, raw: meterRaw[.current] ?? 0)
+    }
+
+    // MARK: - CW keyer
+
+    public func setCWSpeed(_ speed: CWSpeed) async throws {
+        try requireConnected()
+        cwSpeed = speed
+    }
+
+    public func getCWSpeed() async throws -> CWSpeed {
+        try requireConnected()
+        return cwSpeed
+    }
+
+    public func setCWPitch(_ pitch: CWPitch) async throws {
+        try requireConnected()
+        cwPitch = pitch
+    }
+
+    public func getCWPitch() async throws -> CWPitch {
+        try requireConnected()
+        return cwPitch
+    }
+
+    public func setBreakIn(_ mode: BreakInMode) async throws {
+        try requireConnected()
+        breakInMode = mode
+    }
+
+    public func getBreakIn() async throws -> BreakInMode {
+        try requireConnected()
+        return breakInMode
+    }
+
+    public func sendCW(_ text: String) async throws {
+        try requireConnected()
+        // Same 30-char ASCII truncation as IcomCIVProtocol so the
+        // dummy faithfully simulates Icom behavior for tests.
+        let truncated = String(
+            text.unicodeScalars
+                .compactMap { $0.isASCII ? Character($0) : nil }
+                .prefix(30)
+        )
+        lastCWMessage = truncated
+        cwSending = true
+    }
+
+    public func stopCW() async throws {
+        try requireConnected()
+        cwSending = false
+    }
+
+    /// Test helper — returns the last text passed to ``sendCW(_:)``,
+    /// post-truncation. Not part of `CATProtocol`.
+    public var lastSentCW: String {
+        lastCWMessage
+    }
+
+    /// Test helper — true if a CW message is in flight (set by
+    /// ``sendCW(_:)``, cleared by ``stopCW()``). Real radios update
+    /// this on a real timer; the dummy just tracks the explicit
+    /// start/stop calls. Not part of `CATProtocol`.
+    public var isSendingCW: Bool {
+        cwSending
     }
 
     // MARK: - RIT / XIT

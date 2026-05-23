@@ -222,6 +222,20 @@ public struct RigCapabilities: Sendable, Codable {
     /// (``CATProtocol/getCurrent()``).
     public let supportsCurrentMeter: Bool
 
+    // MARK: - CW keyer capabilities (Phase 4.2)
+
+    /// Radio exposes the built-in CW keyer (speed, pitch,
+    /// break-in mode). Mirrors Hamlib's `RIG_LEVEL_KEYSPD` /
+    /// `RIG_LEVEL_CWPITCH` / `RIG_LEVEL_BKINDL` bits.
+    public let supportsCWKeyer: Bool
+
+    /// Radio supports radio-generated CW message transmission
+    /// (text → Morse via the CAT bus). Mirrors Hamlib's
+    /// `send_morse` op. Distinct from ``supportsCWKeyer`` because
+    /// some radios let you query/set keyer parameters but cannot
+    /// be told to *send* a message; others do both.
+    public let supportsSendCW: Bool
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -256,7 +270,9 @@ public struct RigCapabilities: Sendable, Codable {
         supportsALCMeter: Bool = false,
         supportsCompMeter: Bool = false,
         supportsVoltageMeter: Bool = false,
-        supportsCurrentMeter: Bool = false
+        supportsCurrentMeter: Bool = false,
+        supportsCWKeyer: Bool = false,
+        supportsSendCW: Bool = false
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -284,6 +300,8 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsCompMeter = supportsCompMeter
         self.supportsVoltageMeter = supportsVoltageMeter
         self.supportsCurrentMeter = supportsCurrentMeter
+        self.supportsCWKeyer = supportsCWKeyer
+        self.supportsSendCW = supportsSendCW
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

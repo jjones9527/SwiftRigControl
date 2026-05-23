@@ -32,6 +32,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   warning, code keeps compiling.
 
 ### Added
+- **CW keyer API (Phase 4.2).** Six new typed accessors on
+  `CATProtocol` and `RigController`:
+  - `setCWSpeed(_:)` / `cwSpeed()` — keyer WPM
+  - `setCWPitch(_:)` / `cwPitch()` — sidetone Hz
+  - `setBreakIn(_:)` / `breakIn()` — `BreakInMode.off`/`.semi`/`.full`
+  - `sendCW(_ text:)` — text → Morse via the radio
+  - `stopCW()` — abort transmission
+
+  Three new typed value wrappers — `CWSpeed`, `CWPitch`,
+  `BreakInMode` — replace raw `Int`/`Bool` arguments. `CWSpeed`
+  and `CWPitch` clamp to the supported range (6–48 WPM, 300–900 Hz)
+  on construction and accept integer literals
+  (`rig.setCWSpeed(28)`).
+
+  Two new capability flags on `RigCapabilities`:
+  `supportsCWKeyer` (speed/pitch/break-in) and `supportsSendCW`
+  (text→CW). All three hardware-verified Icoms opt in; per-radio
+  promotion cross-checked against Hamlib's `IC{model}_LEVEL_ALL`
+  macros and `send_morse` op.
+
+  `IcomCIVProtocol` implementation uses byte-identical encoding
+  to Hamlib's `rigs/icom/icom.c`:
+  - WPM via the full 43-entry `cw_lookup` table.
+  - Pitch via the linear formula
+    `icom_byte = round((Hz − 300) × 255 / 600)`.
+  - Break-in via `0x16 0x47` with payload `0x00`/`0x01`/`0x02`.
+  - Send via `0x17` (ASCII, truncated to 30 chars).
+  - Stop via `0x17` with payload `0xFF`.
+
+  `DummyCATProtocol` holds CW state with sensible defaults
+  (28 WPM, 600 Hz, semi break-in) plus `lastSentCW` and
+  `isSendingCW` test/preview helpers.
+
+  23 new tests cover value-wrapper clamping, full Hamlib
+  `cw_lookup` parity at every breakpoint, pitch formula
+  round-trips, dummy state roundtrip, ASCII truncation, non-ASCII
+  stripping, capability gating, and before-connect throws.
+
+- **Subscriber-registration race fix and documentation.**
+  `RigController.events` registers new subscribers via a detached
+  `Task` (so the accessor can be `nonisolated` and called from
+  any context). Under parallel test load this can lag the first
+  emission; the events doc comment now documents this caveat
+  with the recommended subscribe-in-init pattern. The
+  pre-existing `pttPolledChangesEmit` test that was sensitive to
+  this race has been rewritten to follow the documented pattern.
+
 - **TX-side metering API (Phase 4.1).** Six new typed accessors
   on `CATProtocol` and `RigController`:
   - `getRFPowerOut()` / `rfPowerOut()` — RF power output
