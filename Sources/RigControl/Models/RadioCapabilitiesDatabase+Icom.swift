@@ -56,7 +56,8 @@ extension RadioCapabilitiesDatabase {
         supportsDeltaFScan: false,
         // VFO ops — IC-9700 has no internal ATU, so no TUNE.
         // Matches Hamlib IC9700_VFO_OPS.
-        supportedVFOOperations: .icomNoATU
+        supportedVFOOperations: .icomNoATU,
+        supportedFunctions: .icomIC9700Funcs
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -121,7 +122,8 @@ extension RadioCapabilitiesDatabase {
         powerUnits: .percentage,
         // VFO ops — IC-7610 uses the standard set (Hamlib uses
         // IC7300_VFO_OPS for both — same family).
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7300Funcs
     )
 
     /// Icom IC-7300 - HF/6m SDR transceiver
@@ -185,7 +187,8 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         powerUnits: .percentage,
         // VFO ops — IC-7300 standard set per Hamlib IC7300_VFO_OPS.
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7300Funcs
     )
 
     /// Icom IC-7600 - HF/6m transceiver
@@ -271,7 +274,8 @@ extension RadioCapabilitiesDatabase {
         antennaCount: 2,
         // VFO ops — matches Hamlib IC7600_VFO_OPS
         // (CPY|XCHG|FROM_VFO|TO_VFO|MCL|TUNE).
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7600Funcs
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -370,7 +374,8 @@ extension RadioCapabilitiesDatabase {
         antennaCount: 2,
         // VFO ops — matches Hamlib IC7100_VFO_OPS
         // (FROM_VFO|TO_VFO|CPY|MCL|XCHG|TUNE).
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7100Funcs
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -445,7 +450,8 @@ extension RadioCapabilitiesDatabase {
         availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
         // VFO ops — IC-705 uses IC7300_VFO_OPS per Hamlib
         // (rigs/icom/ic7300.c:1824).
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7300Funcs
     )
 
     /// Icom IC-703 - Portable HF/6m 10W QRP transceiver
@@ -578,7 +584,8 @@ extension RadioCapabilitiesDatabase {
         requiresModeFilter: true,
         powerUnits: .percentage,
         // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7300Funcs
     )
 
     // MARK: - Icom IC-7300MK2
@@ -623,6 +630,7 @@ extension RadioCapabilitiesDatabase {
         requiresModeFilter: true,
         powerUnits: .percentage,
         // VFO ops — IC-7300MK2 inherits the IC-7300 family set.
-        supportedVFOOperations: .icomStandard
+        supportedVFOOperations: .icomStandard,
+        supportedFunctions: .icomIC7300Funcs
     )
 }

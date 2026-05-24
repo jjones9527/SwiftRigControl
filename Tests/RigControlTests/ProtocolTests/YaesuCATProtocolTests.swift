@@ -421,4 +421,28 @@ import Testing
             try await yaesuProtocol.performVFOOperation(.memoryClear)
         }
     }
+
+    // MARK: - Function toggles (v1.1 parity)
+
+    @Test func setFunctionCompressorOn() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.setFunction(.compressor, enabled: true)
+        #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "PR01;")
+    }
+
+    @Test func setFunctionAutoNotch() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.setFunction(.autoNotch, enabled: true)
+        #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "BC01;")
+    }
+
+    @Test func setFunctionAfcUnsupported() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        await #expect(throws: RigError.self) {
+            try await yaesuProtocol.setFunction(.autoFrequencyControl, enabled: true)
+        }
+    }
 }

@@ -500,4 +500,41 @@ import Testing
             try await kenwoodProtocol.performVFOOperation(.exchange)
         }
     }
+
+    // MARK: - Function toggles (v1.1 parity)
+
+    @Test func setFunctionCompressorOn() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.setFunction(.compressor, enabled: true)
+
+        #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "PR1;")
+    }
+
+    @Test func setFunctionTunerOff() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.setFunction(.tuner, enabled: false)
+
+        #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "AC110;")
+    }
+
+    @Test func getFunctionLockReturnsTrue() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        let query = "LK;".data(using: .ascii)!
+        let response = "LK1;".data(using: .ascii)!
+        await mockTransport.setResponse(for: query, response: response)
+
+        let on = try await kenwoodProtocol.getFunction(.lock)
+        #expect(on == true)
+    }
+
+    @Test func setFunctionSatModeUnsupported() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        await #expect(throws: RigError.self) {
+            try await kenwoodProtocol.setFunction(.satelliteMode, enabled: true)
+        }
+    }
 }

@@ -57,7 +57,8 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
     // MARK: - Remaining Elecraft Radios
 
@@ -106,7 +107,8 @@ extension RadioCapabilitiesDatabase {
         // Kenwood-shared subset (UP/DN/BU/BD/MR) — TUNE is
         // model-specific (`SWT19` on K3, `SWT44` on KX3, etc.)
         // and not yet plumbed through ElecraftProtocol.
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
 
     /// Elecraft K3S - HF/6m transceiver (enhanced K3)
@@ -143,7 +145,8 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
 
     /// Elecraft K4 - HF/6m SDR transceiver
@@ -180,7 +183,8 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
 
     /// Elecraft KX2 - Portable HF transceiver
@@ -216,7 +220,8 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
 
     /// Elecraft KX3 - Portable HF/6m transceiver
@@ -253,7 +258,8 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO]
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
+        supportedFunctions: .elecraftKStandard
     )
 
 }

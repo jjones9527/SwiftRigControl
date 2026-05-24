@@ -222,3 +222,19 @@ public protocol SupportsVFOOperations: CATProtocol {
     ///   specific op isn't supported by this radio.
     func performVFOOperation(_ op: VFOOperation) async throws
 }
+
+// MARK: - Function toggles (v1.1 parity)
+
+/// Conforming radios expose on/off function bits — speech
+/// compressor, VOX, CTCSS, lock, ATU enable, etc. Which specific
+/// functions a radio actually supports is gated by
+/// ``RigCapabilities/supportedFunctions``; callers should consult
+/// that set before calling, and `RigController` checks it before
+/// dispatching.
+public protocol SupportsFunctions: CATProtocol {
+    /// Enables or disables a function bit.
+    func setFunction(_ function: RigFunction, enabled: Bool) async throws
+
+    /// Reads the current state of a function bit.
+    func getFunction(_ function: RigFunction) async throws -> Bool
+}

@@ -68,7 +68,8 @@ public actor DummyCATProtocol:
     SupportsSendCW,
     SupportsScanning,
     SupportsAntenna,
-    SupportsVFOOperations
+    SupportsVFOOperations,
+    SupportsFunctions
 {
 
     /// A no-op transport used purely to satisfy `CATProtocol`'s
@@ -141,6 +142,7 @@ public actor DummyCATProtocol:
 
     /// Selected antenna (1-based). Defaults to ANT 1.
     private var antennaIndex: Int = 1
+    private var functionState: [RigFunction: Bool] = [:]
 
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
@@ -460,6 +462,18 @@ public actor DummyCATProtocol:
         default:
             break  // no-op for ops the dummy doesn't model
         }
+    }
+
+    // MARK: - Function toggles
+
+    public func setFunction(_ function: RigFunction, enabled: Bool) async throws {
+        try requireConnected()
+        functionState[function] = enabled
+    }
+
+    public func getFunction(_ function: RigFunction) async throws -> Bool {
+        try requireConnected()
+        return functionState[function] ?? false
     }
 
     // MARK: - RIT / XIT

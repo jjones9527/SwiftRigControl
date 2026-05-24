@@ -289,6 +289,18 @@ public struct RigCapabilities: Sendable, Codable {
     /// services).
     public let supportedVFOOperations: Set<VFOOperation>
 
+    // MARK: - Function toggles (v1.1 parity)
+
+    /// On/off function bits the radio accepts (compressor, VOX,
+    /// CTCSS, lock, ATU enable, satellite mode, …). Empty set
+    /// means ``RigController/setFunction(_:enabled:)`` throws
+    /// ``RigError/unsupportedOperation(_:)`` for every function.
+    ///
+    /// Mirrors Hamlib's per-radio `has_set_func`/`has_get_func`
+    /// bitfields (filtered to the subset SwiftRigControl
+    /// exposes via ``RigFunction``).
+    public let supportedFunctions: Set<RigFunction>
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -333,7 +345,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportsProgrammedScan: Bool = false,
         supportsDeltaFScan: Bool = false,
         antennaCount: Int = 1,
-        supportedVFOOperations: Set<VFOOperation> = []
+        supportedVFOOperations: Set<VFOOperation> = [],
+        supportedFunctions: Set<RigFunction> = []
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -371,6 +384,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsDeltaFScan = supportsDeltaFScan
         self.antennaCount = max(1, antennaCount)
         self.supportedVFOOperations = supportedVFOOperations
+        self.supportedFunctions = supportedFunctions
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

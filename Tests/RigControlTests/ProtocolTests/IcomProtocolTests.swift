@@ -252,6 +252,72 @@ import Testing
             try await icomProtocol.performVFOOperation(.exchange)
         }
     }
+
+    // MARK: - Function toggles (v1.1 parity)
+
+    @Test func setFunctionCompressorOn() async throws {
+        // 0x16 0x44 0x01 → enable compressor.
+        let expected = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x16, 0x44, 0x01, 0xFD])
+        let ack = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
+        await mockTransport.setResponse(for: expected, response: ack)
+
+        try await icomProtocol.setFunction(.compressor, enabled: true)
+        #expect(await mockTransport.recordedWrites.last == expected)
+    }
+
+    @Test func setFunctionVoxOff() async throws {
+        let expected = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x16, 0x46, 0x00, 0xFD])
+        let ack = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
+        await mockTransport.setResponse(for: expected, response: ack)
+
+        try await icomProtocol.setFunction(.vox, enabled: false)
+        #expect(await mockTransport.recordedWrites.last == expected)
+    }
+
+    @Test func setFunctionLockOn() async throws {
+        let expected = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x16, 0x50, 0x01, 0xFD])
+        let ack = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
+        await mockTransport.setResponse(for: expected, response: ack)
+
+        try await icomProtocol.setFunction(.lock, enabled: true)
+        #expect(await mockTransport.recordedWrites.last == expected)
+    }
+
+    @Test func setFunctionTunerEnable() async throws {
+        // Tuner enable: 0x1C 0x01 0x01 (distinct from VFOOp.tune which is data=0x02).
+        let expected = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1C, 0x01, 0x01, 0xFD])
+        let ack = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
+        await mockTransport.setResponse(for: expected, response: ack)
+
+        try await icomProtocol.setFunction(.tuner, enabled: true)
+        #expect(await mockTransport.recordedWrites.last == expected)
+    }
+
+    @Test func setFunctionSatModeOn() async throws {
+        let expected = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x16, 0x5A, 0x01, 0xFD])
+        let ack = Data([0xFE, 0xFE, 0xE0, 0xA2, 0xFB, 0xFD])
+        await mockTransport.setResponse(for: expected, response: ack)
+
+        try await icomProtocol.setFunction(.satelliteMode, enabled: true)
+        #expect(await mockTransport.recordedWrites.last == expected)
+    }
+
+    @Test func getFunctionCompressorReadsTrue() async throws {
+        let query = Data([0xFE, 0xFE, 0xA2, 0xE0, 0x16, 0x44, 0xFD])
+        // Response: 0x16 0x44 0x01 = compressor is on.
+        let response = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x16, 0x44, 0x01, 0xFD])
+        await mockTransport.setResponse(for: query, response: response)
+
+        let on = try await icomProtocol.getFunction(.compressor)
+        #expect(on == true)
+    }
+
+    @Test func setFunctionUnsupportedThrows() async throws {
+        // Icom has no wire command for .mute — should throw.
+        await #expect(throws: RigError.self) {
+            try await icomProtocol.setFunction(.mute, enabled: true)
+        }
+    }
 }
 
 // Helper extension for MockTransport testing
