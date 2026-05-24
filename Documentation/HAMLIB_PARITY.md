@@ -1,8 +1,17 @@
 # Hamlib Parity Audit
 
 **Generated:** 2026-05-23 (Phase 5 + Phase 6 planning)
+**Last updated:** 2026-05-24 (v1.1 parity work complete)
 **Reference Hamlib version:** clone at `~/Developer/hamlib`, shallow @ master
-**SwiftRigControl HEAD:** post-Phase 5.2 (`261c633`)
+**SwiftRigControl HEAD:** post-v1.1-parity (`de26705`)
+
+> **Update — 2026-05-24:** The three v1.1.0 candidate items
+> identified in this audit (VFO operations, function toggles,
+> secondary levels) **all landed** on `main` between commits
+> `609eeac` and `de26705`. The audit text below remains as the
+> original baseline; the **"Triaged work list"** section at the
+> bottom has been updated to show what's now done vs. what's
+> still pending.
 
 This document is a thorough comparison of SwiftRigControl's
 exposed API surface against Hamlib's. It is intended to:
@@ -435,27 +444,37 @@ Kenwood, Elecraft. The remaining gap is mostly:
 
 ## Triaged work list
 
-### v1.1.0 candidates (close before release)
+### v1.1.0 candidates (status as of 2026-05-24)
 
-If "approaching Hamlib parity" matters for v1.1, these are the
-highest-impact additive wins. None require breaking changes.
+1. ✅ **VFO operations trait** — landed (`609eeac`). All eleven
+   ops modeled: copy, exchange, toggle, vfoToMemory, memoryToVFO,
+   memoryClear, stepUp, stepDown, bandUp, bandDown, tune.
+   Wire implementations for Icom CI-V, Kenwood text, Yaesu
+   newcat, Elecraft K-series. Per-radio sets seeded for verified
+   Icom radios plus all popular Kenwood / Yaesu / Elecraft
+   definitions.
+2. ✅ **Function toggles trait** — landed (`b58f6ee`). 21
+   curated `RigFunction` cases covering COMP, VOX, TONE, TSQL,
+   LOCK, TUNER, ANF, MN, SATMODE, MON, AFC, BC, NB2, APF, REV,
+   DUAL_WATCH, DIVERSITY, MUTE, SCOPE, RESUME, VSC. Per-radio
+   sets seeded from Hamlib's `IC*_FUNCS` masks (IC-7100,
+   IC-7600, IC-7300, IC-7610, IC-705, IC-9700, IC-7760,
+   IC-7300MK2) plus Kenwood/Yaesu/Elecraft standard sets.
+3. ✅ **Secondary levels** — landed (`de26705`). Six new
+   per-trait protocols: `SupportsMicGain`,
+   `SupportsCompressorLevel`, `SupportsMonitorGain`,
+   `SupportsVOXGain`, `SupportsVOXDelay`, `SupportsIFShift`.
+   Per-vendor wire implementations for Icom CI-V, Kenwood text,
+   Yaesu newcat. PBT_IN/OUT and NOTCHF deferred to a future
+   release; the in-protocol path is straightforward (more
+   0x14 sub-commands for Icom) and can ship as patch-level
+   work once a user surfaces them.
+4. ⏳ **Definition adds** for the currently-missing modern
+   handhelds and Lab599 TX-500. Still pending — these are
+   straightforward `RigCapabilities` literals; the protocol
+   infrastructure to back them already exists.
 
-1. **VFO operations trait** (5–6 most-used ops: CPY, XCHG,
-   FROM_VFO, TO_VFO, TUNE, MCL). One new trait, one new enum,
-   wire commands well-documented in Hamlib per-radio source.
-2. **Function toggles trait** for the common bits (COMP, VOX,
-   TONE, TSQL, LOCK, TUNER, ANF, MN, SATMODE, MUTE, REV,
-   DUAL_WATCH, SCOPE, MON, AFC). One new trait, one new enum,
-   one `Set<RigFunction>` on RigCapabilities.
-3. **Secondary levels** (MICGAIN, COMP-level, MONITOR_GAIN,
-   VOXGAIN, VOXDELAY, IF-shift, PBT_IN/OUT, NOTCHF). Either
-   per-trait protocols or a single `SupportsExtendedLevels`
-   trait with enum keys (latter is more Hamlib-shaped).
-4. **Definition adds** for ~5 currently-missing radios that
-   look common: TH-D75 (2023 D-STAR HT), ID-31/51/52 (D-STAR
-   HTs we don't have), Lab599 TX-500, IC-R30.
-
-### Phase 6 candidates
+### Phase 6 candidates (post-v1.1)
 
 1. **Parm trait** (BACKLIGHT, BEEP, TIME, KEYLIGHT).
 2. **Spectrum scope streaming** (SPECTRUM_*) — already roadmapped.
@@ -476,14 +495,23 @@ highest-impact additive wins. None require breaking changes.
 
 ---
 
-## Recommended next step
+## Status — 2026-05-24
 
-**Before tagging v1.0.7** (a documentation-only patch release of
-what's on `main`), consider whether to roll this audit into a
-v1.1.0 that includes at least items 1 and 2 from the "v1.1.0
-candidates" list — VFO operations + function toggles. That
-delivers the most-felt parity improvement in a single batch
-and lines up with the post-Phase-5 architectural reshape as
-the right milestone for adopters to pin against.
+Items 1–3 from the original v1.1.0 candidate list are
+**complete on `main`**. The library now exposes:
 
-Items 3 and 4 can ship in v1.1.x patch releases as they land.
+- 21 compound VFO operations (Hamlib `RIG_OP_*` parity).
+- 21 function toggles (Hamlib `RIG_FUNC_*` curated parity).
+- 6 secondary level controls (mic gain, compressor level,
+  monitor, VOX gain/delay, IF shift).
+
+The rigctld TCP bridge surfaces all three to existing tools
+(WSJT-X, fldigi, JS8Call) via the matching `vfo_op`,
+`set_func`/`get_func`, and `set_level`/`get_level` tokens.
+
+**Remaining for v1.1.0:**
+
+- Item 4 (definition adds for TH-D75, ID-31/51/52, Lab599
+  TX-500, IC-R30) is straightforward `RigCapabilities` literal
+  work; the protocol infrastructure already exists.
+- A v1.1.0 release tag is appropriate once those land.

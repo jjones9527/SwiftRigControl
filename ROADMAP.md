@@ -830,6 +830,56 @@ concrete protocol's conformance list is its capability contract:
 
 ---
 
+## Phase 5.5 — Hamlib parity closure (v1.1)
+
+**Goal:** close the three highest-impact gaps identified in the
+`Documentation/HAMLIB_PARITY.md` audit before tagging v1.1.0.
+
+### 5.5.1 Compound VFO operations
+
+- [x] **Landed (`609eeac`).** New `SupportsVFOOperations` trait,
+      `VFOOperation` enum mirroring Hamlib `RIG_OP_*`, and
+      `RigController.performVFOOperation(_:)`. Wire commands for
+      Icom CI-V (0x07/0x09/0x0A/0x0B/0x1C), Kenwood text
+      (UP/DN/BU/BD/MC/MR/AC), Yaesu newcat (AB/SV/AM/MA/UP/DN/
+      BU0/BD0/AC002), and the Kenwood-shared subset on Elecraft.
+
+### 5.5.2 Function toggles
+
+- [x] **Landed (`b58f6ee`).** New `SupportsFunctions` trait,
+      `RigFunction` enum (21 curated bits from Hamlib's
+      `RIG_FUNC_*` universe), and per-radio
+      `supportedFunctions: Set<RigFunction>`. Per-radio masks
+      seeded from Hamlib for the verified Icom radios.
+
+### 5.5.3 Secondary level controls
+
+- [x] **Landed (`de26705`).** Six new per-trait protocols:
+      `SupportsMicGain`, `SupportsCompressorLevel` (level,
+      distinct from on/off toggle), `SupportsMonitorGain`,
+      `SupportsVOXGain`, `SupportsVOXDelay`, `SupportsIFShift`.
+      PBT_IN/OUT and NOTCHF deferred to post-v1.1 patch work.
+
+### 5.5.4 rigctld bridge coverage
+
+- [x] **Landed (`de26705`).** New `vfo_op` command (Hamlib `G`
+      and `\vfo_op`); extended `set_func`/`get_func` to map 21
+      Hamlib bit names to `RigFunction`; extended
+      `set_level`/`get_level` for the six secondary-level
+      tokens.
+
+### 5.5.5 Definition adds (remaining for v1.1.0)
+
+- [ ] **TH-D75** (2023 Kenwood D-STAR HT). Kenwood text
+      protocol, derive from TH-D74 capabilities.
+- [ ] **ID-31/51/52** (Icom D-STAR HTs). Derive from
+      `id51.c` / `id52plus.c` in Hamlib.
+- [ ] **IC-92D** (Icom dual-band D-STAR HT).
+- [ ] **Lab599 TX-500** (portable HF, Kenwood-like protocol).
+- [ ] **IC-R30** (wideband digital receiver).
+
+---
+
 ## Phase 6 — Beyond-Hamlib differentiators
 
 **Goal:** features Hamlib does not have or does poorly.

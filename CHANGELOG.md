@@ -17,6 +17,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Compound VFO operations** (Hamlib parity, item 1 of v1.1).
+  New `RigController.performVFOOperation(_:)` exposes the
+  one-tap operations every modern radio's front panel has:
+  `.exchange` (A↔B swap), `.copyVFO` (A→B copy),
+  `.vfoToMemory` / `.memoryToVFO`, `.memoryClear`, `.tune` (ATU
+  cycle), and `.stepUp`/`.stepDown`/`.bandUp`/`.bandDown` for
+  text-protocol radios. Mirrors Hamlib's `RIG_OP_*` bitfield.
+  Per-radio capability gated by
+  `RigCapabilities.supportedVFOOperations`. Wire commands
+  cross-checked against `rigs/icom/icom.c::icom_vfo_op`,
+  `rigs/kenwood/kenwood.c::kenwood_vfo_op`,
+  `rigs/yaesu/newcat.c::newcat_vfo_op`.
+
+- **Function toggles** (Hamlib parity, item 2 of v1.1). New
+  `RigController.setFunction(_:enabled:)` /
+  `getFunction(_:)` expose 21 on/off bits curated from
+  Hamlib's `RIG_FUNC_*` universe: compressor, VOX, CTCSS
+  tone/squelch, lock, ATU enable, auto/manual notch, satellite
+  mode, monitor, AFC, beat cancel, NB2, APF, reverse split,
+  dual watch, diversity, mute, scope, scan resume, voice
+  squelch. Per-radio capability gated by
+  `RigCapabilities.supportedFunctions`. Verified Icom radios
+  (IC-7100, IC-7600, IC-7300, IC-7610, IC-705, IC-9700,
+  IC-7760, IC-7300MK2) seeded from their respective Hamlib
+  `IC*_FUNCS` masks.
+
+- **Secondary level controls** (Hamlib parity, item 3 of
+  v1.1). Six new per-trait protocols: `SupportsMicGain`,
+  `SupportsCompressorLevel` (level, distinct from the on/off
+  function toggle), `SupportsMonitorGain`, `SupportsVOXGain`,
+  `SupportsVOXDelay`, `SupportsIFShift`. Per-vendor wire
+  implementations for Icom CI-V (0x14 sub-cmd family), Kenwood
+  text (MG/PL/ML/VG/VD/IS), and Yaesu newcat (MG/PL/ML0/VG/
+  VD/IS0).
+
+- **rigctld bridge: `vfo_op` command** (Hamlib `G` /
+  `\vfo_op`). Maps all Hamlib VFO-op tokens (CPY, XCHG, FROM_VFO,
+  TO_VFO, MCL, UP, DOWN, BAND_UP, BAND_DOWN, TUNE, TOGGLE) to
+  `performVFOOperation()`. Tools like WSJT-X that send these
+  tokens now work without further client changes.
+
+- **rigctld bridge: 21 new `set_func`/`get_func` tokens**.
+  COMP, VOX, TONE, TSQL, LOCK, TUNER, ANF, MN, SATMODE, MON,
+  AFC, BC, NB2, APF, REV, DUAL_WATCH, DIVERSITY, MUTE, SCOPE,
+  RESUME, VSC, on top of the existing SBKIN/FBKIN.
+
+- **rigctld bridge: 6 new `set_level`/`get_level` tokens**.
+  MICGAIN, COMP, MONITOR_GAIN, VOXGAIN, VOXDELAY, IF_SHIFT.
+  (IF_SHIFT named distinctly to avoid collision with the
+  pre-existing IF=IFFILTER token — vendor extension to
+  Hamlib's `RIG_LEVEL_IF`.)
+
 ### Changed
 - **`setPower` parameter renamed** from `watts` to `level` across
   `CATProtocol`, every conformer (`IcomCIVProtocol`,
