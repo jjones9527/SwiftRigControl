@@ -41,6 +41,16 @@ CONFORMANCE = {
     "selectVFOCommand","setFrequencyCommand","readFrequencyCommand","parseFrequencyResponse",
     "civAddress","vfoModel","requiresModeFilter","echoesCommands","powerUnits",
     "errorDescription","recoverySuggestion","description",
+    # v1.1 parity trait method names — implementations inherit
+    # docs from the trait protocol in CATProtocolTraits.swift.
+    "performVFOOperation",
+    "setFunction","getFunction",
+    "setMicGain","getMicGain",
+    "setCompressorLevel","getCompressorLevel",
+    "setMonitorGain","getMonitorGain",
+    "setVOXGain","getVOXGain",
+    "setVOXDelay","getVOXDelay",
+    "setIFShift","getIFShift",
 }
 
 DECL_RE = re.compile(
