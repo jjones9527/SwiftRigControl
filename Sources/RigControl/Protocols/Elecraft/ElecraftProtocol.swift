@@ -36,7 +36,8 @@ public actor ElecraftProtocol:
     SupportsAttenuator,
     SupportsRemotePowerState,
     SupportsMemoryChannels,
-    SupportsAntenna
+    SupportsAntenna,
+    SupportsVFOOperations
 {
     /// The serial transport for communication
     public let transport: any SerialTransport

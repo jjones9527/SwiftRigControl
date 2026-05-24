@@ -53,7 +53,10 @@ extension RadioCapabilitiesDatabase {
         supportsSelectedMemoryScan: true,
         supportsPriorityScan: false,
         supportsProgrammedScan: true,
-        supportsDeltaFScan: false
+        supportsDeltaFScan: false,
+        // VFO ops — IC-9700 has no internal ATU, so no TUNE.
+        // Matches Hamlib IC9700_VFO_OPS.
+        supportedVFOOperations: .icomNoATU
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -115,7 +118,10 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // VFO ops — IC-7610 uses the standard set (Hamlib uses
+        // IC7300_VFO_OPS for both — same family).
+        supportedVFOOperations: .icomStandard
     )
 
     /// Icom IC-7300 - HF/6m SDR transceiver
@@ -177,7 +183,9 @@ extension RadioCapabilitiesDatabase {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // VFO ops — IC-7300 standard set per Hamlib IC7300_VFO_OPS.
+        supportedVFOOperations: .icomStandard
     )
 
     /// Icom IC-7600 - HF/6m transceiver
@@ -260,7 +268,10 @@ extension RadioCapabilitiesDatabase {
         supportsDeltaFScan: true,
         // Antennas — IC-7600 has two switchable antenna jacks
         // (HF). Per Hamlib IC7600_ANTS = RIG_ANT_1 | RIG_ANT_2.
-        antennaCount: 2
+        antennaCount: 2,
+        // VFO ops — matches Hamlib IC7600_VFO_OPS
+        // (CPY|XCHG|FROM_VFO|TO_VFO|MCL|TUNE).
+        supportedVFOOperations: .icomStandard
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -356,7 +367,10 @@ extension RadioCapabilitiesDatabase {
         // Antennas — IC-7100 has two HF antenna jacks. Per Hamlib
         // IC7100_HF_ANTS = RIG_ANT_1 | RIG_ANT_2. The VHF/UHF
         // jack is fixed and not software-selectable.
-        antennaCount: 2
+        antennaCount: 2,
+        // VFO ops — matches Hamlib IC7100_VFO_OPS
+        // (FROM_VFO|TO_VFO|CPY|MCL|XCHG|TUNE).
+        supportedVFOOperations: .icomStandard
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -428,7 +442,10 @@ extension RadioCapabilitiesDatabase {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        // VFO ops — IC-705 uses IC7300_VFO_OPS per Hamlib
+        // (rigs/icom/ic7300.c:1824).
+        supportedVFOOperations: .icomStandard
     )
 
     /// Icom IC-703 - Portable HF/6m 10W QRP transceiver
@@ -512,7 +529,10 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // VFO ops — IC-905 lacks XCHG; TUNE drives an external
+        // tuner accessory. Matches Hamlib IC905_VFO_OPS.
+        supportedVFOOperations: .icom905
     )
 
     // MARK: - Icom IC-7760
@@ -556,7 +576,9 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
+        supportedVFOOperations: .icomStandard
     )
 
     // MARK: - Icom IC-7300MK2
@@ -599,6 +621,8 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        // VFO ops — IC-7300MK2 inherits the IC-7300 family set.
+        supportedVFOOperations: .icomStandard
     )
 }

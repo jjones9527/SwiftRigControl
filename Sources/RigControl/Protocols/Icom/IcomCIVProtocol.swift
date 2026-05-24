@@ -30,7 +30,8 @@ public actor IcomCIVProtocol:
     SupportsCWKeyer,
     SupportsSendCW,
     SupportsScanning,
-    SupportsAntenna
+    SupportsAntenna,
+    SupportsVFOOperations
 {
     /// The serial transport for communication
     public let transport: any SerialTransport

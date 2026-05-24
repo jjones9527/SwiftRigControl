@@ -54,7 +54,8 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TS-890S - HF/6m transceiver with dual receiver
@@ -89,7 +90,8 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TS-990S - HF/6m flagship transceiver with dual receiver
@@ -124,7 +126,8 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TM-D710GA - VHF/UHF dual-band transceiver
@@ -187,7 +190,8 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TS-2000 - HF/VHF/UHF all-mode transceiver
@@ -238,7 +242,8 @@ extension RadioCapabilitiesDatabase {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TS-590S - HF/6m transceiver (earlier version of TS-590SG)
@@ -272,7 +277,8 @@ extension RadioCapabilitiesDatabase {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: .kenwoodStandard
     )
 
     /// Kenwood TS-870S - HF/6m 100W transceiver (classic flagship)

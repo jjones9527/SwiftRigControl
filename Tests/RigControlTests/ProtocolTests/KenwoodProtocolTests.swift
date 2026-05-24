@@ -453,4 +453,51 @@ import Testing
         #expect(cmd1 == "FA00014230000;")
         #expect(cmd2 == "FB00007100000;")
     }
+
+    // MARK: - VFO operations (v1.1 parity)
+
+    @Test func vfoOpStepUp() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.performVFOOperation(.stepUp)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(writes.count == 1)
+        #expect(String(data: writes[0], encoding: .ascii) == "UP;")
+    }
+
+    @Test func vfoOpBandDown() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.performVFOOperation(.bandDown)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "BD;")
+    }
+
+    @Test func vfoOpMemoryToVFO() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.performVFOOperation(.memoryToVFO)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "MR;")
+    }
+
+    @Test func vfoOpTune() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        try await kenwoodProtocol.performVFOOperation(.tune)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "AC111;")
+    }
+
+    @Test func vfoOpUnsupportedExchangeThrows() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        await #expect(throws: RigError.self) {
+            try await kenwoodProtocol.performVFOOperation(.exchange)
+        }
+    }
 }

@@ -277,6 +277,18 @@ public struct RigCapabilities: Sendable, Codable {
     /// `IC7600_ANTS = RIG_ANT_1 | RIG_ANT_2` → `antennaCount = 2`).
     public let antennaCount: Int
 
+    // MARK: - VFO operations (v1.1 parity)
+
+    /// Compound VFO operations the radio accepts (A↔B swap, A→B
+    /// copy, memory write/recall, ATU tune, …). Empty set means
+    /// ``RigController/performVFOOperation(_:)`` throws
+    /// ``RigError/unsupportedOperation(_:)`` for every op.
+    ///
+    /// Mirrors Hamlib's per-radio `vfo_ops` mask (the subset of
+    /// `RIG_OP_*` bits the radio's `vfo_op` handler actually
+    /// services).
+    public let supportedVFOOperations: Set<VFOOperation>
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -320,7 +332,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportsPriorityScan: Bool = false,
         supportsProgrammedScan: Bool = false,
         supportsDeltaFScan: Bool = false,
-        antennaCount: Int = 1
+        antennaCount: Int = 1,
+        supportedVFOOperations: Set<VFOOperation> = []
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -357,6 +370,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsProgrammedScan = supportsProgrammedScan
         self.supportsDeltaFScan = supportsDeltaFScan
         self.antennaCount = max(1, antennaCount)
+        self.supportedVFOOperations = supportedVFOOperations
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

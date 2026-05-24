@@ -46,7 +46,8 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: .yaesuStandard
     )
 
     // MARK: - Yaesu FT-950

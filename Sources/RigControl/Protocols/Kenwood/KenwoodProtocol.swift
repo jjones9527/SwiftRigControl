@@ -27,7 +27,8 @@ public actor KenwoodProtocol:
     SupportsPreamp,
     SupportsAttenuator,
     SupportsRemotePowerState,
-    SupportsMemoryChannels
+    SupportsMemoryChannels,
+    SupportsVFOOperations
 {
     /// The serial transport for communication
     public let transport: any SerialTransport

@@ -375,4 +375,50 @@ import Testing
         #expect(cmd2 == "FA00014230000;")
         #expect(cmd3 == "FB00014235000;")
     }
+
+    // MARK: - VFO operations (v1.1 parity)
+
+    @Test func vfoOpExchange() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.performVFOOperation(.exchange)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "SV;")
+    }
+
+    @Test func vfoOpCopyVFO() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.performVFOOperation(.copyVFO)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "AB;")
+    }
+
+    @Test func vfoOpVFOToMemory() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.performVFOOperation(.vfoToMemory)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "AM;")
+    }
+
+    @Test func vfoOpTune() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        try await yaesuProtocol.performVFOOperation(.tune)
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[0], encoding: .ascii) == "AC002;")
+    }
+
+    @Test func vfoOpMemoryClearUnsupported() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+        await #expect(throws: RigError.self) {
+            try await yaesuProtocol.performVFOOperation(.memoryClear)
+        }
+    }
 }

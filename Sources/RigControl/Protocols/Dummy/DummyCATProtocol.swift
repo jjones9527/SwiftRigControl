@@ -67,7 +67,8 @@ public actor DummyCATProtocol:
     SupportsCWKeyer,
     SupportsSendCW,
     SupportsScanning,
-    SupportsAntenna
+    SupportsAntenna,
+    SupportsVFOOperations
 {
 
     /// A no-op transport used purely to satisfy `CATProtocol`'s
@@ -435,6 +436,30 @@ public actor DummyCATProtocol:
             throw RigError.unsupportedOperation("Antenna selection not supported by this radio")
         }
         return antennaIndex
+    }
+
+    // MARK: - VFO operations
+
+    public func performVFOOperation(_ op: VFOOperation) async throws {
+        try requireConnected()
+        // The dummy "performs" any op by mutating the in-memory
+        // state where it makes sense. Real-radio surface tests
+        // are in the per-vendor protocol test files; this just
+        // proves the trait wires up.
+        switch op {
+        case .copyVFO:
+            // Active VFO → other VFO.
+            let other: VFO = (currentVFO == .a) ? .b : .a
+            frequencyByVFO[other] = frequencyByVFO[currentVFO]
+            modeByVFO[other] = modeByVFO[currentVFO]
+        case .exchange, .toggle:
+            let aFreq = frequencyByVFO[.a]
+            let bFreq = frequencyByVFO[.b]
+            frequencyByVFO[.a] = bFreq
+            frequencyByVFO[.b] = aFreq
+        default:
+            break  // no-op for ops the dummy doesn't model
+        }
     }
 
     // MARK: - RIT / XIT

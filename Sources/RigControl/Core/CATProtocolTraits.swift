@@ -209,3 +209,16 @@ public protocol SupportsAntenna: CATProtocol {
     func selectAntenna(_ index: Int) async throws
     func getAntenna() async throws -> Int
 }
+
+// MARK: - VFO operations (v1.1 parity)
+
+/// Conforming radios support compound VFO operations
+/// (A↔B swap, A→B copy, memory write/recall, ATU tune, …).
+/// Which specific operations a radio supports is gated by
+/// ``RigCapabilities/supportedVFOOperations``.
+public protocol SupportsVFOOperations: CATProtocol {
+    /// Performs the requested compound VFO operation.
+    /// - Throws: ``RigError/unsupportedOperation(_:)`` if the
+    ///   specific op isn't supported by this radio.
+    func performVFOOperation(_ op: VFOOperation) async throws
+}
