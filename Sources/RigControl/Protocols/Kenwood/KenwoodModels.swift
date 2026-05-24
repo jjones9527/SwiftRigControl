@@ -156,6 +156,23 @@ extension RadioDefinition {
         }
     )
 
+    /// Kenwood TH-D75A tri-band handheld with D-STAR and APRS
+    /// (2023 successor to the TH-D74). CAT command set is
+    /// backward-compatible with the TH-D74, so we reuse
+    /// `KenwoodProtocol`.
+    public static let kenwoodTHD75 = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TH-D75",
+        defaultBaudRate: 9600,
+        capabilities: RadioCapabilitiesDatabase.kenwoodTHD75,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.kenwoodTHD75
+            )
+        }
+    )
+
     /// Kenwood TH-D72A dual-band handheld with APRS and GPS
     ///
     /// Uses THD72Protocol (CR-terminated, FO-string based) rather than the

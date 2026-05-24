@@ -37,6 +37,7 @@ public struct RadioDefinition: Sendable {
         case kenwood = "Kenwood"
         case xiegu = "Xiegu"
         case tentec = "Ten-Tec"
+        case lab599 = "Lab599"
 
         /// Generic in-memory dummy radio (no real manufacturer). Used
         /// by `RadioDefinition.dummy(...)` for previews, demo apps,

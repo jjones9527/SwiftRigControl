@@ -70,6 +70,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pre-existing IF=IFFILTER token — vendor extension to
   Hamlib's `RIG_LEVEL_IF`.)
 
+- **Seven new radio definitions** (Hamlib parity, item 4 of
+  v1.1). Cross-checked against the corresponding Hamlib
+  `rigs/icom/` and `rigs/kenwood/` source files:
+  - **Icom ID-31A/E** (2012 single-band UHF D-STAR HT).
+  - **Icom ID-51A/E** and ID-51A Plus2 (2012/2016 dual-band V/U
+    D-STAR HT).
+  - **Icom ID-52A/E** and ID-52A Plus2 (2020/2024 dual-band V/U
+    D-STAR HT — successor to ID-51).
+  - **Icom IC-92AD / IC-E92D** (2008 dual-band D-STAR HT —
+    predecessor to ID-51).
+  - **Icom IC-R30** (2018 wideband digital handheld receiver,
+    100 kHz–3.3 GHz).
+  - **Kenwood TH-D75A** (2023 tri-band D-STAR/APRS HT —
+    successor to TH-D74).
+  - **Lab599 TX-500** (modern portable HF transceiver — uses
+    Kenwood-compatible CAT, introduces new manufacturer brand
+    tag `RadioDefinition.Manufacturer.lab599`).
+
+  All seven are definition-only (`VerificationStatus.definition`)
+  — definitions match the manufacturer's CAT documentation and
+  Hamlib precedent, but behavior is not field-validated. Each
+  has a smoke test confirming it constructs and connects via
+  the mock transport.
+
 ### Changed
 - **`setPower` parameter renamed** from `watts` to `level` across
   `CATProtocol`, every conformer (`IcomCIVProtocol`,

@@ -259,4 +259,125 @@ extension RadioDefinition {
         )
     }
 
+    // MARK: - D-STAR Handhelds (v1.1 parity additions)
+
+    /// Icom ID-31A/E single-band UHF D-STAR handheld (2012).
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xA0)
+    /// - Returns: RadioDefinition for ID-31
+    public static func icomID31(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "ID-31",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomID31,
+            civAddress: civAddress ?? IcomRadioModel.id31.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .id31,
+                    commandSet: StandardIcomCommandSet.id31,
+                    capabilities: RadioCapabilitiesDatabase.icomID31
+                )
+            }
+        )
+    }
+
+    /// Icom ID-51A/E / ID-51A Plus2 dual-band V/U D-STAR
+    /// handheld (2012 / 2016).
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x86)
+    /// - Returns: RadioDefinition for ID-51
+    public static func icomID51(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "ID-51",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomID51,
+            civAddress: civAddress ?? IcomRadioModel.id51.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .id51,
+                    commandSet: StandardIcomCommandSet.id51,
+                    capabilities: RadioCapabilitiesDatabase.icomID51
+                )
+            }
+        )
+    }
+
+    /// Icom ID-52A/E / ID-52A Plus2 dual-band V/U D-STAR
+    /// handheld (2020 / 2024).
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0xB4)
+    /// - Returns: RadioDefinition for ID-52
+    public static func icomID52(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "ID-52",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomID52,
+            civAddress: civAddress ?? IcomRadioModel.id52.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .id52,
+                    commandSet: StandardIcomCommandSet.id52,
+                    capabilities: RadioCapabilitiesDatabase.icomID52
+                )
+            }
+        )
+    }
+
+    /// Icom IC-92AD / IC-E92D dual-band D-STAR handheld (2008).
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x01 —
+    ///   unusual for Icom; per Hamlib `ic92d.c`).
+    /// - Returns: RadioDefinition for IC-92D
+    public static func icomIC92D(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-92D",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomIC92D,
+            civAddress: civAddress ?? IcomRadioModel.ic92d.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .ic92d,
+                    commandSet: StandardIcomCommandSet.ic92d,
+                    capabilities: RadioCapabilitiesDatabase.icomIC92D
+                )
+            }
+        )
+    }
+
+    /// Icom IC-R30 wideband digital handheld receiver (2018).
+    /// 100 kHz–3.3 GHz coverage; receiver only — `setPTT` and
+    /// `setPower` will be rejected by the radio.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x9C)
+    /// - Returns: RadioDefinition for IC-R30
+    public static func icomICR30(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-R30",
+            defaultBaudRate: 9600,
+            capabilities: RadioCapabilitiesDatabase.icomICR30,
+            civAddress: civAddress ?? IcomRadioModel.icr30.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icr30,
+                    commandSet: StandardIcomCommandSet.icR30,
+                    capabilities: RadioCapabilitiesDatabase.icomICR30
+                )
+            }
+        )
+    }
 }

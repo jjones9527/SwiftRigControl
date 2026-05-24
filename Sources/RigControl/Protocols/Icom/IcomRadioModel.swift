@@ -165,6 +165,18 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// ID-4100 VHF/UHF dual-band mobile with D-STAR
     case id4100 = "ID-4100"
 
+    /// ID-31A/E single-band UHF D-STAR handheld
+    case id31 = "ID-31"
+
+    /// ID-51A/E / ID-51A Plus2 dual-band V/U D-STAR handheld
+    case id51 = "ID-51"
+
+    /// ID-52A/E / ID-52A Plus2 dual-band V/U D-STAR handheld
+    case id52 = "ID-52"
+
+    /// IC-92AD / IC-E92D dual-band D-STAR handheld
+    case ic92d = "IC-92D"
+
     // MARK: - Receivers
 
     /// IC-R8600 Wideband communications receiver
@@ -238,6 +250,10 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7000: return 0x70
         case .id5100: return 0x8C
         case .id4100: return 0x9A
+        case .id31:   return 0xA0
+        case .id51:   return 0x86
+        case .id52:   return 0xB4
+        case .ic92d:  return 0x01
 
         // Receivers
         case .icr8600: return 0x96
@@ -255,7 +271,8 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio supports D-STAR digital voice
     public var supportsDSTAR: Bool {
         switch self {
-        case .ic7100, .ic9700, .ic9100, .ic705, .ic2820h, .id4100, .id5100:
+        case .ic7100, .ic9700, .ic9100, .ic705, .ic2820h, .id4100, .id5100,
+             .id31, .id51, .id52, .ic92d:
             return true
         default:
             return false
@@ -277,7 +294,8 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         switch self {
         case .ic7600, .ic7760, .ic7610, .ic7851, .ic7850, .ic7800,
              .ic756, .ic756pro, .ic756proII, .ic756proIII,
-             .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h, .id4100, .id5100:
+             .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h, .id4100, .id5100,
+             .id51, .id52, .ic92d:
             return true
         default:
             return false

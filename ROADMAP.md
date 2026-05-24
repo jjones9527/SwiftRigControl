@@ -868,15 +868,20 @@ concrete protocol's conformance list is its capability contract:
       `set_level`/`get_level` for the six secondary-level
       tokens.
 
-### 5.5.5 Definition adds (remaining for v1.1.0)
+### 5.5.5 Definition adds — done
 
-- [ ] **TH-D75** (2023 Kenwood D-STAR HT). Kenwood text
-      protocol, derive from TH-D74 capabilities.
-- [ ] **ID-31/51/52** (Icom D-STAR HTs). Derive from
-      `id51.c` / `id52plus.c` in Hamlib.
-- [ ] **IC-92D** (Icom dual-band D-STAR HT).
-- [ ] **Lab599 TX-500** (portable HF, Kenwood-like protocol).
-- [ ] **IC-R30** (wideband digital receiver).
+- [x] **TH-D75** — `.kenwoodTHD75`. Tri-band D-STAR/APRS HT,
+      reuses `KenwoodProtocol`.
+- [x] **ID-31** — `.icomID31()`. Single-band UHF D-STAR HT.
+- [x] **ID-51** — `.icomID51()`. Dual-band V/U D-STAR HT.
+- [x] **ID-52** — `.icomID52()`. Dual-band V/U D-STAR HT
+      (successor to ID-51).
+- [x] **IC-92D** — `.icomIC92D()`. Dual-band D-STAR HT
+      (predecessor to ID-51 family).
+- [x] **IC-R30** — `.icomICR30()`. Wideband digital handheld
+      receiver, 100 kHz–3.3 GHz.
+- [x] **Lab599 TX-500** — `.lab599TX500`. Portable HF;
+      introduces the `lab599` manufacturer brand tag.
 
 ---
 

@@ -182,6 +182,12 @@ extension IcomCIVProtocol {
             return 99
         case .id5100, .id4100:
             return 99
+        case .id31:
+            return 500   // Hamlib id31.c — 500 memory channels.
+        case .id51, .id52:
+            return 500   // Hamlib id51.c / id52plus.c.
+        case .ic92d:
+            return 1304  // Hamlib ic92d.c:143-151 — 1200 regular + 100 scan-edge + 4 call.
         case .icr8600, .icr75, .icr30, .icr9500:
             return 99
         }

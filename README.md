@@ -103,10 +103,17 @@ definition-only.
 - **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x8C)
 - **ID-4100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x9A)
 
+**D-STAR Handhelds:**
+- **ID-31A/E** - Single-band UHF D-STAR HT (5W, CI-V: 0xA0)
+- **ID-51A/E / ID-51A Plus2** - Dual-band V/U D-STAR HT (5W, CI-V: 0x86)
+- **ID-52A/E / ID-52A Plus2** - Dual-band V/U D-STAR HT (5W, CI-V: 0xB4)
+- **IC-92AD / IC-E92D** - Dual-band D-STAR HT (5W, CI-V: 0x01)
+
 **Receivers:**
 - **IC-R9500** - Professional wideband receiver (1.2kHz-3.3GHz, CI-V: 0x72)
 - **IC-R8600** - Wideband receiver (10kHz-3GHz, CI-V: 0x96)
 - **IC-R75** - HF receiver (30kHz-60MHz, CI-V: 0x5A)
+- **IC-R30** - Wideband digital handheld receiver (100kHz-3.3GHz, CI-V: 0x9C)
 
 ### Yaesu (CAT Protocol) — 21 models
 
@@ -177,8 +184,13 @@ definition-only.
 **VHF/UHF:**
 - **TM-D710** - VHF/UHF dual-band mobile (50W, 57600 baud)
 - **TM-V71** - VHF/UHF dual-band mobile (50W, 57600 baud)
+- **TH-D75** - Tri-band handheld with D-STAR and APRS (5W, 9600 baud)
 - **TH-D74** - VHF/UHF handheld with D-STAR (5W, 57600 baud)
 - **TH-D72A** - VHF/UHF handheld with APRS (5W, 57600 baud)
+
+### Lab599 — 1 model
+
+- **TX-500** - Portable HF transceiver (10W, Kenwood-compatible CAT)
 
 ## Installation
 

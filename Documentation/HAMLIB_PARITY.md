@@ -469,10 +469,14 @@ Kenwood, Elecraft. The remaining gap is mostly:
    release; the in-protocol path is straightforward (more
    0x14 sub-commands for Icom) and can ship as patch-level
    work once a user surfaces them.
-4. ⏳ **Definition adds** for the currently-missing modern
-   handhelds and Lab599 TX-500. Still pending — these are
-   straightforward `RigCapabilities` literals; the protocol
-   infrastructure to back them already exists.
+4. ✅ **Definition adds** — landed. Seven new radios shipped:
+   ID-31A/E, ID-51A/E (+ Plus2), ID-52A/E (+ Plus2), IC-92AD/
+   E92D, IC-R30, TH-D75A, and Lab599 TX-500. All
+   cross-checked against the corresponding Hamlib source files
+   and exposed through new factory functions on
+   `RadioDefinition` (`.icomID31()`, `.icomID51()`,
+   `.icomID52()`, `.icomIC92D()`, `.icomICR30()`,
+   `.kenwoodTHD75`, `.lab599TX500`).
 
 ### Phase 6 candidates (post-v1.1)
 
@@ -509,9 +513,5 @@ The rigctld TCP bridge surfaces all three to existing tools
 (WSJT-X, fldigi, JS8Call) via the matching `vfo_op`,
 `set_func`/`get_func`, and `set_level`/`get_level` tokens.
 
-**Remaining for v1.1.0:**
-
-- Item 4 (definition adds for TH-D75, ID-31/51/52, Lab599
-  TX-500, IC-R30) is straightforward `RigCapabilities` literal
-  work; the protocol infrastructure already exists.
-- A v1.1.0 release tag is appropriate once those land.
+**All four v1.1.0 candidate items from this audit are
+complete.** A v1.1.0 release tag is appropriate any time.

@@ -219,4 +219,47 @@ extension StandardIcomCommandSet {
     public static var icR9500: StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x72, vfoModel: .targetable)
     }
+
+    // MARK: - D-STAR Handhelds (v1.1 parity additions)
+
+    /// IC-R30 wideband digital handheld receiver (2018)
+    /// - VFO Model: Main/Sub (per Hamlib `icr30.c`)
+    /// - 9600 baud default, receiver only (no PTT/power control)
+    public static var icR30: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x9C, vfoModel: .mainSub)
+    }
+
+    /// ID-31A/E single-band UHF D-STAR handheld (2012)
+    /// - VFO Model: Current Only (no targetable VFO)
+    /// - 9600 baud, 5W UHF, FM + D-STAR
+    /// - Note: Use the SP (speaker) port for CAT; the Data port
+    ///   is firmware-upgrade only (per Hamlib `id31.c`).
+    public static var id31: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0xA0, vfoModel: .currentOnly)
+    }
+
+    /// ID-51A/E / ID-51A Plus2 dual-band V/U D-STAR handheld (2012/2016)
+    /// - VFO Model: Main/Sub (logical dual-watch)
+    /// - 9600 baud, 5W / 25W (EU) or 50W (USA) high power, FM + D-STAR
+    /// - Note: Use the SP port for CAT (Data port is firmware-only).
+    public static var id51: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x86, vfoModel: .mainSub)
+    }
+
+    /// ID-52A/E / ID-52A Plus2 dual-band V/U D-STAR handheld (2020/2024)
+    /// - VFO Model: Main/Sub (logical dual-watch)
+    /// - 9600 baud, 5W max, FM + D-STAR. Successor to ID-51.
+    /// - Per Hamlib `id52plus.c`, uses 0xB4 default CI-V address.
+    public static var id52: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0xB4, vfoModel: .mainSub)
+    }
+
+    /// IC-92AD / IC-E92D dual-band D-STAR handheld (2008)
+    /// - VFO Model: Targetable (A = broadband RX, B = 2m/70cm)
+    /// - 9600 baud, 5W. Predecessor to the ID-51 family.
+    /// - Per Hamlib `ic92d.c`, uses 0x01 default address (unusual)
+    ///   and full-duplex serial.
+    public static var ic92d: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .targetable)
+    }
 }

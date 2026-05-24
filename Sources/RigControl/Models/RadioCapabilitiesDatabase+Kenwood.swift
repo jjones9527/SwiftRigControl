@@ -380,6 +380,50 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true
     )
 
+    /// Kenwood TH-D75A - Tri-band handheld with D-STAR and APRS
+    /// (2023 successor to the TH-D74). Adds Bluetooth audio and
+    /// dual-receive on each band; the CAT command set is
+    /// backward-compatible with the TH-D74.
+    public static let kenwoodTHD75 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 5,  // 5W handheld
+        supportedModes: [.fm, .fmN, .dataFM],  // D-STAR via dataFM
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
+        detailedFrequencyRanges: [
+            // Airband + VHF general receive
+            DetailedFrequencyRange(min: 118_000_000, max: 143_999_999,
+                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            // 2m band
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
+                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "2m"),
+            // General receive between bands
+            DetailedFrequencyRange(min: 148_000_001, max: 219_999_999,
+                                    modes: [.fm, .fmN], canTransmit: false),
+            // 1.25m band (220 MHz)
+            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000,
+                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "1.25m"),
+            // More general receive
+            DetailedFrequencyRange(min: 225_000_001, max: 429_999_999,
+                                    modes: [.fm, .fmN], canTransmit: false),
+            // 70cm band
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
+                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "70cm"),
+            // Upper UHF receive
+            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000,
+                                    modes: [.fm, .fmN], canTransmit: false),
+        ],
+        hasDualReceiver: true,  // Full duplex capable + dual-receive per band
+        hasATU: false,
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        // Hamlib thd74.c:37-38 — TONE/TSQL. Same surface on TH-D75.
+        supportedFunctions: [.ctcssTone, .ctcssSquelch]
+    )
+
     /// Kenwood TH-D74A - Tri-band handheld with D-STAR and APRS
     public static let kenwoodTHD74 = RigCapabilities(
         hasVFOB: true,
