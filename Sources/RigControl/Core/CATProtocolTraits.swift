@@ -238,3 +238,47 @@ public protocol SupportsFunctions: CATProtocol {
     /// Reads the current state of a function bit.
     func getFunction(_ function: RigFunction) async throws -> Bool
 }
+
+// MARK: - Secondary levels (v1.1 parity)
+
+/// Conforming radios expose microphone gain. Hamlib
+/// `RIG_LEVEL_MICGAIN`.
+public protocol SupportsMicGain: CATProtocol {
+    func setMicGain(_ level: Int) async throws
+    func getMicGain() async throws -> Int
+}
+
+/// Conforming radios expose the speech-compressor *level*
+/// (distinct from the on/off ``RigFunction/compressor`` toggle).
+/// Hamlib `RIG_LEVEL_COMP`.
+public protocol SupportsCompressorLevel: CATProtocol {
+    func setCompressorLevel(_ level: Int) async throws
+    func getCompressorLevel() async throws -> Int
+}
+
+/// Conforming radios expose the sidetone-monitor level. Hamlib
+/// `RIG_LEVEL_MONITOR_GAIN`.
+public protocol SupportsMonitorGain: CATProtocol {
+    func setMonitorGain(_ level: Int) async throws
+    func getMonitorGain() async throws -> Int
+}
+
+/// Conforming radios expose VOX gain (sensitivity). Hamlib
+/// `RIG_LEVEL_VOXGAIN`.
+public protocol SupportsVOXGain: CATProtocol {
+    func setVOXGain(_ level: Int) async throws
+    func getVOXGain() async throws -> Int
+}
+
+/// Conforming radios expose VOX delay (hang time). Hamlib
+/// `RIG_LEVEL_VOXDELAY`.
+public protocol SupportsVOXDelay: CATProtocol {
+    func setVOXDelay(_ level: Int) async throws
+    func getVOXDelay() async throws -> Int
+}
+
+/// Conforming radios expose IF shift. Hamlib `RIG_LEVEL_IF`.
+public protocol SupportsIFShift: CATProtocol {
+    func setIFShift(_ level: Int) async throws
+    func getIFShift() async throws -> Int
+}

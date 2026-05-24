@@ -318,6 +318,36 @@ import Testing
             try await icomProtocol.setFunction(.mute, enabled: true)
         }
     }
+
+    // MARK: - Secondary levels (v1.1 parity)
+
+    @Test func setMicGain50() async throws {
+        // Default mock response is ACK, so no setup needed.
+        try await icomProtocol.setMicGain(50)
+        let writes = await mockTransport.recordedWrites
+        // Frame: FE FE A2 E0 14 0B [bcd hi] [bcd lo] FD = 9 bytes.
+        #expect(writes.count == 1)
+        let frame = writes[0]
+        #expect(frame.count == 9)
+        #expect(frame[4] == 0x14)
+        #expect(frame[5] == 0x0B)
+    }
+
+    @Test func setCompressorLevel() async throws {
+        try await icomProtocol.setCompressorLevel(75)
+        let writes = await mockTransport.recordedWrites
+        // Sub-command 0x0E.
+        #expect(writes[0][4] == 0x14)
+        #expect(writes[0][5] == 0x0E)
+    }
+
+    @Test func setIFShift() async throws {
+        try await icomProtocol.setIFShift(50)
+        let writes = await mockTransport.recordedWrites
+        // Sub-command 0x04 = S_LVL_IF.
+        #expect(writes[0][4] == 0x14)
+        #expect(writes[0][5] == 0x04)
+    }
 }
 
 // Helper extension for MockTransport testing

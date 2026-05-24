@@ -225,7 +225,37 @@ public actor RigctldCommandHandler {
         case .stopMorse:
             try await rigController.stopCW()
             return .ok(command: command)
+
+        // VFO operations (v1.1)
+        case .vfoOp(let op):
+            return try await runVFOOp(op: op, command: command)
         }
+    }
+
+    // MARK: - VFO operations (v1.1)
+
+    private func runVFOOp(op: String, command: RigctldCommand) async throws -> RigctldResponse {
+        // Hamlib token → SwiftRigControl `VFOOperation`.
+        // Bit names lifted from `rig_strvfo_op` (src/misc.c).
+        let token = op.uppercased()
+        let mapped: VFOOperation
+        switch token {
+        case "CPY":         mapped = .copyVFO
+        case "XCHG":        mapped = .exchange
+        case "TOGGLE":      mapped = .toggle
+        case "FROM_VFO":    mapped = .vfoToMemory
+        case "TO_VFO":      mapped = .memoryToVFO
+        case "MCL":         mapped = .memoryClear
+        case "UP":          mapped = .stepUp
+        case "DOWN":        mapped = .stepDown
+        case "BAND_UP":     mapped = .bandUp
+        case "BAND_DOWN":   mapped = .bandDown
+        case "TUNE":        mapped = .tune
+        default:
+            return .error(.invalidParam, command: command)
+        }
+        try await rigController.performVFOOperation(mapped)
+        return .ok(command: command)
     }
 
     // MARK: - Mode Conversion
@@ -448,6 +478,41 @@ public actor RigctldCommandHandler {
             try await rigController.setCWPitch(CWPitch(hz: hz))
             return .ok(command: command)
 
+        // v1.1 secondary levels (Hamlib: 0.0-1.0 float).
+        case "MICGAIN":
+            let v = try parseFloatLevel(value, name: "MICGAIN")
+            try await rigController.setMicGain(v)
+            return .ok(command: command)
+
+        case "COMP":
+            let v = try parseFloatLevel(value, name: "COMP")
+            try await rigController.setCompressorLevel(v)
+            return .ok(command: command)
+
+        case "MONITOR_GAIN":
+            let v = try parseFloatLevel(value, name: "MONITOR_GAIN")
+            try await rigController.setMonitorGain(v)
+            return .ok(command: command)
+
+        case "VOXGAIN":
+            let v = try parseFloatLevel(value, name: "VOXGAIN")
+            try await rigController.setVOXGain(v)
+            return .ok(command: command)
+
+        case "VOXDELAY":
+            let v = try parseFloatLevel(value, name: "VOXDELAY")
+            try await rigController.setVOXDelay(v)
+            return .ok(command: command)
+
+        case "IF_SHIFT":
+            // Note: Hamlib's RIG_LEVEL_IF token "IF" is already
+            // claimed above for IF filter selection. We expose
+            // IF *shift* under a distinct token to avoid the
+            // collision.
+            let v = try parseFloatLevel(value, name: "IF_SHIFT")
+            try await rigController.setIFShift(v)
+            return .ok(command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
@@ -585,9 +650,39 @@ public actor RigctldCommandHandler {
             let pitch = try await rigController.cwPitch()
             return RigctldResponse(value: String(pitch.hz), command: command)
 
+        // v1.1 secondary levels (return Hamlib 0.0-1.0 float).
+        case "MICGAIN":
+            return floatResponse(try await rigController.micGain(), command: command)
+        case "COMP":
+            return floatResponse(try await rigController.compressorLevel(), command: command)
+        case "MONITOR_GAIN":
+            return floatResponse(try await rigController.monitorGain(), command: command)
+        case "VOXGAIN":
+            return floatResponse(try await rigController.voxGain(), command: command)
+        case "VOXDELAY":
+            return floatResponse(try await rigController.voxDelay(), command: command)
+        case "IF_SHIFT":
+            return floatResponse(try await rigController.ifShift(), command: command)
+
         default:
             return .error(.notImplemented, command: command)
         }
+    }
+
+    // MARK: - Level helpers (v1.1)
+
+    /// Hamlib level values arrive as floats in [0.0, 1.0]. Our
+    /// secondary-level API uses Int in [0, 100]. Map and clamp.
+    private func parseFloatLevel(_ raw: String, name: String) throws -> Int {
+        guard let v = Double(raw) else {
+            throw RigError.invalidParameter("Invalid \(name) value: \(raw)")
+        }
+        return min(max(Int((v * 100.0).rounded()), 0), 100)
+    }
+
+    /// Formats an Int in [0, 100] as the Hamlib 0.0-1.0 float.
+    private func floatResponse(_ value: Int, command: RigctldCommand) -> RigctldResponse {
+        RigctldResponse(value: String(format: "%.6f", Double(value) / 100.0), command: command)
     }
 
     // MARK: - Function toggles (Phase 4.5)
@@ -596,19 +691,20 @@ public actor RigctldCommandHandler {
         let normalized = name.uppercased()
         switch normalized {
         case "SBKIN":
-            // Semi break-in. Setting SBKIN=1 selects semi; SBKIN=0
-            // turns break-in off (unless FBKIN is already on, in
-            // which case the operator's intent is ambiguous and we
-            // honor the literal request: off).
             try await rigController.setBreakIn(enabled ? .semi : .off)
             return .ok(command: command)
 
         case "FBKIN":
-            // Full break-in.
             try await rigController.setBreakIn(enabled ? .full : .off)
             return .ok(command: command)
 
         default:
+            // v1.1: also map the RigFunction enum — Hamlib bit
+            // names match our enum's raw values once normalised.
+            if let function = mapHamlibFuncBit(normalized) {
+                try await rigController.setFunction(function, enabled: enabled)
+                return .ok(command: command)
+            }
             return .error(.notImplemented, command: command)
         }
     }
@@ -625,7 +721,43 @@ public actor RigctldCommandHandler {
             return RigctldResponse(value: mode == .full ? "1" : "0", command: command)
 
         default:
+            if let function = mapHamlibFuncBit(normalized) {
+                let on = try await rigController.getFunction(function)
+                return RigctldResponse(value: on ? "1" : "0", command: command)
+            }
             return .error(.notImplemented, command: command)
+        }
+    }
+
+    /// Maps a Hamlib `RIG_FUNC_*` token (e.g. "COMP", "VOX",
+    /// "LOCK") to our ``RigFunction`` enum. Returns `nil` for
+    /// tokens we don't cover (which falls through to
+    /// `.notImplemented` for backward compat with the original
+    /// Phase 4.5 surface).
+    private func mapHamlibFuncBit(_ token: String) -> RigFunction? {
+        switch token {
+        case "COMP":        return .compressor
+        case "VOX":         return .vox
+        case "TONE":        return .ctcssTone
+        case "TSQL":        return .ctcssSquelch
+        case "LOCK":        return .lock
+        case "TUNER":       return .tuner
+        case "ANF":         return .autoNotch
+        case "MN":          return .manualNotch
+        case "SATMODE":     return .satelliteMode
+        case "MON":         return .monitor
+        case "AFC":         return .autoFrequencyControl
+        case "BC":          return .beatCancel
+        case "NB2":         return .noiseBlanker2
+        case "APF":         return .audioPeakFilter
+        case "REV":         return .reverseSplit
+        case "DUAL_WATCH":  return .dualWatch
+        case "DIVERSITY":   return .diversity
+        case "MUTE":        return .mute
+        case "SCOPE":       return .scope
+        case "RESUME":      return .scanResume
+        case "VSC":         return .voiceSquelch
+        default:            return nil
         }
     }
 

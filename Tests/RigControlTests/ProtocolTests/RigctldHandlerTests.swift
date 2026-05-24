@@ -251,4 +251,82 @@ import Testing
         let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.isSendingCW == false)
     }
+
+    // MARK: - VFO operations (v1.1)
+
+    @Test func vfoOpExchangePassesThrough() async throws {
+        let caps = RigCapabilities(supportedVFOOperations: [.exchange])
+        let rig = try RigController(
+            radio: .dummy(name: "Test", capabilities: caps),
+            connection: .mock
+        )
+        try await rig.connect()
+        let handler = RigctldCommandHandler(rigController: rig)
+
+        let response = await handler.handle(.vfoOp(op: "XCHG"))
+        #expect(response.returnCode == .ok)
+    }
+
+    @Test func vfoOpUnknownTokenReturnsInvalidParam() async throws {
+        let (_, handler) = try await makeHandler()
+        let response = await handler.handle(.vfoOp(op: "NOTAREAL"))
+        #expect(response.returnCode == .invalidParam)
+    }
+
+    @Test func vfoOpUnsupportedByRadioReturnsError() async throws {
+        // Capabilities don't include .copyVFO → RigController
+        // throws unsupportedOperation, which maps to an error
+        // response.
+        let (_, handler) = try await makeHandler()
+        let response = await handler.handle(.vfoOp(op: "CPY"))
+        #expect(response.returnCode != .ok)
+    }
+
+    // MARK: - Function toggles via set_func/get_func (v1.1)
+
+    @Test func setFuncCOMPMapsToCompressor() async throws {
+        let caps = RigCapabilities(supportedFunctions: [.compressor])
+        let rig = try RigController(
+            radio: .dummy(name: "Test", capabilities: caps),
+            connection: .mock
+        )
+        try await rig.connect()
+        let handler = RigctldCommandHandler(rigController: rig)
+
+        let response = await handler.handle(.setFunc(name: "COMP", enabled: true))
+        #expect(response.returnCode == .ok)
+
+        let get = await handler.handle(.getFunc(name: "COMP"))
+        #expect(firstLine(get) == "1")
+    }
+
+    @Test func setFuncLOCKMapsToLock() async throws {
+        let caps = RigCapabilities(supportedFunctions: [.lock])
+        let rig = try RigController(
+            radio: .dummy(name: "Test", capabilities: caps),
+            connection: .mock
+        )
+        try await rig.connect()
+        let handler = RigctldCommandHandler(rigController: rig)
+
+        let response = await handler.handle(.setFunc(name: "LOCK", enabled: true))
+        #expect(response.returnCode == .ok)
+    }
+
+    // MARK: - Secondary levels via set_level/get_level (v1.1)
+
+    @Test func setLevelMICGAINPassesThrough() async throws {
+        let (_, handler) = try await makeHandler()
+        let response = await handler.handle(.setLevel(name: "MICGAIN", value: "0.5"))
+        #expect(response.returnCode == .ok)
+
+        let get = await handler.handle(.getLevel(name: "MICGAIN"))
+        #expect(firstLine(get) == "0.500000")
+    }
+
+    @Test func setLevelIFShiftPassesThrough() async throws {
+        let (_, handler) = try await makeHandler()
+        let response = await handler.handle(.setLevel(name: "IF_SHIFT", value: "0.5"))
+        #expect(response.returnCode == .ok)
+    }
 }

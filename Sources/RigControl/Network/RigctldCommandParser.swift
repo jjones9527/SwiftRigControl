@@ -262,6 +262,13 @@ public struct RigctldCommandParser {
             let ch = args.count > 1 ? (Int(args[1]) ?? 0) : 0
             return .scan(function: fct, channel: ch)
 
+        // VFO operation (v1.1) — Hamlib `G` short form
+        case "G":
+            guard let op = args.first else {
+                throw ParseError.missingParameter("vfo operation")
+            }
+            return .vfoOp(op: op)
+
         // CW send (Phase 4.5) — Hamlib `b` short form takes
         // free-form text. Join all remaining args back with spaces
         // so multi-word messages survive the tokenizer.
@@ -481,6 +488,12 @@ public struct RigctldCommandParser {
             }
             let ch = args.count > 1 ? (Int(args[1]) ?? 0) : 0
             return .scan(function: fct, channel: ch)
+
+        case "vfo_op":
+            guard let op = args.first else {
+                throw ParseError.missingParameter("vfo operation")
+            }
+            return .vfoOp(op: op)
 
         case "send_morse":
             // The args were tokenized on spaces; rejoin to recover

@@ -207,6 +207,13 @@ public enum RigctldCommand: Sendable, Equatable {
     /// ignored — `CATProtocol.startScan(_:)` doesn't model it.
     case scan(function: String, channel: Int)
 
+    // MARK: - VFO operations (v1.1 parity)
+
+    /// Perform a compound VFO operation (`G` or `\vfo_op`).
+    /// `op` is the Hamlib token: CPY, XCHG, FROM_VFO, TO_VFO,
+    /// MCL, UP, DOWN, BAND_UP, BAND_DOWN, TUNE, TOGGLE.
+    case vfoOp(op: String)
+
     // MARK: - CW (Phase 4.5)
 
     /// Send a CW message (`b` or `\send_morse`).
@@ -268,6 +275,7 @@ public enum RigctldCommand: Sendable, Equatable {
         case .setAntenna: return "set_ant"
         case .getAntenna: return "get_ant"
         case .scan: return "scan"
+        case .vfoOp: return "vfo_op"
         case .sendMorse: return "send_morse"
         case .stopMorse: return "stop_morse"
         case .setPowerStat: return "set_powerstat"

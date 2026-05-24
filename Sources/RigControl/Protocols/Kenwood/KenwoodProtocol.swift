@@ -29,7 +29,13 @@ public actor KenwoodProtocol:
     SupportsRemotePowerState,
     SupportsMemoryChannels,
     SupportsVFOOperations,
-    SupportsFunctions
+    SupportsFunctions,
+    SupportsMicGain,
+    SupportsCompressorLevel,
+    SupportsMonitorGain,
+    SupportsVOXGain,
+    SupportsVOXDelay,
+    SupportsIFShift
 {
     /// The serial transport for communication
     public let transport: any SerialTransport

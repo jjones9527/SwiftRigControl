@@ -69,7 +69,13 @@ public actor DummyCATProtocol:
     SupportsScanning,
     SupportsAntenna,
     SupportsVFOOperations,
-    SupportsFunctions
+    SupportsFunctions,
+    SupportsMicGain,
+    SupportsCompressorLevel,
+    SupportsMonitorGain,
+    SupportsVOXGain,
+    SupportsVOXDelay,
+    SupportsIFShift
 {
 
     /// A no-op transport used purely to satisfy `CATProtocol`'s
@@ -143,6 +149,7 @@ public actor DummyCATProtocol:
     /// Selected antenna (1-based). Defaults to ANT 1.
     private var antennaIndex: Int = 1
     private var functionState: [RigFunction: Bool] = [:]
+    private var secondaryLevels: [String: Int] = [:]
 
     /// Test/preview helper. When non-nil, every operation on the
     /// dummy throws this error instead of returning a normal value.
@@ -474,6 +481,62 @@ public actor DummyCATProtocol:
     public func getFunction(_ function: RigFunction) async throws -> Bool {
         try requireConnected()
         return functionState[function] ?? false
+    }
+
+    // MARK: - Secondary levels (v1.1)
+
+    public func setMicGain(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["micgain"] = level
+    }
+    public func getMicGain() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["micgain"] ?? 0
+    }
+
+    public func setCompressorLevel(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["comp"] = level
+    }
+    public func getCompressorLevel() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["comp"] ?? 0
+    }
+
+    public func setMonitorGain(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["monitor"] = level
+    }
+    public func getMonitorGain() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["monitor"] ?? 0
+    }
+
+    public func setVOXGain(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["voxgain"] = level
+    }
+    public func getVOXGain() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["voxgain"] ?? 0
+    }
+
+    public func setVOXDelay(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["voxdelay"] = level
+    }
+    public func getVOXDelay() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["voxdelay"] ?? 0
+    }
+
+    public func setIFShift(_ level: Int) async throws {
+        try requireConnected()
+        secondaryLevels["ifshift"] = level
+    }
+    public func getIFShift() async throws -> Int {
+        try requireConnected()
+        return secondaryLevels["ifshift"] ?? 50  // 50 = centre
     }
 
     // MARK: - RIT / XIT
