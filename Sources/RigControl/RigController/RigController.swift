@@ -16,7 +16,7 @@ import Foundation
 ///
 /// ```swift
 /// let rig = try RigController(
-///     radio: .icomIC9700(),
+///     radio: .Icom.ic9700(),
 ///     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
 /// )
 ///
@@ -113,7 +113,7 @@ public actor RigController {
     /// Initializes a new rig controller.
     ///
     /// - Parameters:
-    ///   - radio: The radio definition (e.g., .icomIC9700)
+    ///   - radio: The radio definition (e.g., .Icom.ic9700)
     ///   - connection: How to connect to the radio
     ///
     /// - Throws: `RigError.unsupportedOperation` if an invalid connection type is specified

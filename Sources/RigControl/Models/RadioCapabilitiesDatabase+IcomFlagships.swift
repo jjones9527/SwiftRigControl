@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Icom {
 
     // MARK: - High-End Icom Flagships
 
     /// Icom IC-7700 - HF/6m 200W flagship transceiver
-    public static let icomIC7700 = RigCapabilities(
+    public static let ic7700 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -35,7 +35,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7800 - HF/6m 200W flagship transceiver
-    public static let icomIC7800 = RigCapabilities(
+    public static let ic7800 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -67,7 +67,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Legacy Icom HF Transceivers
 
     /// Icom IC-7000 - HF/VHF/UHF mobile transceiver
-    public static let icomIC7000 = RigCapabilities(
+    public static let ic7000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -93,7 +93,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-756PRO - HF/6m transceiver
-    public static let icomIC756PRO = RigCapabilities(
+    public static let ic756PRO = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -121,7 +121,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-756PROII - HF/6m transceiver
-    public static let icomIC756PROII = RigCapabilities(
+    public static let ic756PROII = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -149,7 +149,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-756PROIII - HF/6m transceiver
-    public static let icomIC756PROIII = RigCapabilities(
+    public static let ic756PROIII = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -177,7 +177,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-746 - HF/6m/2m receive base station transceiver
-    public static let icomIC746 = RigCapabilities(
+    public static let ic746 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -210,7 +210,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-746PRO - HF/6m/2m receive base station transceiver (enhanced)
-    public static let icomIC746PRO = RigCapabilities(
+    public static let ic746PRO = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

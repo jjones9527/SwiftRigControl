@@ -21,7 +21,7 @@ import Testing
             civAddress: 0x7A,
             radioModel: .ic7600,
             commandSet: StandardIcomCommandSet.ic7600,
-            capabilities: RadioCapabilitiesDatabase.icomIC7600
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7600
         )
         return (mock, proto)
     }
@@ -33,7 +33,7 @@ import Testing
             civAddress: 0x94,
             radioModel: .ic7300,
             commandSet: StandardIcomCommandSet.ic7300,
-            capabilities: RadioCapabilitiesDatabase.icomIC7300
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7300
         )
         return (mock, proto)
     }

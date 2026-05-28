@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Xiegu {
 
     // MARK: - Xiegu Radios (CI-V Compatible)
 
     /// Xiegu G90 - HF 20W SDR transceiver with ATU
-    public static let xieguG90 = RigCapabilities(
+    public static let g90 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -41,7 +41,7 @@ extension RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
     /// Xiegu X6100 - Portable HF/6m 10W SDR transceiver with ATU
-    public static let xieguX6100 = RigCapabilities(
+    public static let x6100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -79,7 +79,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Xiegu X6200 - Portable HF/6m 8W SDR transceiver with VHF air band RX
-    public static let xieguX6200 = RigCapabilities(
+    public static let x6200 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

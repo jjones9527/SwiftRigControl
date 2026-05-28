@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Icom {
 
     // MARK: - Icom Radios
 
     /// Icom IC-9700 - VHF/UHF/1.2GHz all-mode transceiver
-    public static let icomIC9700 = RigCapabilities(
+    public static let ic9700 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -61,7 +61,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
-    public static let icomIC7610 = RigCapabilities(
+    public static let ic7610 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -127,7 +127,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7300 - HF/6m SDR transceiver
-    public static let icomIC7300 = RigCapabilities(
+    public static let ic7300 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -192,7 +192,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7600 - HF/6m transceiver
-    public static let icomIC7600 = RigCapabilities(
+    public static let ic7600 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -279,7 +279,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
-    public static let icomIC7100 = RigCapabilities(
+    public static let ic7100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -379,7 +379,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
-    public static let icomIC705 = RigCapabilities(
+    public static let ic705 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -455,7 +455,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-703 - Portable HF/6m 10W QRP transceiver
-    public static let icomIC703 = RigCapabilities(
+    public static let ic703 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -515,7 +515,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-905 VHF/UHF/SHF all-mode transceiver.
-    public static let icomIC905 = RigCapabilities(
+    public static let ic905 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -547,7 +547,7 @@ extension RadioCapabilitiesDatabase {
     ///
     /// The IC-7760 is Icom's 2024 successor to the IC-7610 line. It features
     /// dual independent receivers, a large touch display, and CI-V address 0xB0.
-    public static let icomIC7760 = RigCapabilities(
+    public static let ic7760 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -593,7 +593,7 @@ extension RadioCapabilitiesDatabase {
     /// Icom IC-7300MK2 HF/6m SDR transceiver — successor to the IC-7300 (2025).
     ///
     /// Shares CI-V address 0x94 with the IC-7300; distinguish by model configuration.
-    public static let icomIC7300MK2 = RigCapabilities(
+    public static let ic7300MK2 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -642,7 +642,7 @@ extension RadioCapabilitiesDatabase {
     /// (USA) coverage: 440–450 MHz TX, broader UHF receive.
     /// Region-1 (EU) variant transmits 430–440 MHz; we model the
     /// USA defaults here — overrride at the call site if needed.
-    public static let icomID31 = RigCapabilities(
+    public static let id31 = RigCapabilities(
         hasVFOB: false,
         hasSplit: false,
         powerControl: true,
@@ -678,7 +678,7 @@ extension RadioCapabilitiesDatabase {
     /// `rigs/icom/id51.c`. Region-2 (USA) high-power variant
     /// (50 W output for the mobile mode) — handheld is 5 W from
     /// internal battery.
-    public static let icomID51 = RigCapabilities(
+    public static let id51 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -722,7 +722,7 @@ extension RadioCapabilitiesDatabase {
     /// D-STAR handheld (successor to ID-51). Cross-checked
     /// against Hamlib `rigs/icom/id52plus.c`. Adds attenuator
     /// support (10 dB / 30 dB) and AMN narrow-AM mode.
-    public static let icomID52 = RigCapabilities(
+    public static let id52 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -766,7 +766,7 @@ extension RadioCapabilitiesDatabase {
     /// (predecessor to the ID-51 family). Cross-checked against
     /// Hamlib `rigs/icom/ic92d.c`. Notable: 0x01 CI-V address
     /// (unusual for Icom) and full-duplex serial.
-    public static let icomIC92D = RigCapabilities(
+    public static let ic92D = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -814,7 +814,7 @@ extension RadioCapabilitiesDatabase {
     /// (100 kHz–3.3 GHz). Cross-checked against Hamlib
     /// `rigs/icom/icr30.c`. Receiver-only; `setPower` /
     /// `setPTT` will be rejected by the radio.
-    public static let icomICR30 = RigCapabilities(
+    public static let icR30 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: false,

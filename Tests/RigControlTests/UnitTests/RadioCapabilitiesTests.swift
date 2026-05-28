@@ -46,7 +46,7 @@ import Testing
     // MARK: - IC-7300 Capability Tests
 
     @Test func ic7300ValidFrequency() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         // Test valid HF frequency
         #expect(caps.isFrequencyValid(14_200_000), "14.200 MHz should be valid for IC-7300")
@@ -62,7 +62,7 @@ import Testing
     }
 
     @Test func ic7300TransmitCapability() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         // Should be able to transmit on 20m
         #expect(caps.canTransmit(on: 14_200_000), "Should be able to transmit on 20m")
@@ -75,7 +75,7 @@ import Testing
     }
 
     @Test func ic7300BandNames() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         #expect(caps.bandName(for: 14_200_000) == "20m", "14.200 MHz should be identified as 20m")
         #expect(caps.bandName(for: 7_100_000) == "40m", "7.100 MHz should be identified as 40m")
@@ -83,7 +83,7 @@ import Testing
     }
 
     @Test func ic7300SupportedModes() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         // Test 20m modes
         let modes20m = caps.supportedModes(for: 14_200_000)
@@ -98,7 +98,7 @@ import Testing
     // MARK: - IC-9700 Capability Tests
 
     @Test func ic9700ValidFrequency() {
-        let caps = RadioCapabilitiesDatabase.icomIC9700
+        let caps = RadioCapabilitiesDatabase.Icom.ic9700
 
         // Should be valid on 2m
         #expect(caps.isFrequencyValid(146_000_000), "146 MHz should be valid on IC-9700")
@@ -114,7 +114,7 @@ import Testing
     }
 
     @Test func ic9700TransmitCapability() {
-        let caps = RadioCapabilitiesDatabase.icomIC9700
+        let caps = RadioCapabilitiesDatabase.Icom.ic9700
 
         // Should transmit on 2m
         #expect(caps.canTransmit(on: 146_000_000), "Should transmit on 2m")
@@ -129,7 +129,7 @@ import Testing
     // MARK: - FT-991A Capability Tests
 
     @Test func ft991AValidFrequency() {
-        let caps = RadioCapabilitiesDatabase.yaesuFT991A
+        let caps = RadioCapabilitiesDatabase.Yaesu.ft991A
 
         // Should be valid on HF
         #expect(caps.isFrequencyValid(14_200_000), "14.200 MHz should be valid")
@@ -142,7 +142,7 @@ import Testing
     }
 
     @Test func ft991ATransmitCapability() {
-        let caps = RadioCapabilitiesDatabase.yaesuFT991A
+        let caps = RadioCapabilitiesDatabase.Yaesu.ft991A
 
         // Should transmit on 20m
         #expect(caps.canTransmit(on: 14_200_000), "Should transmit on 20m")
@@ -157,7 +157,7 @@ import Testing
     // MARK: - Kenwood TS-590SG Tests
 
     @Test func ts590SGValidFrequency() {
-        let caps = RadioCapabilitiesDatabase.kenwoodTS590SG
+        let caps = RadioCapabilitiesDatabase.Kenwood.ts590SG
 
         // Valid HF frequencies
         #expect(caps.isFrequencyValid(14_200_000), "14.200 MHz should be valid")
@@ -170,7 +170,7 @@ import Testing
     // MARK: - Elecraft K3 Tests
 
     @Test func elecraftK3ValidFrequency() {
-        let caps = RadioCapabilitiesDatabase.elecraftK3
+        let caps = RadioCapabilitiesDatabase.Elecraft.k3
 
         // Valid HF frequencies
         #expect(caps.isFrequencyValid(14_200_000), "14.200 MHz should be valid")
@@ -183,7 +183,7 @@ import Testing
     }
 
     @Test func elecraftK3TransmitCapability() {
-        let caps = RadioCapabilitiesDatabase.elecraftK3
+        let caps = RadioCapabilitiesDatabase.Elecraft.k3
 
         // Should transmit on amateur bands
         #expect(caps.canTransmit(on: 14_200_000), "Should transmit on 20m")
@@ -195,7 +195,7 @@ import Testing
     // MARK: - Edge Case Tests
 
     @Test func bandEdgeFrequencies() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         // Test exact band edge frequencies
         #expect(caps.isFrequencyValid(14_000_000), "14.000 MHz should be at start of 20m")
@@ -207,7 +207,7 @@ import Testing
     }
 
     @Test func frequencyRangeRetrieval() {
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
 
         // Get the frequency range containing 20m
         let range = caps.frequencyRange(containing: 14_200_000)
@@ -226,16 +226,16 @@ import Testing
 
     @Test func allRadioDefinitionsHaveCapabilities() {
         let radios: [RadioDefinition] = [
-            .icomIC9700(),
-            .icomIC7610(),
-            .icomIC7300(),
-            .icomIC7600(),
-            .icomIC7100(),
-            .icomIC705(),
-            .yaesuFTDX10,
-            .yaesuFT991A,
-            .kenwoodTS590SG,
-            .elecraftK3
+            .Icom.ic9700(),
+            .Icom.ic7610(),
+            .Icom.ic7300(),
+            .Icom.ic7600(),
+            .Icom.ic7100(),
+            .Icom.ic705(),
+            .Yaesu.ftdx10,
+            .Yaesu.ft991A,
+            .Kenwood.ts590SG,
+            .Elecraft.k3
         ]
 
         for radio in radios {
@@ -247,7 +247,7 @@ import Testing
 
     @Test func radiosWithDetailedFrequencyRanges() {
         // Test radios that have detailed frequency ranges
-        let caps = RadioCapabilitiesDatabase.icomIC7300
+        let caps = RadioCapabilitiesDatabase.Icom.ic7300
         #expect(!caps.detailedFrequencyRanges.isEmpty, "IC-7300 should have detailed frequency ranges")
 
         // Verify ranges are properly ordered

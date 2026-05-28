@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Icom {
 
     // MARK: - Icom IC-7400
 
     /// Icom IC-7400 - HF/6m/2m 100W transceiver
-    public static let icomIC7400 = RigCapabilities(
+    public static let ic7400 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -50,7 +50,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Icom IC-735
 
     /// Icom IC-735 - Classic HF all-mode transceiver
-    public static let icomIC735 = RigCapabilities(
+    public static let ic735 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -87,7 +87,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-751 HF all-mode transceiver (classic)
-    public static let icomIC751 = RigCapabilities(
+    public static let ic751 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -125,7 +125,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-9100 - HF/VHF/UHF all-mode transceiver
-    public static let icomIC9100 = RigCapabilities(
+    public static let ic9100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -197,7 +197,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7200 - HF/6m all-mode transceiver
-    public static let icomIC7200 = RigCapabilities(
+    public static let ic7200 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -257,7 +257,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-718 - HF 100W budget transceiver
-    public static let icomIC718 = RigCapabilities(
+    public static let ic718 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -313,7 +313,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7410 - HF/6m all-mode transceiver
-    public static let icomIC7410 = RigCapabilities(
+    public static let ic7410 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

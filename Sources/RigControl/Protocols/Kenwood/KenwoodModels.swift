@@ -1,157 +1,157 @@
 import Foundation
 
 /// Pre-defined Kenwood radio models.
-extension RadioDefinition {
+extension RadioDefinition.Kenwood {
     /// Kenwood TS-890S HF/6m transceiver
-    public static let kenwoodTS890S = RadioDefinition(
+    public static let ts890S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-890S",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS890S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts890S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS890S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts890S
             )
         }
     )
 
     /// Kenwood TS-990S HF/6m transceiver (flagship model)
-    public static let kenwoodTS990S = RadioDefinition(
+    public static let ts990S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-990S",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS990S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts990S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS990S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts990S
             )
         }
     )
 
     /// Kenwood TS-590SG HF/6m transceiver
-    public static let kenwoodTS590SG = RadioDefinition(
+    public static let ts590SG = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-590SG",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts590SG,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS590SG
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts590SG
             )
         }
     )
 
     /// Kenwood TM-D710GA VHF/UHF dual-band transceiver
-    public static let kenwoodTMD710 = RadioDefinition(
+    public static let tmd710 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TM-D710",
         defaultBaudRate: 57600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTMD710,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTMD710
+                capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710
             )
         }
     )
 
     /// Kenwood TS-480SAT HF/6m all-mode transceiver
-    public static let kenwoodTS480SAT = RadioDefinition(
+    public static let ts480SAT = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-480SAT",
         defaultBaudRate: 57600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS480SAT,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts480SAT,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS480SAT
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480SAT
             )
         }
     )
 
     /// Kenwood TS-2000 HF/VHF/UHF all-mode transceiver
-    public static let kenwoodTS2000 = RadioDefinition(
+    public static let ts2000 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-2000",
         defaultBaudRate: 57600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS2000,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts2000,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS2000
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts2000
             )
         }
     )
 
     /// Kenwood TS-590S HF/6m transceiver (earlier version of TS-590SG)
-    public static let kenwoodTS590S = RadioDefinition(
+    public static let ts590S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-590S",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS590S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts590S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS590S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts590S
             )
         }
     )
 
     /// Kenwood TS-870S HF/6m transceiver (classic flagship)
-    public static let kenwoodTS870S = RadioDefinition(
+    public static let ts870S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-870S",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS870S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts870S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS870S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts870S
             )
         }
     )
 
     /// Kenwood TS-480HX HF/6m 200W transceiver
-    public static let kenwoodTS480HX = RadioDefinition(
+    public static let ts480HX = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-480HX",
         defaultBaudRate: 57600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS480HX,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts480HX,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS480HX
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480HX
             )
         }
     )
 
     /// Kenwood TM-V71A VHF/UHF dual-band transceiver with EchoLink
-    public static let kenwoodTMV71 = RadioDefinition(
+    public static let tmv71 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TM-V71",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTMV71,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTMV71
+                capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71
             )
         }
     )
 
     /// Kenwood TH-D74A tri-band handheld with D-STAR and APRS
-    public static let kenwoodTHD74 = RadioDefinition(
+    public static let thd74 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D74",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTHD74,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thd74,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTHD74
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd74
             )
         }
     )
@@ -160,15 +160,15 @@ extension RadioDefinition {
     /// (2023 successor to the TH-D74). CAT command set is
     /// backward-compatible with the TH-D74, so we reuse
     /// `KenwoodProtocol`.
-    public static let kenwoodTHD75 = RadioDefinition(
+    public static let thd75 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D75",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTHD75,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thd75,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTHD75
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd75
             )
         }
     )
@@ -177,15 +177,15 @@ extension RadioDefinition {
     ///
     /// Uses THD72Protocol (CR-terminated, FO-string based) rather than the
     /// standard semicolon Kenwood CAT used by HF transceivers.
-    public static let kenwoodTHD72A = RadioDefinition(
+    public static let thd72A = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D72A",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A
             )
         }
     )
@@ -194,15 +194,15 @@ extension RadioDefinition {
     ///
     /// Identical protocol and capabilities to the TH-D72A. The A suffix denotes
     /// the North American market version; the protocol command set is the same.
-    public static let kenwoodTHD72 = RadioDefinition(
+    public static let thd72 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D72",
         defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTHD72A
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A
             )
         }
     )
@@ -212,15 +212,15 @@ extension RadioDefinition {
     /// Kenwood TS-850S HF 100W transceiver with internal ATU
     ///
     /// Default baud rate is 1200 — significantly lower than modern Kenwood radios.
-    public static let kenwoodTS850S = RadioDefinition(
+    public static let ts850S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-850S",
         defaultBaudRate: 1200,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS850S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts850S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS850S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts850S
             )
         }
     )
@@ -228,15 +228,15 @@ extension RadioDefinition {
     /// Kenwood TS-570D HF/6m 100W transceiver with ATU and DSP
     ///
     /// Default baud rate is 4800. Includes 6m coverage (unlike the TS-570S).
-    public static let kenwoodTS570D = RadioDefinition(
+    public static let ts570D = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-570D",
         defaultBaudRate: 4800,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS570D,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts570D,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS570D
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570D
             )
         }
     )
@@ -244,15 +244,15 @@ extension RadioDefinition {
     /// Kenwood TS-570S HF-only 100W transceiver with DSP (no 6m, no ATU)
     ///
     /// Default baud rate is 4800. Budget sibling of the TS-570D — HF bands only.
-    public static let kenwoodTS570S = RadioDefinition(
+    public static let ts570S = RadioDefinition(
         manufacturer: .kenwood,
         model: "TS-570S",
         defaultBaudRate: 4800,
-        capabilities: RadioCapabilitiesDatabase.kenwoodTS570S,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts570S,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.kenwoodTS570S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570S
             )
         }
     )

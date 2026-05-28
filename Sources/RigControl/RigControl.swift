@@ -13,7 +13,7 @@
 /// import RigControl
 ///
 /// let rig = try RigController(
-///     radio: .icomIC9700(),
+///     radio: .Icom.ic9700(),
 ///     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
 /// )
 ///
@@ -31,7 +31,7 @@
 /// import RigControl
 ///
 /// let rig = try RigController(
-///     radio: .icomIC7600(),
+///     radio: .Icom.ic7600(),
 ///     connection: .serial(path: "/dev/cu.IC-7600", baudRate: 19200)
 /// )
 /// try await rig.connect()

@@ -209,9 +209,9 @@ import Testing
 
     @Test func verifiedRadiosSupportCW() {
         for caps in [
-            RadioCapabilitiesDatabase.icomIC7100,
-            RadioCapabilitiesDatabase.icomIC7600,
-            RadioCapabilitiesDatabase.icomIC9700,
+            RadioCapabilitiesDatabase.Icom.ic7100,
+            RadioCapabilitiesDatabase.Icom.ic7600,
+            RadioCapabilitiesDatabase.Icom.ic9700,
         ] {
             #expect(caps.supportsCWKeyer)
             #expect(caps.supportsSendCW)

@@ -11,32 +11,32 @@ import Testing
 @Suite struct VerificationStatusTests {
 
     @Test func icomIC7100IsHardwareVerified() {
-        #expect(RadioDefinition.icomIC7100().verificationStatus == .hardware)
+        #expect(RadioDefinition.Icom.ic7100().verificationStatus == .hardware)
     }
 
     @Test func icomIC7600IsHardwareVerified() {
-        #expect(RadioDefinition.icomIC7600().verificationStatus == .hardware)
+        #expect(RadioDefinition.Icom.ic7600().verificationStatus == .hardware)
     }
 
     @Test func icomIC9700IsHardwareVerified() {
-        #expect(RadioDefinition.icomIC9700().verificationStatus == .hardware)
+        #expect(RadioDefinition.Icom.ic9700().verificationStatus == .hardware)
     }
 
     @Test func elecraftK2IsHardwareVerified() {
-        #expect(RadioDefinition.elecraftK2.verificationStatus == .hardware)
+        #expect(RadioDefinition.Elecraft.k2.verificationStatus == .hardware)
     }
 
     @Test func customCIVAddressPreservesHardwareStatus() {
         // Setting a custom CI-V address must not silently downgrade
         // the verification status — the factory should pass it through.
-        let custom = RadioDefinition.icomIC7600(civAddress: 0x7B)
+        let custom = RadioDefinition.Icom.ic7600(civAddress: 0x7B)
         #expect(custom.verificationStatus == .hardware)
     }
 
     @Test func definitionOnlyRadiosReportDefinition() {
         // IC-7300 is widely deployed and likely works, but we don't
         // own one — so it must report as definition-only until we do.
-        #expect(RadioDefinition.icomIC7300().verificationStatus == .definition)
+        #expect(RadioDefinition.Icom.ic7300().verificationStatus == .definition)
     }
 
     @Test func defaultVerificationStatusIsDefinition() {
@@ -46,13 +46,13 @@ import Testing
             manufacturer: .icom,
             model: "Synthetic",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7600,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7600,
             protocolFactory: { transport in
                 IcomCIVProtocol(
                     transport: transport,
                     radioModel: .ic7600,
                     commandSet: StandardIcomCommandSet.ic7600,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7600
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7600
                 )
             }
         )

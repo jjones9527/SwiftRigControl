@@ -34,7 +34,7 @@ struct K2HardwareTests {
         print(String(repeating: "=", count: 60) + "\n")
 
         rig = try RigController(
-            radio: .elecraftK2,
+            radio: .Elecraft.k2,
             connection: .serial(path: port, baudRate: nil)
         )
 

@@ -23,7 +23,7 @@ import Testing
     }
 
     @Test func icomRadioReportsIcomCase() async throws {
-        let rig = try RigController(radio: .icomIC7600(), connection: .mock)
+        let rig = try RigController(radio: .Icom.ic7600(), connection: .mock)
         try await rig.connect()
         if case .icom(let icom) = await rig.vendorExtensions {
             // Confirm we got the real actor — it should be the
@@ -36,7 +36,7 @@ import Testing
     }
 
     @Test func elecraftReportsElecraftCase() async throws {
-        let rig = try RigController(radio: .elecraftK2, connection: .mock)
+        let rig = try RigController(radio: .Elecraft.k2, connection: .mock)
         try await rig.connect()
         if case .elecraft = await rig.vendorExtensions {
             // pass
@@ -59,7 +59,7 @@ import Testing
     }
 
     @Test func vendorExtensionsAndRawProtocolAgree() async throws {
-        let rig = try RigController(radio: .icomIC9700(), connection: .mock)
+        let rig = try RigController(radio: .Icom.ic9700(), connection: .mock)
         try await rig.connect()
 
         let raw = await rig.rawProtocol as? IcomCIVProtocol

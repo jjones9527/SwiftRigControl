@@ -24,7 +24,7 @@ rig_open(rig);
 ```swift
 // SwiftRigControl
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.IC-7600", baudRate: 19200)
 )
 try await rig.connect()

@@ -55,7 +55,7 @@ struct IC7600HardwareTests {
         print(String(repeating: "=", count: 60) + "\n")
 
         rig = try RigController(
-            radio: .icomIC7600(civAddress: nil),
+            radio: .Icom.ic7600(civAddress: nil),
             connection: .serial(path: port, baudRate: nil)
         )
 

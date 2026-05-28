@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Yaesu {
 
     // MARK: - More Yaesu Radios
 
     /// Yaesu FT-818 - Portable QRP HF/VHF/UHF transceiver (successor to FT-817)
-    public static let yaesuFT818 = RigCapabilities(
+    public static let ft818 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -49,7 +49,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FT-2000 - HF/6m 100W transceiver
-    public static let yaesuFT2000 = RigCapabilities(
+    public static let ft2000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -91,7 +91,7 @@ extension RadioCapabilitiesDatabase {
     /// Yaesu FT-1000MP - HF 200W flagship transceiver with dual receiver
     ///
     /// Classic flagship with Yaesu's Mark V lineage. HF-only (no 6m), 4800 baud default.
-    public static let yaesuFT1000MP = RigCapabilities(
+    public static let ft1000MP = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -130,7 +130,7 @@ extension RadioCapabilitiesDatabase {
     /// Yaesu FT-857 - HF/VHF/UHF 100W compact mobile transceiver
     ///
     /// Non-D version (pre-D-STAR). Predecessor to the FT-857D.
-    public static let yaesuFT857 = RigCapabilities(
+    public static let ft857 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -174,7 +174,7 @@ extension RadioCapabilitiesDatabase {
     /// Yaesu FT-897 - HF/VHF/UHF 100W base/portable transceiver
     ///
     /// Non-D version (pre-D-STAR). Includes internal battery tray and ATU option.
-    public static let yaesuFT897 = RigCapabilities(
+    public static let ft897 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -218,7 +218,7 @@ extension RadioCapabilitiesDatabase {
     /// Yaesu FT-450 - HF/6m 100W transceiver with optional ATU
     ///
     /// Non-D version (predecessor to FT-450D). Basic CAT support, 38400 baud.
-    public static let yaesuFT450 = RigCapabilities(
+    public static let ft450 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -257,7 +257,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FTDX-3000 - HF/6m 100W transceiver
-    public static let yaesuFTDX3000 = RigCapabilities(
+    public static let ftdx3000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

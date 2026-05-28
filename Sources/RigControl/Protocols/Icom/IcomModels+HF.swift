@@ -1,6 +1,6 @@
 import Foundation
 
-extension RadioDefinition {
+extension RadioDefinition.Icom {
 
     // MARK: - Additional HF Transceivers
 
@@ -8,12 +8,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x56)
     /// - Returns: RadioDefinition for IC-746
-    public static func icomIC746(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic746(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-746",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC746,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic746,
             civAddress: civAddress ?? IcomRadioModel.ic746.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -21,7 +21,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic746,
                     commandSet: IC746CommandSet.ic746,
-                    capabilities: RadioCapabilitiesDatabase.icomIC746
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic746
                 )
             }
         )
@@ -31,12 +31,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x66)
     /// - Returns: RadioDefinition for IC-746PRO
-    public static func icomIC746PRO(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic746PRO(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-746PRO",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC746PRO,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic746PRO,
             civAddress: civAddress ?? IcomRadioModel.ic746pro.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -44,7 +44,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic746pro,
                     commandSet: IC746CommandSet.ic746PRO,
-                    capabilities: RadioCapabilitiesDatabase.icomIC746PRO
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic746PRO
                 )
             }
         )
@@ -54,12 +54,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x50)
     /// - Returns: RadioDefinition for IC-756
-    public static func icomIC756(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic756(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-756",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC756,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic756,
             civAddress: civAddress ?? IcomRadioModel.ic756.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -67,7 +67,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic756,
                     commandSet: IC756CommandSet.ic756,
-                    capabilities: RadioCapabilitiesDatabase.icomIC756
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic756
                 )
             }
         )
@@ -77,12 +77,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x5C)
     /// - Returns: RadioDefinition for IC-756PRO
-    public static func icomIC756PRO(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic756PRO(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-756PRO",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC756PRO,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic756PRO,
             civAddress: civAddress ?? IcomRadioModel.ic756pro.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -90,7 +90,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic756pro,
                     commandSet: IC756CommandSet.ic756PRO,
-                    capabilities: RadioCapabilitiesDatabase.icomIC756PRO
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic756PRO
                 )
             }
         )
@@ -100,12 +100,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x64)
     /// - Returns: RadioDefinition for IC-756PROII
-    public static func icomIC756PROII(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic756PROII(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-756PROII",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC756PROII,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic756PROII,
             civAddress: civAddress ?? IcomRadioModel.ic756proII.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -113,7 +113,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic756proII,
                     commandSet: IC756CommandSet.ic756PROII,
-                    capabilities: RadioCapabilitiesDatabase.icomIC756PROII
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic756PROII
                 )
             }
         )
@@ -123,12 +123,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x6E)
     /// - Returns: RadioDefinition for IC-756PROIII
-    public static func icomIC756PROIII(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic756PROIII(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-756PROIII",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC756PROIII,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic756PROIII,
             civAddress: civAddress ?? IcomRadioModel.ic756proIII.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -136,7 +136,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic756proIII,
                     commandSet: IC756CommandSet.ic756PROIII,
-                    capabilities: RadioCapabilitiesDatabase.icomIC756PROIII
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic756PROIII
                 )
             }
         )
@@ -146,12 +146,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x76)
     /// - Returns: RadioDefinition for IC-7200
-    public static func icomIC7200(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7200(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7200",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7200,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7200,
             civAddress: civAddress ?? IcomRadioModel.ic7200.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -159,7 +159,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7200,
                     commandSet: StandardIcomCommandSet.ic7200,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7200
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7200
                 )
             }
         )
@@ -169,12 +169,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x5E)
     /// - Returns: RadioDefinition for IC-718
-    public static func icomIC718(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic718(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-718",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC718,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic718,
             civAddress: civAddress ?? IcomRadioModel.ic718.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -182,7 +182,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic718,
                     commandSet: StandardIcomCommandSet.ic718,
-                    capabilities: RadioCapabilitiesDatabase.icomIC718
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic718
                 )
             }
         )
@@ -192,12 +192,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x80)
     /// - Returns: RadioDefinition for IC-7410
-    public static func icomIC7410(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7410(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7410",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7410,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7410,
             civAddress: civAddress ?? IcomRadioModel.ic7410.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -205,7 +205,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7410,
                     commandSet: StandardIcomCommandSet.ic7410,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7410
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7410
                 )
             }
         )
@@ -215,12 +215,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x74)
     /// - Returns: RadioDefinition for IC-7700
-    public static func icomIC7700(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7700(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7700",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7700,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7700,
             civAddress: civAddress ?? IcomRadioModel.ic7700.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -228,7 +228,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7700,
                     commandSet: StandardIcomCommandSet.ic7700,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7700
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7700
                 )
             }
         )
@@ -238,12 +238,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x6A)
     /// - Returns: RadioDefinition for IC-7800
-    public static func icomIC7800(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7800(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7800",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7800,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7800,
             civAddress: civAddress ?? IcomRadioModel.ic7800.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -251,7 +251,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7800,
                     commandSet: StandardIcomCommandSet.ic7800,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7800
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7800
                 )
             }
         )
@@ -261,12 +261,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x8E)
     /// - Returns: RadioDefinition for IC-7851
-    public static func icomIC7851(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7851(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7851",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7851,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7851,
             civAddress: civAddress ?? IcomRadioModel.ic7851.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -274,7 +274,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7851,
                     commandSet: StandardIcomCommandSet.ic7851,
-                    capabilities: RadioCapabilitiesDatabase.icomIC7851
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7851
                 )
             }
         )
@@ -284,12 +284,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x8E)
     /// - Returns: RadioDefinition for IC-7850
-    public static func icomIC7850(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic7850(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-7850",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC7850,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic7850,
             civAddress: civAddress ?? IcomRadioModel.ic7850.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -297,7 +297,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic7850,
                     commandSet: StandardIcomCommandSet.ic7851,  // Uses same command set as IC-7851
-                    capabilities: RadioCapabilitiesDatabase.icomIC7850
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic7850
                 )
             }
         )
@@ -307,12 +307,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x7C)
     /// - Returns: RadioDefinition for IC-9100
-    public static func icomIC9100(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic9100(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-9100",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC9100,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic9100,
             civAddress: civAddress ?? IcomRadioModel.ic9100.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -320,7 +320,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic9100,
                     commandSet: StandardIcomCommandSet.ic9100,
-                    capabilities: RadioCapabilitiesDatabase.icomIC9100
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic9100
                 )
             }
         )
@@ -330,12 +330,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x60)
     /// - Returns: RadioDefinition for IC-910H
-    public static func icomIC910H(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic910H(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-910H",
             defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC910H,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic910H,
             civAddress: civAddress ?? IcomRadioModel.ic910h.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -343,7 +343,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic910h,
                     commandSet: StandardIcomCommandSet.ic910H,
-                    capabilities: RadioCapabilitiesDatabase.icomIC910H
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic910H
                 )
             }
         )
@@ -353,12 +353,12 @@ extension RadioDefinition {
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x42)
     /// - Returns: RadioDefinition for IC-820H
-    public static func icomIC820H(civAddress: UInt8? = nil) -> RadioDefinition {
+    public static func ic820H(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
             manufacturer: .icom,
             model: "IC-820H",
             defaultBaudRate: 9600,
-            capabilities: RadioCapabilitiesDatabase.icomIC820H,
+            capabilities: RadioCapabilitiesDatabase.Icom.ic820H,
             civAddress: civAddress ?? IcomRadioModel.ic820h.defaultCIVAddress,
             protocolFactory: { transport in
                 IcomCIVProtocol(
@@ -366,7 +366,7 @@ extension RadioDefinition {
                     civAddress: civAddress,
                     radioModel: .ic820h,
                     commandSet: StandardIcomCommandSet.ic910H,  // Uses similar command set
-                    capabilities: RadioCapabilitiesDatabase.icomIC820H
+                    capabilities: RadioCapabilitiesDatabase.Icom.ic820H
                 )
             }
         )

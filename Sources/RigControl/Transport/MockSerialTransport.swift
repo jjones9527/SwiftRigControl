@@ -30,7 +30,7 @@ import Foundation
 ///     transport: mock,
 ///     radioModel: .ic9700,
 ///     commandSet: IC9700CommandSet(),
-///     capabilities: RadioCapabilitiesDatabase.icomIC9700
+///     capabilities: RadioCapabilitiesDatabase.Icom.ic9700
 /// )
 /// try await proto.connect()
 /// let freq = try await proto.getFrequency(vfo: .a)   // → 14_300_000

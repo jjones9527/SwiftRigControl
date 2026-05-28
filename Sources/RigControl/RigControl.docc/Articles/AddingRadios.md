@@ -24,7 +24,7 @@ Before you write any code, decide which path applies:
 Pick a `Sources/RigControl/Models/RadioCapabilitiesDatabase+*.swift`
 file matching the manufacturer, add a static
 ``RigCapabilities`` constant for the new radio, then add a
-factory method (e.g., `.icomIC7910()`) in the corresponding
+factory method (e.g., `.Icom.ic7910()`) in the corresponding
 `Sources/RigControl/Protocols/<Vendor>/<Vendor>Models*.swift`
 file.
 
@@ -52,7 +52,7 @@ public static func icomIC9999(civAddress: UInt8? = nil) -> RadioDefinition {
         manufacturer: .icom,
         model: "IC-9999",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.icomIC9999,
+        capabilities: RadioCapabilitiesDatabase.Icom.ic9999,
         civAddress: civAddress ?? 0xB0,
         // verificationStatus defaults to .definition — leave that
         // unless you're going to validate against real hardware
@@ -63,7 +63,7 @@ public static func icomIC9999(civAddress: UInt8? = nil) -> RadioDefinition {
                 civAddress: civAddress,
                 radioModel: .ic9999,  // add the enum case
                 commandSet: StandardIcomCommandSet(civAddress: 0xB0),
-                capabilities: RadioCapabilitiesDatabase.icomIC9999
+                capabilities: RadioCapabilitiesDatabase.Icom.ic9999
             )
         }
     )

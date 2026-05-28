@@ -23,7 +23,7 @@ makes the connection look like generic Hamlib.
 import RigControl
 
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
 )
 try await rig.connect()

@@ -373,59 +373,59 @@ public class XPCServer: NSObject, @preconcurrency RigControlXPCProtocol {
         switch model.uppercased() {
         // Icom
         case "IC-9700", "IC9700", "9700":
-            return .icomIC9700()
+            return RadioDefinition.Icom.ic9700()
         case "IC-7610", "IC7610", "7610":
-            return .icomIC7610()
+            return RadioDefinition.Icom.ic7610()
         case "IC-7300", "IC7300", "7300":
-            return .icomIC7300()
+            return RadioDefinition.Icom.ic7300()
         case "IC-7600", "IC7600", "7600":
-            return .icomIC7600()
+            return RadioDefinition.Icom.ic7600()
         case "IC-7100", "IC7100", "7100":
-            return .icomIC7100()
+            return RadioDefinition.Icom.ic7100()
         case "IC-705", "IC705", "705":
-            return .icomIC705()
+            return RadioDefinition.Icom.ic705()
 
         // Elecraft
         case "K2":
-            return .elecraftK2
+            return RadioDefinition.Elecraft.k2
         case "K3":
-            return .elecraftK3
+            return RadioDefinition.Elecraft.k3
         case "K3S":
-            return .elecraftK3S
+            return RadioDefinition.Elecraft.k3S
         case "K4":
-            return .elecraftK4
+            return RadioDefinition.Elecraft.k4
         case "KX2":
-            return .elecraftKX2
+            return RadioDefinition.Elecraft.kx2
         case "KX3":
-            return .elecraftKX3
+            return RadioDefinition.Elecraft.kx3
 
         // Yaesu
         case "FTDX-10", "FTDX10", "FTDX 10":
-            return .yaesuFTDX10
+            return RadioDefinition.Yaesu.ftdx10
         case "FT-991A", "FT991A", "991A":
-            return .yaesuFT991A
+            return RadioDefinition.Yaesu.ft991A
         case "FT-710", "FT710":
-            return .yaesuFT710
+            return RadioDefinition.Yaesu.ft710
         case "FT-891", "FT891":
-            return .yaesuFT891
+            return RadioDefinition.Yaesu.ft891
         case "FT-817", "FT817":
-            return .yaesuFT817
+            return RadioDefinition.Yaesu.ft817
         case "FTDX-101D", "FTDX101D":
-            return .yaesuFTDX101D
+            return RadioDefinition.Yaesu.ftdx101D
 
         // Kenwood
         case "TS-890S", "TS890S":
-            return .kenwoodTS890S
+            return RadioDefinition.Kenwood.ts890S
         case "TS-990S", "TS990S":
-            return .kenwoodTS990S
+            return RadioDefinition.Kenwood.ts990S
         case "TS-590SG", "TS590SG":
-            return .kenwoodTS590SG
+            return RadioDefinition.Kenwood.ts590SG
         case "TM-D710", "TMD710", "TM-D710GA":
-            return .kenwoodTMD710
+            return RadioDefinition.Kenwood.tmd710
         case "TS-480SAT", "TS480SAT":
-            return .kenwoodTS480SAT
+            return RadioDefinition.Kenwood.ts480SAT
         case "TS-2000", "TS2000":
-            return .kenwoodTS2000
+            return RadioDefinition.Kenwood.ts2000
 
         default:
             return nil

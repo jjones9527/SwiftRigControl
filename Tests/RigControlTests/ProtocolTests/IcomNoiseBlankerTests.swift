@@ -28,7 +28,7 @@ import Testing
             civAddress: 0xA2,
             radioModel: .ic9700,
             commandSet: IC9700CommandSet(),
-            capabilities: RadioCapabilitiesDatabase.icomIC9700
+            capabilities: RadioCapabilitiesDatabase.Icom.ic9700
         )
         return (mock, proto)
     }

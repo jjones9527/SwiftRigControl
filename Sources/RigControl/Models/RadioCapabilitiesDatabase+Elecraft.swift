@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Elecraft {
 
     // MARK: - Elecraft Radios
 
     /// Elecraft K3 - HF/6m transceiver
-    public static let elecraftK3 = RigCapabilities(
+    public static let k3 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -63,7 +63,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Remaining Elecraft Radios
 
     /// Elecraft K2 - HF transceiver
-    public static let elecraftK2 = RigCapabilities(
+    public static let k2 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -112,7 +112,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Elecraft K3S - HF/6m transceiver (enhanced K3)
-    public static let elecraftK3S = RigCapabilities(
+    public static let k3S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -120,7 +120,7 @@ extension RadioCapabilitiesDatabase {
         supportedModes: [.lsb, .usb, .cw, .cwR, .am, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
         detailedFrequencyRanges: [
-            // Similar to K3, see elecraftK3 definition
+            // Similar to K3, see k3 definition above
             DetailedFrequencyRange(min: 500_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
             DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .dataLSB], canTransmit: true, bandName: "160m"),
             DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
@@ -150,7 +150,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Elecraft K4 - HF/6m SDR transceiver
-    public static let elecraftK4 = RigCapabilities(
+    public static let k4 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -188,7 +188,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Elecraft KX2 - Portable HF transceiver
-    public static let elecraftKX2 = RigCapabilities(
+    public static let kx2 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -225,7 +225,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Elecraft KX3 - Portable HF/6m transceiver
-    public static let elecraftKX3 = RigCapabilities(
+    public static let kx3 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

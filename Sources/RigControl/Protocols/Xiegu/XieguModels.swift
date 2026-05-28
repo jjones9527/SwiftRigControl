@@ -10,7 +10,7 @@ import Foundation
 /// - Fixed baud rate: **19200**
 /// - Standard Icom command set with minor quirks
 /// - VFO model: currentOnly (operates on current VFO)
-extension RadioDefinition {
+extension RadioDefinition.Xiegu {
     // MARK: - Xiegu Budget HF Transceivers
 
     /// Xiegu G90 HF 20W SDR transceiver
@@ -31,11 +31,11 @@ extension RadioDefinition {
     /// - Protocol: Standard Icom CI-V
     ///
     /// - Returns: RadioDefinition for Xiegu G90
-    public static let xieguG90 = RadioDefinition(
+    public static let g90 = RadioDefinition(
         manufacturer: .xiegu,
         model: "G90",
         defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.xieguG90,
+        capabilities: RadioCapabilitiesDatabase.Xiegu.g90,
         civAddress: 0xA4,  // Xiegu standard CI-V address
         protocolFactory: { transport in
             IcomCIVProtocol(
@@ -48,7 +48,7 @@ extension RadioDefinition {
                     requiresModeFilter: true,
                     echoesCommands: false
                 ),
-                capabilities: RadioCapabilitiesDatabase.xieguG90
+                capabilities: RadioCapabilitiesDatabase.Xiegu.g90
             )
         }
     )
@@ -72,11 +72,11 @@ extension RadioDefinition {
     /// - Protocol: Standard Icom CI-V
     ///
     /// - Returns: RadioDefinition for Xiegu X6100
-    public static let xieguX6100 = RadioDefinition(
+    public static let x6100 = RadioDefinition(
         manufacturer: .xiegu,
         model: "X6100",
         defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.xieguX6100,
+        capabilities: RadioCapabilitiesDatabase.Xiegu.x6100,
         civAddress: 0xA4,
         protocolFactory: { transport in
             IcomCIVProtocol(
@@ -89,7 +89,7 @@ extension RadioDefinition {
                     requiresModeFilter: true,
                     echoesCommands: false
                 ),
-                capabilities: RadioCapabilitiesDatabase.xieguX6100
+                capabilities: RadioCapabilitiesDatabase.Xiegu.x6100
             )
         }
     )
@@ -115,11 +115,11 @@ extension RadioDefinition {
     /// - Protocol: Standard Icom CI-V
     ///
     /// - Returns: RadioDefinition for Xiegu X6200
-    public static let xieguX6200 = RadioDefinition(
+    public static let x6200 = RadioDefinition(
         manufacturer: .xiegu,
         model: "X6200",
         defaultBaudRate: 19200,
-        capabilities: RadioCapabilitiesDatabase.xieguX6200,
+        capabilities: RadioCapabilitiesDatabase.Xiegu.x6200,
         civAddress: 0xA4,
         protocolFactory: { transport in
             IcomCIVProtocol(
@@ -132,7 +132,7 @@ extension RadioDefinition {
                     requiresModeFilter: true,
                     echoesCommands: false
                 ),
-                capabilities: RadioCapabilitiesDatabase.xieguX6200
+                capabilities: RadioCapabilitiesDatabase.Xiegu.x6200
             )
         }
     )

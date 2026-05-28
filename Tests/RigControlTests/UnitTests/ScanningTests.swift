@@ -106,7 +106,7 @@ import Testing
     // MARK: - Per-radio capability promotion
 
     @Test func ic7100ScanCapabilities() {
-        let caps = RadioCapabilitiesDatabase.icomIC7100
+        let caps = RadioCapabilitiesDatabase.Icom.ic7100
         // Hamlib IC7100_SCAN_OPS: VFO, MEM, SLCT, PRIO
         #expect(caps.supportsVFOScan)
         #expect(caps.supportsMemoryScan)
@@ -117,7 +117,7 @@ import Testing
     }
 
     @Test func ic7600ScanCapabilities() {
-        let caps = RadioCapabilitiesDatabase.icomIC7600
+        let caps = RadioCapabilitiesDatabase.Icom.ic7600
         // Hamlib IC7600_SCAN_OPS: VFO, MEM, PROG, DELTA, PRIO
         #expect(caps.supportsVFOScan)
         #expect(caps.supportsMemoryScan)
@@ -128,7 +128,7 @@ import Testing
     }
 
     @Test func ic9700ScanCapabilities() {
-        let caps = RadioCapabilitiesDatabase.icomIC9700
+        let caps = RadioCapabilitiesDatabase.Icom.ic9700
         // Hamlib IC9700_SCAN_OPS: MEM, PROG, SLCT
         #expect(!caps.supportsVFOScan)
         #expect(caps.supportsMemoryScan)

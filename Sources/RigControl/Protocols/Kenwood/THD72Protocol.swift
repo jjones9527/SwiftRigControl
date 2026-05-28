@@ -49,7 +49,7 @@ public actor THD72Protocol:
     ///   - transport: Serial transport (typically the radio's
     ///     virtual COM port over USB).
     ///   - capabilities: Capability set; usually
-    ///     ``RadioCapabilitiesDatabase/kenwoodTHD72A``.
+    ///     ``RadioCapabilitiesDatabase/Kenwood/thd72A``.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities

@@ -7,13 +7,13 @@ This document provides comprehensive examples for common amateur radio control s
 > examples below work against the current release, `v1.0.6`. See
 > `CHANGELOG.md`'s top-of-file note for the reconciliation.
 
-> **API style note:** Examples below sometimes show the legacy
-> static-property form (`.icomIC9700`, `.icomIC7600`, etc.). Those
-> properties were removed in Phase 1.4 of the v1.0.x line (commit
-> `6d8a954`) in favor of function-style factories that accept an
-> optional CI-V address: `.icomIC9700()`,
-> `.icomIC7600(civAddress: 0x7B)`. Read each `.icomXxx` example as
-> `.icomXxx()` and add a CI-V address argument if needed.
+> **API style note:** Radio definitions live under vendor namespaces:
+> `.Icom.ic9700()`, `.Yaesu.ftdx10`, `.Kenwood.ts890S`,
+> `.Elecraft.k3`, `.Xiegu.g90`, `.Lab599.tx500`. Icom factories
+> accept an optional CI-V address (`.Icom.ic7600(civAddress: 0x7B)`).
+> If an example below still shows the pre-namespace flat form
+> (`.icomIC9700`, `.yaesuFTDX10`), read it as the namespaced
+> equivalent.
 
 ## Table of Contents
 
@@ -41,8 +41,8 @@ import RigControl
 
 func basicExample() async throws {
     // Create controller for IC-9700
-    let rig = RigController(
-        radio: .icomIC9700,
+    let rig = try RigController(
+        radio: .Icom.ic9700(),
         connection: .serial(path: "/dev/cu.IC9700", baudRate: nil)  // nil uses default
     )
 
@@ -67,26 +67,26 @@ func basicExample() async throws {
 
 ```swift
 // Icom IC-7300
-let icom = RigController(
-    radio: .icomIC7300,
+let icom = try RigController(
+    radio: .Icom.ic7300(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 115200)
 )
 
 // Yaesu FTDX-10
-let yaesu = RigController(
-    radio: .yaesuFTDX10,
+let yaesu = try RigController(
+    radio: .Yaesu.ftdx10,
     connection: .serial(path: "/dev/cu.usbserial-FTDX10", baudRate: 38400)
 )
 
 // Kenwood TS-890S
-let kenwood = RigController(
-    radio: .kenwoodTS890S,
+let kenwood = try RigController(
+    radio: .Kenwood.ts890S,
     connection: .serial(path: "/dev/cu.usbserial-TS890", baudRate: 115200)
 )
 
 // Elecraft K3
-let elecraft = RigController(
-    radio: .elecraftK3,
+let elecraft = try RigController(
+    radio: .Elecraft.k3,
     connection: .serial(path: "/dev/cu.usbserial-K3", baudRate: 38400)
 )
 
@@ -952,8 +952,8 @@ func compareFrequencies(freqA: UInt64, freqB: UInt64) async throws {
 
 ```swift
 func robustRadioControl() async {
-    let rig = RigController(
-        radio: .icomIC7300,
+    let rig = try RigController(
+        radio: .Icom.ic7300(),
         connection: .serial(path: "/dev/cu.IC7300", baudRate: nil)
     )
 
@@ -1415,7 +1415,7 @@ SwiftRigControl hides that.
 
 ```swift
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
 )
 try await rig.connect()
@@ -1495,7 +1495,7 @@ a single API that mirrors Hamlib's `RIG_FUNC_*` namespace.
 
 ```swift
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
 )
 try await rig.connect()
@@ -1578,7 +1578,7 @@ as a 0-100 normalized scale per Hamlib convention.
 
 ```swift
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
 )
 try await rig.connect()
@@ -1645,7 +1645,7 @@ import RigControl
 import Network
 
 let rig = try RigController(
-    radio: .icomIC7600(),
+    radio: .Icom.ic7600(),
     connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
 )
 try await rig.connect()

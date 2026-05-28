@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Kenwood {
 
     // MARK: - Kenwood Radios
 
     /// Kenwood TS-590SG - HF/6m transceiver
-    public static let kenwoodTS590SG = RigCapabilities(
+    public static let ts590SG = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -60,7 +60,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-890S - HF/6m transceiver with dual receiver
-    public static let kenwoodTS890S = RigCapabilities(
+    public static let ts890S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -97,7 +97,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-990S - HF/6m flagship transceiver with dual receiver
-    public static let kenwoodTS990S = RigCapabilities(
+    public static let ts990S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -134,7 +134,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TM-D710GA - VHF/UHF dual-band transceiver
-    public static let kenwoodTMD710 = RigCapabilities(
+    public static let tmd710 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -163,7 +163,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-480SAT - HF/6m all-mode transceiver
-    public static let kenwoodTS480SAT = RigCapabilities(
+    public static let ts480SAT = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -199,7 +199,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-2000 - HF/VHF/UHF all-mode transceiver
-    public static let kenwoodTS2000 = RigCapabilities(
+    public static let ts2000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -252,7 +252,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-590S - HF/6m transceiver (earlier version of TS-590SG)
-    public static let kenwoodTS590S = RigCapabilities(
+    public static let ts590S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -288,7 +288,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-870S - HF/6m 100W transceiver (classic flagship)
-    public static let kenwoodTS870S = RigCapabilities(
+    public static let ts870S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -322,7 +322,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TS-480HX - HF/6m 200W transceiver (high power version of TS-480)
-    public static let kenwoodTS480HX = RigCapabilities(
+    public static let ts480HX = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -356,7 +356,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TM-V71A - VHF/UHF dual-band transceiver with EchoLink
-    public static let kenwoodTMV71 = RigCapabilities(
+    public static let tmv71 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -400,7 +400,7 @@ extension RadioCapabilitiesDatabase {
     ///
     /// Bluetooth SPP isn't yet supported by SwiftRigControl's
     /// transport layer; that's tracked as a future feature.
-    public static let kenwoodTHD75 = RigCapabilities(
+    public static let thd75 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -441,7 +441,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Kenwood TH-D74A - Tri-band handheld with D-STAR and APRS
-    public static let kenwoodTHD74 = RigCapabilities(
+    public static let thd74 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
         powerControl: true,
@@ -474,7 +474,7 @@ extension RadioCapabilitiesDatabase {
     /// Kenwood TS-850S - HF 100W transceiver with internal ATU
     ///
     /// Classic late-90s flagship. HF-only (no 6m), 1200 baud default CAT.
-    public static let kenwoodTS850S = RigCapabilities(
+    public static let ts850S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -511,7 +511,7 @@ extension RadioCapabilitiesDatabase {
     ///
     /// Late-90s mid-range transceiver with optional 6m coverage. 4800 baud default CAT.
     /// The TS-570D includes 6m; the TS-570S does not.
-    public static let kenwoodTS570D = RigCapabilities(
+    public static let ts570D = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -549,7 +549,7 @@ extension RadioCapabilitiesDatabase {
     /// Kenwood TS-570S - HF-only 100W transceiver with DSP (no 6m, no ATU)
     ///
     /// Budget sibling of the TS-570D. HF bands only, no 6m, no internal ATU. 4800 baud default CAT.
-    public static let kenwoodTS570S = RigCapabilities(
+    public static let ts570S = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -587,7 +587,7 @@ extension RadioCapabilitiesDatabase {
     /// Frequency ranges and TX limits from Hamlib thd72.c (rx_range_list2 / tx_range_list2).
     /// Tuning steps from thd72tuningstep[]. CTCSS/DCS/duplex per hardware capability.
     /// Power is discrete: 5 W (High), 500 mW (Mid), 50 mW (Low) — see THD72Protocol.setPower().
-    public static let kenwoodTHD72A = RigCapabilities(
+    public static let thd72A = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,   // VMC/BC split supported per thd72_set_split_vfo
         powerControl: true,

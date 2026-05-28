@@ -50,7 +50,7 @@ themselves at the type level instead of failing at runtime.
 import RigControl
 
 let rig = try RigController(
-    radio: .icomIC9700(),
+    radio: .Icom.ic9700(),
     connection: .serial(path: "/dev/cu.IC9700", baudRate: 115200)
 )
 

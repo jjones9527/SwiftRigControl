@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Yaesu {
 
     // MARK: - Yaesu FT-991
 
     /// Yaesu FT-991 - HF/VHF/UHF all-mode transceiver (predecessor to FT-991A)
-    public static let yaesuFT991 = RigCapabilities(
+    public static let ft991 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -54,7 +54,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Yaesu FT-950
 
     /// Yaesu FT-950 - HF/6m 100W transceiver
-    public static let yaesuFT950 = RigCapabilities(
+    public static let ft950 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -96,7 +96,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FTDX-5000 HF/6m 200W flagship transceiver with dual receiver
-    public static let yaesuFTDX5000 = RigCapabilities(
+    public static let ftdx5000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -138,7 +138,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FTDX-1200 HF/6m 100W transceiver
-    public static let yaesuFTDX1200 = RigCapabilities(
+    public static let ftdx1200 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -180,7 +180,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
-    public static let yaesuFT100 = RigCapabilities(
+    public static let ft100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -228,7 +228,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FTDX-9000 series HF/6m flagship transceiver (200W/400W)
-    public static let yaesuFTDX9000 = RigCapabilities(
+    public static let ftdx9000 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -268,7 +268,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FT-847 HF/VHF/UHF all-band transceiver
-    public static let yaesuFT847 = RigCapabilities(
+    public static let ft847 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -316,7 +316,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Yaesu FT-920 HF/6m transceiver with DSP
-    public static let yaesuFT920 = RigCapabilities(
+    public static let ft920 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

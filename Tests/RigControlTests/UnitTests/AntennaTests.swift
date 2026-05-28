@@ -83,19 +83,19 @@ import Testing
 
     @Test func ic7100HasTwoAntennas() {
         // Hamlib IC7100_HF_ANTS = RIG_ANT_1 | RIG_ANT_2.
-        #expect(RadioCapabilitiesDatabase.icomIC7100.antennaCount == 2)
+        #expect(RadioCapabilitiesDatabase.Icom.ic7100.antennaCount == 2)
     }
 
     @Test func ic7600HasTwoAntennas() {
         // Hamlib IC7600_ANTS = RIG_ANT_1 | RIG_ANT_2.
-        #expect(RadioCapabilitiesDatabase.icomIC7600.antennaCount == 2)
+        #expect(RadioCapabilitiesDatabase.Icom.ic7600.antennaCount == 2)
     }
 
     @Test func ic9700HasOneAntenna() {
         // IC-9700 has per-band hardware jacks but no
         // software-selectable antenna routing. Hamlib does not
         // define IC9700_ANTS — we treat as single antenna.
-        #expect(RadioCapabilitiesDatabase.icomIC9700.antennaCount == 1)
+        #expect(RadioCapabilitiesDatabase.Icom.ic9700.antennaCount == 1)
     }
 
     @Test func k2HasTwoAntennas() {
@@ -103,7 +103,7 @@ import Testing
         // internal or KAT100 external tuner. Capability flag
         // advertises potential support; operators without the
         // tuner installed will see commandFailed at runtime.
-        #expect(RadioCapabilitiesDatabase.elecraftK2.antennaCount == 2)
+        #expect(RadioCapabilitiesDatabase.Elecraft.k2.antennaCount == 2)
     }
 
     // MARK: - IcomCIVProtocol gating (capability not advertised → throws)

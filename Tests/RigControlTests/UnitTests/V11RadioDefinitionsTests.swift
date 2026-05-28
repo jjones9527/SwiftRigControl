@@ -13,7 +13,7 @@ import Testing
     // MARK: - Kenwood TH-D75
 
     @Test func thd75BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.kenwoodTHD75
+        let caps = RadioCapabilitiesDatabase.Kenwood.thd75
         #expect(caps.maxPower == 5)
         #expect(caps.hasDualReceiver == true)
         #expect(caps.supportsCTCSS == true)
@@ -30,7 +30,7 @@ import Testing
 
     @Test func thd75ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .kenwoodTHD75,
+            radio: .Kenwood.thd75,
             connection: .mock
         )
         try await rig.connect()
@@ -40,7 +40,7 @@ import Testing
     // MARK: - Icom ID-31
 
     @Test func id31BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.icomID31
+        let caps = RadioCapabilitiesDatabase.Icom.id31
         #expect(caps.hasDualReceiver == false)
         #expect(caps.canTransmit(on: 446_000_000))
         #expect(!caps.canTransmit(on: 145_000_000)) // single-band UHF only
@@ -49,7 +49,7 @@ import Testing
 
     @Test func id31ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .icomID31(),
+            radio: .Icom.id31(),
             connection: .mock
         )
         try await rig.connect()
@@ -59,7 +59,7 @@ import Testing
     // MARK: - Icom ID-51
 
     @Test func id51BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.icomID51
+        let caps = RadioCapabilitiesDatabase.Icom.id51
         #expect(caps.hasDualReceiver == true) // Main/Sub
         // Dual-band: 2m + 70cm TX
         #expect(caps.canTransmit(on: 146_520_000))
@@ -68,7 +68,7 @@ import Testing
 
     @Test func id51ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .icomID51(),
+            radio: .Icom.id51(),
             connection: .mock
         )
         try await rig.connect()
@@ -78,7 +78,7 @@ import Testing
     // MARK: - Icom ID-52
 
     @Test func id52BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.icomID52
+        let caps = RadioCapabilitiesDatabase.Icom.id52
         #expect(caps.hasDualReceiver == true)
         // Airband starts at 108 MHz (vs 118 MHz on ID-51).
         #expect(caps.isFrequencyValid(108_500_000))
@@ -88,7 +88,7 @@ import Testing
 
     @Test func id52ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .icomID52(),
+            radio: .Icom.id52(),
             connection: .mock
         )
         try await rig.connect()
@@ -98,7 +98,7 @@ import Testing
     // MARK: - Icom IC-92D
 
     @Test func ic92dBasicCaps() {
-        let caps = RadioCapabilitiesDatabase.icomIC92D
+        let caps = RadioCapabilitiesDatabase.Icom.ic92D
         // Broadband RX VFO A starts at 495 kHz.
         #expect(caps.isFrequencyValid(500_000))
         // 2m TX + 70cm TX (70cm EU limit 440 MHz).
@@ -112,7 +112,7 @@ import Testing
 
     @Test func ic92dConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .icomIC92D(),
+            radio: .Icom.ic92D(),
             connection: .mock
         )
         try await rig.connect()
@@ -122,7 +122,7 @@ import Testing
     // MARK: - Icom IC-R30
 
     @Test func icR30BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.icomICR30
+        let caps = RadioCapabilitiesDatabase.Icom.icR30
         #expect(caps.powerControl == false)  // receiver only
         #expect(caps.maxPower == 0)
         #expect(caps.antennaCount == 2)
@@ -135,7 +135,7 @@ import Testing
 
     @Test func icR30ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .icomICR30(),
+            radio: .Icom.icR30(),
             connection: .mock
         )
         try await rig.connect()
@@ -145,7 +145,7 @@ import Testing
     // MARK: - Lab599 TX-500
 
     @Test func tx500BasicCaps() {
-        let caps = RadioCapabilitiesDatabase.lab599TX500
+        let caps = RadioCapabilitiesDatabase.Lab599.tx500
         #expect(caps.maxPower == 10)
         #expect(caps.antennaCount == 2)
         // HF coverage 160m–10m
@@ -164,7 +164,7 @@ import Testing
 
     @Test func tx500ConnectsViaMock() async throws {
         let rig = try RigController(
-            radio: .lab599TX500,
+            radio: .Lab599.tx500,
             connection: .mock
         )
         try await rig.connect()

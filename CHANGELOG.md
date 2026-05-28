@@ -17,6 +17,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (BREAKING — flat names replaced by vendor namespaces)
+
+- **Radio definitions and capability presets are now organized
+  under vendor namespaces** on `RadioDefinition` and
+  `RadioCapabilitiesDatabase`. The flat `icomXxx`, `yaesuXxx`,
+  `kenwoodXxx`, `elecraftXxx`, `xieguXxx`, and `lab599Xxx`
+  members were removed and replaced with namespaced forms
+  (`.Icom.ic7300()`, `.Yaesu.ftdx10`, `.Kenwood.ts890S`,
+  `.Elecraft.k3`, `.Xiegu.g90`, `.Lab599.tx500`). The radio
+  identity is unchanged; only the spelling moves. Icom factories
+  still accept an optional CI-V address
+  (`.Icom.ic7600(civAddress: 0x7B)`).
+
+  **Migration**: search-and-replace at call sites.
+  ```swift
+  // before
+  let rig = try RigController(radio: .icomIC7300(), …)
+  let caps = RadioCapabilitiesDatabase.yaesuFTDX10
+  // after
+  let rig = try RigController(radio: .Icom.ic7300(), …)
+  let caps = RadioCapabilitiesDatabase.Yaesu.ftdx10
+  ```
+
+  The `IcomRadioModel` enum cases (e.g. `.ic7300`, `.ic9700`)
+  are unchanged — those identify radios *inside* the Icom
+  CI-V protocol implementation, not the public catalog. Function
+  and VFO-operation preset sets (`.icomIC7600Funcs`,
+  `.icomStandard`, `.yaesuStandard`, etc.) on `Set<RigFunction>`
+  / `Set<VFOOperation>` are also unchanged.
+
 ### Removed (BREAKING for callers using these specific radios)
 
 - **`RadioDefinition.icomIC9000()`** factory and supporting

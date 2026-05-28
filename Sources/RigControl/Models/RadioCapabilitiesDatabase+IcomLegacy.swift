@@ -1,11 +1,11 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
+extension RadioCapabilitiesDatabase.Icom {
 
     // MARK: - Icom Legacy Mobile Transceivers
 
     /// Icom IC-706 - HF/6m/2m mobile transceiver
-    public static let icomIC706 = RigCapabilities(
+    public static let ic706 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -40,7 +40,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-706MKII - HF/6m/2m mobile transceiver (enhanced)
-    public static let icomIC706MKII = RigCapabilities(
+    public static let ic706MKII = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -75,7 +75,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-706MKIIG - HF/VHF/UHF mobile transceiver (adds UHF)
-    public static let icomIC706MKIIG = RigCapabilities(
+    public static let ic706MKIIG = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -117,7 +117,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-756 - HF/6m base station transceiver (original model)
-    public static let icomIC756 = RigCapabilities(
+    public static let ic756 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -148,7 +148,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7851 - HF/6m flagship transceiver with spectrum scope
-    public static let icomIC7851 = RigCapabilities(
+    public static let ic7851 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -179,7 +179,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-7850 HF/6m 200W flagship (50th Anniversary Limited Edition)
-    public static let icomIC7850 = RigCapabilities(
+    public static let ic7850 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -210,7 +210,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-910H - VHF/UHF satellite transceiver
-    public static let icomIC910H = RigCapabilities(
+    public static let ic910H = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -238,7 +238,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-970 VHF/UHF all-mode transceiver with satellite mode
-    public static let icomIC970 = RigCapabilities(
+    public static let ic970 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -266,7 +266,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-820H VHF/UHF dual-band satellite transceiver
-    public static let icomIC820H = RigCapabilities(
+    public static let ic820H = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -288,7 +288,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-2730 - VHF/UHF dual-band mobile transceiver
-    public static let icomIC2730 = RigCapabilities(
+    public static let ic2730 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,  // No split operation
         powerControl: true,
@@ -318,7 +318,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Icom D-STAR Mobiles
 
     /// Icom ID-5100 - VHF/UHF D-STAR mobile transceiver
-    public static let icomID5100 = RigCapabilities(
+    public static let id5100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -346,7 +346,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom ID-4100 - VHF/UHF D-STAR mobile transceiver
-    public static let icomID4100 = RigCapabilities(
+    public static let id4100 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,
@@ -376,7 +376,7 @@ extension RadioCapabilitiesDatabase {
     // MARK: - Icom Receivers
 
     /// Icom IC-R8600 - Wideband communications receiver
-    public static let icomICR8600 = RigCapabilities(
+    public static let icR8600 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,  // Receiver only
         powerControl: false,  // No transmit power
@@ -396,7 +396,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-R75 - HF communications receiver
-    public static let icomICR75 = RigCapabilities(
+    public static let icR75 = RigCapabilities(
         hasVFOB: false,  // Single VFO
         hasSplit: false,  // Receiver only
         powerControl: false,  // No transmit power
@@ -416,7 +416,7 @@ extension RadioCapabilitiesDatabase {
     )
 
     /// Icom IC-R9500 - Professional communications receiver
-    public static let icomICR9500 = RigCapabilities(
+    public static let icR9500 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,  // Receiver only
         powerControl: false,  // No transmit power

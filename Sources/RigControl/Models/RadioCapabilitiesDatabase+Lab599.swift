@@ -1,8 +1,6 @@
 import Foundation
 
-extension RadioCapabilitiesDatabase {
-
-    // MARK: - Lab599
+extension RadioCapabilitiesDatabase.Lab599 {
 
     /// Lab599 TX-500 — portable HF transceiver (~2020).
     ///
@@ -13,7 +11,7 @@ extension RadioCapabilitiesDatabase {
     ///
     /// Features: 10W HF, weatherproof, all-band amateur HF,
     /// optional 6m/2m/70cm receive in some variants.
-    public static let lab599TX500 = RigCapabilities(
+    public static let tx500 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
         powerControl: true,

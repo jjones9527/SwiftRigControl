@@ -29,7 +29,7 @@ Reading the field at runtime:
 
 ```swift
 let rig = try RigController(
-    radio: .icomIC7300(),
+    radio: .Icom.ic7300(),
     connection: .serial(path: "/dev/cu.IC7300", baudRate: 115200)
 )
 

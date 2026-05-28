@@ -114,6 +114,39 @@ public struct RadioDefinition: Sendable {
     public var fullName: String {
         "\(manufacturer.rawValue) \(model)"
     }
+
+    // MARK: - Vendor namespaces
+    //
+    // Radio factories are organised by manufacturer. Typing
+    // `RadioDefinition.Icom.` in Xcode autocomplete filters to
+    // only Icom radios. The per-vendor `<Vendor>Models.swift`
+    // files extend the matching namespace below.
+
+    /// Icom CI-V radios — HF transceivers, satellite radios,
+    /// D-STAR handhelds, and wideband receivers.
+    public enum Icom {}
+
+    /// Yaesu transceivers — FTDX flagships, FT mid-range, and
+    /// portable QRP rigs.
+    public enum Yaesu {}
+
+    /// Kenwood text-protocol transceivers — TS HF series,
+    /// TM mobiles, and TH handhelds.
+    public enum Kenwood {}
+
+    /// Elecraft K-series — K2, K3, K3S, K4, KX2, KX3.
+    public enum Elecraft {}
+
+    /// Xiegu CI-V-compatible HF SDR transceivers — G90, X6100,
+    /// X6200.
+    public enum Xiegu {}
+
+    /// Ten-Tec — Orion, Eagle, Jupiter, Pegasus.
+    public enum TenTec {}
+
+    /// Lab599 — TX-500 portable HF transceiver using a
+    /// Kenwood-compatible CAT.
+    public enum Lab599 {}
 }
 
 // MARK: - Connection Type
@@ -130,7 +163,7 @@ public enum ConnectionType {
     /// radio you can `setFrequency` / `setMode` / `setPTT` against,
     /// but never touches a serial port.
     ///
-    /// Pair with a real radio definition (e.g. `.icomIC7600()`) for
+    /// Pair with a real radio definition (e.g. `.Icom.ic7600()`) for
     /// protocol-level testing: the radio's `CATProtocol` actually
     /// runs and produces byte sequences you can inspect through the
     /// underlying ``MockSerialTransport``.

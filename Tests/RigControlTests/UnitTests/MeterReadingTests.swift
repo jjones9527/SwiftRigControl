@@ -165,9 +165,9 @@ import Testing
     @Test func verifiedRadiosHaveAllMeters() {
         // All four hardware-verified Icoms have all six meters.
         // K2 is Elecraft and has none (no protocol-level support).
-        let ic7100 = RigCapabilities.icomIC7100
-        let ic7600 = RigCapabilities.icomIC7600
-        let ic9700 = RigCapabilities.icomIC9700
+        let ic7100 = RadioCapabilitiesDatabase.Icom.ic7100
+        let ic7600 = RadioCapabilitiesDatabase.Icom.ic7600
+        let ic9700 = RadioCapabilitiesDatabase.Icom.ic9700
         for caps in [ic7100, ic7600, ic9700] {
             #expect(caps.supportsRFPowerMeter)
             #expect(caps.supportsSWRMeter)
@@ -179,11 +179,3 @@ import Testing
     }
 }
 
-// Convenience extension so the verifiedRadiosHaveAllMeters test
-// can reach the three Icom capability constants without the
-// RadioCapabilitiesDatabase prefix.
-private extension RigCapabilities {
-    static var icomIC7100: RigCapabilities { RadioCapabilitiesDatabase.icomIC7100 }
-    static var icomIC7600: RigCapabilities { RadioCapabilitiesDatabase.icomIC7600 }
-    static var icomIC9700: RigCapabilities { RadioCapabilitiesDatabase.icomIC9700 }
-}

@@ -1,8 +1,6 @@
 import Foundation
 
-extension RadioDefinition {
-
-    // MARK: - Lab599
+extension RadioDefinition.Lab599 {
 
     /// Lab599 TX-500 — portable HF transceiver (~2020).
     ///
@@ -13,15 +11,15 @@ extension RadioDefinition {
     /// preserved separately so UI can show the operator the
     /// actual radio model rather than mislabelling it as
     /// "Kenwood".
-    public static let lab599TX500 = RadioDefinition(
+    public static let tx500 = RadioDefinition(
         manufacturer: .lab599,
         model: "TX-500",
         defaultBaudRate: 115200,
-        capabilities: RadioCapabilitiesDatabase.lab599TX500,
+        capabilities: RadioCapabilitiesDatabase.Lab599.tx500,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.lab599TX500
+                capabilities: RadioCapabilitiesDatabase.Lab599.tx500
             )
         }
     )

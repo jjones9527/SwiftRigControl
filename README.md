@@ -341,7 +341,7 @@ import RigControl
 
 // Create a rig controller
 let rig = try RigController(
-    radio: .icomIC9700(),
+    radio: .Icom.ic9700(),
     connection: .serial(path: "/dev/cu.usbserial-A1B2C3", baudRate: 115200)
 )
 
