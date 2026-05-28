@@ -18,6 +18,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **IC-9700 / IC-705 noise blanker level was being encoded with
+  reversed bytes and could emit invalid BCD.** The setter at
+  `IcomCIVProtocol+NoiseControl.swift:143` inlined its own BCD
+  math instead of calling the shared
+  `BCDEncoding.encodePower(_:)` helper. The inlined math
+  emitted bytes in little-endian order (`[tens-ones, hundreds]`
+  instead of Icom's canonical big-endian `[hundreds, tens-ones]`)
+  *and* produced invalid BCD digits for levels > 99 — e.g. a
+  level of 128 emitted `[0xC8, 0x01]` where `0xC` is not a
+  valid BCD digit. The reader had the matching inverse error,
+  so round-trips via SwiftRigControl appeared self-consistent
+  while the radio actually held a value off by a factor of
+  10 or 100 from what the operator requested. The fix calls
+  `BCDEncoding.encodePower` / `decodePower` — the same helpers
+  IC-7100's NB level setter and the NR level setter already
+  use (introduced in commit `b2f2ca4`). Four protocol-level
+  tests in `IcomNoiseBlankerTests` lock in the wire bytes for
+  levels 50, 128, and 255 to prevent regression.
+
 - **IC-7600 (and IC-9100, IC-9700) DATA-USB / DATA-LSB / DATA-FM
   modes were not being engaged.** Previously these non-targetable
   radios received only the base mode set (`0x06 [mode, filter]`)

@@ -140,7 +140,18 @@ extension IcomCIVProtocol {
         case .ic9700, .ic705:
             // These radios use the same NB level command as IC-7100
             // Command: 0x14 0x12 [level BCD]
-            let bcdLevel = [UInt8(level % 10) | (UInt8(level / 10) << 4), UInt8(level / 100)]
+            //
+            // Use the shared BCDEncoding helper — Icom 0x14
+            // levels are big-endian packed BCD ([hundreds,
+            // tens-ones]). The earlier inlined math here
+            // emitted bytes in reverse order *and* produced
+            // invalid digits for levels > 99 (e.g. level=128
+            // gave [0xC8, 0x01] — the 0xC nibble isn't a BCD
+            // digit). The fix matches the IC-7100 path in
+            // `setNBLevelIC7100` and `setNRLevel` —
+            // `BCDEncoding.encodePower` is the canonical
+            // encoder for these 0x14 level commands.
+            let bcdLevel = BCDEncoding.encodePower(Int(level))
             let frame = CIVFrame(
                 to: civAddress,
                 command: [0x14, 0x12],
@@ -165,7 +176,15 @@ extension IcomCIVProtocol {
     private func getNBLevel() async throws -> UInt8 {
         switch radioModel {
         case .ic9700, .ic705:
-            // Command: 0x14 0x12 (read)
+            // Command: 0x14 0x12 (read).
+            // Mirror the setter: use the shared
+            // BCDEncoding helper. The earlier hand-rolled
+            // decode here read the bytes in the wrong order
+            // (treated data[0] as the tens/ones byte when the
+            // radio actually emits hundreds first), so reads
+            // appeared self-consistent with writes but were
+            // off by a factor of 10/100 vs. what the radio
+            // actually held.
             let frame = CIVFrame(
                 to: civAddress,
                 command: [0x14, 0x12],
@@ -176,10 +195,7 @@ extension IcomCIVProtocol {
             guard response.command.count >= 2, response.data.count == 2 else {
                 throw RigError.invalidResponse
             }
-            let lo = response.data[0] & 0x0F
-            let hi = (response.data[0] >> 4) * 10
-            let hundreds = response.data[1] * 100
-            return lo + hi + hundreds
+            return UInt8(BCDEncoding.decodePower(response.data))
 
         case .ic7100:
             // Use existing IC-7100 specific method
