@@ -14,10 +14,14 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Event stream**: `RigController.events` as `AsyncStream<RigStateEvent>` — push-style state updates for SwiftUI with no polling loop in user code
 - ✅ **Polled state broadcaster**: opt-in `startPolling()` for S-meter monitoring and front-panel-driven changes; per-field intervals; events fan into the same stream
 - ✅ **Connection-health monitor**: opt-in `startHealthMonitor()` with heartbeat probing and optional exponential-backoff auto-reconnect; degraded and reconnecting states fan into the same stream
+- ✅ **Compound VFO operations** *(v1.1)*: one-call A↔B swap, copy, memory write/recall, ATU tune cycle via `performVFOOperation(.exchange)` etc.
+- ✅ **Function toggles** *(v1.1)*: 21 on/off radio bits — compressor, VOX, CTCSS, lock, ATU enable, satellite mode, scope, … via `setFunction(.compressor, enabled: true)`
+- ✅ **Secondary level controls** *(v1.1)*: mic gain, compressor level, monitor gain, VOX gain/delay, IF shift — the second-tier knobs every SSB/CW operator touches
+- ✅ **rigctld TCP bridge**: drive a SwiftRigControl-backed app from WSJT-X, fldigi, JS8Call, or any Hamlib-compatible client via `RigControlServer`
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: 192 tests on Swift Testing framework with mock transport
+- ✅ **Well-Tested**: 420+ tests on Swift Testing framework with mock transport
 - ✅ **Frequency Validation**: Safety-critical validation with amateur band support
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching
@@ -63,23 +67,31 @@ or PR so we can promote it.
 
 ## Supported Radios
 
-**~80 radio definitions across 6 manufacturers.** Radios marked
+**~97 radio definitions across 7 manufacturers.** Radios marked
 *Hardware* in the table above are field-tested; all others are
 definition-only.
 
-### Icom (CI-V Protocol) — 38 models
+### Icom (CI-V Protocol) — 46 models
 
 **Flagship & High-End HF:**
 - **IC-7851** - HF/6m flagship with spectrum scope (200W, CI-V: 0x8E)
+- **IC-7850** - HF/6m flagship (200W, CI-V: 0x8E)
 - **IC-7800** - HF/6m flagship dual receiver (200W, CI-V: 0x6A)
+- **IC-7760** - HF/6m next-gen flagship (200W, CI-V: 0xB0)
 - **IC-7700** - HF/6m high-end (200W, CI-V: 0x74)
 - **IC-7610** - HF/6m SDR with dual receiver (100W, CI-V: 0x98)
 - **IC-7600** - HF/6m high-performance dual receiver (100W, CI-V: 0x7A)
 
 **Popular HF Transceivers:**
 - **IC-7300** - HF/6m all-mode SDR (100W, CI-V: 0x94)
+- **IC-7300MK2** - HF/6m all-mode SDR successor (100W, CI-V: 0x94)
 - **IC-7410** - HF/6m all-mode (100W, CI-V: 0x80)
+- **IC-7400** - HF/6m + 2m (100W, CI-V: 0x66)
 - **IC-7200** - HF/6m mid-range (100W, CI-V: 0x76)
+- **IC-718** - HF entry-level (100W, CI-V: 0x5E)
+- **IC-751** - HF legacy (100W, CI-V: 0x1C)
+- **IC-735** - HF legacy (100W, CI-V: 0x04)
+- **IC-703** - HF/6m portable QRP (10W, CI-V: 0x68)
 - **IC-756PRO III** - HF/6m dual receiver (100W, CI-V: 0x6E)
 - **IC-756PRO II** - HF/6m dual receiver (100W, CI-V: 0x64)
 - **IC-756PRO** - HF/6m dual receiver (100W, CI-V: 0x5C)
@@ -98,7 +110,12 @@ definition-only.
 
 **VHF/UHF:**
 - **IC-9700** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
+- **IC-905** - VHF/UHF/SHF microwave (10W, CI-V: 0xAC)
 - **IC-910H** - VHF/UHF satellite transceiver (100W 2m/75W 70cm, CI-V: 0x60)
+- **IC-9000** - VHF/UHF satellite transceiver legacy (100W, CI-V: 0x60)
+- **IC-970** - VHF/UHF all-mode legacy (100W, CI-V: 0x2E)
+- **IC-820H** - VHF/UHF satellite legacy (45W, CI-V: 0x42)
+- **IC-2820H** - VHF/UHF dual-band mobile with D-STAR (50W, CI-V: 0x42)
 - **IC-2730** - VHF/UHF dual-band FM mobile (50W, CI-V: 0x90)
 - **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x8C)
 - **ID-4100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x9A)
@@ -115,7 +132,7 @@ definition-only.
 - **IC-R75** - HF receiver (30kHz-60MHz, CI-V: 0x5A)
 - **IC-R30** - Wideband digital handheld receiver (100kHz-3.3GHz, CI-V: 0x9C)
 
-### Yaesu (CAT Protocol) — 21 models
+### Yaesu (CAT Protocol) — 25 models
 
 **Flagship HF:**
 - **FTDX-9000** - HF/6m 200W/400W flagship (38400 baud)
@@ -133,12 +150,16 @@ definition-only.
 - **FT-920** - HF/6m 100W with DSP (38400 baud)
 - **FT-710** - HF/6m AESS (38400 baud)
 - **FT-891** - HF/6m field transceiver (38400 baud)
-- **FT-450D** - HF/6m budget (38400 baud)
+- **FT-450** - HF/6m budget (38400 baud)
+- **FT-450D** - HF/6m budget with DSP (38400 baud)
 - **FT-2000** - HF/6m 100W (38400 baud)
+- **FT-1000MP** - HF/6m flagship legacy (4800 baud)
 
 **HF + VHF/UHF Mobile:**
-- **FT-897D** - HF/VHF/UHF base/mobile (38400 baud)
-- **FT-857D** - HF/VHF/UHF mobile (38400 baud)
+- **FT-897** - HF/VHF/UHF base/mobile (38400 baud)
+- **FT-897D** - HF/VHF/UHF base/mobile with DSP (38400 baud)
+- **FT-857** - HF/VHF/UHF mobile (38400 baud)
+- **FT-857D** - HF/VHF/UHF mobile with DSP (38400 baud)
 - **FT-847** - HF/VHF/UHF all-band (38400 baud)
 - **FT-100** - HF/VHF/UHF mobile (38400 baud)
 
@@ -165,7 +186,7 @@ definition-only.
 - **X6100** - HF/6m 10W portable SDR (19200 baud, CI-V: 0xA4)
 - **X6200** - HF/6m 8W portable SDR (19200 baud, CI-V: 0xA4)
 
-### Kenwood (Text-Based Protocol) — 12 models
+### Kenwood (Text-Based Protocol) — 17 models
 
 **HF Flagships:**
 - **TS-990S** - HF/6m flagship with dual receiver (200W, 115200 baud)
@@ -175,6 +196,9 @@ definition-only.
 - **TS-590SG** - HF/6m all-mode (100W, 115200 baud)
 - **TS-590S** - HF/6m all-mode (100W, 115200 baud)
 - **TS-870S** - HF/6m all-mode (100W, 115200 baud)
+- **TS-850S** - HF 100W transceiver (legacy, 4800 baud)
+- **TS-570D** - HF/6m with DSP (100W, 57600 baud)
+- **TS-570S** - HF/6m with DSP (100W, 57600 baud)
 - **TS-480SAT** - HF/6m with antenna tuner (100W, 57600 baud)
 - **TS-480HX** - HF/6m high power (200W, 57600 baud)
 
@@ -187,6 +211,7 @@ definition-only.
 - **TH-D75** - Tri-band handheld with D-STAR and APRS (5W, 9600 baud)
 - **TH-D74** - VHF/UHF handheld with D-STAR (5W, 57600 baud)
 - **TH-D72A** - VHF/UHF handheld with APRS (5W, 57600 baud)
+- **TH-D72** - VHF/UHF handheld with APRS (5W, 57600 baud)
 
 ### Lab599 — 1 model
 
@@ -390,6 +415,66 @@ try await rig.configure(frequency: 7_074_000)
 try await rig.configure(mode: .cw)
 ```
 
+### Compound VFO Operations (v1.1)
+
+Front-panel "swap A↔B", "copy A→B", and "tune ATU" buttons map
+to single-call operations:
+
+```swift
+// Swap VFO A and B contents.
+try await rig.performVFOOperation(.exchange)
+
+// Copy the active VFO to the other VFO.
+try await rig.performVFOOperation(.copyVFO)
+
+// Start an ATU tune cycle (radios with built-in tuner).
+try await rig.performVFOOperation(.tune)
+
+// Recall the selected memory channel into the active VFO.
+try await rig.performVFOOperation(.memoryToVFO)
+```
+
+Per-radio support is gated by `capabilities.supportedVFOOperations` — calling
+an op the radio doesn't support throws `RigError.unsupportedOperation`.
+See `VFOOperation` for the full set of 11 cases.
+
+### Function Toggles (v1.1)
+
+On/off radio bits — speech compressor, VOX, CTCSS, lock, ATU
+enable, satellite mode, scope, etc. — via a single curated enum
+covering 21 of Hamlib's most-used `RIG_FUNC_*` bits:
+
+```swift
+// Engage the speech compressor.
+try await rig.setFunction(.compressor, enabled: true)
+
+// Engage front-panel lock so the operator can't fiddle.
+try await rig.setFunction(.lock, enabled: true)
+
+// IC-9700 satellite mode.
+try await rig.setFunction(.satelliteMode, enabled: true)
+
+// Read a function bit.
+let voxOn = try await rig.getFunction(.vox)
+```
+
+Per-radio support is gated by `capabilities.supportedFunctions`.
+See `RigFunction` for the full set.
+
+### Secondary Level Controls (v1.1)
+
+The second-tier knobs every SSB/CW operator touches — exposed
+as a 0-100 normalized scale:
+
+```swift
+try await rig.setMicGain(60)
+try await rig.setCompressorLevel(40)        // distinct from on/off toggle
+try await rig.setMonitorGain(20)             // sidetone monitor
+try await rig.setVOXGain(50)
+try await rig.setVOXDelay(30)
+try await rig.setIFShift(50)                 // 50 = center, 0 = -1200 Hz, 100 = +1200 Hz
+```
+
 ### Performance Caching
 
 ```swift
@@ -583,7 +668,12 @@ Common patterns:
 | IC-910H | 19200 | 100W | 144-1300 MHz | Yes | No | Yes |
 | ID-5100 | 19200 | 50W | 118-524 MHz | Yes | No | No |
 | ID-4100 | 19200 | 50W | 118-524 MHz | Yes | No | No |
+| ID-52A/E | 9600 | 5W | 108-550 MHz | Yes | No | No |
+| ID-51A/E | 9600 | 5W | 118-550 MHz | Yes | No | No |
+| ID-31A/E | 9600 | 5W | 400-479 MHz | No | No | No |
+| IC-92D | 9600 | 5W | 495 kHz-1 GHz | Yes | No | No |
 | IC-R8600 | 19200 | N/A | 10 kHz - 3 GHz | No | No | No |
+| IC-R30 | 9600 | N/A | 100 kHz - 3.3 GHz | Yes | No | No |
 
 #### Elecraft Radios (Text Protocol)
 
@@ -617,6 +707,13 @@ Common patterns:
 | TS-2000 | 57600 | 100W | 30 kHz - 1.3 GHz | No | Yes | Yes |
 | TS-480SAT | 57600 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
 | TM-D710 | 57600 | 50W | 118 - 524 MHz | Yes | No | No |
+| TH-D75 | 9600 | 5W | 118-524 MHz | Yes | No | No |
+
+#### Lab599 Radios (Kenwood-Compatible CAT)
+
+| Model | Baud Rate | Max Power | Frequency Range | Dual RX | ATU | Split |
+|-------|-----------|-----------|-----------------|---------|-----|-------|
+| TX-500 | 115200 | 10W | 300 kHz - 30 MHz | No | No | Yes |
 
 ### Protocol Command Comparison
 

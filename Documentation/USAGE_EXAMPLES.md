@@ -7,12 +7,13 @@ This document provides comprehensive examples for common amateur radio control s
 > examples below work against the current release, `v1.0.6`. See
 > `CHANGELOG.md`'s top-of-file note for the reconciliation.
 
-> **API style note (post-v2.0):** Examples below sometimes show the
-> legacy static-property form (`.icomIC9700`, `.icomIC7600`, etc.).
-> These properties were removed in v2.0 in favor of function-style
-> factories that accept an optional CI-V address:
-> `.icomIC9700()`, `.icomIC7600(civAddress: 0x7B)`. Read each `.icomXxx`
-> example as `.icomXxx()` and add a CI-V address argument if needed.
+> **API style note:** Examples below sometimes show the legacy
+> static-property form (`.icomIC9700`, `.icomIC7600`, etc.). Those
+> properties were removed in Phase 1.4 of the v1.0.x line (commit
+> `6d8a954`) in favor of function-style factories that accept an
+> optional CI-V address: `.icomIC9700()`,
+> `.icomIC7600(civAddress: 0x7B)`. Read each `.icomXxx` example as
+> `.icomXxx()` and add a CI-V address argument if needed.
 
 ## Table of Contents
 
@@ -20,12 +21,16 @@ This document provides comprehensive examples for common amateur radio control s
 2. [Digital Mode Applications](#digital-mode-applications)
 3. [Split Operation](#split-operation)
 4. [RIT/XIT Operations](#ritxit-operations-v110) (v1.1.0)
-5. [Power Control](#power-control)
-6. [Multi-VFO Operations](#multi-vfo-operations)
-7. [Error Handling Patterns](#error-handling-patterns)
-8. [Mac App Store Apps (XPC)](#mac-app-store-apps-xpc)
-9. [SwiftUI Integration](#swiftui-integration)
-10. [Logging and Monitoring](#logging-and-monitoring)
+5. [Compound VFO Operations](#compound-vfo-operations-v11) (v1.1)
+6. [Function Toggles](#function-toggles-v11) (v1.1)
+7. [Secondary Level Controls](#secondary-level-controls-v11) (v1.1)
+8. [Power Control](#power-control)
+9. [Multi-VFO Operations](#multi-vfo-operations)
+10. [Driving WSJT-X / fldigi via the rigctld Bridge](#driving-wsjt-x--fldigi-via-the-rigctld-bridge) (v1.1)
+11. [Error Handling Patterns](#error-handling-patterns)
+12. [Mac App Store Apps (XPC)](#mac-app-store-apps-xpc)
+13. [SwiftUI Integration](#swiftui-integration)
+14. [Logging and Monitoring](#logging-and-monitoring)
 
 ## Basic Operations
 
@@ -1399,12 +1404,335 @@ await monitor.measureCommand("setFrequency") {
 
 ---
 
+## Compound VFO Operations (v1.1)
+
+The compound VFO operations API (`performVFOOperation`) maps
+front-panel "swap A↔B" and "copy A→B" buttons to single calls.
+Behind the scenes, each vendor's wire commands differ —
+SwiftRigControl hides that.
+
+### Swap A↔B and copy operations
+
+```swift
+let rig = try RigController(
+    radio: .icomIC7600(),
+    connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
+)
+try await rig.connect()
+
+// Swap A and B contents — most-used compound op.
+try await rig.performVFOOperation(.exchange)
+
+// Copy the active VFO's frequency and mode to the other VFO.
+// Useful for "set A and B to the same band, then split-tune B."
+try await rig.performVFOOperation(.copyVFO)
+```
+
+### Memory write / recall
+
+```swift
+// Store the active VFO to the currently-selected memory channel
+// ("M.W" on most front panels).
+try await rig.performVFOOperation(.vfoToMemory)
+
+// Recall the selected memory channel back into the active VFO
+// ("M→V" on most front panels).
+try await rig.performVFOOperation(.memoryToVFO)
+
+// Clear the selected memory channel.
+try await rig.performVFOOperation(.memoryClear)
+```
+
+### ATU tune cycle
+
+```swift
+// On radios with an internal ATU (IC-7600, IC-7300, TS-590SG,
+// FT-991A, …), starts an automatic tune cycle.
+// Returns immediately — the radio keeps tuning in the background.
+try await rig.performVFOOperation(.tune)
+```
+
+### Capability gating
+
+Per-radio support is gated by
+`capabilities.supportedVFOOperations`. Calling an op the radio
+doesn't claim throws `RigError.unsupportedOperation`. Always
+check before enabling a UI button:
+
+```swift
+let canSwap = rig.capabilities.supportedVFOOperations.contains(.exchange)
+let canTune = rig.capabilities.supportedVFOOperations.contains(.tune)
+
+// Disable the "Tune" button if the radio has no ATU.
+tuneButton.isEnabled = canTune
+```
+
+### The full set of operations
+
+| Case            | Description                                |
+| --------------- | ------------------------------------------ |
+| `.copyVFO`      | Copy active VFO to the other VFO.          |
+| `.exchange`     | Swap A↔B contents.                         |
+| `.toggle`       | Toggle active VFO (alias of `.exchange` on most radios). |
+| `.vfoToMemory`  | Store active VFO into the selected memory. |
+| `.memoryToVFO`  | Recall selected memory into active VFO.    |
+| `.memoryClear`  | Erase the selected memory channel.         |
+| `.stepUp`       | Step VFO up by configured tuning step.     |
+| `.stepDown`     | Step VFO down.                             |
+| `.bandUp`       | Move to next amateur band.                 |
+| `.bandDown`     | Move to previous amateur band.             |
+| `.tune`         | Start automatic ATU tune cycle.            |
+
+---
+
+## Function Toggles (v1.1)
+
+Twenty-one on/off radio bits — speech compressor, VOX, CTCSS,
+lock, ATU enable, satellite mode, scope, etc. — exposed through
+a single API that mirrors Hamlib's `RIG_FUNC_*` namespace.
+
+### Common toggles
+
+```swift
+let rig = try RigController(
+    radio: .icomIC7600(),
+    connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
+)
+try await rig.connect()
+
+// Engage the speech compressor for SSB rag-chew.
+try await rig.setFunction(.compressor, enabled: true)
+
+// Enable VOX for hands-free operation.
+try await rig.setFunction(.vox, enabled: true)
+
+// Lock the front panel.
+try await rig.setFunction(.lock, enabled: true)
+
+// Enable the internal antenna tuner (radios with ATU).
+try await rig.setFunction(.tuner, enabled: true)
+```
+
+### Repeater / FM operating
+
+```swift
+// FM repeater access — engage CTCSS encode.
+try await rig.setFunction(.ctcssTone, enabled: true)
+
+// Listen with CTCSS squelch (only open audio when correct tone heard).
+try await rig.setFunction(.ctcssSquelch, enabled: true)
+```
+
+### IC-9700 satellite operating
+
+```swift
+// Engage satellite mode (cross-band TX/RX between main and sub).
+if case .icom(let icom) = await rig.vendorExtensions {
+    try await rig.setFunction(.satelliteMode, enabled: true)
+    try await rig.setFunction(.dualWatch, enabled: true)
+}
+```
+
+### Reading function state
+
+```swift
+let compressorOn = try await rig.getFunction(.compressor)
+let lockEngaged = try await rig.getFunction(.lock)
+let satellite = try await rig.getFunction(.satelliteMode)
+
+print("Compressor: \(compressorOn ? "on" : "off")")
+```
+
+### Capability gating
+
+```swift
+let supportedFns = rig.capabilities.supportedFunctions
+
+// Show only the toggles this radio supports.
+let availableToggles = RigFunction.allCases.filter { supportedFns.contains($0) }
+for fn in availableToggles {
+    print("Available: \(fn.rawValue)")
+}
+```
+
+### The full set of function bits
+
+`RigFunction.allCases` contains 21 toggles. Common ones include
+`.compressor`, `.vox`, `.ctcssTone`, `.ctcssSquelch`, `.lock`,
+`.tuner`, `.autoNotch`, `.manualNotch`, `.satelliteMode`,
+`.monitor`, `.autoFrequencyControl`, `.beatCancel`,
+`.noiseBlanker2`, `.audioPeakFilter`, `.reverseSplit`,
+`.dualWatch`, `.diversity`, `.mute`, `.scope`, `.scanResume`,
+`.voiceSquelch`.
+
+---
+
+## Secondary Level Controls (v1.1)
+
+The second-tier knobs every SSB/CW operator touches — mic gain,
+speech compressor *level* (distinct from the on/off toggle
+above), monitor gain, VOX gain/delay, and IF shift. All exposed
+as a 0-100 normalized scale per Hamlib convention.
+
+### SSB voice setup
+
+```swift
+let rig = try RigController(
+    radio: .icomIC7600(),
+    connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
+)
+try await rig.connect()
+
+// Set up the radio for SSB voice on 20m.
+try await rig.setFrequency(14_230_000, vfo: .a)
+try await rig.setMode(.usb, vfo: .a)
+
+// Mic gain to 60%, compressor on at 40%.
+try await rig.setMicGain(60)
+try await rig.setFunction(.compressor, enabled: true)
+try await rig.setCompressorLevel(40)
+
+// Monitor your own audio at low level (sidetone).
+try await rig.setMonitorGain(20)
+```
+
+### VOX hands-free setup
+
+```swift
+// Engage VOX with sensitivity 50, hang time 30.
+try await rig.setFunction(.vox, enabled: true)
+try await rig.setVOXGain(50)
+try await rig.setVOXDelay(30)
+
+// Quick check on current settings.
+print("VOX gain: \(try await rig.voxGain())")
+print("VOX delay: \(try await rig.voxDelay())")
+```
+
+### IF shift for nearby-QRM rejection
+
+```swift
+// 50 = center (no shift), 0 = -1200 Hz, 100 = +1200 Hz.
+// Shift up to reject a louder station below your QSO.
+try await rig.setIFShift(70)
+
+// Reset to center.
+try await rig.setIFShift(50)
+```
+
+### Read-back
+
+```swift
+let mic = try await rig.micGain()
+let comp = try await rig.compressorLevel()
+let monitor = try await rig.monitorGain()
+print("Mic \(mic) / Comp \(comp) / Monitor \(monitor)")
+```
+
+---
+
+## Driving WSJT-X / fldigi via the rigctld Bridge
+
+SwiftRigControl ships a TCP bridge (`RigControlServer`) that
+speaks the Hamlib `rigctld` text protocol. Any Hamlib-compatible
+client — WSJT-X, fldigi, JS8Call, the standalone `rigctl` tool —
+can drive a SwiftRigControl-backed app over a local socket.
+
+### Starting the bridge
+
+```swift
+import RigControl
+import Network
+
+let rig = try RigController(
+    radio: .icomIC7600(),
+    connection: .serial(path: "/dev/cu.SLAB_USBtoUART", baudRate: 19200)
+)
+try await rig.connect()
+
+// Start the rigctld TCP bridge on localhost:4532
+// (the standard rigctld port).
+let server = RigControlServer(rigController: rig, port: 4532)
+try await server.start()
+
+print("rigctld bridge listening on 127.0.0.1:4532")
+```
+
+### Pointing WSJT-X at the bridge
+
+In **WSJT-X → File → Settings → Radio**:
+
+- **Rig**: `Hamlib NET rigctl`
+- **Network Server**: `127.0.0.1:4532`
+- **PTT Method**: `CAT`
+- Click **Test CAT** — should turn green.
+
+WSJT-X will now read frequency / mode / PTT from your app and
+push frequency changes back when you double-click a decode.
+
+### Pointing fldigi at the bridge
+
+In **fldigi → Configure → Rig Control → Hamlib**:
+
+- **Use Hamlib**: ✓
+- **Rig**: `Hamlib NET rigctl (#2)`
+- **Device**: `127.0.0.1:4532`
+- Click **Initialize**.
+
+### Manual testing with `rigctl`
+
+```bash
+# Install Hamlib (Homebrew: `brew install hamlib`), then:
+rigctl -m 2 -r localhost:4532
+
+Rig command: f          # query frequency
+14230000
+Rig command: F 14210000 # set frequency to 14.210 MHz
+RPRT 0
+Rig command: m          # query mode
+USB
+2400
+Rig command: q          # quit
+```
+
+### Supported rigctld commands (v1.1)
+
+The bridge covers the standard Hamlib client surface:
+
+- **Frequency/mode/PTT**: `f`, `F`, `m`, `M`, `t`, `T`
+- **Split**: `s`, `S`, `i`, `I`, `x`, `X`
+- **VFO**: `v`, `V`
+- **Levels**: `l`, `L` for AF / RF / SQL / PREAMP / ATT /
+  RFPOWER / AGC / NB / NR / KEYSPD / CWPITCH / SWR / ALC /
+  RFPOWER_METER / COMP_METER / VD_METER / ID_METER, plus
+  v1.1 additions MICGAIN / COMP / MONITOR_GAIN / VOXGAIN /
+  VOXDELAY / IF_SHIFT
+- **Function toggles**: `u`, `U` for SBKIN / FBKIN plus v1.1
+  RIG_FUNC_* tokens — COMP, VOX, TONE, TSQL, LOCK, TUNER,
+  ANF, MN, SATMODE, MON, AFC, BC, NB2, APF, REV, DUAL_WATCH,
+  DIVERSITY, MUTE, SCOPE, RESUME, VSC
+- **VFO operations** (v1.1): `G` / `\vfo_op` with the Hamlib
+  RIG_OP_* tokens — CPY, XCHG, FROM_VFO, TO_VFO, MCL, UP,
+  DOWN, BAND_UP, BAND_DOWN, TUNE, TOGGLE
+- **Antenna**: `Y`, `y`
+- **Scan**: `g`
+- **CW**: `b`, `\stop_morse`
+- **Power state**: `\set_powerstat`, `\get_powerstat`
+- **Capability dumps**: `\dump_state`, `\dump_caps`, `\chk_vfo`
+
+See `Documentation/NETWORK_CONTROL.md` for the full protocol
+reference and per-command response formats.
+
+---
+
 ## Additional Resources
 
 - [API Documentation](API_DOCUMENTATION.md)
 - [Troubleshooting Guide](TROUBLESHOOTING.md)
 - [Serial Port Configuration](SERIAL_PORT_GUIDE.md)
 - [XPC Helper Guide](XPC_HELPER_GUIDE.md)
+- [Network Control / rigctld Bridge](NETWORK_CONTROL.md)
+- [Hamlib Parity Audit](HAMLIB_PARITY.md)
 
 ## Contributing Examples
 
