@@ -48,6 +48,20 @@ public protocol CIVCommandSet: Sendable {
     /// - Returns: Command bytes and data bytes
     func setDataModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8])
 
+    /// Whether this radio needs the protocol to send a separate
+    /// `0x1A 0x06 [data_flag, filter]` frame after the base
+    /// mode set in order to enter or leave a DATA sub-mode.
+    ///
+    /// Most non-targetable modern Icoms (IC-7600, IC-9100,
+    /// IC-9700, IC-7100, IC-705, …) need this — the base mode
+    /// command only sets USB/LSB/FM; the second frame flips
+    /// the DATA sub-mode bit.
+    ///
+    /// Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800,
+    /// IC-7851) return `false` because their `0x26` mode frame
+    /// already carries the data flag inline.
+    var requiresDataModeSubCommand: Bool { get }
+
     /// Format a mode read command.
     /// - Returns: Command bytes
     func readModeCommand() -> [UInt8]
@@ -115,4 +129,12 @@ public protocol CIVCommandSet: Sendable {
     /// - Returns: Frequency in Hz
     /// - Throws: `RigError.invalidResponse` if response is malformed
     func parseFrequencyResponse(_ response: CIVFrame) throws -> UInt64
+}
+
+extension CIVCommandSet {
+    /// Default: assume the command set carries the data flag in
+    /// its own `setDataModeCommand` frame (no follow-up needed).
+    /// Real Icom command sets override this — see
+    /// ``IcomRadioCommandSet/requiresDataModeSubCommand``.
+    public var requiresDataModeSubCommand: Bool { false }
 }

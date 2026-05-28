@@ -129,22 +129,68 @@ extension IcomRadioCommandSet {
         }
     }
 
-    /// Mode set command for DATA modes using the explicit data-flag byte.
+    /// Mode set command for DATA modes.
     ///
-    /// On targetable radios, Hamlib uses `C_SEND_SEL_MODE (0x26)` with:
-    /// `[mode_byte, data_flag, filter_byte]` where `data_flag = 0x01` for DATA mode.
-    /// On non-targetable radios, falls back to `C_SET_MODE (0x06)` with filter byte `0x00`.
+    /// Three different wire shapes depending on the radio:
+    ///
+    /// - **Targetable** (IC-7300, IC-7610, IC-7700, IC-7800,
+    ///   IC-7851): single frame `0x26 [mode, data_flag=0x01,
+    ///   filter=FIL1]` that carries the DATA flag in the same
+    ///   command. No follow-up needed.
+    /// - **`requiresDataModeSubCommand` radios** (IC-7600,
+    ///   IC-9100, IC-9700, IC-7100, IC-705, …): send the base
+    ///   mode first via the normal `setModeCommand` path, then
+    ///   `IcomCIVProtocol.setMode` follows up with `0x1A 0x06
+    ///   [0x01, filter]` to flip the DATA sub-mode bit. The
+    ///   value returned here is the base-mode frame; the
+    ///   protocol takes care of the second frame.
+    /// - **Legacy** radios without `data_mode_supported` (older
+    ///   IC-7200 etc.): fall back to the original `0x06 [mode,
+    ///   filter=0x00]` shorthand, kept for compatibility.
+    ///
+    /// Matches Hamlib `icom_set_mode` for each family
+    /// (rigs/icom/icom.c:2494). Cross-checked against
+    /// `icom_set_mode_x26`, `S_MEM_DATA_MODE`, and
+    /// `data_mode_supported` per-radio.
     public func setDataModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
         if supportsTargetableMode {
             // Targetable: 0x26 [mode, data_flag=0x01, filter=FIL1]
             return ([CIVFrame.Command.targetableMode], [mode, 0x01, CIVFrame.FilterCode.fil1])
+        } else if requiresDataModeSubCommand {
+            // Non-targetable with explicit 0x1A 0x06 follow-up:
+            // send the normal base-mode frame here; the protocol
+            // sends 0x1A 0x06 separately to flip the data bit.
+            return setModeCommand(mode: mode)
         } else if requiresModeFilter {
-            // Non-targetable with filter: 0x06 [mode, filter=0x00 (DATA)]
+            // Legacy radios without data_mode_supported: the old
+            // 0x06 [mode, filter=0x00] shorthand. Kept for
+            // backward compatibility with any radio whose driver
+            // historically relied on this.
             return ([CIVFrame.Command.setMode], [mode, CIVFrame.FilterCode.data])
         } else {
-            // IC-7100 family: 0x06 [mode] only — data mode set via 0x1A 0x06 separately
+            // No filter byte, no follow-up. (No shipping radio
+            // in our catalog hits this branch; reserved for a
+            // future minimal-CAT radio.)
             return ([CIVFrame.Command.setMode], [mode])
         }
+    }
+
+    /// Whether this radio needs the separate `0x1A 0x06
+    /// [data_flag, filter]` follow-up to enter/exit a DATA
+    /// sub-mode after the base mode has been set.
+    ///
+    /// Defaults to `true` for non-targetable radios — that's the
+    /// path Hamlib's `icom_set_mode` takes for every radio with
+    /// `data_mode_supported = 1` that doesn't claim the
+    /// targetable-mode capability bit. Targetable radios return
+    /// `false` because the `0x26` command already carries the
+    /// data flag in its payload.
+    ///
+    /// Override on a per-radio command set if a specific model
+    /// genuinely doesn't accept the follow-up (none in our
+    /// current catalog do).
+    public var requiresDataModeSubCommand: Bool {
+        !supportsTargetableMode
     }
 
     public func readModeCommand() -> [UInt8] {

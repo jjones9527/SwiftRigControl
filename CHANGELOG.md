@@ -17,6 +17,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **IC-7600 (and IC-9100, IC-9700) DATA-USB / DATA-LSB / DATA-FM
+  modes were not being engaged.** Previously these non-targetable
+  radios received only the base mode set (`0x06 [mode, filter]`)
+  with `filter=0x00` as a DATA marker — but the IC-7600 family
+  does not interpret filter=0x00 as a DATA-mode signal. Per
+  Hamlib `icom_set_mode` (rigs/icom/icom.c:2494), every Icom
+  with `data_mode_supported = 1` that isn't covered by the
+  targetable `0x26` command needs a separate `0x1A 0x06
+  [data_flag, filter]` frame after the base mode set. That path
+  was previously hardcoded to fire only on IC-7100/IC-705; it
+  now fires on every non-targetable radio with data-mode
+  support. Symptom: SwiftRigControl-backed apps (like
+  MacWinlink) requesting `.dataUSB` on an IC-7600 ended up with
+  the radio in plain USB instead.
+- **Exiting DATA mode now clears the DATA sub-mode bit.**
+  Going from DATA-USB back to plain USB previously left the
+  radio stuck in DATA on the affected radios. The fix sends
+  `0x1A 0x06 [0x00, filter]` to clear the bit, matching Hamlib.
+
 ### Added
 - **Compound VFO operations** (Hamlib parity, item 1 of v1.1).
   New `RigController.performVFOOperation(_:)` exposes the

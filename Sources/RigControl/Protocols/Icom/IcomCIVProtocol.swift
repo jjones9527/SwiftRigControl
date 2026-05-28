@@ -170,11 +170,21 @@ public actor IcomCIVProtocol:
             throw RigError.commandFailed("Radio rejected mode \(mode)")
         }
 
-        // IC-7100 and IC-705: the base 0x06 command does not activate the DATA sub-mode.
-        // A second command (0x1A 0x06) is required to enable or clear the data flag.
-        // This must also be sent with 0x00 when switching away from a data mode, otherwise
-        // the radio remains in DATA sub-mode.
-        if radioModel == .ic7100 || radioModel == .ic705 {
+        // Non-targetable Icoms (IC-7600, IC-7100, IC-705,
+        // IC-9100, IC-9700, …) need a separate `0x1A 0x06
+        // [data_flag, filter]` frame to flip the DATA sub-mode
+        // bit. The base mode set above only sets USB / LSB / FM;
+        // without this follow-up the radio stays in voice mode
+        // even when DATA was requested (and vice versa — exiting
+        // DATA back to plain voice needs `data_flag = 0x00`).
+        //
+        // Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800,
+        // IC-7851) skip this — the `0x26` command above already
+        // carried the data flag in the same frame.
+        //
+        // Matches Hamlib `icom_set_mode` for every radio with
+        // `data_mode_supported = 1` (rigs/icom/icom.c:2494).
+        if commandSet.requiresDataModeSubCommand {
             let dataModeFlag: UInt8 = isDataMode(mode) ? 0x01 : 0x00
             let dataModeFrame = CIVFrame(
                 to: civAddress,
