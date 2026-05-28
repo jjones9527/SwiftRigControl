@@ -20,7 +20,7 @@ themselves at the type level instead of failing at runtime.
 
 ### What you get
 
-- **80+ radio definitions** across 6 manufacturers. Four are
+- **~97 radio definitions** across 7 manufacturers. Four are
   field-verified against real hardware; the rest are
   definition-only (Hamlib- and manual-derived) until someone
   exercises them. See <doc:VerificationStatus>.
@@ -30,9 +30,19 @@ themselves at the type level instead of failing at runtime.
   polling loop in your code. See <doc:ReactiveState>.
 - **In-memory dummy radio.** `RadioDefinition.dummy()` lets
   SwiftUI previews, demos, and tutorials run with zero hardware.
+- **Compound VFO operations** (v1.1) — one-call A↔B swap, copy,
+  memory write/recall, ATU tune. See <doc:VFOOperations>.
+- **Function toggles** (v1.1) — 21 on/off radio bits with type-
+  safe enum dispatch. See <doc:FunctionToggles>.
+- **Secondary level controls** (v1.1) — mic gain, compressor
+  level, monitor gain, VOX gain/delay, IF shift. See
+  <doc:SecondaryLevels>.
 - **rigctld-compatible TCP server.** Drop-in for WSJT-X, fldigi,
-  JS8Call, and other Hamlib clients.
+  JS8Call, and other Hamlib clients. See <doc:RigctldBridge>.
 - **XPC helper** for Mac App Store sandboxed apps.
+- **Type-safe capability dispatch.** Trait protocols and the
+  ``VendorExtensions`` enum gate per-radio features at compile
+  time. See <doc:TraitProtocols>.
 
 ### Quick taste
 
@@ -66,6 +76,14 @@ For the SwiftUI / reactive-state pattern, see
 - <doc:VerificationStatus>
 - <doc:AddingRadios>
 - <doc:HamlibMigration>
+
+### Working with v1.1 features
+
+- <doc:VFOOperations>
+- <doc:FunctionToggles>
+- <doc:SecondaryLevels>
+- <doc:RigctldBridge>
+- <doc:TraitProtocols>
 
 ### The radio controller
 
@@ -102,6 +120,8 @@ For the SwiftUI / reactive-state pattern, see
 - ``CWPitch``
 - ``BreakInMode``
 - ``ScanKind``
+- ``VFOOperation``
+- ``RigFunction``
 
 ### Protocols
 
@@ -118,7 +138,8 @@ For the SwiftUI / reactive-state pattern, see
 Each radio opts into the features it supports by conforming to
 the matching trait protocol. `RigController` checks the
 conformance at runtime and throws ``RigError/unsupportedOperation(_:)``
-when a feature isn't available.
+when a feature isn't available. See <doc:TraitProtocols> for the
+architecture overview.
 
 - ``SupportsPower``
 - ``SupportsSplit``
@@ -141,6 +162,14 @@ when a feature isn't available.
 - ``SupportsSendCW``
 - ``SupportsScanning``
 - ``SupportsAntenna``
+- ``SupportsVFOOperations``
+- ``SupportsFunctions``
+- ``SupportsMicGain``
+- ``SupportsCompressorLevel``
+- ``SupportsMonitorGain``
+- ``SupportsVOXGain``
+- ``SupportsVOXDelay``
+- ``SupportsIFShift``
 
 ### Network
 
