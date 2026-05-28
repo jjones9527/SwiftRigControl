@@ -17,6 +17,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **TCP serial transport** — new `TCPSerialTransport` actor under
+  `Sources/RigControl/Transport/`, conforming to `SerialTransport`.
+  Backed by Network.framework's `NWConnection`; zero new
+  third-party dependencies. The underlying `CATProtocol`
+  implementations cannot tell whether their bytes come from a USB
+  serial port or a TCP socket, so any text-based vendor protocol
+  works unchanged.
+- **`ConnectionType.tcp(host:port:)`** — pair any radio
+  definition with a TCP endpoint instead of `/dev/cu.*`. Use for
+  Flex 6000-series radios (SmartSDR on port 4992) and for
+  bridging to a remote `rigctld` / `RigControlServer` (port
+  4532). The `defaultBaudRate` field is ignored for TCP
+  connections.
+- **FlexRadio family** — three definition-only radios under a new
+  `.Flex` namespace and `.flex` `Manufacturer` case, all driven
+  by the existing `KenwoodProtocol`:
+  - `.Flex.flex6000` — Flex 6000-series (6300/6400/6500/6600/6700)
+    via SmartSDR's TCP CAT bridge. Cross-checked against Hamlib
+    `kenwood/flex6xxx.c` (`RIG_MODEL_F6K`,
+    `.port_type = RIG_PORT_NETWORK`). Pair with
+    `ConnectionType.tcp(host: …, port: 4992)`.
+  - `.Flex.powerSDR` — PowerSDR (FlexRadio Systems / Apache Labs)
+    via virtual serial CAT. Superset of Flex 6000 caps: adds VOX,
+    ANF, MUTE, TUNER function bits and RF-power / SWR meter
+    support per Hamlib `POWERSDR_*` macros.
+  - `.Flex.thetis` — Thetis (TAPR) open-source PowerSDR fork.
+    Same CAT surface as PowerSDR.
+  All three are **definition-only** — no field validation against
+  real hardware. Issue reports welcome.
+- 15 new tests across `TCPSerialTransportTests` (loopback
+  echo server: connect, write/read round-trip, partial-frame
+  buffering, read timeout, flush, refused / unroutable connect)
+  and `FlexRadioDefinitionsTests` (caps shape, mock connect,
+  manufacturer brand tag).
+
 ### Changed (BREAKING — flat names replaced by vendor namespaces)
 
 - **Radio definitions and capability presets are now organized

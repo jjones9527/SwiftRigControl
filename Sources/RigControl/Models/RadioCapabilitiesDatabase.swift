@@ -39,4 +39,7 @@ public struct RadioCapabilitiesDatabase {
 
     /// Lab599.
     public enum Lab599 {}
+
+    /// FlexRadio Systems and compatible SDRs (PowerSDR, Thetis).
+    public enum Flex {}
 }

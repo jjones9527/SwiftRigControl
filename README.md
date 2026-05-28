@@ -215,6 +215,16 @@ definition-only.
 
 - **TX-500** - Portable HF transceiver (10W, Kenwood-compatible CAT)
 
+### FlexRadio — 3 definitions
+
+All three are **definition-only** (no hardware verification yet).
+They reuse `KenwoodProtocol` on the wire — Hamlib does the same in
+`kenwood/flex6xxx.c`.
+
+- **Flex 6000-series** - 6300/6400/6500/6600/6700 via SmartSDR's TCP CAT bridge (`.tcp(host:port: 4992)`)
+- **PowerSDR** - FlexRadio/Apache Labs PowerSDR via virtual serial CAT
+- **Thetis** - TAPR open-source PowerSDR fork via virtual serial CAT
+
 ## Installation
 
 ### Swift Package Manager
@@ -926,6 +936,8 @@ See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.m
 - Elecraft text protocol (6 radios)
 - Ten-Tec protocol (5 radios — Orion family + Legacy)
 - Xiegu (CI-V compatible) (3 radios)
+- Lab599 (Kenwood-compatible) (1 radio)
+- FlexRadio (Kenwood-compatible via SmartSDR / PowerSDR / Thetis) (3 definitions)
 
 Adding a radio using an existing protocol typically takes 30-60 minutes!
 

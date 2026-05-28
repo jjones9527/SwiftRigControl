@@ -132,6 +132,9 @@ public actor RigController {
             let config = SerialConfiguration(path: path, baudRate: actualBaudRate)
             transport = IOKitSerialPort(configuration: config)
 
+        case .tcp(let host, let port):
+            transport = TCPSerialTransport(host: host, port: port)
+
         case .mock:
             transport = MockSerialTransport()
         }

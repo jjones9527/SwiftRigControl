@@ -97,6 +97,43 @@ try await kenwood.setFrequency(14_230_000, vfo: .a)
 try await elecraft.setFrequency(14_230_000, vfo: .a)
 ```
 
+### Connecting over TCP (Flex 6000-series + remote rigctld)
+
+Some radios — and any rigctld instance you want to drive over the
+network — speak CAT over a TCP socket instead of a serial port.
+Use `ConnectionType.tcp(host:port:)`:
+
+```swift
+// Flex 6000-series via SmartSDR's TCP CAT bridge (port 4992).
+let flex = try RigController(
+    radio: .Flex.flex6000,
+    connection: .tcp(host: "flex-6400.local", port: 4992)
+)
+try await flex.connect()
+try await flex.setFrequency(14_230_000, vfo: .a)
+try await flex.setMode(.usb, vfo: .a)
+
+// PowerSDR / Thetis use a virtual serial CAT port — same as a real
+// radio. Pair them with `.serial`, not `.tcp`.
+let powerSDR = try RigController(
+    radio: .Flex.powerSDR,
+    connection: .serial(path: "/dev/cu.usbserial-CAT", baudRate: 38400)
+)
+
+// Drive a remote SwiftRigControl `RigControlServer` or Hamlib
+// `rigctld` instance. Pick any radio definition — the bytes on
+// the wire match the wire of a local serial connection.
+let remote = try RigController(
+    radio: .Icom.ic7300(),
+    connection: .tcp(host: "shack-mac.local", port: 4532)
+)
+```
+
+The TCP transport is backed by Network.framework's `NWConnection`
+and is `actor`-isolated like every other transport. It throws
+`RigError.timeout` if the initial handshake exceeds the configured
+timeout (5 s by default).
+
 ## Digital Mode Applications
 
 ### SSTV (Slow Scan Television)

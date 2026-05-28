@@ -38,6 +38,7 @@ public struct RadioDefinition: Sendable {
         case xiegu = "Xiegu"
         case tentec = "Ten-Tec"
         case lab599 = "Lab599"
+        case flex = "FlexRadio"
 
         /// Generic in-memory dummy radio (no real manufacturer). Used
         /// by `RadioDefinition.dummy(...)` for previews, demo apps,
@@ -147,6 +148,11 @@ public struct RadioDefinition: Sendable {
     /// Lab599 — TX-500 portable HF transceiver using a
     /// Kenwood-compatible CAT.
     public enum Lab599 {}
+
+    /// FlexRadio Systems and compatible SDRs (PowerSDR, Thetis)
+    /// that share the Kenwood-derived CAT command set documented
+    /// in Hamlib `kenwood/flex6xxx.c`.
+    public enum Flex {}
 }
 
 // MARK: - Connection Type
@@ -155,6 +161,15 @@ public struct RadioDefinition: Sendable {
 public enum ConnectionType {
     /// Serial port connection over a `/dev/cu.*` device.
     case serial(path: String, baudRate: Int? = nil)
+
+    /// TCP connection to a remote CAT endpoint.
+    ///
+    /// Use for Flex 6000-series radios (SmartSDR exposes CAT on
+    /// port 4992) and for bridging to a remote `rigctld` /
+    /// ``RigControlServer`` instance (default port 4532). The
+    /// underlying ``CATProtocol`` does not know the bytes come
+    /// from a socket instead of a serial port.
+    case tcp(host: String, port: UInt16)
 
     /// In-memory transport with no real I/O.
     ///

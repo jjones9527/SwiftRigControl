@@ -880,8 +880,36 @@ concrete protocol's conformance list is its capability contract:
       (predecessor to ID-51 family).
 - [x] **IC-R30** — `.icomICR30()`. Wideband digital handheld
       receiver, 100 kHz–3.3 GHz.
-- [x] **Lab599 TX-500** — `.lab599TX500`. Portable HF;
+- [x] **Lab599 TX-500** — `.Lab599.tx500`. Portable HF;
       introduces the `lab599` manufacturer brand tag.
+
+### 5.5.6 TCP transport + FlexRadio family — done
+
+- [x] **`TCPSerialTransport`** actor (Network.framework
+      `NWConnection` under the hood). Conforms to
+      `SerialTransport`; reusable for any radio that speaks a
+      text CAT over TCP.
+- [x] **`ConnectionType.tcp(host:port:)`** wired through
+      `RigController.init`. The `defaultBaudRate` field is
+      ignored on TCP connections.
+- [x] **`.Flex.flex6000`** — Flex 6000-series via SmartSDR's
+      TCP CAT bridge on port 4992. Cross-checked against
+      Hamlib `kenwood/flex6xxx.c` (`RIG_MODEL_F6K`,
+      `.port_type = RIG_PORT_NETWORK`).
+- [x] **`.Flex.powerSDR`** — PowerSDR / FlexRadio Systems /
+      Apache Labs via virtual serial CAT. Superset of Flex 6000
+      caps per Hamlib `POWERSDR_*` macros.
+- [x] **`.Flex.thetis`** — TAPR Thetis fork; same wire surface
+      as PowerSDR.
+- [x] **New `.flex` `Manufacturer` case** and `.Flex` vendor
+      namespace on `RadioDefinition` / `RadioCapabilitiesDatabase`.
+- [x] **15 new tests** across `TCPSerialTransportTests`
+      (loopback echo server: connect, write/read, partial frames,
+      timeouts, flush, refused / unroutable) and
+      `FlexRadioDefinitionsTests` (caps shape, mock connect,
+      brand tag).
+- [ ] Hardware verification of Flex models. Definition-only;
+      validators not yet written.
 
 ---
 
