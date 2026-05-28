@@ -37,10 +37,25 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7300MK2 HF/6m 100W SDR transceiver — successor to IC-7300 (2025)
     case ic7300mk2 = "IC-7300MK2"
 
-    /// IC-7851 HF/6m 200W flagship transceiver
+    /// IC-7851 HF/6m 200W flagship transceiver (2015–2024
+    /// production run).
     case ic7851 = "IC-7851"
 
-    /// IC-7850 HF/6m 200W transceiver (predecessor to IC-7851)
+    /// IC-7850 HF/6m 200W transceiver — the 50th-anniversary
+    /// limited edition (≈150 units worldwide, late 2014).
+    ///
+    /// Functionally identical to the ``ic7851`` inside the
+    /// chassis: same CI-V address (`0x8E`), same command set,
+    /// same DSP and signal path. The IC-7850 only differs in
+    /// cosmetics (gold trim, gloss-black front panel,
+    /// anniversary serial plate, Tokuzo Inoue signature).
+    ///
+    /// Hamlib treats both radios as a single model
+    /// (`rigs/icom/ic785x.c`, `RIG_MODEL_IC785x`). SwiftRigControl
+    /// exposes them as separate enum cases so the radio model
+    /// names match what the operator sees on the front panel,
+    /// but every wire interaction routes through the same code
+    /// path. Either case yields the same behavior.
     case ic7850 = "IC-7850"
 
     /// IC-7800 HF/6m 200W flagship transceiver (predecessor to IC-7850)
@@ -133,9 +148,6 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-910H VHF/UHF all-mode transceiver with satellite mode
     case ic910h = "IC-910H"
 
-    /// IC-9000 VHF/UHF all-mode transceiver
-    case ic9000 = "IC-9000"
-
     /// IC-820H VHF/UHF all-mode transceiver
     case ic820h = "IC-820H"
 
@@ -152,9 +164,6 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
 
     /// IC-2730 VHF/UHF dual-band FM mobile
     case ic2730 = "IC-2730"
-
-    /// IC-2820H VHF/UHF dual-band FM mobile with D-STAR
-    case ic2820h = "IC-2820H"
 
     /// IC-7000 HF/VHF/UHF 100W mobile transceiver
     case ic7000 = "IC-7000"
@@ -238,7 +247,6 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         // VHF/UHF
         case .ic970: return 0x2E
         case .ic910h: return 0x60
-        case .ic9000: return 0x60  // Same as IC-910H
         case .ic820h: return 0x42
         case .ic275: return 0x10
         case .ic375: return 0x12
@@ -246,7 +254,6 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
 
         // Mobile/FM
         case .ic2730: return 0x90
-        case .ic2820h: return 0x42
         case .ic7000: return 0x70
         case .id5100: return 0x8C
         case .id4100: return 0x9A
@@ -271,7 +278,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// Whether this radio supports D-STAR digital voice
     public var supportsDSTAR: Bool {
         switch self {
-        case .ic7100, .ic9700, .ic9100, .ic705, .ic2820h, .id4100, .id5100,
+        case .ic7100, .ic9700, .ic9100, .ic705, .id4100, .id5100,
              .id31, .id51, .id52, .ic92d:
             return true
         default:
@@ -294,7 +301,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         switch self {
         case .ic7600, .ic7760, .ic7610, .ic7851, .ic7850, .ic7800,
              .ic756, .ic756pro, .ic756proII, .ic756proIII,
-             .ic9700, .ic9100, .ic910h, .ic2730, .ic2820h, .id4100, .id5100,
+             .ic9700, .ic9100, .ic910h, .ic2730, .id4100, .id5100,
              .id51, .id52, .ic92d:
             return true
         default:

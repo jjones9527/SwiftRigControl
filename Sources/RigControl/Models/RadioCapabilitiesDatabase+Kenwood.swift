@@ -380,10 +380,26 @@ extension RadioCapabilitiesDatabase {
         supportsSignalStrength: true
     )
 
-    /// Kenwood TH-D75A - Tri-band handheld with D-STAR and APRS
-    /// (2023 successor to the TH-D74). Adds Bluetooth audio and
-    /// dual-receive on each band; the CAT command set is
-    /// backward-compatible with the TH-D74.
+    /// Kenwood TH-D75A — tri-band D-STAR/APRS handheld (announced
+    /// Hamvention 2024, shipping mid-2024; successor to the TH-D74).
+    ///
+    /// **Verification status: definition-only, reverse-engineered.**
+    /// Kenwood does not publish a TH-D75 PC command reference;
+    /// the radio's CAT surface is inferred from the TH-D74's
+    /// community-derived command set and the TH-D75 user
+    /// manual's references to MCP-D75 and ARFC-D75 PC software.
+    /// CAT operations should mirror the TH-D74 ("FQ", "MD",
+    /// "FO", "PC", "SM", "SQ", etc.) but specific commands have
+    /// not been hardware-verified.
+    ///
+    /// **Transport:** USB-C virtual COM or Bluetooth SPP only.
+    /// The TH-D75 does NOT support RS-232 over a serial cable —
+    /// when constructing a `.serial(path:baudRate:)` connection
+    /// for this radio, point at the USB-C-provided
+    /// `/dev/cu.usbmodem*` device, not a USB-RS232 adapter.
+    ///
+    /// Bluetooth SPP isn't yet supported by SwiftRigControl's
+    /// transport layer; that's tracked as a future feature.
     public static let kenwoodTHD75 = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,

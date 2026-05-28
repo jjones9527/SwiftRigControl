@@ -372,79 +372,12 @@ extension RadioCapabilitiesDatabase {
         powerUnits: .percentage
     )
 
-    // MARK: - Icom IC-9000
-
-    /// Icom IC-9000 - VHF/UHF all-mode transceiver with D-STAR
-    ///
-    /// The IC-9000 is a dual-band VHF (2m) / UHF (70cm) all-mode transceiver
-    /// with D-STAR digital voice. It shares the CI-V address 0x60 with the IC-910H.
-    /// Uses the standard Icom command set with Main/Sub receiver architecture.
-    public static let icomIC9000 = RigCapabilities(
-        hasVFOB: true,
-        hasSplit: true,
-        powerControl: true,
-        maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .am, .fm, .fmN],
-        frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
-        detailedFrequencyRanges: [
-            // General receive coverage
-            DetailedFrequencyRange(min: 118_000_000, max: 143_999_999, modes: [.am, .fm], canTransmit: false),
-            // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .lsb, .cw, .cwR, .rtty, .am, .fm, .fmN], canTransmit: true, bandName: "2m"),
-            // General VHF receive
-            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .am], canTransmit: false),
-            // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .lsb, .cw, .cwR, .rtty, .am, .fm, .fmN], canTransmit: true, bandName: "70cm"),
-            // General UHF receive
-            DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm, .am], canTransmit: false),
-        ],
-        hasDualReceiver: true,
-        hasATU: false,
-        supportsSignalStrength: true,
-        requiresVFOSelection: true,
-        requiresModeFilter: true,
-        powerUnits: .percentage,
-        supportsCTCSS: true,
-        supportsDCS: false,
-        supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
-    )
-
-    // MARK: - Icom IC-2820H
-
-    /// Icom IC-2820H - VHF/UHF dual-band FM mobile transceiver with D-STAR
-    ///
-    /// The IC-2820H is a dual-band 2m/70cm FM mobile transceiver with D-STAR digital voice.
-    /// CI-V address is 0x42 (same as IC-820H). Uses a simplified CI-V command set
-    /// with Main/Sub dual-receiver architecture and FM-only operation.
-    public static let icomIC2820H = RigCapabilities(
-        hasVFOB: true,
-        hasSplit: true,
-        powerControl: true,
-        maxPower: 50,
-        supportedModes: [.fm, .fmN],
-        frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
-        detailedFrequencyRanges: [
-            // General VHF receive
-            DetailedFrequencyRange(min: 118_000_000, max: 143_999_999, modes: [.fm], canTransmit: false),
-            // 2m band (50W FM)
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
-            // General VHF receive
-            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
-            // 70cm band (35W FM)
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
-            // General UHF receive
-            DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm], canTransmit: false),
-        ],
-        hasDualReceiver: true,
-        hasATU: false,
-        supportsSignalStrength: true,
-        requiresVFOSelection: true,
-        requiresModeFilter: true,
-        powerUnits: .percentage,
-        supportsCTCSS: true,
-        supportsDCS: true,
-        supportsDuplex: true,
-        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
-    )
+    // The IC-9000 and IC-2820H entries that previously lived
+    // here were removed: the IC-9000 doesn't exist as an Icom
+    // amateur product (no manufacturer page, no Hamlib entry,
+    // and the description had been copy-pasted from the
+    // IC-9100), and the IC-2820H — while a real product — only
+    // exposes a cloning / packet-TNC interface, not a CAT
+    // control surface. Documentation audit on 2026-05-28
+    // confirmed both. See CHANGELOG.md for the migration note.
 }

@@ -347,65 +347,9 @@ extension RadioDefinition {
         )
     }
 
-    // MARK: - VHF/UHF All-Mode Transceivers
-
-    /// Icom IC-9000 VHF/UHF all-mode transceiver with D-STAR
-    ///
-    /// The IC-9000 uses Main/Sub receiver architecture and shares CI-V address 0x60 with
-    /// the IC-910H. Set a custom address if both radios are on the same CI-V bus.
-    ///
-    /// - Parameter civAddress: CI-V bus address (default: 0x60)
-    /// - Returns: RadioDefinition for IC-9000
-    public static func icomIC9000(civAddress: UInt8? = nil) -> RadioDefinition {
-        RadioDefinition(
-            manufacturer: .icom,
-            model: "IC-9000",
-            defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC9000,
-            civAddress: civAddress ?? IcomRadioModel.ic9000.defaultCIVAddress,
-            protocolFactory: { transport in
-                IcomCIVProtocol(
-                    transport: transport,
-                    civAddress: civAddress,
-                    radioModel: .ic9000,
-                    commandSet: StandardIcomCommandSet.ic910H,
-                    capabilities: RadioCapabilitiesDatabase.icomIC9000
-                )
-            }
-        )
-    }
-
-    // MARK: - VHF/UHF FM Mobile Transceivers
-
-    /// Icom IC-2820H VHF/UHF dual-band FM mobile transceiver with D-STAR
-    ///
-    /// The IC-2820H is a 2m/70cm FM mobile with D-STAR digital voice.
-    /// It shares CI-V address 0x42 with the IC-820H.
-    ///
-    /// - Parameter civAddress: CI-V bus address (default: 0x42)
-    /// - Returns: RadioDefinition for IC-2820H
-    public static func icomIC2820H(civAddress: UInt8? = nil) -> RadioDefinition {
-        let addr = civAddress ?? IcomRadioModel.ic2820h.defaultCIVAddress
-        return RadioDefinition(
-            manufacturer: .icom,
-            model: "IC-2820H",
-            defaultBaudRate: 19200,
-            capabilities: RadioCapabilitiesDatabase.icomIC2820H,
-            civAddress: addr,
-            protocolFactory: { transport in
-                IcomCIVProtocol(
-                    transport: transport,
-                    civAddress: civAddress,
-                    radioModel: .ic2820h,
-                    commandSet: StandardIcomCommandSet(
-                        civAddress: addr,
-                        vfoModel: .mainSub,
-                        requiresModeFilter: true,
-                        echoesCommands: false
-                    ),
-                    capabilities: RadioCapabilitiesDatabase.icomIC2820H
-                )
-            }
-        )
-    }
+    // Removed: the IC-9000 factory (no such Icom product
+    // exists — the entry conflated the IC-910H and IC-9100)
+    // and the IC-2820H factory (real product, but exposes only
+    // a cloning / packet-TNC interface, not CAT control over
+    // CI-V). See CHANGELOG.md 2026-05-28 for the audit notes.
 }

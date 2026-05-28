@@ -67,11 +67,11 @@ or PR so we can promote it.
 
 ## Supported Radios
 
-**~97 radio definitions across 7 manufacturers.** Radios marked
+**~95 radio definitions across 7 manufacturers.** Radios marked
 *Hardware* in the table above are field-tested; all others are
 definition-only.
 
-### Icom (CI-V Protocol) — 46 models
+### Icom (CI-V Protocol) — 44 models
 
 **Flagship & High-End HF:**
 - **IC-7851** - HF/6m flagship with spectrum scope (200W, CI-V: 0x8E)
@@ -112,10 +112,8 @@ definition-only.
 - **IC-9700** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
 - **IC-905** - VHF/UHF/SHF microwave (10W, CI-V: 0xAC)
 - **IC-910H** - VHF/UHF satellite transceiver (100W 2m/75W 70cm, CI-V: 0x60)
-- **IC-9000** - VHF/UHF satellite transceiver legacy (100W, CI-V: 0x60)
 - **IC-970** - VHF/UHF all-mode legacy (100W, CI-V: 0x2E)
 - **IC-820H** - VHF/UHF satellite legacy (45W, CI-V: 0x42)
-- **IC-2820H** - VHF/UHF dual-band mobile with D-STAR (50W, CI-V: 0x42)
 - **IC-2730** - VHF/UHF dual-band FM mobile (50W, CI-V: 0x90)
 - **ID-5100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x8C)
 - **ID-4100** - VHF/UHF D-STAR mobile (50W, CI-V: 0x9A)

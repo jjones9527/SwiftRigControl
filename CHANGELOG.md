@@ -17,6 +17,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING for callers using these specific radios)
+
+- **`RadioDefinition.icomIC9000()`** factory and supporting
+  `IcomRadioModel.ic9000` enum case + cap struct. After
+  verification with the manufacturer, the IC-9000 does not
+  exist as an Icom amateur product — no manufacturer page, no
+  Hamlib entry, and the SwiftRigControl definition's
+  description had been copy-pasted from the IC-9100. The CI-V
+  address was a duplicate of the IC-910H's. Callers using
+  `.icomIC9000()` should switch to `.icomIC910H()` (the actual
+  satellite transceiver at CI-V 0x60) or `.icomIC9100()` (the
+  HF/VHF/UHF satellite transceiver at 0x7C), depending on
+  which physical radio they own.
+
+- **`RadioDefinition.icomIC2820H()`** factory and supporting
+  `IcomRadioModel.ic2820h` enum case + cap struct. The
+  IC-2820H is a real product (2007 dual-band FM mobile with
+  D-STAR), but it does **not** expose a CAT control surface —
+  its serial port is used only for cloning (via Icom's
+  CS-2820 software) and as a packet-TNC interface. Hamlib
+  also does not support it. SwiftRigControl shipping the
+  definition implied capabilities that don't exist on the
+  wire. Callers who wanted memory-bank programming should use
+  Icom's CS-2820 cloning software directly.
+
+### Changed
+
+- **IC-7850 / IC-7851 documentation clarified.** The two enum
+  cases are both retained because the model name on the front
+  panel matters for UI display, but the IC-7850's doc comment
+  now explicitly notes it is the 50th-anniversary limited
+  edition (≈150 units worldwide, late 2014) with functionally
+  identical internals to the IC-7851 production model. Both
+  resolve to CI-V 0x8E and share the same command set. Hamlib
+  uses one entry (`RIG_MODEL_IC785x`) for both.
+
+- **TH-D75 documentation marked as reverse-engineered.** The
+  TH-D75A is a real Kenwood product (announced Hamvention
+  2024, shipping mid-2024), but Kenwood doesn't publish a PC
+  command reference. SwiftRigControl's CAT surface for this
+  radio is inferred from the TH-D74's community-derived
+  command set; specific commands have not been
+  hardware-verified. The doc comment now explicitly notes
+  this and warns that the TH-D75 supports only USB-C virtual
+  COM and Bluetooth SPP — RS-232 over a USB-serial adapter
+  will not work.
+
 ### Fixed
 - **IC-9700 / IC-705 noise blanker level was being encoded with
   reversed bytes and could emit invalid BCD.** The setter at

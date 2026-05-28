@@ -174,11 +174,11 @@ extension IcomCIVProtocol {
             return 99
         case .ic706mkiig, .ic706mkii, .ic706:
             return 99
-        case .ic970, .ic910h, .ic9000, .ic820h:
+        case .ic970, .ic910h, .ic820h:
             return 99
         case .ic275, .ic375, .ic475:
             return 99
-        case .ic2730, .ic2820h:
+        case .ic2730:
             return 99
         case .id5100, .id4100:
             return 99
