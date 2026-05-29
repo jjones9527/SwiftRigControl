@@ -44,19 +44,14 @@ extension RadioDefinition.Kenwood {
         }
     )
 
-    /// Kenwood TM-D710GA VHF/UHF dual-band transceiver
-    public static let tmd710 = RadioDefinition(
-        manufacturer: .kenwood,
-        model: "TM-D710",
-        defaultBaudRate: 57600,
-        capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710,
-        protocolFactory: { transport in
-            KenwoodProtocol(
-                transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710
-            )
-        }
-    )
+    // MARK: - Removed in v1.1.0
+    //
+    // The TM-D710 and TM-V71 factories were removed after real-
+    // hardware testing on 2026-05-29 confirmed that
+    // `KenwoodProtocol` is structurally incompatible with these
+    // radios. See `Documentation/HAMLIB_PARITY.md` (or the v1.2
+    // roadmap) for the captured wire bytes and the planned
+    // `TMD710Protocol` design.
 
     /// Kenwood TS-480SAT HF/6m all-mode transceiver
     public static let ts480SAT = RadioDefinition(
@@ -124,20 +119,6 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts480HX
-            )
-        }
-    )
-
-    /// Kenwood TM-V71A VHF/UHF dual-band transceiver with EchoLink
-    public static let tmv71 = RadioDefinition(
-        manufacturer: .kenwood,
-        model: "TM-V71",
-        defaultBaudRate: 9600,
-        capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71,
-        protocolFactory: { transport in
-            KenwoodProtocol(
-                transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71
             )
         }
     )

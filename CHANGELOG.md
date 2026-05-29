@@ -28,6 +28,26 @@ vendor-namespace refactor (breaking), TCP transport, FlexRadio
 family, targeted serial-port auto-detection. Migration guide
 lives at `Documentation/MIGRATION_v1.1.md`.
 
+### Removed (BREAKING)
+
+- **`RadioDefinition.Kenwood.tmd710`** (TM-D710 / TM-D710GA) and
+  **`RadioDefinition.Kenwood.tmv71`** (TM-V71 / TM-V71A) — and
+  their corresponding `RadioCapabilitiesDatabase.Kenwood.tmd710`
+  / `tmv71` caps. Real-hardware testing on 2026-05-29 confirmed
+  that `KenwoodProtocol` is wire-incompatible with these radios.
+  Both use CR (`\r`) terminator, 9600-baud default, and a
+  different command vocabulary (`FO`/`BC`/`MR`/`MS`/`TY` per
+  Hamlib `rigs/kenwood/tmd710.c`) — none of which
+  `KenwoodProtocol` produces. The previous shipped definitions
+  wired both radios to `KenwoodProtocol` and **could never have
+  worked**: discovery couldn't find them, and any frequency /
+  mode / PTT call would have thrown. Removed rather than ship a
+  stub that lies about catalog coverage. A proper
+  `TMD710Protocol` is on the v1.2 roadmap; see ROADMAP.md for
+  the implementation plan and captured wire bytes. Migration:
+  there is no drop-in replacement — pin to v1.0.6 if you
+  depend on either radio.
+
 ### Added
 
 - **Targeted auto-detection** — new `RadioDiscovery` actor under

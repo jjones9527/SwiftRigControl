@@ -420,8 +420,8 @@ public class XPCServer: NSObject, @preconcurrency RigControlXPCProtocol {
             return RadioDefinition.Kenwood.ts990S
         case "TS-590SG", "TS590SG":
             return RadioDefinition.Kenwood.ts590SG
-        case "TM-D710", "TMD710", "TM-D710GA":
-            return RadioDefinition.Kenwood.tmd710
+        // TM-D710 / TM-V71 removed in v1.1.0 — KenwoodProtocol is
+        // wire-incompatible with these mobiles. See v1.2 roadmap.
         case "TS-480SAT", "TS480SAT":
             return RadioDefinition.Kenwood.ts480SAT
         case "TS-2000", "TS2000":

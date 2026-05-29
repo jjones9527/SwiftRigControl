@@ -62,7 +62,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **~98 radio definitions**, but only a subset
+SwiftRigControl ships with **~96 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -96,7 +96,7 @@ or PR so we can promote it.
 
 ## Supported Radios
 
-**~98 radio definitions across 8 manufacturers.** Models tagged
+**~96 radio definitions across 8 manufacturers.** Models tagged
 **[Hardware]** below — and listed in the Hardware verification status
 table above — are field-tested; all others are definition-only.
 
@@ -213,7 +213,7 @@ table above — are field-tested; all others are definition-only.
 - **X6100** - HF/6m 10W portable SDR (19200 baud, CI-V: 0xA4)
 - **X6200** - HF/6m 8W portable SDR (19200 baud, CI-V: 0xA4)
 
-### Kenwood (Text-Based Protocol) — 17 models
+### Kenwood (Text-Based Protocol) — 15 models
 
 **HF Flagships:**
 - **TS-990S** - HF/6m flagship with dual receiver (200W, 115200 baud)
@@ -233,8 +233,6 @@ table above — are field-tested; all others are definition-only.
 - **TS-2000** - HF/VHF/UHF all-mode (100W, 57600 baud)
 
 **VHF/UHF:**
-- **TM-D710** - VHF/UHF dual-band mobile (50W, 57600 baud)
-- **TM-V71** - VHF/UHF dual-band mobile (50W, 57600 baud)
 - **TH-D75** - Tri-band handheld with D-STAR and APRS (5W, 9600 baud)
 - **TH-D74** - VHF/UHF handheld with D-STAR (5W, 57600 baud)
 - **TH-D72A** - VHF/UHF handheld with APRS (5W, 57600 baud)
@@ -743,7 +741,6 @@ Common patterns:
 | TS-590SG | 115200 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
 | TS-2000 | 57600 | 100W | 30 kHz - 1.3 GHz | No | Yes | Yes |
 | TS-480SAT | 57600 | 100W | 30 kHz - 60 MHz | No | Yes | Yes |
-| TM-D710 | 57600 | 50W | 118 - 524 MHz | Yes | No | No |
 | TH-D75 | 9600 | 5W | 118-524 MHz | Yes | No | No |
 
 #### Lab599 Radios (Kenwood-Compatible CAT)

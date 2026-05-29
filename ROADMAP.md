@@ -920,6 +920,117 @@ concrete protocol's conformance list is its capability contract:
 
 ---
 
+## Phase 5.7 — Kenwood TM/TH mobile + handheld protocol (v1.2)
+
+**Goal:** ship a working ``TMD710Protocol`` so the Kenwood
+TM-D710 / TM-V71 mobiles and (eventually) the rest of the
+TH-handheld family share a common, correctly-implemented
+CR-terminated protocol stack.
+
+### Why this exists
+
+Real-hardware testing on **2026-05-29** discovered that the
+TM-D710 / TM-V71 definitions that shipped before v1.1.0 had
+been wired to ``KenwoodProtocol`` and **could never have
+worked**. The two radios were removed from the catalog in
+v1.1.0 (see CHANGELOG `[1.1.0]` Removed section and the
+"Removed radios" section of
+``Documentation/MIGRATION_v1.1.md``) rather than ship a stub
+that lies about catalog coverage.
+
+This phase implements the proper protocol and re-adds the
+definitions.
+
+### Findings from the v1.1 hardware investigation
+
+Connected to a Kenwood TM-D710 at the **rear PC port** at
+9600 baud (the front-panel data jack on this firmware is
+TNC-locked even with the TNC turned off — only the rear
+PC port honors the full PC-CAT command set):
+
+| Send                 | Receive                | Notes |
+| -------------------- | ---------------------- | ----- |
+| `ID;` (KenwoodProtocol default)  | *(no response)*  | Wrong terminator; KenwoodProtocol uses `;`, TM-D710 uses `\r` |
+| `ID\r`               | `?\r` (unknown)        | `ID` is not a TM-D710 command at all |
+| `TY\r`               | `TY K,0,3,1,0\r`       | TM-D710 model identification. **Use for discovery.** |
+| `MS\r`               | `MS VA3ZTF\r`          | APRS station-callsign read |
+| `FA\r`               | `?\r`                  | Wrong command — TM-D710 uses `FO`, not `FA` |
+| `BC\r`               | `?\r` in front-panel mode; works on rear PC port | Band-A/B selector |
+
+### Hamlib reference
+
+Cross-checked against ``rigs/kenwood/tmd710.c`` in the local
+shallow clone at ``~/Developer/hamlib``:
+
+- Hamlib registers two models — ``RIG_MODEL_TMD710`` (TM-D710 /
+  TM-D710G/A) and ``RIG_MODEL_TMV71`` (TM-V71 / TM-V71A) —
+  sharing the same `tmd710_priv_caps`.
+- Both use ``.cmdtrm = EOM_TH`` — i.e. `'\r'` (CR), not the
+  `';'` we send.
+- ``serial_rate_min = 9600``, ``serial_rate_max = 57600``.
+  The PC-port baud rate is a menu setting on the radio
+  (Menu 528 on the TM-D710G firmware we tested at). Real
+  radio was at 9600.
+- Hamlib's ``tmd710_open`` calls ``BC`` (band query) first
+  rather than the usual Kenwood ``ID``.
+- Command surface in `tmd710.c`: ``BC``, ``FO``, ``MR``,
+  ``MS``, ``BY``, ``TY``, ``VMC``, ``MU`` (memory channel
+  control), ``DCL``/``DCD`` (squelch state). Frequency is
+  packed in the ``FO`` response string in a layout similar
+  to (but not identical to) the TH-D72's ``FO`` format.
+
+### Implementation plan
+
+- [ ] **`TMD710Protocol` actor** under
+      ``Sources/RigControl/Protocols/Kenwood/``. Model on the
+      existing ``THD72Protocol`` (CR-terminated frame loop;
+      same ``readUntil(0x0D, ...)`` shape).
+- [ ] **Default baud rate 9600** with the radio's other
+      documented rates (19200, 38400, 57600) reachable through
+      the existing ``ConnectionType.serial(path:baudRate:)``
+      override.
+- [ ] **Frequency get/set via `FO`** — parse the packed
+      multi-field response per Hamlib `tmd710_do_get_freq` /
+      `tmd710_do_set_freq`. The TM-D710's `FO` format
+      differs slightly from the TH-D72's; pin a real-hardware
+      capture in the test before generalizing.
+- [ ] **Band selection via `BC`** — TM-D710 has independent
+      band-A / band-B which map cleanly onto `VFO.main` /
+      `VFO.sub` rather than `.a` / `.b`.
+- [ ] **PTT via `TX` / `RX`** (same as `THD72Protocol`).
+- [ ] **Mode set via the `FO` packed string's mode field** —
+      not a separate `MD` command on this radio.
+- [ ] **Discovery probe** updated for the TM-D710 / TM-V71:
+      send `TY\r`, accept any well-formed `TY K,...\r` reply.
+      (Currently `RadioIdentifyProbe` only knows about
+      `;`-terminated `ID` and Icom CI-V `0x19 0x00`.)
+- [ ] **New factories**
+      ``RadioDefinition.Kenwood.tmd710`` and
+      ``RadioDefinition.Kenwood.tmv71`` wired to the new
+      protocol. Default baud rate 9600 to match the radio's
+      menu default.
+- [ ] **Caps**: VHF/UHF dual-band FM, 50 W; per-band split
+      handled via separate Main/Sub `FO` write — not a CAT
+      `setSplit` command.
+- [ ] **Hardware verification** on the TM-D710 used in the v1.1
+      investigation (confirmed reachable at 9600 / CR /
+      rear PC port).
+- [ ] **MockTransport tests** pinning the captured wire bytes
+      (`TY K,0,3,1,0\r`, `MS VA3ZTF\r`, the `FO 0,...` reply
+      shape).
+- [ ] **CHANGELOG `[Unreleased]`** Added entry referencing the
+      tracked migration story.
+
+### Stretch — generalize to a "Kenwood handheld/mobile
+     family" protocol that backs TH-D75 and TM-V71 too
+
+The TH-D74, TH-D75, TM-D710, and TM-V71 share enough of the
+CR-terminated command surface that there's a real case for
+hoisting common framing/ID/PTT into a shared base. Defer
+until at least two of these have working concrete impls.
+
+---
+
 ## Phase 6 — Beyond-Hamlib differentiators
 
 **Goal:** features Hamlib does not have or does poorly.

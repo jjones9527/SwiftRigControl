@@ -163,8 +163,8 @@ For each `.vendorModel` reference in your code:
 | `.kenwoodTS480SAT`  | `.Kenwood.ts480SAT`   |
 | `.kenwoodTS480HX`   | `.Kenwood.ts480HX`    |
 | `.kenwoodTS2000`    | `.Kenwood.ts2000`     |
-| `.kenwoodTMD710`    | `.Kenwood.tmd710`     |
-| `.kenwoodTMV71`     | `.Kenwood.tmv71`      |
+| `.kenwoodTMD710`    | **Removed** — see "Removed radios" below |
+| `.kenwoodTMV71`     | **Removed** — see "Removed radios" below |
 | `.kenwoodTHD75`     | `.Kenwood.thd75`      |
 | `.kenwoodTHD74`     | `.Kenwood.thd74`      |
 | `.kenwoodTHD72A`    | `.Kenwood.thd72A`     |
@@ -294,7 +294,88 @@ for previews and tests can drive discovery without `/dev/`.
 
 ---
 
-## 5. Other changes
+## 5. Removed radios (BREAKING)
+
+Two radios that previously shipped under the Kenwood namespace
+have been **removed** in v1.1.0:
+
+- `.Kenwood.tmd710` — Kenwood TM-D710 / TM-D710GA mobile
+- `.Kenwood.tmv71` — Kenwood TM-V71 / TM-V71A mobile
+
+### Why
+
+Real-hardware testing on 2026-05-29 revealed that
+``KenwoodProtocol`` is structurally incompatible with these
+radios. The TM-D710 and TM-V71 are TH-handheld-family mobiles —
+they share the CR (`\r`) terminator, 9600-baud default, and
+command vocabulary of the TH-D72 line, NOT the `;`-terminated
+HF Kenwood command set that `KenwoodProtocol` implements.
+
+What we discovered on the wire (TM-D710 connected to its rear
+PC port at 9600 baud):
+
+| Command sent       | Radio response       | Notes |
+| ------------------ | -------------------- | ----- |
+| `ID;` (`KenwoodProtocol` default) | *(no response)* | Wrong terminator |
+| `ID\r`             | `?\r` (unknown command) | TM-D710 doesn't recognize `ID` |
+| `TY\r`             | `TY K,0,3,1,0\r` | Hamlib's identify command — works |
+| `MS\r`             | `MS VA3ZTF\r` | Reads APRS station callsign — works |
+| `FA\r` (frequency) | `?\r` | Wrong command — TM-D710 uses `FO`, not `FA` |
+| `BC\r` (band)      | `?\r` (in some modes) | Works in PC-CAT mode only |
+
+So even at the correct baud rate and terminator, the command
+vocabulary is different. The TM-D710 / TM-V71 family uses
+`FO`/`BC`/`MR`/`MS`/`TY` per Hamlib `rigs/kenwood/tmd710.c`,
+not the HF Kenwood `FA`/`FB`/`MD`/`IF` set.
+
+The previous shipped definitions wired both radios to
+`KenwoodProtocol`. **They could never have worked** — discovery
+couldn't find them, and any frequency/mode/PTT call would have
+thrown. We've removed them rather than ship a stub that lies
+about the catalog's coverage.
+
+### What we'll do about it
+
+A proper `TMD710Protocol` is on the v1.2 roadmap (see
+`ROADMAP.md`). The implementation plan:
+
+1. New `TMD710Protocol` actor under
+   `Sources/RigControl/Protocols/Kenwood/`, modeled on
+   `THD72Protocol` (CR-terminated frame loop).
+2. Default baud rate 9600 with optional configuration for
+   19200/38400/57600 (the TM-D710's PC-port speed is a menu
+   setting on the radio).
+3. Command set cross-referenced against Hamlib
+   `rigs/kenwood/tmd710.c`:
+   - `BC` — get/set current band (A/B)
+   - `FO <vfo>` — get/set frequency (packed string like THD72)
+   - `MR` — memory recall
+   - `MS` — memory string (station ID)
+   - `BY` — busy / S-meter
+   - `TY` — model identification (used for discovery)
+4. New `tmd710` / `tmv71` factories under
+   `RadioDefinition.Kenwood` wired to the new protocol.
+5. Hardware verification on the operator's TM-D710 (verified
+   working at 9600 baud / CR / rear PC port during the v1.1
+   investigation).
+
+### If you depended on these
+
+Code that previously did:
+
+```swift
+let rig = try RigController(
+    radio: .Kenwood.tmd710,
+    connection: .serial(...)
+)
+```
+
+…fails to compile in v1.1.0. There is no drop-in replacement;
+the protocol genuinely needs to be written. Either pin to v1.0.6
+until v1.2 ships, or open a tracking issue on the v1.2 work item
+in `ROADMAP.md`.
+
+## 6. Other changes
 
 - README's Supported Radios section now tags the four
   hardware-verified models (IC-7100, IC-7600, IC-9700, K2)

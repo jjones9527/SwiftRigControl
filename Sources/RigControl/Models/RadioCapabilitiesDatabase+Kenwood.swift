@@ -133,34 +133,13 @@ extension RadioCapabilitiesDatabase.Kenwood {
         supportedFunctions: .kenwoodHFStandard
     )
 
-    /// Kenwood TM-D710GA - VHF/UHF dual-band transceiver
-    public static let tmd710 = RigCapabilities(
-        hasVFOB: true,
-        hasSplit: false,
-        powerControl: true,
-        maxPower: 50,
-        supportedModes: [.fm, .fmN],
-        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
-        detailedFrequencyRanges: [
-            // Airband receive
-            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
-            // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
-            // General receive
-            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
-            // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
-            // Upper UHF receive
-            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
-        ],
-        hasDualReceiver: true,  // Simultaneous VHF/UHF
-        hasATU: false,
-        supportsSignalStrength: true,
-        supportsCTCSS: true,
-        supportsDCS: true,
-        supportsDuplex: true,
-        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
-    )
+    // MARK: - Removed in v1.1.0
+    //
+    // The TM-D710 and TM-V71 caps were removed alongside their
+    // factories after real-hardware testing on 2026-05-29 showed
+    // KenwoodProtocol is wire-incompatible with these radios.
+    // See the v1.2 roadmap entry for the captured wire bytes and
+    // the planned `TMD710Protocol` design.
 
     /// Kenwood TS-480SAT - HF/6m all-mode transceiver
     public static let ts480SAT = RigCapabilities(
@@ -352,31 +331,6 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
-    )
-
-    /// Kenwood TM-V71A - VHF/UHF dual-band transceiver with EchoLink
-    public static let tmv71 = RigCapabilities(
-        hasVFOB: true,
-        hasSplit: false,
-        powerControl: true,
-        maxPower: 50,
-        supportedModes: [.fm, .fmN],
-        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
-        detailedFrequencyRanges: [
-            // Airband receive
-            DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
-            // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
-            // General receive
-            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
-            // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
-            // Upper UHF receive
-            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000, modes: [.fm], canTransmit: false),
-        ],
-        hasDualReceiver: true,  // Simultaneous VHF/UHF
-        hasATU: false,
         supportsSignalStrength: true
     )
 
