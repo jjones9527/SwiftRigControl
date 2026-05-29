@@ -31,7 +31,7 @@ struct K2Validator {
         do {
             // Create controller
             let rig = try RigController(
-                radio: .elecraftK2,
+                radio: .Elecraft.k2,
                 connection: .serial(path: port, baudRate: nil)
             )
 

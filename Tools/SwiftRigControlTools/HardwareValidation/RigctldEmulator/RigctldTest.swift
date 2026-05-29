@@ -57,21 +57,21 @@ struct RigctldTest {
         let radio: RadioDefinition
         switch radioModel.uppercased() {
         case "IC-9700", "IC9700", "9700":
-            radio = RadioDefinition.icomIC9700()
+            radio = RadioDefinition.Icom.ic9700()
         case "IC-7610", "IC7610", "7610":
-            radio = RadioDefinition.icomIC7610()
+            radio = RadioDefinition.Icom.ic7610()
         case "IC-7300", "IC7300", "7300":
-            radio = RadioDefinition.icomIC7300()
+            radio = RadioDefinition.Icom.ic7300()
         case "IC-7600", "IC7600", "7600":
-            radio = RadioDefinition.icomIC7600()
+            radio = RadioDefinition.Icom.ic7600()
         case "IC-7100", "IC7100", "7100":
-            radio = RadioDefinition.icomIC7100()
+            radio = RadioDefinition.Icom.ic7100()
         case "IC-705", "IC705", "705":
-            radio = RadioDefinition.icomIC705()
+            radio = RadioDefinition.Icom.ic705()
         default:
             print("Unknown radio model: \(radioModel)")
             print("Using IC-7600 as default")
-            radio = RadioDefinition.icomIC7600()
+            radio = RadioDefinition.Icom.ic7600()
         }
 
         print("Configuration:")

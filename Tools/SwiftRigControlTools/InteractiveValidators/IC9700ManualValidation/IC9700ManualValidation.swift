@@ -42,7 +42,7 @@ struct IC9700ManualValidation {
 
         do {
             let rig = try RigController(
-                radio: .icomIC9700(civAddress: nil),
+                radio: .Icom.ic9700(civAddress: nil),
                 connection: .serial(path: serialPort, baudRate: 19200)
             )
 

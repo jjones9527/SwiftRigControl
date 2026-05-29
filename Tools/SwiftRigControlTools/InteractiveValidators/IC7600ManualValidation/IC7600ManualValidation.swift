@@ -33,7 +33,7 @@ struct IC7600ManualValidation {
         let rig: RigController
         do {
             rig = try RigController(
-                radio: .icomIC7600(civAddress: 0x7A),
+                radio: .Icom.ic7600(civAddress: 0x7A),
                 connection: .serial(path: serialPort, baudRate: 19200)
             )
         } catch {

@@ -6,16 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > **Version-numbering note (Phase 0 reconciliation, 2026-05-22):**
-> The actual released git tags are `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`,
-> `v1.0.4`, and `v1.0.6` (1.0.5 was skipped). The `[1.1.0]`, `[1.2.0]`,
-> and `[1.3.0]` headings that appear below describe **real shipped work
-> that was bundled into the `v1.0.6` release tag on 2026-04-30**, not
-> separately released versions. They are preserved here as historical
-> feature batches. Going forward, version numbers in this file match
-> the git tag they ship under. The next release will be `v1.0.7` (patch)
-> or `v1.1.0` (minor) — see ROADMAP.md.
+> The actual released git tags through April 2026 are `v1.0.0`,
+> `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.6` (1.0.5 was
+> skipped). The earlier `[1.1.0]`, `[1.2.0]`, and `[1.3.0]`
+> headings that appear lower in this file describe **real shipped
+> work that was bundled into the `v1.0.6` release tag on
+> 2026-04-30**, not separately released versions. They are
+> preserved as historical feature batches.
+>
+> The **second** `[1.1.0]` heading below — dated 2026-05-29 — is
+> the *real* v1.1.0 release, the first feature release after
+> v1.0.6. From this release forward, CHANGELOG version headings
+> match the git tag they ship under.
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-05-29
+
+First feature release after the v1.0.6 baseline. Highlights:
+vendor-namespace refactor (breaking), TCP transport, FlexRadio
+family, targeted serial-port auto-detection. Migration guide
+lives at `Documentation/MIGRATION_v1.1.md`.
 
 ### Added
 

@@ -32,7 +32,7 @@ struct IC7600ModeDebug {
 
         do {
             let rig = try RigController(
-                radio: .icomIC7600(civAddress: nil),
+                radio: .Icom.ic7600(civAddress: nil),
                 connection: .serial(path: serialPort, baudRate: 19200)
             )
 

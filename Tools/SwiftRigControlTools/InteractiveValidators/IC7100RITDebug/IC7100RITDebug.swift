@@ -24,7 +24,7 @@ struct IC7100RITDebug {
         do {
             // Create controller
             let rig = try RigController(
-                radio: .icomIC7100(civAddress: nil),
+                radio: .Icom.ic7100(civAddress: nil),
                 connection: .serial(path: port, baudRate: nil)
             )
 

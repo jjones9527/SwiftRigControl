@@ -5,7 +5,36 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.0.6
+**Current release:** v1.1.0
+
+## What's new in v1.1.0
+
+- **Vendor namespaces** — radio definitions and capabilities now
+  live under `.Icom.`, `.Yaesu.`, `.Kenwood.`, `.Elecraft.`,
+  `.Xiegu.`, `.Lab599.`, `.TenTec.`, `.Flex.` instead of the
+  flat `icomXxx`/`yaesuXxx` form. Autocomplete filters cleanly
+  by vendor. **This is a breaking change.** See
+  [`Documentation/MIGRATION_v1.1.md`](Documentation/MIGRATION_v1.1.md).
+- **TCP transport** — new `ConnectionType.tcp(host:port:)`
+  backed by Network.framework. Drives Flex 6000-series radios
+  (SmartSDR @ 4992) and remote `rigctld` / `RigControlServer`
+  instances.
+- **FlexRadio family** — three definition-only radios under the
+  new `.Flex` namespace: `flex6000`, `powerSDR`, `thetis`. All
+  speak Kenwood-derived CAT, matching Hamlib's approach in
+  `kenwood/flex6xxx.c`.
+- **Targeted auto-detection** — `RadioDiscovery.detect(_ radio:)`
+  and the multi-radio overload probe serial ports for a known
+  radio rather than scanning every vendor at every baud.
+  Per-vendor identify queries (Icom `0x19 0x00`, Kenwood-family
+  `ID;`) match against the radio's expected CI-V address or
+  text-reply shape.
+- **Honesty pass closed** — the four hardware-verified radios
+  (IC-7100, IC-7600, IC-9700, K2) are tagged **[Hardware]**
+  inline in the supported-radios lists; everything else is
+  implicitly definition-only.
+
+444 tests pass; zero new runtime dependencies.
 
 ## Features
 
@@ -21,7 +50,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: 420+ tests on Swift Testing framework with mock transport
+- ✅ **Well-Tested**: 440+ tests on Swift Testing framework with mock transport
 - ✅ **Frequency Validation**: Safety-critical validation with amateur band support
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching

@@ -19,7 +19,7 @@ struct K2PTTDebug {
 
         do {
             let rig = try RigController(
-                radio: .elecraftK2,
+                radio: .Elecraft.k2,
                 connection: .serial(path: port, baudRate: 4800)
             )
 

@@ -37,7 +37,7 @@ struct IC7600Validator {
         do {
             // Create and connect
             let rig = try RigController(
-                radio: .icomIC7600(civAddress: nil),
+                radio: .Icom.ic7600(civAddress: nil),
                 connection: .serial(path: port, baudRate: nil)
             )
 

@@ -32,7 +32,7 @@ struct IC9700ComprehensiveTest {
         do {
             // Create controller
             let rig = try RigController(
-                radio: .icomIC9700(civAddress: nil),
+                radio: .Icom.ic9700(civAddress: nil),
                 connection: .serial(path: port, baudRate: nil)  // Use default 19200 baud
             )
 

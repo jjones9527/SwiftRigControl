@@ -44,6 +44,7 @@ let package = Package(
         .executable(name: "IC9700Validator", targets: ["IC9700Validator"]),
         .executable(name: "K2Validator", targets: ["K2Validator"]),
         .executable(name: "RigctldEmulator", targets: ["RigctldEmulator"]),
+        .executable(name: "RadioDiscoveryValidator", targets: ["RadioDiscoveryValidator"]),
 
         // MARK: - Interactive Validators (require stdin)
 
@@ -113,6 +114,11 @@ let package = Package(
             name: "RigctldEmulator",
             dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
             path: "HardwareValidation/RigctldEmulator"
+        ),
+        .executableTarget(
+            name: "RadioDiscoveryValidator",
+            dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
+            path: "HardwareValidation/RadioDiscoveryValidator"
         ),
 
         // MARK: - Interactive Validators (Icom)

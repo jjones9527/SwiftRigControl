@@ -1,16 +1,15 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.0.6 (released 2026-04-30, per git tag)
+**Current version:** v1.1.0 (cut 2026-05-29 — first feature
+release after v1.0.6)
 **Swift tools:** 6.2, language mode `.v6` (strict concurrency)
 **Minimum platform:** macOS 14
 **License:** LGPL v3.0
 
-> Earlier versions of `CHANGELOG.md` show `[1.1.0]`, `[1.2.0]`, and
-> `[1.3.0]` headings, but no such tags exist in git. That work all
-> shipped under the `v1.0.6` tag. The version-numbering note at the
-> top of CHANGELOG.md explains the reconciliation. The next release
-> will be `v1.0.7` (patch) or `v1.1.0` (minor) depending on the scope
-> of work accumulated in the `[Unreleased]` section.
+> The earlier `[1.1.0]`/`[1.2.0]`/`[1.3.0]` CHANGELOG headings
+> describe work that shipped under the `v1.0.6` git tag — see the
+> version-numbering note at the top of CHANGELOG.md. The *real*
+> v1.1.0 is the heading dated 2026-05-29.
 
 > This roadmap is a living document. Per `CLAUDE.md`, it is updated
 > after every commit or coherent batch of work. If something here

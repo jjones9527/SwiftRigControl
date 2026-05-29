@@ -69,7 +69,7 @@ class Validator {
         print("📡 Connecting to IC-9700 on \(serialPort)...")
 
         rig = try RigController(
-            radio: .icomIC9700(civAddress: nil),
+            radio: .Icom.ic9700(civAddress: nil),
             connection: .serial(path: serialPort, baudRate: 19200)
         )
 
