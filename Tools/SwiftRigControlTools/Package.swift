@@ -62,6 +62,7 @@ let package = Package(
         .executable(name: "K2NewCommandsTest", targets: ["K2NewCommandsTest"]),
         .executable(name: "K2PowerDebug", targets: ["K2PowerDebug"]),
         .executable(name: "K2PTTDebug", targets: ["K2PTTDebug"]),
+        .executable(name: "IC7600Probe", targets: ["IC7600Probe"]),
     ],
     dependencies: [
         // Depend on the parent SwiftRigControl package via a relative path.
@@ -180,6 +181,11 @@ let package = Package(
             name: "K2PTTDebug",
             dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
             path: "Debugging/K2PTTDebug"
+        ),
+        .executableTarget(
+            name: "IC7600Probe",
+            dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
+            path: "Debugging/IC7600Probe"
         ),
     ],
     swiftLanguageModes: [.v6]

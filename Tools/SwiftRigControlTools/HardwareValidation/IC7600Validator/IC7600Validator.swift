@@ -474,16 +474,24 @@ struct IC7600Validator {
                 }
             }
 
-            // Test Squelch Condition (requires FM mode)
+            // Test Squelch Condition (requires FM mode). Always
+            // restore the prior mode even if the squelch read
+            // fails — leaving the radio in FM cascades into the
+            // next test (e.g. TWIN PBT is invalid in FM and NAKs).
             ValidationHelpers.printInfo("Testing Squelch Condition (switching to FM mode)...")
             let squelchSavedMode = try await rig.mode(vfo: .main, cached: false)
             try await rig.setMode(.fm, vfo: .main)
             try await Task.sleep(nanoseconds: 200_000_000)
 
-            let squelchOpen = try await icomProtocol.getSquelchConditionIC7600()
-            ValidationHelpers.printSuccess("Squelch: \(squelchOpen ? "OPEN" : "CLOSED")")
+            do {
+                let squelchOpen = try await icomProtocol.getSquelchConditionIC7600()
+                ValidationHelpers.printSuccess("Squelch: \(squelchOpen ? "OPEN" : "CLOSED")")
+            } catch {
+                try await rig.setMode(squelchSavedMode, vfo: .main)
+                ValidationHelpers.printInfo("Restored mode to \(squelchSavedMode.rawValue) after failure")
+                throw error
+            }
 
-            // Restore mode
             try await rig.setMode(squelchSavedMode, vfo: .main)
             ValidationHelpers.printInfo("Restored mode to \(squelchSavedMode.rawValue)")
 
@@ -759,11 +767,19 @@ struct IC7600Validator {
         }
 
         do {
-            // Test Band Edge Detection
+            // Test Band Edge Detection. getBandEdgeIC7600 currently
+            // throws .unsupportedOperation because the IC-7600's
+            // multi-segment response format hasn't been reverse-
+            // engineered — see the method's doc-comment. Skip
+            // gracefully so the rest of Test 15 still runs.
             ValidationHelpers.printInfo("Testing Band Edge Detection...")
             try await rig.setFrequency(14_200_000, vfo: .a)  // 20m band
-            let (lowerEdge, upperEdge) = try await icomProtocol.getBandEdgeIC7600()
-            ValidationHelpers.printSuccess("Band Edges: \(ValidationHelpers.formatFrequency(lowerEdge)) - \(ValidationHelpers.formatFrequency(upperEdge))")
+            do {
+                let (lowerEdge, upperEdge) = try await icomProtocol.getBandEdgeIC7600()
+                ValidationHelpers.printSuccess("Band Edges: \(ValidationHelpers.formatFrequency(lowerEdge)) - \(ValidationHelpers.formatFrequency(upperEdge))")
+            } catch RigError.unsupportedOperation(let reason) {
+                ValidationHelpers.printWarning("Band Edge: SKIPPED — \(reason)")
+            }
 
             // Test Dial Lock
             ValidationHelpers.printInfo("Testing Dial Lock...")
@@ -781,9 +797,12 @@ struct IC7600Validator {
             let brightness = try await icomProtocol.getBrightLevelIC7600()
             ValidationHelpers.printSuccess("Display Brightness: \(brightness)")
 
-            // Test AGC Time Constant
+            // Test AGC Time Constant. IC-7600 only accepts 1
+            // (FAST), 2 (MEDIUM), 3 (SLOW) — see Hamlib
+            // ic7600.c agc_levels. Wider 0–13 range used by
+            // IC-7300/9700/705 is rejected here.
             ValidationHelpers.printInfo("Testing AGC Time Constant...")
-            for tc in [0x00, 0x05, 0x0A] as [UInt8] {
+            for tc in [0x01, 0x02, 0x03] as [UInt8] {
                 try await icomProtocol.setAGCTimeConstantIC7600(tc)
                 let actual = try await icomProtocol.getAGCTimeConstantIC7600()
                 ValidationHelpers.printSuccess("AGC Time Constant \(tc): \(actual)")

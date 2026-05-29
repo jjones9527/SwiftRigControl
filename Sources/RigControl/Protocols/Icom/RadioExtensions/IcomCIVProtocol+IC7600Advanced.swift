@@ -60,8 +60,15 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Set AGC time constant (IC-7600)
-    /// Command: 0x1A 0x04 [time constant 0-13]
+    /// Set AGC time constant (IC-7600).
+    ///
+    /// Command: `0x1A 0x04 [icom_level]`.
+    ///
+    /// **Valid `value` range on the IC-7600 is `1...3`** (FAST=1,
+    /// MEDIUM=2, SLOW=3) per Hamlib `ic7600.c`'s `agc_levels`
+    /// table. The wider 0–13 range available on the IC-7300/9700/705
+    /// is NOT supported by the IC-7600 firmware and will be NAKed.
+    /// Values outside `1...3` throw `commandFailed`.
     public func setAGCTimeConstantIC7600(_ value: UInt8) async throws {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("setAGCTimeConstantIC7600 is only available on IC-7600")
@@ -79,6 +86,13 @@ extension IcomCIVProtocol {
     }
 
     /// Read AGC time constant (IC-7600)
+    ///
+    /// Real-hardware capture (2026-05-29) shows the reply as
+    /// `FE FE E0 7A 1A 04 05 FD`. `CIVFrame.parse` does NOT treat
+    /// `0x1A` as a "has sub-command" prefix (only 0x14/0x15/0x1C
+    /// are in that list), so the split is
+    /// `command=[0x1A], data=[0x04, value]`. Match against that
+    /// shape rather than assuming a 2-byte command.
     public func getAGCTimeConstantIC7600() async throws -> UInt8 {
         guard radioModel == .ic7600 else {
             throw RigError.unsupportedOperation("getAGCTimeConstantIC7600 is only available on IC-7600")
@@ -90,13 +104,13 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2,
+        guard response.command.count == 1,
               response.command[0] == CIVFrame.Command.advancedSettings,
-              response.command[1] == CIVFrame.AdvancedCode.agcTimeConstant,
-              !response.data.isEmpty else {
+              response.data.count >= 2,
+              response.data[0] == CIVFrame.AdvancedCode.agcTimeConstant else {
             throw RigError.invalidResponse
         }
-        return response.data[0]
+        return response.data[1]
     }
 
     // MARK: - VFO Extended Commands (IC-7600 Specific)
@@ -158,27 +172,32 @@ extension IcomCIVProtocol {
 
     // MARK: - Miscellaneous Commands (IC-7600 Specific)
 
-    /// Read band edge frequencies (IC-7600)
+    /// Read band edge frequencies (IC-7600). **Currently unreliable —
+    /// returns `.unsupportedOperation`.**
+    ///
     /// Command: 0x02
+    ///
+    /// On the real IC-7600 (verified 2026-05-29), command 0x02
+    /// returns a multi-segment payload that does NOT match the
+    /// "single lower + single upper, 5-byte BCD each" layout this
+    /// parser was written against. A real capture in USB mode at
+    /// 14 MHz looked like:
+    ///
+    ///   FE FE E0 7A 02 00 00 03 00 00 2D 00 00 00 60 00 FD
+    ///                  ^^ ^^^^^^^^^^^ ^^ ^^^^^^^^^^^ ^^
+    ///                  seg0 lower(4)  seg2D upper(4) ?
+    ///
+    /// The freq fields appear to be 4-byte BCD rather than 5, and
+    /// the response carries per-segment IDs. Hamlib defines
+    /// `C_RD_BAND` but doesn't call it from any rig handler —
+    /// likely for the same reason.
+    ///
+    /// Marked as unsupported pending an IC-7600 CI-V manual
+    /// cross-check. PRs welcome.
     public func getBandEdgeIC7600() async throws -> (lower: UInt64, upper: UInt64) {
-        guard radioModel == .ic7600 else {
-            throw RigError.unsupportedOperation("getBandEdgeIC7600 is only available on IC-7600")
-        }
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [CIVFrame.Command.readBandEdge],
-            data: []
+        throw RigError.unsupportedOperation(
+            "Band edge read is not reliably parseable without an IC-7600 manual cross-check. See doc comment for the captured frame layout."
         )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-        guard response.command.count >= 1,
-              response.command[0] == CIVFrame.Command.readBandEdge,
-              response.data.count >= 10 else {
-            throw RigError.invalidResponse
-        }
-        let lowerFreq = try BCDEncoding.decodeFrequency(Array(response.data[0..<5]))
-        let upperFreq = try BCDEncoding.decodeFrequency(Array(response.data[5..<10]))
-        return (lowerFreq, upperFreq)
     }
 
     // MARK: - Helper Methods (IC-7600 Specific)

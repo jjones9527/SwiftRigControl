@@ -351,16 +351,20 @@ extension IcomCIVProtocol {
         try await sendFrame(frame)
         let response = try await receiveFrame()
 
-        // IC-7600 uses IC-7100 format: subcommand echoed in data field
-        if response.command.count == 1 && response.data.count >= 3 {
-            // IC-7600/IC-7100 format: command=[15], data=[01, value_bcd...]
+        // Squelch condition replies with 1 value byte: 0x00=closed,
+        // 0x01=open. Per Hamlib `icom_get_dcd` (icom.c:5531). The
+        // IC-7600 returns `cmd=[0x15], data=[0x01, value]` — i.e.
+        // the sub-command echo lives in the data field with the
+        // 1-byte value immediately after. Real-hardware capture
+        // (2026-05-29): `FE FE E0 7A 15 01 01 FD`.
+        if response.command.count == 1 && response.data.count >= 2 {
             guard response.command[0] == CIVFrame.Command.readLevel,
                   response.data[0] == CIVFrame.LevelRead.squelch else {
                 throw RigError.invalidResponse
             }
             return response.data[1] != 0x00
-        } else if response.command.count >= 2 && response.data.count >= 2 {
-            // Standard format: command=[15, 01], data=[value_bcd...]
+        } else if response.command.count >= 2 && response.data.count >= 1 {
+            // Standard format some Icoms use: `cmd=[15,01], data=[value]`.
             guard response.command[0] == CIVFrame.Command.readLevel,
                   response.command[1] == CIVFrame.LevelRead.squelch else {
                 throw RigError.invalidResponse
