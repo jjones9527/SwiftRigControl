@@ -102,11 +102,15 @@ struct K2Validator {
                 testsFailed += 1
             }
 
-            // Test 3: Mode Control
+            // Test 3: Mode Control. K2 supports only LSB, USB, CW,
+            // CW-R, and PKT-{L,U}SB (data) per Hamlib K2_MODES.
+            // AM, FM, and RTTY are not in the K2's mode table —
+            // requesting them is silently ignored by the radio
+            // (verified on real hardware 2026-05-29).
             print("📻 Test 3: Mode Control Commands")
             do {
                 try await rig.setFrequency(14_200_000, vfo: .a)
-                let modes: [Mode] = [.lsb, .usb, .cw, .cwR, .am, .fm]
+                let modes: [Mode] = [.lsb, .usb, .cw, .cwR, .dataLSB, .dataUSB]
                 for mode in modes {
                     try await rig.setMode(mode, vfo: .a)
                     let actual = try await rig.mode(vfo: .a, cached: false)
@@ -307,15 +311,26 @@ struct K2Validator {
                 testsFailed += 1
             }
 
-            // Test 10: PTT Control (using CW mode - SSB requires audio input)
-            print("📡 Test 10: PTT Control Commands (CW Mode)")
+            // Test 10: PTT Control. Per KIO2 Pgmrs Ref via the
+            // ElecraftProtocol's setPTT comment, the K2's `TX;`/`RX;`
+            // CAT commands only flip TX/RX state in SSB and RTTY
+            // modes. CW mode silently ignores them (verified on real
+            // hardware 2026-05-29). We use USB so the radio actually
+            // transitions to TX and the TQ query reflects it; no
+            // audio is present at the mic input so the K2 won't
+            // generate RF, but the state change is what we're
+            // verifying.
+            print("📡 Test 10: PTT Control Commands (USB Mode)")
             do {
                 try await rig.setPower(1)  // 1W QRP
-                try await rig.setFrequency(14_100_000, vfo: .a)  // CW portion of 20m
-                try await rig.setMode(.cw, vfo: .a)  // CW mode produces carrier without audio
+                try await rig.setFrequency(14_200_000, vfo: .a)  // 20m USB phone segment
+                try await rig.setMode(.usb, vfo: .a)
+                // K2 needs a bit of time to settle on mode change
+                // before the TX/RX state machine accepts CAT PTT.
+                try await Task.sleep(nanoseconds: 500_000_000)  // 500ms
 
                 print("   Keying transmitter for 5 seconds at 1W...")
-                print("   (CW mode should produce full carrier)")
+                print("   (USB mode with no mic audio — radio enters TX state but produces no RF)")
                 print("   → Watch power meter on radio for TX indication")
 
                 try await rig.setPTT(true)

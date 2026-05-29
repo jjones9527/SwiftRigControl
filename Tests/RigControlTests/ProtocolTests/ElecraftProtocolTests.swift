@@ -16,6 +16,52 @@ import Testing
 
     // MARK: - Connection Tests
 
+    // MARK: - K2 / K3 family wire differences
+
+    @Test func k2SignalStrengthSendsSMNotSM0() async throws {
+        // K2 expects `SM;`, K3/K3S/K4 expect `SM0;`. Real-hardware
+        // testing 2026-05-29 showed `SM0;` to the K2 hangs the
+        // response (timeout). Per Hamlib `kenwood_get_level` switch
+        // on RIG_LEVEL_STRENGTH (kenwood.c), only TS-590/480/2000
+        // use `SM0`; all other Kenwood-derived radios (including
+        // the K2) use plain `SM`.
+        let k2Mock = MockTransport()
+        let k2 = ElecraftProtocol(
+            transport: k2Mock,
+            capabilities: RadioCapabilitiesDatabase.Elecraft.k2
+        )
+        let smCommand = "SM;".data(using: .ascii)!
+        let smReply   = "SM0010;".data(using: .ascii)!
+        await k2Mock.setResponse(for: smCommand, response: smReply)
+
+        try await k2.connect()
+        _ = try await k2.getSignalStrength()
+
+        let writes = await k2Mock.recordedWrites
+        let lastWrite = String(data: writes.last!, encoding: .ascii)
+        #expect(lastWrite == "SM;")
+    }
+
+    @Test func k3SignalStrengthSendsSM0() async throws {
+        // K3/K3S/K4 path. capabilities.maxPower > 15 triggers the
+        // non-K2 branch.
+        let k3Mock = MockTransport()
+        let k3 = ElecraftProtocol(
+            transport: k3Mock,
+            capabilities: RadioCapabilitiesDatabase.Elecraft.k3
+        )
+        let smCommand = "SM0;".data(using: .ascii)!
+        let smReply   = "SM00010;".data(using: .ascii)!
+        await k3Mock.setResponse(for: smCommand, response: smReply)
+
+        try await k3.connect()
+        _ = try await k3.getSignalStrength()
+
+        let writes = await k3Mock.recordedWrites
+        let lastWrite = String(data: writes.last!, encoding: .ascii)
+        #expect(lastWrite == "SM0;")
+    }
+
     @Test func connect() async throws {
         // Mock AI0; response
         let aiCommand = "AI0;".data(using: .ascii)!

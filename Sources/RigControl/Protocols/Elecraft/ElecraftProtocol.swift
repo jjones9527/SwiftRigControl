@@ -401,17 +401,25 @@ public actor ElecraftProtocol:
     // MARK: - Signal Strength
 
     public func getSignalStrength() async throws -> SignalStrength {
-        // Send SM0; for main receiver (some models also support SM; for current RX)
-        try await sendCommand("SM0")
+        // The K2 uses `SM;` (no main/sub digit), the K3/K3S/K4
+        // and other Kenwood-derived radios use `SM0;` for the
+        // main receiver. Per Hamlib `kenwood_get_level` switch
+        // on RIG_LEVEL_STRENGTH (kenwood.c) — only TS-590/480/
+        // 2000 use SM0; everything else uses plain `SM`.
+        //
+        // The reply matches: K2 returns `SMnnnn;`, K3 returns
+        // `SM0nnnn;`. Parse both shapes — strip the response
+        // prefix dynamically and read the trailing 4-digit value.
+        let cmd = isK2 ? "SM" : "SM0"
+        try await sendCommand(cmd)
         let response = try await receiveResponse()
 
-        // Response format: "SM0nnnn" where nnnn is 0000-0030 (dB over S0)
-        guard response.hasPrefix("SM0"),
-              response.count >= 7 else {
+        guard response.hasPrefix(cmd),
+              response.count >= cmd.count + 4 else {
             throw RigError.invalidResponse
         }
 
-        let startIndex = response.index(response.startIndex, offsetBy: 3)
+        let startIndex = response.index(response.startIndex, offsetBy: cmd.count)
         let endIndex = response.index(startIndex, offsetBy: 4)
         let valueString = String(response[startIndex..<endIndex])
 
