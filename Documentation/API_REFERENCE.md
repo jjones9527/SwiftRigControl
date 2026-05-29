@@ -7,13 +7,13 @@ Complete API documentation for SwiftRigControl library.
 > under. All features below ship under the current release, `v1.0.6`.
 > See `CHANGELOG.md`'s top-of-file note for the reconciliation.
 
-> **API style note:** Examples below sometimes show the legacy
-> static-property form (`.icomIC9700`, `.icomIC7600`, etc.). Those
-> properties were removed in Phase 1.4 of the v1.0.x line (commit
-> `6d8a954`) in favor of function-style factories that accept an
-> optional CI-V address: `.icomIC9700()`,
-> `.icomIC7600(civAddress: 0x7B)`. Read each `.icomXxx` example as
-> `.icomXxx()` and add a CI-V address argument if needed.
+> **API style note:** Radio definitions live under vendor namespaces:
+> `.Icom.ic9700()`, `.Yaesu.ftdx10`, `.Kenwood.ts890S`,
+> `.Elecraft.k3`, `.Xiegu.g90`, `.Lab599.tx500`,
+> `.Flex.flex6000`. Icom factories accept an optional CI-V address
+> (`.Icom.ic7600(civAddress: 0x7B)`). If an example below still shows
+> the pre-namespace flat form (`.icomIC9700`, `.yaesuFTDX10`), read
+> it as the namespaced equivalent.
 
 ## Table of Contents
 

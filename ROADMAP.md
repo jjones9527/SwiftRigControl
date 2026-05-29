@@ -120,21 +120,29 @@ This is blocking for all subsequent phases; it costs about a day.
 - [x] **Architecture diagram refresh.** Roadmap's current-state
       section now lists `TenTec/`, `Xiegu/`, `THD72Protocol`,
       `Network/`, `Cache/`.
-- [ ] **Audit README spec tables.** Each radio row gains a
-      "Verified" column with one of: *Hardware*, *Definition*.
-- [ ] **Update README's "Hardware-Verified" section** to match the
-      four-radio table above (IC-7100, IC-7600, IC-9700, K2).
+- [x] **Audit README spec tables.** Rather than add a column per
+      row (which would balloon noise on ~98 entries), the four
+      hardware-verified radios are tagged inline with
+      **[Hardware]**; the rest are implicitly Definition per the
+      lead paragraph and the verification-status table.
+- [x] **Update README's "Hardware-Verified" section** — the
+      table at the top of the README already lists the four
+      verified radios (IC-7100, IC-7600, IC-9700, K2) with their
+      validator paths, and the Supported-Radios lead paragraph
+      now references it explicitly.
 - [x] **Add a `verificationStatus` field to `RadioDefinition`.**
       New `VerificationStatus` enum (`.hardware` / `.definition`).
       Defaults to `.definition`; IC-7100, IC-7600, IC-9700, K2
       promoted to `.hardware`. Surfaced via
       `RigController.verificationStatus`. Guarded by 8-test
       `VerificationStatusTests` suite.
-- [ ] **Sweep inline `(vX.Y.Z)` tags** in `Documentation/API_REFERENCE.md`
-      and `USAGE_EXAMPLES.md`. Leave them as historical breadcrumbs
-      but add a note at the top of each file pointing to the
-      CHANGELOG reconciliation note.
-- [ ] **Commit Phase 0 work** with `docs:` prefix. No source code
+- [x] **Sweep inline `(vX.Y.Z)` tags** — both
+      `Documentation/API_REFERENCE.md` and `USAGE_EXAMPLES.md`
+      carry a version-label note pointing readers to
+      `CHANGELOG.md`'s reconciliation. The earlier API-style
+      note describing the pre-namespace flat form has been
+      updated to describe the vendor-namespaced surface.
+- [x] **Commit Phase 0 work** with `docs:` prefix. No source code
       change in this phase.
 
 **Exit criteria:** any new reader can trust the README's

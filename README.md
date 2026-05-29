@@ -33,7 +33,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **~80 radio definitions**, but only a subset
+SwiftRigControl ships with **~98 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -67,9 +67,9 @@ or PR so we can promote it.
 
 ## Supported Radios
 
-**~95 radio definitions across 7 manufacturers.** Radios marked
-*Hardware* in the table above are field-tested; all others are
-definition-only.
+**~98 radio definitions across 8 manufacturers.** Models tagged
+**[Hardware]** below — and listed in the Hardware verification status
+table above — are field-tested; all others are definition-only.
 
 ### Icom (CI-V Protocol) — 44 models
 
@@ -80,7 +80,7 @@ definition-only.
 - **IC-7760** - HF/6m next-gen flagship (200W, CI-V: 0xB0)
 - **IC-7700** - HF/6m high-end (200W, CI-V: 0x74)
 - **IC-7610** - HF/6m SDR with dual receiver (100W, CI-V: 0x98)
-- **IC-7600** - HF/6m high-performance dual receiver (100W, CI-V: 0x7A)
+- **IC-7600** **[Hardware]** - HF/6m high-performance dual receiver (100W, CI-V: 0x7A)
 
 **Popular HF Transceivers:**
 - **IC-7300** - HF/6m all-mode SDR (100W, CI-V: 0x94)
@@ -101,7 +101,7 @@ definition-only.
 
 **HF + VHF/UHF Multi-Band:**
 - **IC-9100** - HF/VHF/UHF dual receiver with satellite (100W, CI-V: 0x7C)
-- **IC-7100** - HF/VHF/UHF all-mode (100W, CI-V: 0x88)
+- **IC-7100** **[Hardware]** - HF/VHF/UHF all-mode (100W, CI-V: 0x88)
 - **IC-705** - HF/VHF/UHF portable (10W, CI-V: 0xA4)
 - **IC-7000** - HF/VHF/UHF mobile (100W HF/50W VHF/35W UHF, CI-V: 0x70)
 - **IC-706MKIIG** - HF/VHF/UHF mobile (100W HF/50W VHF/20W UHF, CI-V: 0x58)
@@ -109,7 +109,7 @@ definition-only.
 - **IC-706** - HF/VHF mobile (100W HF, CI-V: 0x48)
 
 **VHF/UHF:**
-- **IC-9700** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
+- **IC-9700** **[Hardware]** - VHF/UHF/1.2GHz all-mode dual receiver (100W, CI-V: 0xA2)
 - **IC-905** - VHF/UHF/SHF microwave (10W, CI-V: 0xAC)
 - **IC-910H** - VHF/UHF satellite transceiver (100W 2m/75W 70cm, CI-V: 0x60)
 - **IC-970** - VHF/UHF all-mode legacy (100W, CI-V: 0x2E)
@@ -175,7 +175,7 @@ definition-only.
 **QRP/Portable:**
 - **KX3** - HF/6m portable (15W, 38400 baud)
 - **KX2** - HF portable (12W, 38400 baud)
-- **K2** - HF transceiver (15W, 4800 baud)
+- **K2** **[Hardware]** - HF transceiver (15W, 4800 baud)
 
 ### Xiegu (CI-V Compatible) — 3 models
 
