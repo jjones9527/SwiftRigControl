@@ -10,7 +10,18 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .rtty, .dataUSB, .dataLSB],
+        // Per Hamlib K3_MODES: CW | CWR | SSB | RTTY | RTTYR | FM
+        // | AM | PKTUSB | PKTLSB. Elecraft K3 spec confirms FM is
+        // supported for repeater work — was previously missing here
+        // and from the 6m detailedFrequencyRange below.
+        //
+        // RTTY-R is in K3_MODES but not exposed yet: ElecraftProtocol
+        // currently maps `.rtty` to `MD6` only; per the K3
+        // Programmer's Reference the proper sequence is `MD6;DT2;`
+        // for AFSK RTTY and `MD9;DT1;` for FSK RTTY-R. Plumbing the
+        // DT sub-mode follow-up is tracked separately — once it
+        // lands, add `.rttyR` here and on K3S/K4/KX2/KX3.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
         detailedFrequencyRanges: [
             // General coverage receive only
@@ -51,8 +62,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
             DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .dataUSB], canTransmit: true, bandName: "10m"),
             // General coverage receive
             DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
-            // 6m band
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .dataUSB], canTransmit: true, bandName: "6m"),
+            // 6m band — K3 supports FM on 6m for VHF repeater work.
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
         ],
         hasDualReceiver: true,
         hasATU: true,
@@ -124,7 +135,10 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .rtty, .dataUSB, .dataLSB],
+        // Per Hamlib K3_MODES (shared K3 mode list). K3S spec has
+        // FM; previously missing. RTTY-R deferred — see K3's
+        // doc-comment for the MD/DT sub-mode plumbing required.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
         detailedFrequencyRanges: [
             // Similar to K3, see k3 definition above
@@ -147,7 +161,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
             DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
             DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .dataUSB], canTransmit: true, bandName: "10m"),
             DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .dataUSB], canTransmit: true, bandName: "6m"),
+            // 6m band — K3S supports FM on 6m for VHF repeater work.
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
         ],
         hasDualReceiver: true,
         hasATU: true,
@@ -162,6 +177,9 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
+        // Per Hamlib K3_MODES (shared K-family list). K4 already
+        // had FM. RTTY-R deferred — see K3's doc-comment for the
+        // MD/DT sub-mode plumbing required.
         supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
         detailedFrequencyRanges: [
@@ -200,7 +218,14 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasSplit: true,
         powerControl: true,
         maxPower: 12,  // 12W internal
-        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB],
+        // Per Hamlib K3_MODES (the KX2 inherits the K-family mode
+        // list in `kenwood/k3.c`). Frequency range tops at 30 MHz;
+        // KX2 is HF-only on TX (no 6m), unlike Hamlib's KX2 range
+        // which copy-pastes K3's 6m TX from the shared cap macros
+        // — Elecraft's KX2 official spec is 80m–10m TX only.
+        // `.dataLSB` added 2026-05-29 (was previously missing).
+        // RTTY-R deferred — see K3 doc-comment.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 30_000_000),
         detailedFrequencyRanges: [
             // Similar to K2 but with updated features
@@ -237,6 +262,9 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasSplit: true,
         powerControl: true,
         maxPower: 15,  // 15W internal (100W with external PA)
+        // Per Hamlib K3_MODES (the KX3 inherits the K-family mode
+        // list). KX3 has full FM + 6m TX per Elecraft's spec.
+        // RTTY-R deferred — see K3 doc-comment.
         supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 54_000_000),
         detailedFrequencyRanges: [
