@@ -90,6 +90,40 @@ import Testing
         #expect(dataFlag[4] == 0x1A)
         #expect(dataFlag[5] == 0x06)
         #expect(dataFlag[6] == 0x00)       // data flag OFF
+        // Hamlib `icom_set_mode` (icom.c:2637): "if (datamode[0] ==
+        // 0) { datamode[1] = 0; } — the only good combo possible
+        // according to manual." IC-7600 NAKs `[0x00, FIL1]` from
+        // real-hardware testing (2026-05-29).
+        #expect(dataFlag[7] == 0x00)       // filter byte must also be 0
+    }
+
+    @Test func ic7600SelectVFOAUsesMainBankCode() async throws {
+        let (mock, proto) = makeIC7600()
+        try await proto.connect()
+
+        // IC-7600 has a dual-receiver Main/Sub architecture. Asking
+        // for VFO A must translate to `0x07 0xD0` (select Main) per
+        // the command set's `mainSub` model, NOT `0x07 0x00` (VFO A).
+        // The radio NAKs the latter — discovered on real hardware
+        // 2026-05-29 when getFrequency(.a) failed at first byte.
+        try await proto.selectVFO(.a)
+
+        let writes = await mock.recordedWrites
+        let lastFrame = writes.last!
+        // Frame: FE FE 7A E0 07 D0 FD
+        #expect(lastFrame[4] == 0x07)   // selectVFO command
+        #expect(lastFrame[5] == 0xD0)   // Main bank, NOT 0x00 (VFO A)
+    }
+
+    @Test func ic7600SelectVFOBUsesSubBankCode() async throws {
+        let (mock, proto) = makeIC7600()
+        try await proto.connect()
+        try await proto.selectVFO(.b)
+
+        let writes = await mock.recordedWrites
+        let lastFrame = writes.last!
+        #expect(lastFrame[4] == 0x07)
+        #expect(lastFrame[5] == 0xD1)   // Sub bank
     }
 
     @Test func ic7600DataLSBUsesLSBBaseMode() async throws {

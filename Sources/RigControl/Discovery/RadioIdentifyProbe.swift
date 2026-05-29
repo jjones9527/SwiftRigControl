@@ -62,14 +62,16 @@ internal struct RadioIdentifyProbe {
         try await transport.write(Data(frame.bytes()))
 
         do {
-            let raw = try await readCIVFrame(transport: transport, timeout: timeout)
+            var raw = try await readCIVFrame(transport: transport, timeout: timeout)
             // Some Icoms echo the command before replying; if the
             // first frame is the controller echoing back to civ,
-            // drop it and read once more.
+            // drop it and read once more. Track the *real reply*
+            // bytes for the identity-response field so the validator
+            // shows what the radio said, not what we sent.
             var parsed = try CIVFrame.parse(raw)
             if parsed.to == civ && parsed.from == CIVFrame.controllerAddress {
-                let raw2 = try await readCIVFrame(transport: transport, timeout: timeout)
-                parsed = try CIVFrame.parse(raw2)
+                raw = try await readCIVFrame(transport: transport, timeout: timeout)
+                parsed = try CIVFrame.parse(raw)
             }
             let hex = raw.map { String(format: "%02X", $0) }.joined(separator: " ")
             // A genuine reply has from == civ and the same 0x19 0x00

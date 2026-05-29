@@ -185,11 +185,17 @@ public actor IcomCIVProtocol:
         // Matches Hamlib `icom_set_mode` for every radio with
         // `data_mode_supported = 1` (rigs/icom/icom.c:2494).
         if commandSet.requiresDataModeSubCommand {
+            // When ENTERING a data mode: send [0x01, FIL1].
+            // When LEAVING data mode (or setting any non-data mode):
+            // both bytes MUST be 0 — per Hamlib `icom_set_mode`
+            // (icom.c:2637): "the only good combo possible
+            // according to manual". IC-7600 returns NAK otherwise.
             let dataModeFlag: UInt8 = isDataMode(mode) ? 0x01 : 0x00
+            let filterByte: UInt8   = isDataMode(mode) ? CIVFrame.FilterCode.fil1 : 0x00
             let dataModeFrame = CIVFrame(
                 to: civAddress,
                 command: [0x1A, 0x06],
-                data: [dataModeFlag, CIVFrame.FilterCode.fil1]
+                data: [dataModeFlag, filterByte]
             )
             try await sendFrame(dataModeFrame)
             let dataModeResponse = try await receiveFrame()
@@ -269,22 +275,21 @@ public actor IcomCIVProtocol:
     // MARK: - VFO Control
 
     public func selectVFO(_ vfo: VFO) async throws {
-        let vfoCode: UInt8
-        switch vfo {
-        case .a:
-            vfoCode = CIVFrame.VFOSelect.vfoA
-        case .b:
-            vfoCode = CIVFrame.VFOSelect.vfoB
-        case .main:
-            vfoCode = CIVFrame.VFOSelect.main
-        case .sub:
-            vfoCode = CIVFrame.VFOSelect.sub
+        // Delegate to the command set so each VFO model
+        // (targetable / currentOnly / mainSub / mainSubDualVFO)
+        // emits the right bytes. Dual-receiver radios like the
+        // IC-7600 reject `0x07 0x00` (VFO A) and require
+        // `0x07 0xD0` (Main); the command set encodes that mapping.
+        guard let (command, data) = commandSet.selectVFOCommand(vfo) else {
+            throw RigError.unsupportedOperation(
+                "VFO selection not supported on this radio"
+            )
         }
 
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.selectVFO],
-            data: [vfoCode]
+            command: command,
+            data: data
         )
 
         try await sendFrame(frame)
