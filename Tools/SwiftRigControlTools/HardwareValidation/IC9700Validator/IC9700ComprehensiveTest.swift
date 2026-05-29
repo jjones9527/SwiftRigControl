@@ -353,17 +353,22 @@ struct IC9700ComprehensiveTest {
                     throw RigError.commandFailed("Protocol access")
                 }
 
-                // Test Attenuator
+                // Test Attenuator. IC-9700 supports only OFF (0x00)
+                // and 10dB (0x10). Wider ranges available on HF
+                // Icoms (IC-7600 etc.) are NAKed on the IC-9700.
                 print("   Testing Attenuator...")
-                for (value, name) in [(0x00 as UInt8, "OFF"), (0x10 as UInt8, "10dB"), (0x20 as UInt8, "20dB")] {
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x10 as UInt8, "10dB")] {
                     try await icomProtocol.setAttenuatorIC9700(value)
                     let actual = try await icomProtocol.getAttenuatorIC9700()
                     print("   ✓ Attenuator \(name): \(actual == value ? "OK" : "MISMATCH")")
                 }
 
-                // Test Preamp
+                // Test Preamp. IC-9700 supports only OFF (0x00) and
+                // P.AMP1 (0x01) per the radio's CI-V manual (verified
+                // 2026-05-29). P.AMP2 (0x02) is rejected — it exists
+                // on HF Icoms (7600, 7300) but not the VHF/UHF 9700.
                 print("   Testing Preamp...")
-                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "P.AMP1"), (0x02 as UInt8, "P.AMP2")] {
+                for (value, name) in [(0x00 as UInt8, "OFF"), (0x01 as UInt8, "P.AMP1")] {
                     try await icomProtocol.setPreampIC9700(value)
                     let actual = try await icomProtocol.getPreampIC9700()
                     print("   ✓ Preamp \(name): \(actual == value ? "OK" : "MISMATCH")")

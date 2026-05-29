@@ -282,7 +282,12 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Read DSQL/CSQL setting (DV mode only) (IC-9700)
+    /// Read DSQL/CSQL setting (DV mode only) (IC-9700).
+    ///
+    /// Real-hardware capture (2026-05-29): `FE FE E0 A2 16 5B 00 FD`.
+    /// `CIVFrame.parse` doesn't treat `0x16` as a "has sub-command"
+    /// prefix (only 0x14/0x15/0x1C are in that list), so the split
+    /// is `command=[0x16], data=[0x5B, value]`. Match that shape.
     public func getDigitalSquelchIC9700() async throws -> UInt8 {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("getDigitalSquelchIC9700 is only available on IC-9700")
@@ -294,9 +299,12 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count >= 2,
+              response.data[0] == 0x5B else {
             throw RigError.invalidResponse
         }
-        return response.data[0]
+        return response.data[1]
     }
 }

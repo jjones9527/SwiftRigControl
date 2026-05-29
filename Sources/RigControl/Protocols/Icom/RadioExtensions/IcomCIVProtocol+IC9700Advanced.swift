@@ -65,7 +65,12 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Read satellite mode setting (IC-9700 unique)
+    /// Read satellite mode setting (IC-9700 unique).
+    ///
+    /// Real-hardware capture (2026-05-29): `FE FE E0 A2 16 5A 01 FD`.
+    /// `CIVFrame.parse` doesn't treat `0x16` as a "has sub-command"
+    /// prefix (only 0x14/0x15/0x1C are in that list), so the split
+    /// is `command=[0x16], data=[0x5A, value]`.
     public func getSatelliteModeIC9700() async throws -> Bool {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("getSatelliteModeIC9700 is only available on IC-9700")
@@ -77,10 +82,13 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
-        guard response.command.count >= 2, response.data.count == 1 else {
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count >= 2,
+              response.data[0] == 0x5A else {
             throw RigError.invalidResponse
         }
-        return response.data[0] == 0x01
+        return response.data[1] == 0x01
     }
 
     // MARK: - VFO Operations (IC-9700 Specific)
@@ -121,24 +129,56 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Set dualwatch (IC-9700)
-    /// Command: 0x07 [dualwatch code]
-    /// Codes: 0xC2=OFF, 0xC3=ON
+    /// Set dualwatch (IC-9700).
+    ///
+    /// Wire command: `0x16 0x59 [0x01=ON, 0x00=OFF]`. The previous
+    /// implementation used `0x07 0xC2/0xC3` (the form HF Icoms use
+    /// per Hamlib's S_DUAL_OFF/S_DUAL_ON constants), but the
+    /// IC-9100/9700/ID-5100 family routes dualwatch through
+    /// `C_CTL_FUNC` (0x16) with `S_MEM_DUALMODE` (0x59) instead —
+    /// see Hamlib `icom_set_func` (icom.c:7263–7269). Real-hardware
+    /// testing 2026-05-29 confirms the old form NAKs, the new form
+    /// ACKs.
     public func setDualwatchIC9700(_ enabled: Bool) async throws {
         guard radioModel == .ic9700 else {
             throw RigError.unsupportedOperation("setDualwatchIC9700 is only available on IC-9700")
         }
-        let code: UInt8 = enabled ? 0xC3 : 0xC2
         let frame = CIVFrame(
             to: civAddress,
-            command: [CIVFrame.Command.selectVFO],
-            data: [code]
+            command: [0x16, 0x59],
+            data: [enabled ? 0x01 : 0x00]
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
         guard response.isAck else {
             throw RigError.commandFailed("Dualwatch command rejected")
         }
+    }
+
+    /// Read dualwatch state (IC-9700).
+    ///
+    /// Real-hardware capture (2026-05-29): `FE FE E0 A2 16 59 00 FD`.
+    /// `CIVFrame.parse` splits this as `command=[0x16],
+    /// data=[0x59, value]` because 0x16 is not in the parser's
+    /// hasSubCommand list.
+    public func getDualwatchIC9700() async throws -> Bool {
+        guard radioModel == .ic9700 else {
+            throw RigError.unsupportedOperation("getDualwatchIC9700 is only available on IC-9700")
+        }
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [0x16, 0x59],
+            data: []
+        )
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+        guard response.command.count == 1,
+              response.command[0] == 0x16,
+              response.data.count >= 2,
+              response.data[0] == 0x59 else {
+            throw RigError.invalidResponse
+        }
+        return response.data[1] == 0x01
     }
 
     // MARK: - Selected/Unselected VFO (IC-9700)
