@@ -97,6 +97,42 @@ try await kenwood.setFrequency(14_230_000, vfo: .a)
 try await elecraft.setFrequency(14_230_000, vfo: .a)
 ```
 
+### Auto-detecting the serial port
+
+Asking the user "which `/dev/cu.*` is your radio on?" is a bad
+UX. SwiftRigControl flips the question: you tell the library
+which radio the user said they have, and the library probes the
+ports for it.
+
+```swift
+// Single radio: the user picked an IC-7300 in your settings UI.
+guard let port = await RadioDiscovery.detect(.Icom.ic7300()) else {
+    print("Couldn't find an IC-7300 on any serial port.")
+    return
+}
+let rig = try RigController(
+    radio: .Icom.ic7300(),
+    connection: .serial(path: port.portPath, baudRate: port.baudRate)
+)
+try await rig.connect()
+
+// Multiple candidate radios: the user's settings list several rigs,
+// and you want to discover whichever one happens to be plugged in.
+let found = await RadioDiscovery.detect([
+    .Icom.ic7300(),
+    .Icom.ic9700(),
+    .Yaesu.ftdx10,
+])
+for hit in found {
+    print("\(hit.radio.fullName) on \(hit.portPath) @ \(hit.baudRate) baud")
+}
+```
+
+Probes use the radio's `defaultBaudRate` and the appropriate
+vendor identify query (`0x19 0x00` for Icom CI-V; `ID;` for
+Kenwood-family text protocols). A full scan of a typical macOS
+serial-port set finishes in a few seconds.
+
 ### Connecting over TCP (Flex 6000-series + remote rigctld)
 
 Some radios — and any rigctld instance you want to drive over the

@@ -19,6 +19,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Targeted auto-detection** — new `RadioDiscovery` actor under
+  `Sources/RigControl/Discovery/` answers "which serial port is my
+  radio on?" without scanning every vendor at every baud. Two
+  entry points:
+  - `RadioDiscovery.detect(_ radio:)` — single radio, returns
+    the first port whose identify matches.
+  - `RadioDiscovery.detect(_ radios:)` — multi-radio overload
+    for apps that support several rigs at once. Probes are
+    sequential; a port that already matched a previous radio is
+    skipped for subsequent candidates.
+  Each port is probed at the radio's `defaultBaudRate` with the
+  appropriate vendor identify query — `0x19 0x00` to the radio's
+  CI-V address for Icom; `ID;` for Kenwood / Yaesu / Elecraft /
+  Xiegu / Lab599 / Flex. Returns `DetectedPort` with port path,
+  baud rate, the matched radio definition, and the raw identity
+  response. Ten-Tec is currently skipped (no standard identify);
+  the dummy radio is also a no-op. The port enumerator and probe
+  function are both injectable via `RadioDiscovery.init`, so
+  apps and tests can drive discovery without touching `/dev/`.
+- 9 new tests in `RadioDiscoveryTests` covering single + multi
+  radio matching, wrong-radio rejection, port-exclusivity in the
+  multi-radio path, USB-serial port ranking, and the
+  Kenwood-family `ID###;` parser at every published model-ID
+  shape.
 - **TCP serial transport** — new `TCPSerialTransport` actor under
   `Sources/RigControl/Transport/`, conforming to `SerialTransport`.
   Backed by Network.framework's `NWConnection`; zero new

@@ -946,12 +946,40 @@ concrete protocol's conformance list is its capability contract:
       `MemoryBank` type (CSV/JSON interop).
 - [ ] Diff/merge helpers.
 
-### 6.4 Auto-detection
+### 6.4 Auto-detection — done
 
-- [ ] Enumerate `/dev/cu.*` and `/dev/tty.*`.
-- [ ] Probe each at common baud rates, sending each vendor's
-      identify query, return candidate matches.
-- [ ] Surface as `RadioDiscovery.scan() async -> [Candidate]`.
+Hamlib leaves serial-port discovery to the user; this library
+makes the radio side declarative. The shipped shape is
+*targeted*, not exhaustive: the app tells SwiftRigControl which
+radio (or radios) the user said they have, and discovery probes
+ports until one answers correctly. That keeps total scan time
+under a few seconds and avoids spraying every vendor's bytes at
+every adapter.
+
+- [x] `DefaultSerialPortEnumerator` walks `/dev/cu.*`, drops
+      Bluetooth/debug entries, and ranks USB-serial adapters
+      (FTDI, Silicon Labs CP210x, CDC-ACM) ahead of generic
+      paths.
+- [x] Per-vendor identify probes: Icom CI-V `0x19 0x00`
+      addressed to the radio's CI-V address; Kenwood-family
+      `ID;` for Kenwood, Yaesu, Elecraft, Xiegu, Lab599, Flex.
+- [x] `RadioDiscovery.detect(_ radio:)` returns the first
+      matching `DetectedPort`.
+- [x] `RadioDiscovery.detect(_ radios:)` returns one
+      `DetectedPort` per radio found, with port-exclusivity so a
+      physical radio can't double-bind.
+- [x] Port enumerator + probe function are protocols/closures
+      injectable via `RadioDiscovery.init`, so apps can stub
+      discovery for previews and tests can verify orchestration
+      without `/dev/`.
+- [x] 9 new tests covering single/multi detection, ordering,
+      wrong-radio rejection, and the Kenwood `ID###;` parser.
+- [ ] Ten-Tec identify probe (no standard query across the
+      Orion/Legacy split; left as `.noResponse` for now).
+- [ ] Flex 6000 SmartSDR UDP discovery (separate from serial
+      port discovery; tracked under Phase 6 follow-ups).
+- [ ] Baud-rate fallback when `defaultBaudRate` doesn't answer
+      (deferred — most users keep the documented default).
 
 ---
 
