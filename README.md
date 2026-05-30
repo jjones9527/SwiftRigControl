@@ -29,12 +29,16 @@ A native Swift library for controlling amateur radio transceivers on macOS.
   Per-vendor identify queries (Icom `0x19 0x00`, Kenwood-family
   `ID;`) match against the radio's expected CI-V address or
   text-reply shape.
-- **Honesty pass closed** — the four hardware-verified radios
-  (IC-7100, IC-7600, IC-9700, K2) are tagged **[Hardware]**
-  inline in the supported-radios lists; everything else is
-  implicitly definition-only.
+- **Five radios hardware-verified** — IC-7100, IC-7600, IC-9700,
+  K2, and TH-D72A all re-validated on real hardware (with PTT
+  keyed into dummy loads) during the v1.1.0 release pass. Each
+  is tagged **[Hardware]** inline in the supported-radios list;
+  everything else is implicitly definition-only. The TH-D72
+  pass uncovered a half-dozen real protocol bugs that are
+  fixed in this release.
 
-444 tests pass; zero new runtime dependencies.
+459 tests pass; five radios re-verified on real hardware (IC-7100,
+IC-7600, IC-9700, K2, TH-D72A); zero new runtime dependencies.
 
 ## Features
 
@@ -50,7 +54,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: 440+ tests on Swift Testing framework with mock transport
+- ✅ **Well-Tested**: 459 tests on Swift Testing framework with mock transport
 - ✅ **Frequency Validation**: Safety-critical validation with amateur band support
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching
@@ -74,13 +78,18 @@ has been validated against real hardware. Status categories:
   manual and Hamlib source), but **no real-radio verification has been
   performed**. These may work; they have not been proven.
 
-| Radio        | Status     | Validator                                                          |
-| ------------ | ---------- | ------------------------------------------------------------------ |
-| Icom IC-7100 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`    |
-| Icom IC-7600 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`    |
-| Icom IC-9700 | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`    |
-| Elecraft K2  | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`        |
-| *all others* | Definition | —                                                                  |
+| Radio             | Status     | Validator                                                          | v1.1.0 result |
+| ----------------- | ---------- | ------------------------------------------------------------------ | ------------- |
+| Icom IC-7100      | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`    | 14/14 (100%) |
+| Icom IC-7600      | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`    | 14/14 (100%) |
+| Icom IC-9700      | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`    | 15/15 (100%) |
+| Elecraft K2       | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`        | 13/13 (100%) |
+| Kenwood TH-D72(A) | Hardware   | `Tools/SwiftRigControlTools/HardwareValidation/THD72Validator`     | 6/6 (100%)   |
+| *all others*      | Definition | —                                                                  | —            |
+
+All five hardware-verified radios were re-validated on real
+hardware on 2026-05-29 with PTT keyed into a dummy load. Discovery
+(`RadioDiscovery.detect(...)`) succeeded for every radio.
 
 Validators live in a separate SwiftPM project so library consumers
 don't transitively compile them. To run one:
@@ -235,8 +244,8 @@ table above — are field-tested; all others are definition-only.
 **VHF/UHF:**
 - **TH-D75** - Tri-band handheld with D-STAR and APRS (5W, 9600 baud)
 - **TH-D74** - VHF/UHF handheld with D-STAR (5W, 57600 baud)
-- **TH-D72A** - VHF/UHF handheld with APRS (5W, 57600 baud)
-- **TH-D72** - VHF/UHF handheld with APRS (5W, 57600 baud)
+- **TH-D72A** **[Hardware]** - VHF/UHF handheld with APRS (5W, 9600 baud, CR-terminated)
+- **TH-D72** **[Hardware]** - VHF/UHF handheld with APRS (5W, 9600 baud, CR-terminated)
 
 ### Lab599 — 1 model
 

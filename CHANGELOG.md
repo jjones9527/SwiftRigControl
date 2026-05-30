@@ -48,6 +48,144 @@ lives at `Documentation/MIGRATION_v1.1.md`.
   there is no drop-in replacement — pin to v1.0.6 if you
   depend on either radio.
 
+### Fixed (from real-hardware validation, 2026-05-29)
+
+Five radios were re-validated on real hardware as the v1.1.0
+release pass: IC-7100, IC-7600, IC-9700, K2, and TH-D72A.
+Several pre-existing protocol bugs surfaced during this work
+and are fixed in this release.
+
+**Icom CI-V (affects every dual-receiver Icom — IC-7600,
+IC-9700, IC-9100, IC-7800, IC-7850/51, IC-910H, …):**
+
+- **`selectVFO(.a)` was sending VFO A code (`0x07 0x00`) on
+  dual-receiver radios with `.mainSub` VFO model**, which they
+  reject. The Main bank code is `0x07 0xD0`. Fixed by
+  delegating to `commandSet.selectVFOCommand(vfo)` — the
+  single source of truth that already encodes the correct
+  mapping for every `VFOOperationModel`. This unblocked all
+  IC-7600 operations (every getFrequency / setFrequency /
+  setMode call had been throwing). Regression test:
+  `ic7600SelectVFOAUsesMainBankCode`,
+  `ic7600SelectVFOBUsesSubBankCode`.
+
+- **Data-mode exit follow-up was using the wrong filter byte.**
+  Per Hamlib `icom_set_mode` (icom.c:2637) — "the only good
+  combo possible according to manual" — both bytes of the
+  `0x1A 0x06` follow-up must be 0 when the data flag is 0.
+  The previous impl held the filter at FIL1 (`0x02`); the
+  IC-7600 NAKs that. Now sends `[data_flag, data_flag == 0 ?
+  0x00 : FIL1]`. Regression test:
+  `ic7600ExitDataModeSendsDataFlagOff` extended to pin
+  `data[7] == 0x00`.
+
+- **IC-7600 squelch-condition parser was rejecting valid
+  replies.** The captured `FE FE E0 7A 15 01 01 FD` parses as
+  `command=[0x15, 0x01], data=[0x01]` (per the existing
+  hasSubCommand rule for 0x15) — but `getSquelchConditionIC7600`
+  required `data.count >= 2`. Relaxed to `>= 1`. Regression
+  tests in new file `IC7600ResponseParsingTests.swift`.
+
+- **IC-7600 AGC time-constant reader assumed the wrong frame
+  shape** — checked `command.count >= 2` but `CIVFrame.parse`
+  doesn't treat 0x1A as a sub-command prefix (only 0x14/0x15/
+  0x1C are in that list), so the actual split is
+  `command=[0x1A], data=[sub, value]`. Fixed to match.
+
+- **IC-7600 band-edge read marked as `.unsupportedOperation`.**
+  Command `0x02` returns a multi-segment payload (per-segment
+  IDs, 4-byte BCD freq fields) that doesn't match the
+  previously-assumed "5+5 BCD" layout. Hamlib defines
+  `C_RD_BAND` but doesn't call it from any rig handler.
+  Marked as not-reliably-parseable pending a manual cross-check.
+
+- **IC-9700 dualwatch was sending the wrong wire command.**
+  Previous impl sent `0x07 0xC2/0xC3` (the S_DUAL_OFF/S_DUAL_ON
+  form HF Icoms use). Per Hamlib `icom_set_func` (icom.c:7263),
+  the IC-9100 / IC-9700 / ID-5100 family routes dualwatch
+  through `C_CTL_FUNC (0x16) + S_MEM_DUALMODE (0x59)` instead.
+  Real radio NAKed the old form. Also added the missing
+  `getDualwatchIC9700` reader. Regression tests in new file
+  `IC9700ResponseParsingTests.swift`.
+
+- **IC-9700 digital-squelch and satellite-mode readers had
+  the same parser-shape bug** as the AGC reader above. Fixed
+  both to match `command=[0x16], data=[sub, value]`.
+
+**Elecraft (affects K2 specifically; spot-checked K3/K3S/K4/
+KX2/KX3 caps against Hamlib):**
+
+- **K2 signal strength used `SM0;`, but the K2 actually uses
+  `SM;` (no main/sub digit).** Per Hamlib `kenwood_get_level`
+  (kenwood.c), only TS-590/480/2000 use `SM0` — every other
+  Kenwood-derived radio including the K2 uses plain `SM`.
+  Fixed; K3/K3S/K4 keep `SM0`. Regression tests:
+  `k2SignalStrengthSendsSMNotSM0`, `k3SignalStrengthSendsSM0`.
+
+- **K2 capabilities falsely claimed AM, FM, and RTTY
+  support.** Per Hamlib K2_MODES the K2 is CW/CWR/SSB/PKTLSB/
+  PKTUSB only — no AM, FM, or RTTY. Real radio silently keeps
+  the previous mode on out-of-range requests. Narrowed
+  `supportedModes` to match Hamlib + reality.
+
+- **K3 / K3S spot-check found missing FM support** in
+  `supportedModes`. K3_MODES (which K3/K3S/K4/KX2/KX3 all
+  share per Hamlib k3.c) includes FM, and Elecraft's official
+  spec confirms FM on 6m for repeater work. Added.
+
+- **KX2 was missing `.dataLSB`.** Per K3_MODES which the KX2
+  inherits. Added.
+
+- **RTTY-R deferred** across the K-family. K3_MODES has both
+  RTTY and RTTYR but `ElecraftProtocol.modeToElecraftCode`
+  maps `.rtty` to `MD6` only. Per the K3 Programmer's
+  Reference (and Hamlib `k3_set_mode`), proper K-series RTTY
+  is a two-command sequence: `MD<n>;DT<n>;`. Documented as
+  tracked-for-future; not exposed in supportedModes for now.
+
+**Kenwood TH-D72 / TH-D72A (CR-terminated handheld):**
+
+- **`THD72Protocol.getSignalStrength` returned bogus parsed
+  data.** Real radio rejects `SM 0\r` with `?\r`. Per Hamlib
+  `THD72_LEVEL_ALL` (RFPOWER / SQL / BALANCE / VOXGAIN /
+  VOXDELAY only), the TH-D72 has no numeric S-meter via CAT.
+  Now correctly throws `.unsupportedOperation` with a message
+  pointing callers at the busy-flag query. Caps:
+  `supportsSignalStrength: false` (was true).
+
+- **New `THD72Protocol.getBusy(vfo:)`** — the radio's actual
+  facility for "is the band squelch-open?". Wire command
+  `BY <band>\r`, parses `BY n,m\r` (m=0/1). Tolerates leading
+  APRS/NMEA buffer noise.
+
+- **`RadioIdentifyProbe` gained a CR-terminated probe path**
+  routed for TH-handheld family radios (TH-D72/D74/D75). The
+  existing semicolon-`ID;` probe was structurally wrong for
+  these radios — they use `\r` per Hamlib's `EOM_TH` and
+  reply with an alphabetic model name (`ID TH-D72\r`) rather
+  than the numeric `ID017;` of HF Kenwoods. Real radio
+  validated end-to-end via the new `THD72Validator`.
+
+- **Race-condition fix in `RadioDiscovery.defaultProbe`.** The
+  previous `defer { Task { await port.close() } }` form
+  spawned a detached close task that raced against the next
+  probe iteration's `open()`, producing spurious EBUSY errors
+  on Silicon Labs CP210x adapters. Closes synchronously now.
+
+**Verified-radio promotions:**
+
+- **TH-D72 / TH-D72A** marked `verificationStatus: .hardware`
+  (was `.definition`) after the full validator run completed
+  6/6 with PTT keyed into a dummy load.
+
+**New hardware validators in Tools/SwiftRigControlTools:**
+
+- `THD72Validator` — frequency, mode, VFO, power, PTT, busy
+- Existing IC-7100 / IC-7600 / IC-9700 / K2 validators
+  updated with corrected per-radio test data (the IC-9700
+  attenuator/preamp ranges, K2 mode list, IC-7600 squelch
+  test mode-restore, etc.).
+
 ### Added
 
 - **Targeted auto-detection** — new `RadioDiscovery` actor under

@@ -163,6 +163,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-D72A",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
+        verificationStatus: .hardware,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
@@ -180,6 +181,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-D72",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
+        verificationStatus: .hardware,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,

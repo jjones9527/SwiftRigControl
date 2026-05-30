@@ -59,12 +59,13 @@ safer, and more ergonomic API.
 Only these are exercised against real hardware. All other
 definitions are **paper-only** until proven otherwise.
 
-| Radio          | Verifier target                                                   | Notes |
-| -------------- | ----------------------------------------------------------------- | ----- |
-| Icom IC-7100   | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`   | HF/VHF/UHF, 100W |
-| Icom IC-7600   | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`   | HF/6m dual receiver |
-| Icom IC-9700   | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`   | VHF/UHF/1.2GHz |
-| Elecraft K2    | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`       | HF QRP |
+| Radio             | Verifier target                                                   | Notes |
+| ----------------- | ----------------------------------------------------------------- | ----- |
+| Icom IC-7100      | `Tools/SwiftRigControlTools/HardwareValidation/IC7100Validator`   | HF/VHF/UHF, 100W |
+| Icom IC-7600      | `Tools/SwiftRigControlTools/HardwareValidation/IC7600Validator`   | HF/6m dual receiver |
+| Icom IC-9700      | `Tools/SwiftRigControlTools/HardwareValidation/IC9700Validator`   | VHF/UHF/1.2GHz |
+| Elecraft K2       | `Tools/SwiftRigControlTools/HardwareValidation/K2Validator`       | HF QRP |
+| Kenwood TH-D72(A) | `Tools/SwiftRigControlTools/HardwareValidation/THD72Validator`    | VHF/UHF dual-band handheld with APRS/GPS |
 
 ### Gaps measured against the north star
 
