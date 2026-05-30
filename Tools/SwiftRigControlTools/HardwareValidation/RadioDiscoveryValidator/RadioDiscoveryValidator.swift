@@ -42,7 +42,8 @@ struct RadioDiscoveryValidator {
             Candidate(envKey: "IC7100_SERIAL_PORT", name: "Icom IC-7100", radio: .Icom.ic7100()),
             Candidate(envKey: "IC7600_SERIAL_PORT", name: "Icom IC-7600", radio: .Icom.ic7600()),
             Candidate(envKey: "IC9700_SERIAL_PORT", name: "Icom IC-9700", radio: .Icom.ic9700()),
-            Candidate(envKey: "K2_SERIAL_PORT",      name: "Elecraft K2", radio: .Elecraft.k2),
+            Candidate(envKey: "K2_SERIAL_PORT",     name: "Elecraft K2",   radio: .Elecraft.k2),
+            Candidate(envKey: "THD72_SERIAL_PORT",  name: "Kenwood TH-D72", radio: .Kenwood.thd72A),
         ]
 
         let env = ProcessInfo.processInfo.environment
@@ -74,8 +75,15 @@ struct RadioDiscoveryValidator {
             guard let expectedPort = env[candidate.envKey] else { continue }
             print("\nProbing for \(candidate.name) (expected on \(expectedPort)) ...")
 
+            // TH-handhelds (TH-D72/D74/D75) buffer APRS / GPS data
+            // while idle and may flush several seconds of NMEA
+            // sentences before the `ID` reply lands. Give them a
+            // longer per-port budget than the HF radios.
+            let isHandheld = candidate.radio.model.uppercased().hasPrefix("TH-D")
+            let perPortTimeout: TimeInterval = isHandheld ? 8.0 : 1.5
+
             let start = Date()
-            let result = await RadioDiscovery.detect(candidate.radio, timeoutPerPort: 1.5)
+            let result = await RadioDiscovery.detect(candidate.radio, timeoutPerPort: perPortTimeout)
             let elapsed = Date().timeIntervalSince(start)
 
             switch result {

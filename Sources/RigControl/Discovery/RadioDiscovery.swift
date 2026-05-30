@@ -293,15 +293,21 @@ public actor RadioDiscovery {
         } catch {
             return .error
         }
-        defer { Task { await port.close() } }
 
+        let outcome: RadioProbeOutcome
         do {
             try await port.flush()
             let probe = RadioIdentifyProbe(radio: radio)
-            let outcome = try await probe.run(transport: port, timeout: timeout)
-            return outcome
+            outcome = try await probe.run(transport: port, timeout: timeout)
         } catch {
-            return .error
+            outcome = .error
         }
+        // Close synchronously before returning so the next probe can
+        // open the same (or a related) port without racing against
+        // a detached cleanup task. The earlier `defer { Task { ... } }`
+        // form raced with subsequent `open()` calls and produced
+        // spurious EBUSY errors on Silicon Labs CP210x adapters.
+        await port.close()
+        return outcome
     }
 }

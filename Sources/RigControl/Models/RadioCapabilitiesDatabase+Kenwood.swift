@@ -565,7 +565,12 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: true,
         hasATU: false,
-        supportsSignalStrength: true,
+        // TH-D72 does NOT expose a numeric S-meter via CAT. Hamlib
+        // confirms (THD72_LEVEL_ALL includes RFPOWER, SQL, BALANCE,
+        // VOXGAIN, VOXDELAY only); real-hardware testing 2026-05-29
+        // showed `SM 0` returns `?` (unknown command). `BY <band>`
+        // is available but reports a 0/1 busy flag, not S-units.
+        supportsSignalStrength: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,

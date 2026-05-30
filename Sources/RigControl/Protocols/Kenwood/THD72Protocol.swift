@@ -223,20 +223,50 @@ public actor THD72Protocol:
     // MARK: - Signal Strength
 
     public func getSignalStrength() async throws -> SignalStrength {
-        try await sendCommand("SM 0")
-        let response = try await receiveResponse()
-        // Response: "SM 0,nnnn" where nnnn is 0000–0005
-        guard response.hasPrefix("SM "), response.count >= 8 else {
-            throw RigError.invalidResponse
+        // The TH-D72 / TH-D72A does NOT expose a numeric S-meter
+        // via CAT. Real-hardware testing on 2026-05-29 (and Hamlib
+        // `rigs/kenwood/thd72.c` — `THD72_LEVEL_ALL` includes only
+        // RFPOWER, SQL, BALANCE, VOXGAIN, VOXDELAY) confirm this.
+        //
+        // The radio provides:
+        //   - `BY <band>` → returns `BY n,m` where m is a 0/1
+        //     busy flag (squelch state), not a signal level.
+        //   - No `SM` command at all (replies `?`).
+        //
+        // For richer signal info you'd need to read the TNC data
+        // stream or the front-panel S-meter LCD, neither of which
+        // is in the PC CAT surface. Throw `.unsupportedOperation`
+        // so callers can degrade gracefully.
+        throw RigError.unsupportedOperation(
+            "TH-D72 does not expose a numeric S-meter via CAT; only the busy flag (`BY`) is available, which is not a signal-strength reading."
+        )
+    }
+
+    /// Reads the TH-D72's per-band busy / squelch indicator.
+    ///
+    /// Wire command: `BY 0` (Band A) or `BY 1` (Band B).
+    /// Response shape: `BY n,m` where `m` is `1` when the band is
+    /// active (signal above squelch) and `0` when quiet.
+    ///
+    /// This is the closest TH-D72 equivalent to a signal-strength
+    /// query, but it's a single bit — not a scaled S-units value.
+    public func getBusy(vfo: VFO) async throws -> Bool {
+        let bandChar = vfoCharacter(vfo)
+        try await sendCommand("BY \(bandChar)")
+        // The TH-D72 may have buffered APRS / NMEA lines preceding
+        // our BY reply. Read up to a few lines until we see the
+        // actual `BY n,m` frame.
+        for _ in 0..<32 {
+            let response = try await receiveResponse()
+            if let range = response.range(of: "BY \(bandChar),") {
+                let after = response[range.upperBound...]
+                let flag = after.prefix(while: { $0.isASCII && $0.isNumber })
+                if let value = Int(flag) {
+                    return value != 0
+                }
+            }
         }
-        let parts = response.dropFirst(3).split(separator: ",")
-        guard parts.count == 2, let raw = Int(parts[1]) else {
-            throw RigError.invalidResponse
-        }
-        // TH-D72 S-meter: 0–5 scale (coarser than HF rigs)
-        // Map linearly: each unit ≈ 1.8 S-units (9 S-units / 5 steps)
-        let sUnits = min(raw * 9 / 5, 9)
-        return SignalStrength(sUnits: sUnits, overS9: 0, raw: raw)
+        throw RigError.invalidResponse
     }
 
     // MARK: - Private: FO string helpers

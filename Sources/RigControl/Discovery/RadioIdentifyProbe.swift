@@ -20,11 +20,15 @@ internal struct RadioIdentifyProbe {
             return try await probeIcom(transport: transport, timeout: timeout)
 
         case .kenwood, .elecraft, .yaesu, .xiegu, .lab599, .flex:
-            // All five families speak Kenwood-derived text CAT with
-            // a `;` terminator. The `ID` query and its `IDxxx;`
-            // reply shape are common; we accept any well-formed
-            // response (model-ID parsing would require a per-radio
-            // mapping table we don't yet maintain).
+            // Kenwood TH-handhelds (TH-D72, TH-D74, TH-D75) use the
+            // CR (`\r`) terminator and reply with an alphabetic
+            // model name like `ID TH-D72\r` per Hamlib `thd72.c`
+            // and `th.c`. Every other Kenwood-derived radio in this
+            // family — Elecraft, Yaesu, Xiegu, Lab599, Flex, and
+            // Kenwood HF — uses the `;`-terminated `IDnnn;` shape.
+            if Self.isKenwoodTHHandheld(radio) {
+                return try await probeCR(transport: transport, timeout: timeout)
+            }
             return try await probeSemicolon(transport: transport, timeout: timeout)
 
         case .tentec:
@@ -120,6 +124,69 @@ internal struct RadioIdentifyProbe {
             return .wrongRadio(identityResponse: text)
         } catch RigError.timeout {
             return .noResponse
+        }
+    }
+
+    /// True for the TH-handheld family (TH-D72, TH-D74, TH-D75) —
+    /// CR-terminated, alphabetic model-name reply. Hamlib treats
+    /// these as a separate backend (`thd72.c` / `th.c`) using
+    /// `EOM_TH = '\r'` rather than the HF Kenwood `EOM_KEN = ';'`.
+    static func isKenwoodTHHandheld(_ radio: RadioDefinition) -> Bool {
+        guard radio.manufacturer == .kenwood else { return false }
+        let model = radio.model.uppercased()
+        return model.hasPrefix("TH-D72")
+            || model.hasPrefix("TH-D74")
+            || model.hasPrefix("TH-D75")
+    }
+
+    // MARK: - Kenwood TH-handheld CR-terminated CAT
+
+    /// Send `ID\r` and wait for a `\r`-terminated reply. The
+    /// TH-handhelds reply with `ID TH-D72\r` (or `ID TH-D74\r`,
+    /// etc.) — the model name as text rather than a 3-digit code.
+    /// The radio may have buffered APRS / GPS data preceding the
+    /// reply; tolerate that by accepting the first frame ending
+    /// in `\r` that starts with `ID `.
+    private func probeCR(
+        transport: any SerialTransport,
+        timeout: TimeInterval
+    ) async throws -> RadioProbeOutcome {
+        guard let query = "ID\r".data(using: .ascii) else {
+            return .error
+        }
+        try await transport.write(query)
+
+        // Tolerate the APRS/GPS preamble: the TH-D72 may have
+        // buffered NMEA sentences queued before our `ID` query
+        // lands at the radio. Read lines until either we see the
+        // `ID TH-Dxx` reply or the per-port timeout expires.
+        // Iteration cap is generous (the radio can stream 60+
+        // GPS lines per second), but the real bound is the
+        // wall-clock deadline.
+        let deadline = Date().addingTimeInterval(timeout)
+        var sawAnyData = false
+        do {
+            for _ in 0..<256 {
+                let remaining = max(0.05, deadline.timeIntervalSinceNow)
+                let data = try await transport.readUntil(
+                    terminator: 0x0D, timeout: remaining
+                )
+                sawAnyData = true
+                guard let text = String(data: data, encoding: .ascii) else { continue }
+                let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "\r\n"))
+                if let range = trimmed.range(of: "ID TH-D", options: .caseInsensitive) {
+                    let identity = String(trimmed[range.lowerBound...])
+                    return .matched(identityResponse: identity)
+                }
+                if trimmed == "?" {
+                    return .wrongRadio(identityResponse: trimmed)
+                }
+                if Date() > deadline { break }
+            }
+            // Saw data but no ID match within budget.
+            return sawAnyData ? .wrongRadio(identityResponse: "no-id-in-stream") : .noResponse
+        } catch RigError.timeout {
+            return sawAnyData ? .wrongRadio(identityResponse: "timeout-in-stream") : .noResponse
         }
     }
 

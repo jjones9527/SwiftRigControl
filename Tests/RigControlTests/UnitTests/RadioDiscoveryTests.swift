@@ -158,6 +158,32 @@ import Testing
         #expect(!RadioIdentifyProbe.isLikelyKenwoodFamilyID("FA0001425;")) // wrong command
         #expect(!RadioIdentifyProbe.isLikelyKenwoodFamilyID("IDxyz;"))     // non-digit payload
     }
+
+    // MARK: - Kenwood TH-handheld family detection
+
+    @Test func isKenwoodTHHandheldAcceptsTHFamily() {
+        // The TH-D72/D74/D75 use CR-terminated CAT with an
+        // alphabetic model-name reply (`ID TH-D72\r`) per
+        // Hamlib `kenwood/thd72.c` and `kenwood/th.c`. Discovery
+        // routes them through a different probe path than the
+        // HF Kenwoods. Real-hardware capture on the TH-D72
+        // (2026-05-29): `ID\r` -> `ID TH-D72\r`.
+        #expect(RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.thd72))
+        #expect(RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.thd72A))
+        #expect(RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.thd74))
+        #expect(RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.thd75))
+    }
+
+    @Test func isKenwoodTHHandheldRejectsHFAndOtherVendors() {
+        // HF Kenwoods use `;` terminator and numeric `ID017;` style.
+        #expect(!RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.ts890S))
+        #expect(!RadioIdentifyProbe.isKenwoodTHHandheld(.Kenwood.ts590SG))
+        // Elecraft K-series are Kenwood-derived but `;` terminator.
+        #expect(!RadioIdentifyProbe.isKenwoodTHHandheld(.Elecraft.k2))
+        // Other vendors never qualify regardless of model name.
+        #expect(!RadioIdentifyProbe.isKenwoodTHHandheld(.Icom.ic7600()))
+        #expect(!RadioIdentifyProbe.isKenwoodTHHandheld(.Yaesu.ftdx10))
+    }
 }
 
 // MARK: - Mock helpers
