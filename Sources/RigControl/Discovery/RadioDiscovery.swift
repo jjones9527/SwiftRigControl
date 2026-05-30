@@ -26,6 +26,11 @@ public struct DetectedPort: Sendable, Equatable {
     /// Y?" diagnostics.
     public let identityResponse: String
 
+    /// Memberwise initializer. Apps generally don't construct
+    /// `DetectedPort` directly — it's returned by
+    /// ``RadioDiscovery/detect(_:timeoutPerPort:)-7y9a4`` — but
+    /// the init is public so tests and custom probe implementations
+    /// can mint values without going through serial I/O.
     public init(portPath: String, baudRate: Int, radio: RadioDefinition, identityResponse: String) {
         self.portPath = portPath
         self.baudRate = baudRate
@@ -33,6 +38,11 @@ public struct DetectedPort: Sendable, Equatable {
         self.identityResponse = identityResponse
     }
 
+    /// Two `DetectedPort` values are equal when their port path,
+    /// baud rate, radio model name, and raw identity response all
+    /// match. The `radio` field's full `RadioDefinition` is
+    /// compared by display name rather than identity because
+    /// `RadioDefinition` is not itself `Equatable`.
     public static func == (lhs: DetectedPort, rhs: DetectedPort) -> Bool {
         lhs.portPath == rhs.portPath
             && lhs.baudRate == rhs.baudRate
@@ -58,8 +68,14 @@ public protocol SerialPortEnumerator: Sendable {
 /// reorders so common USB-serial adapters (FTDI, Silicon Labs
 /// CP210x, CDC-ACM) come first.
 public struct DefaultSerialPortEnumerator: SerialPortEnumerator {
+    /// Creates a default enumerator. Stateless — one shared
+    /// instance is fine, and ``RadioDiscovery``'s init defaults
+    /// to it.
     public init() {}
 
+    /// Walks `/dev/`, keeps `cu.*` entries, drops Bluetooth and
+    /// debug devices, and reorders the survivors by USB-serial
+    /// adapter family so the most likely radio ports come first.
     public func availablePorts() -> [String] {
         let fm = FileManager.default
         guard let entries = try? fm.contentsOfDirectory(atPath: "/dev") else {
@@ -250,6 +266,15 @@ public actor RadioDiscovery {
         await RadioDiscovery().detect(radios, timeoutPerPort: timeoutPerPort)
     }
 
+    /// Instance method form of the multi-radio detection. Use
+    /// this when you constructed the actor with a custom
+    /// enumerator or probe (typically tests).
+    ///
+    /// - Parameters:
+    ///   - radios: Candidate radio definitions.
+    ///   - timeoutPerPort: Per-port probe timeout. Default 1.5 s.
+    /// - Returns: One ``DetectedPort`` per radio that answered;
+    ///   empty if none did.
     public func detect(
         _ radios: [RadioDefinition],
         timeoutPerPort: TimeInterval = 1.5
