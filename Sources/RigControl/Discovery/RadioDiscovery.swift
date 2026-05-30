@@ -3,9 +3,9 @@ import Foundation
 /// A serial port + baud rate at which a target radio responded to a
 /// vendor identify query.
 ///
-/// Returned by ``RadioDiscovery/detect(_:timeoutPerPort:)`` (and the
-/// multi-radio overload) so a calling app can show the user which
-/// port to use, or pass it straight into a new ``RigController``.
+/// Returned by ``RadioDiscovery``'s `detect` methods so a calling
+/// app can show the user which port to use, or pass it straight
+/// into a new ``RigController``.
 public struct DetectedPort: Sendable, Equatable {
     /// `/dev/cu.*` path where the radio answered.
     public let portPath: String
@@ -28,9 +28,9 @@ public struct DetectedPort: Sendable, Equatable {
 
     /// Memberwise initializer. Apps generally don't construct
     /// `DetectedPort` directly — it's returned by
-    /// ``RadioDiscovery/detect(_:timeoutPerPort:)-7y9a4`` — but
-    /// the init is public so tests and custom probe implementations
-    /// can mint values without going through serial I/O.
+    /// ``RadioDiscovery``'s `detect` methods — but the init is
+    /// public so tests and custom probe implementations can mint
+    /// values without going through serial I/O.
     public init(portPath: String, baudRate: Int, radio: RadioDefinition, identityResponse: String) {
         self.portPath = portPath
         self.baudRate = baudRate
