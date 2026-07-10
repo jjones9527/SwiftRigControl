@@ -51,32 +51,35 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.0.6** (git tag, 2026-04-30). Earlier
-CHANGELOG entries labeled `[1.1.0]`, `[1.2.0]`, and `[1.3.0]` were
-*not* separate releases — the work they describe all shipped under
-the `v1.0.6` tag. The top-of-file note in `CHANGELOG.md` explains
-the reconciliation. The next release will be `v1.0.7` (patch) or
-`v1.1.0` (minor), depending on the scope of accumulated work in
-`[Unreleased]`.
+The shipped version is **v1.1.1** (git tag, 2026-07-10), a patch
+release fixing the Yaesu PTT-on-connect bug tracked as issue #11.
+The prior release was **v1.1.0** (2026-05-29), the first true
+feature release after the v1.0.6 baseline (vendor namespaces, TCP
+transport, FlexRadio family, targeted auto-detection). The
+earlier CHANGELOG entries labeled `[1.1.0]`, `[1.2.0]`, and
+`[1.3.0]` that appear *below* the real v1.1.0 heading were *not*
+separate releases — that work all shipped under the `v1.0.6` tag.
+The top-of-file note in `CHANGELOG.md` explains the
+reconciliation.
 
 Going forward: **`CHANGELOG.md` heading versions must match the git
 tag they ship under.** No more aspirational labels.
 
 ### Versioning policy
 
-This project keeps releases in the **v1.0.x line** even when
-removing previously-deprecated API. Rationale: every breaking
-removal is gated by a formal `@available(*, deprecated)` marker
-that lives in at least one release before the deletion. Callers
-who heeded the deprecation warning are already migrated; bumping
-the major version on top of that is ceremony, not signal.
+Patch releases (`v1.1.x`) are for bug fixes and safety fixes with
+no public API change beyond additive, source-compatible additions.
+Minor releases (`v1.y.0`) add new radios, new commands, or new
+optional API. Every breaking removal is still gated by a formal
+`@available(*, deprecated)` marker that lives in at least one
+release before the deletion.
 
 Reserve a major-version bump (v2.0.0) for *genuinely scope-
 changing* API rewrites — splitting `CATProtocol` into capability
 traits (Phase 5), reworking `RadioDefinition` into a discriminated
 type, or anything that requires a non-trivial migration even for
 code that never relied on a deprecated symbol. When that day
-comes, ship a v2.0.0-alpha first; until then, v1.0.x is the line.
+comes, ship a v2.0.0-alpha first.
 
 ---
 
