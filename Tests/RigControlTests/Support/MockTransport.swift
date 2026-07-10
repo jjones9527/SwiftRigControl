@@ -70,6 +70,18 @@ actor MockTransport: SerialTransport {
         // No-op for mock
     }
 
+    func setDTR(_ enabled: Bool) async throws {
+        guard _isOpen else {
+            throw RigError.notConnected
+        }
+    }
+
+    func setRTS(_ enabled: Bool) async throws {
+        guard _isOpen else {
+            throw RigError.notConnected
+        }
+    }
+
     func reset() {
         recordedWrites.removeAll()
         mockResponses.removeAll()

@@ -58,6 +58,16 @@ public actor MockSerialTransport: SerialTransport {
     /// Inspect this from tests to verify the on-wire protocol.
     public private(set) var recordedWrites: [Data] = []
 
+    /// Every `setDTR(_:)` call in order. Tests that need to verify
+    /// modem-line safety (e.g. that `open()` de-asserts DTR) inspect
+    /// this list.
+    public private(set) var recordedDTR: [Bool] = []
+
+    /// Every `setRTS(_:)` call in order. Yaesu PTT-on-connect
+    /// regression tests assert that this ends in `false` after
+    /// `open()`.
+    public private(set) var recordedRTS: [Bool] = []
+
     /// When `true`, the next `write(_:)` call throws
     /// `RigError.serialPortError`. Resets to `false` after firing —
     /// use ``setShouldThrowOnWrite(_:)`` to control persistently.
@@ -127,12 +137,28 @@ public actor MockSerialTransport: SerialTransport {
         // No buffered data; flush is a no-op.
     }
 
+    public func setDTR(_ enabled: Bool) async throws {
+        guard _isOpen else {
+            throw RigError.notConnected
+        }
+        recordedDTR.append(enabled)
+    }
+
+    public func setRTS(_ enabled: Bool) async throws {
+        guard _isOpen else {
+            throw RigError.notConnected
+        }
+        recordedRTS.append(enabled)
+    }
+
     // MARK: - Test scripting
 
     /// Wipes all recorded writes, scripted responses, and error flags.
     /// Useful between independent test cases that share a transport.
     public func reset() {
         recordedWrites.removeAll()
+        recordedDTR.removeAll()
+        recordedRTS.removeAll()
         mockResponses.removeAll()
         shouldThrowOnWrite = false
         shouldThrowOnRead = false

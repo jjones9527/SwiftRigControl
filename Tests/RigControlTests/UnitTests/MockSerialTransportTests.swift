@@ -106,4 +106,43 @@ import Testing
             try await mock.write(Data([0x01]))
         }
     }
+
+    @Test func setDTRRecordsCall() async throws {
+        let mock = MockSerialTransport()
+        try await mock.open()
+        try await mock.setDTR(false)
+        try await mock.setDTR(true)
+        #expect(await mock.recordedDTR == [false, true])
+    }
+
+    @Test func setRTSRecordsCall() async throws {
+        let mock = MockSerialTransport()
+        try await mock.open()
+        try await mock.setRTS(false)
+        #expect(await mock.recordedRTS == [false])
+    }
+
+    @Test func setDTRBeforeOpenThrows() async {
+        let mock = MockSerialTransport()
+        await #expect(throws: RigError.self) {
+            try await mock.setDTR(false)
+        }
+    }
+
+    @Test func setRTSBeforeOpenThrows() async {
+        let mock = MockSerialTransport()
+        await #expect(throws: RigError.self) {
+            try await mock.setRTS(false)
+        }
+    }
+
+    @Test func resetClearsRecordedModemLines() async throws {
+        let mock = MockSerialTransport()
+        try await mock.open()
+        try await mock.setDTR(true)
+        try await mock.setRTS(true)
+        await mock.reset()
+        #expect(await mock.recordedDTR.isEmpty)
+        #expect(await mock.recordedRTS.isEmpty)
+    }
 }

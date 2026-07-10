@@ -144,6 +144,20 @@ public actor IOKitSerialPort: SerialTransport {
             throw RigError.serialPortError("Cannot set terminal attributes: \(String(cString: strerror(errno)))")
         }
 
+        // De-assert DTR (and RTS when not used for hardware flow control).
+        // Yaesu radios (FT-DX10, FT-DX101, FT-991A, FT-450D, ...) drive
+        // hardware PTT off one of these lines on their CAT USB port;
+        // leaving them asserted at open would key the radio the moment
+        // the port opens. Clearing CRTSCTS in termios only disables
+        // flow-control use of the pins — it does not drive them low.
+        // Best-effort: some clone USB-serial drivers ignore TIOCMBIC and
+        // we don't want to fail an otherwise-good open over that.
+        var linesToClear: Int32 = TIOCM_DTR
+        if !configuration.hardwareFlowControl {
+            linesToClear |= TIOCM_RTS
+        }
+        _ = ioctl(fileDescriptor, TIOCMBIC, &linesToClear)
+
         // Flush any existing data
         try await flush()
     }
@@ -259,6 +273,25 @@ public actor IOKitSerialPort: SerialTransport {
 
         tcflush(fileDescriptor, TCIOFLUSH)
     }
+
+    public func setDTR(_ enabled: Bool) async throws {
+        try setModemLine(TIOCM_DTR, enabled: enabled)
+    }
+
+    public func setRTS(_ enabled: Bool) async throws {
+        try setModemLine(TIOCM_RTS, enabled: enabled)
+    }
+
+    private func setModemLine(_ line: Int32, enabled: Bool) throws {
+        guard fileDescriptor >= 0 else {
+            throw RigError.notConnected
+        }
+        var flag = line
+        let request = enabled ? TIOCMBIS : TIOCMBIC
+        guard ioctl(fileDescriptor, request, &flag) == 0 else {
+            throw RigError.serialPortError("Cannot set modem line: \(String(cString: strerror(errno)))")
+        }
+    }
 }
 
 #else
@@ -301,6 +334,14 @@ public actor IOKitSerialPort: SerialTransport {
     }
 
     public func flush() async throws {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func setDTR(_ enabled: Bool) async throws {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func setRTS(_ enabled: Bool) async throws {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
 }

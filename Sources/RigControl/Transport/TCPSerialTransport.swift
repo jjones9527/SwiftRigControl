@@ -199,6 +199,18 @@ public actor TCPSerialTransport: SerialTransport {
         receiveBuffer.removeAll(keepingCapacity: true)
     }
 
+    // TCP has no modem control lines; PTT over rigctld / Flex SmartSDR
+    // is a data-plane concern (T 1 / T 0 for rigctld, ZZTX / ZZRX for
+    // Flex). These are documented no-ops so callers can hold a single
+    // `SerialTransport` reference regardless of transport type.
+    public func setDTR(_ enabled: Bool) async throws {
+        try checkOpen()
+    }
+
+    public func setRTS(_ enabled: Bool) async throws {
+        try checkOpen()
+    }
+
     // MARK: - Private
 
     private func checkOpen() throws {

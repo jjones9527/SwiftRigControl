@@ -40,6 +40,39 @@ public protocol SerialTransport: Actor {
 
     /// Flushes any pending data in input and output buffers.
     func flush() async throws
+
+    /// Drives the DTR (Data Terminal Ready) modem control line.
+    ///
+    /// `open()` on a serial transport de-asserts DTR by default so that
+    /// radios which use DTR as a hardware PTT signal (some Yaesu HF
+    /// models with Menu 048 set to DTR, TS-590 with DTR-as-PTT, etc.)
+    /// do not key on connect. Call this method with `true` only if a
+    /// specific device requires DTR asserted for RX or for legacy
+    /// PTT-via-DTR keying.
+    ///
+    /// Transports that have no modem control lines (e.g. TCP) implement
+    /// this as a no-op.
+    ///
+    /// - Parameter enabled: `true` to assert DTR, `false` to de-assert.
+    /// - Throws: `RigError.serialPortError` if the port is not open or
+    ///   the underlying ioctl fails.
+    func setDTR(_ enabled: Bool) async throws
+
+    /// Drives the RTS (Request To Send) modem control line.
+    ///
+    /// `open()` on a serial transport de-asserts RTS by default so that
+    /// radios which use RTS as a hardware PTT signal (Yaesu FT-DX10,
+    /// FT-DX101, FT-991A, FT-450D, and many earlier HF models) do not
+    /// key on connect. Call this method with `true` only if a specific
+    /// device legitimately requires RTS asserted.
+    ///
+    /// Transports that have no modem control lines (e.g. TCP) implement
+    /// this as a no-op.
+    ///
+    /// - Parameter enabled: `true` to assert RTS, `false` to de-assert.
+    /// - Throws: `RigError.serialPortError` if the port is not open or
+    ///   the underlying ioctl fails.
+    func setRTS(_ enabled: Bool) async throws
 }
 
 /// Configuration for serial port connections.
