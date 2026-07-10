@@ -21,6 +21,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-10
+
+Patch release fixing a safety-critical bug that keyed Yaesu radios
+into transmit on connect.
+
+### Fixed
+
+- **`IOKitSerialPort.open()` now de-asserts DTR and RTS** after
+  configuring termios. macOS opens serial ttys with DTR asserted
+  by default, and CP210x / FTDI drivers leave RTS in its power-on
+  state. Yaesu HF radios (FT-DX10, FT-DX101, FT-991A, FT-891,
+  FT-450D, FT-950, FT-2000, FT-DX3000/5000, and many earlier
+  models) drive hardware PTT off one of these lines on their CAT
+  USB port — so simply opening the port keyed the radio into TX
+  and held it there until the USB cable was physically unplugged.
+  Clearing `CRTSCTS` in termios only disables *flow-control use*
+  of the pins; the fix uses `ioctl(TIOCMBIC, TIOCM_DTR |
+  TIOCM_RTS)` to actually drive them low. Reported in issue #11
+  after a downstream MacWinlink FT-DX10 report. Safety and
+  regulatory concern under FCC §97.213 and equivalent regimes
+  worldwide — a CAT library that keys on connect is not fit to
+  ship. RTS is preserved when `hardwareFlowControl` is `true`.
+
+### Added
+
+- **`SerialTransport.setDTR(_:)` / `setRTS(_:)`** — public API to
+  drive the DTR and RTS modem control lines from the transport
+  layer. Since `open()` now de-asserts both lines, callers whose
+  device legitimately needs DTR or RTS asserted (some GPS pucks,
+  Kenwood TS-590 with DTR-as-PTT configured, external TNCs) can
+  opt in explicitly. `IOKitSerialPort` implements via
+  `TIOCMBIS` / `TIOCMBIC`; `TCPSerialTransport` is a documented
+  no-op; `MockSerialTransport` records calls as `recordedDTR` /
+  `recordedRTS` for test assertions.
+
 ## [1.1.0] - 2026-05-29
 
 First feature release after the v1.0.6 baseline. Highlights:

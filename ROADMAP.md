@@ -1,7 +1,7 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.1.0 (cut 2026-05-29 — first feature
-release after v1.0.6)
+**Current version:** v1.1.1 (cut 2026-07-10 — patch fixing
+Yaesu PTT-on-connect on `IOKitSerialPort.open()`, issue #11)
 **Swift tools:** 6.2, language mode `.v6` (strict concurrency)
 **Minimum platform:** macOS 14
 **License:** LGPL v3.0

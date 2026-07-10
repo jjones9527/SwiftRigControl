@@ -5,7 +5,19 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.1.0
+**Current release:** v1.1.1
+
+## What's new in v1.1.1
+
+- **Yaesu PTT-on-connect fix (issue #11)** — `IOKitSerialPort.open()`
+  now de-asserts DTR and RTS after configuring termios. Yaesu HF
+  radios (FT-DX10, FT-DX101, FT-991A, FT-891, FT-450D, and many
+  earlier models) drive hardware PTT off one of these lines on
+  their CAT USB port; the previous behavior keyed the radio into
+  transmit the moment the port opened, and held it there until
+  the USB cable was unplugged. Safe by default; opt back in via
+  the new `setDTR(_:)` / `setRTS(_:)` methods on `SerialTransport`
+  if a specific device needs a line asserted.
 
 ## What's new in v1.1.0
 
