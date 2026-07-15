@@ -22,6 +22,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-990S",
         defaultBaudRate: 115200,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts990S,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -36,6 +37,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-590SG",
         defaultBaudRate: 115200,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts590SG,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -73,6 +75,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-2000",
         defaultBaudRate: 57600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts2000,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -87,6 +90,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-590S",
         defaultBaudRate: 115200,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts590S,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -164,6 +168,7 @@ extension RadioDefinition.Kenwood {
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
         verificationStatus: .hardware,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
@@ -182,6 +187,7 @@ extension RadioDefinition.Kenwood {
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd72A,
         verificationStatus: .hardware,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
@@ -200,6 +206,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-850S",
         defaultBaudRate: 1200,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts850S,
+        serialDefaults: .kenwoodLegacy,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -216,6 +223,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-570D",
         defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts570D,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
@@ -232,6 +240,7 @@ extension RadioDefinition.Kenwood {
         model: "TS-570S",
         defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Kenwood.ts570S,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,

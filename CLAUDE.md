@@ -51,16 +51,37 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.1.1** (git tag, 2026-07-10), a patch
-release fixing the Yaesu PTT-on-connect bug tracked as issue #11.
-The prior release was **v1.1.0** (2026-05-29), the first true
-feature release after the v1.0.6 baseline (vendor namespaces, TCP
-transport, FlexRadio family, targeted auto-detection). The
-earlier CHANGELOG entries labeled `[1.1.0]`, `[1.2.0]`, and
-`[1.3.0]` that appear *below* the real v1.1.0 heading were *not*
-separate releases — that work all shipped under the `v1.0.6` tag.
-The top-of-file note in `CHANGELOG.md` explains the
-reconciliation.
+The shipped version is **v1.1.2** (git tag, 2026-07-15), a
+safety-focused patch release. Started as a fix for the Yaesu HF
+serial-framing bug (issue #12) but expanded into a full
+seven-vendor Hamlib parity audit that surfaced a Kenwood
+`setPTT(false)` bug (it was sending `TX0;` which means "PTT on
+via mic port"), a Kenwood `getPTT()` bug (it was sending the
+`TX;` set command, keying the radio on every poll), a Yaesu
+`setSplit()` command collision (`FT` is TX-VFO selection, not
+split — should be `ST`), and a Yaesu `selectVFO()` FT-encoding
+bug on FT-950/2000/DX-series (`FT2;`/`FT3;` select VFO A/B,
+`FT0;`/`FT1;` toggle TX function). Also corrected serial framing
+for TS-570D/S, TH-D72(A), TS-850S, K2; Lab599 TX-500 baud rate;
+Ten-Tec Legacy frequency encoding; the FT-891 `hasSplit`
+capability flag; and the Elecraft K2 response timeout (bumped
+to 2s per Hamlib to avoid spurious timeouts on band changes).
+Also exposed the previously-unreachable Ten-Tec radio factories
+(`RadioDefinition.TenTec.orion` / `.orionII` / `.eagle` /
+`.jupiter` / `.pegasus`) — all definition-only, needing
+hardware verification before promotion. Deferred v1.2 items
+(K2 hardware re-verify, K2 extended-power probing, baud-rate
+range API, Kenwood mic/data PTT variants, Ten-Tec hardware
+validators) tracked in ROADMAP Phase 5.8.
+The prior release was **v1.1.1** (2026-07-10), a patch fixing the
+Yaesu PTT-on-connect bug tracked as issue #11. Before that,
+**v1.1.0** (2026-05-29) was the first true feature release after
+the v1.0.6 baseline (vendor namespaces, TCP transport, FlexRadio
+family, targeted auto-detection). The earlier CHANGELOG entries
+labeled `[1.1.0]`, `[1.2.0]`, and `[1.3.0]` that appear *below*
+the real v1.1.0 heading were *not* separate releases — that work
+all shipped under the `v1.0.6` tag. The top-of-file note in
+`CHANGELOG.md` explains the reconciliation.
 
 Going forward: **`CHANGELOG.md` heading versions must match the git
 tag they ship under.** No more aspirational labels.
@@ -281,6 +302,16 @@ When adding a new rigctld command:
   asserting "we now match Hamlib."
 - **Don't ship a new radio definition without a CHANGELOG entry**
   and an honest verification status.
+- **Set `serialDefaults` on new radio factories.** `RadioDefinition`
+  carries `serialDefaults: SerialDefaults` covering stop bits,
+  parity, and hardware/software flow control. The default is
+  `.standard` (8-N-1, no flow control) which is correct for Icom
+  CI-V, Elecraft K3/KX-series, and modern Kenwood TS-480/890S — but
+  wrong for Yaesu HF (which need 8-N-2 via `.yaesuHFDesktop` or
+  `.yaesuHFPortable`) and desktop Kenwood TS-590/990S/2000 (which
+  need `.kenwoodDesktop`). Cross-check Hamlib
+  `rigs/<vendor>/<model>.c` `.serial_stop_bits` and
+  `.serial_handshake` before shipping.
 
 ---
 

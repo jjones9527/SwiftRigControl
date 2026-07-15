@@ -150,8 +150,10 @@ import Testing
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Kenwood uses TX1 for PTT on
-        let expectedCommand = "TX1;".data(using: .ascii)!
+        // Kenwood PTT-on is bare `TX;` per Hamlib `kenwood_set_ptt`.
+        // (Pre-fix code sent `TX1;` which means "PTT via data port"
+        // — also a keying command, but not the canonical form.)
+        let expectedCommand = "TX;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
         try await kenwoodProtocol.setPTT(true)
@@ -160,15 +162,18 @@ import Testing
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "TX1;")
+        #expect(command == "TX;")
     }
 
     @Test func setPTTOff() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        // Kenwood uses TX0 for PTT off
-        let expectedCommand = "TX0;".data(using: .ascii)!
+        // Kenwood PTT-off is bare `RX;` per Hamlib `kenwood_set_ptt`.
+        // (Pre-fix code sent `TX0;` which on Kenwood actually means
+        // "PTT on via mic port" — the exact opposite of RX. This
+        // was the most dangerous of the audited PTT bugs.)
+        let expectedCommand = "RX;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
 
         try await kenwoodProtocol.setPTT(false)
@@ -177,15 +182,22 @@ import Testing
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "TX0;")
+        #expect(command == "RX;")
     }
 
     @Test func getPTT() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
 
-        let queryCommand = "TX;".data(using: .ascii)!
-        let response = "TX1;".data(using: .ascii)!
+        // PTT is read from the `IF;` response byte 28 per Hamlib
+        // `kenwood_get_ptt`. Pre-fix code queried `TX;` which on
+        // Kenwood *sets* PTT — every poll would key the radio.
+        let queryCommand = "IF;".data(using: .ascii)!
+
+        // 37-char IF response with byte 28 = '1' (transmitting).
+        var chars = Array(repeating: Character("0"), count: 37)
+        chars[0] = "I"; chars[1] = "F"; chars[28] = "1"
+        let response = (String(chars) + ";").data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let enabled = try await kenwoodProtocol.getPTT()
@@ -360,8 +372,8 @@ import Testing
         await mockTransport.setResponse(for: modeCmd, response: modeCmd)
         try await kenwoodProtocol.setMode(.usb, vfo: .a)
 
-        // 3. Enable PTT
-        let pttCmd = "TX1;".data(using: .ascii)!
+        // 3. Enable PTT — bare `TX;` per Hamlib canonical form.
+        let pttCmd = "TX;".data(using: .ascii)!
         await mockTransport.setResponse(for: pttCmd, response: Data())
         try await kenwoodProtocol.setPTT(true)
 
@@ -374,7 +386,7 @@ import Testing
 
         #expect(cmd1 == "FA00014230000;")
         #expect(cmd2 == "MD2;")
-        #expect(cmd3 == "TX1;")
+        #expect(cmd3 == "TX;")
     }
 
     @Test func splitOperationWorkflow() async throws {

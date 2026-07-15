@@ -21,6 +21,197 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-15
+
+Safety-focused patch release. Started as a fix for the Yaesu HF
+serial-framing bug reported downstream (issue #12) and expanded
+into a full seven-vendor Hamlib parity audit after several
+additional latent bugs were uncovered — including one Kenwood
+PTT bug that could key the transmitter on every `setPTT(false)`
+call and one that keyed on every `getPTT()` poll. Every finding
+in this release is traceable to a Hamlib source-file citation.
+
+### Fixed — safety-critical (PTT / TX-VFO)
+
+- **Kenwood `setPTT(false)` no longer keys the transmitter.**
+  Pre-fix code sent `TX0;` for PTT-off, but on Kenwood `TX0;`
+  actually means "PTT on via mic port" — the *opposite* of
+  releasing PTT. Every call to `setPTT(false)` was keying the
+  radio. `setPTT(true)` also sent `TX1;` ("PTT on via data
+  port"), which does key but is not the canonical form.
+  `setPTT(_:)` now uses bare `TX;` / `RX;` per Hamlib
+  `kenwood_set_ptt` (rigs/kenwood/kenwood.c).
+
+- **Kenwood `getPTT()` no longer keys the transmitter on every
+  poll.** Pre-fix code sent the `TX;` *set* command to query PTT
+  state, then parsed the (nonexistent) response. Every PTT poll
+  keyed the radio. `getPTT()` now sends `IF;` and reads byte 28
+  of the response per Hamlib `kenwood_get_ptt`.
+
+- **Yaesu `setSplit()` no longer risks TXing on the wrong VFO.**
+  Pre-fix code sent `FT0;`/`FT1;` — but on modern Yaesu radios
+  `FT` is the *TX-VFO selection* command, not split. Sending
+  `FT1;` for "enable split" would silently reassign which VFO the
+  radio transmits from. Now uses `ST0;`/`ST1;` per Hamlib
+  `newcat_set_split` (newcat.c:8317). On radios that don't
+  support `ST` (FT-950/891/991/2000/DX3000/DX5000/DX1200/DX9000),
+  the method throws `unsupportedOperation` with a message telling
+  callers to use `selectVFO()` instead of silently doing the
+  wrong thing.
+
+- **Yaesu `selectVFO()` uses the correct FT encoding per radio.**
+  On FT-950 / FT-2000 / FT-DX3000/5000/1200 / FT-991(A) / FT-DX10
+  / FT-DX101(D/MP), `FT2;` selects VFO A and `FT3;` selects VFO B
+  (`FT0;`/`FT1;` reserved for toggling the TX function). On
+  FT-710 / FT-450, the classic `FT0;`/`FT1;` encoding applies.
+  On FT-891, the `FT` command doesn't exist at all — the method
+  throws. Matches Hamlib `newcat_set_tx_vfo` (newcat.c:8164).
+
+- **Yaesu `getPTT()` recognises `TX2;` and `TX3;` as
+  transmitting.** Pre-fix code checked only for `TX1;`, so on
+  radios that report PTT-via-data (`TX2`) or PTT-via-CAT (`TX3`)
+  the driver misreported the state as RX. A UI that polled PTT
+  would show the radio idle while it was actually keyed —
+  tempting the operator to hit PTT again. Matches Hamlib
+  `newcat_get_ptt` (newcat.c:2282-2295).
+
+### Fixed — per-radio serial framing
+
+- **Per-radio stop bits and hardware handshake now propagate
+  through `RigController` into `SerialConfiguration`.** Pre-fix
+  code let `SerialConfiguration.init` defaults win (8-N-1, no
+  flow control). Correct for Icom CI-V, wrong for every modern
+  Yaesu HF radio except FT-710 (needs 8-N-2) and desktop Kenwood
+  TS-590/990S/2000/TS-570 (needs RTS/CTS).
+
+- **Serial framing corrected for five additional Kenwood radios**
+  the initial fix missed: TS-570D, TS-570S, TH-D72, TH-D72A
+  (→ `.kenwoodDesktop`, 8-N-1 + HW), and TS-850S (→ new
+  `.kenwoodLegacy`, 8-N-2 + HW). Per Hamlib rigs/kenwood/*.c.
+
+- **Elecraft K2** switched to 8-N-2 per Hamlib `k2.c`. The K2 is
+  hardware-verified — its ATmega UART is tolerant of variable
+  stop-bit counts, which is why the pre-fix 8-N-1 defaults
+  worked. Aligning to Hamlib is safer for sustained rapid-fire
+  command sequences. **Hardware-verified status should be
+  re-confirmed at 8-N-2 before v1.1.3.**
+
+- **Lab599 TX-500** baud rate corrected from 115200 → 9600.
+  Hamlib `tx500.c` locks baud to 9600; the TX-500 firmware
+  rejects any other rate, so the pre-fix code left the radio
+  completely unresponsive.
+
+- **Yaesu FT-891 `hasSplit` capability corrected to `false`.**
+  Per Hamlib newcat.c:516,578 the FT-891 supports neither `ST`
+  nor `FT` — there is no CAT path to establish split. The pre-fix
+  capability advertised split as available and callers would
+  silently fail (or, before the split fix above, mis-key TX-VFO).
+
+### Fixed — protocol correctness
+
+- **Kenwood mode-code table completed.** Mode code `8` (FSK-R /
+  RTTY-R) is now mapped to `Mode.rttyR` in both directions —
+  pre-fix `kenwoodCodeToMode` treated `8` as an invalid response
+  and `modeToKenwoodCode` had no encoder for `.rttyR`. Matches
+  Hamlib `rigs/kenwood/ts990s.c:92`.
+
+- **Elecraft K2 post-write delay** increased from 50ms to 100ms
+  per Hamlib `k2.c:137` (`post_write_delay = 100`). The pre-fix
+  value could drop bytes on the K2's UART under sustained
+  command sequences.
+
+- **Ten-Tec Legacy protocol (Jupiter, Pegasus) frequency
+  encoding rewritten.** Pre-fix code sent a 6-byte zero-padded
+  decimal ASCII string; the Jupiter/Pegasus firmware doesn't
+  understand that format and ignored every frequency set. The
+  radios use three 16-bit binary tuning factors computed from
+  frequency, mode, filter width, PBT, and (for CW) BFO offset.
+  Ported directly from Hamlib `tentec_tuning_factor_calc`
+  (rigs/tentec/tentec.c:181). Unit-tested against hand-computed
+  reference values for USB/LSB/CW/AM. Note: the Ten-Tec Legacy
+  protocol is not currently exposed as a public
+  `RadioDefinition.TenTec.*` factory, so no consumer was
+  affected by the pre-fix bug.
+
+- **Ten-Tec Jupiter/Pegasus baud rate** corrected from 38400 to
+  57600 per Hamlib jupiter.c:139 and pegasus.c:75.
+
+### Added
+
+- **`RadioDefinition.SerialDefaults`** — new value type carrying
+  termios settings that `defaultBaudRate` does not cover: stop
+  bits, parity, and hardware/software flow control. Named
+  profiles:
+  - `.standard` — 8-N-1, no flow control. Icom, Elecraft K3+,
+    TS-480/890S, FT-710, FlexRadio, Xiegu.
+  - `.yaesuHFDesktop` — 8-N-2 + RTS/CTS. FT-DX10, FT-DX101(D/MP),
+    FT-991(A), FT-891, FT-950, FT-2000, FT-DX1200/3000/5000/9000,
+    FT-450(D).
+  - `.yaesuHFPortable` — 8-N-2, no handshake. FT-817(D), FT-818,
+    FT-857(D), FT-897(D), FT-847, FT-920, FT-100, FT-1000MP.
+  - `.kenwoodDesktop` — 8-N-1 + RTS/CTS. TS-590(S/SG), TS-990S,
+    TS-2000, TS-570(D/S), TH-D72(A).
+  - `.kenwoodLegacy` — 8-N-2 + RTS/CTS. TS-850S.
+  - `.elecraftK2` — 8-N-2, no handshake. K2.
+
+- **`RadioDefinition.init(serialDefaults:)`** — new optional
+  parameter defaulting to `.standard` for source compatibility.
+
+- **`YaesuCATProtocol.Quirks`** — per-model behavioural quirks
+  the shared newcat command set can't express uniformly.
+  Captures ST-split support and FT-encoding variants sourced
+  from Hamlib newcat.c's `valid_commands` table and
+  `newcat_set_tx_vfo` / `newcat_set_split_vfo`. Named profiles:
+  `.classic`, `.newcatNoST`, `.newcatWithSTDX`, `.ft710`,
+  `.ft450`, `.ft891`. `YaesuCATProtocol.init` gains an optional
+  `quirks:` parameter defaulting to `.classic` for source
+  compatibility.
+
+- **Ten-Tec radio factories now public.** The
+  `TenTecOrionProtocol` and `TenTecLegacyProtocol`
+  implementations existed but had no `RadioDefinition.TenTec.*`
+  factories, making them unreachable from consumer code. Added:
+  `.orion` (TT-565), `.orionII` (TT-599), `.eagle`, `.jupiter`
+  (TT-538), `.pegasus` (TT-550). All marked
+  `verificationStatus: .definition` — the wire protocols match
+  Hamlib byte-for-byte but no radio has been driven against real
+  hardware since the v1.1.2 fixes landed.
+
+- **`SerialDefaults.tentecModern`** — 8-N-1 with RTS/CTS
+  handshake per Hamlib `rigs/tentec/*.c` (jupiter.c:139-143,
+  pegasus.c:75-79, omnivii.c, orion.h:224-229 and :443-448).
+  Applied to all newly-exposed Ten-Tec factories.
+
+- **Elecraft K2 response timeout bumped to 2s** (from 1s) per
+  Hamlib `k2.c:139` — the K2 can take up to 500ms to complete a
+  band-change frequency set, and the previous 1s ceiling risked
+  spurious timeouts. K3 and later stay at 1s. `responseTimeout`
+  is now per-instance, resolved from `isK2` in
+  `ElecraftProtocol.init`.
+
+### Deferred to v1.2.0 (feature release)
+
+- Elecraft K2 extended-power probing (`K22;`) — adds
+  higher-resolution power reads on QRO K2s.
+- Baud-rate range support on `RadioDefinition` (radios with a
+  Hamlib-declared range currently hard-code a single default).
+
+### Audit provenance
+
+This release closes findings from a seven-agent Hamlib parity
+audit (Icom, Yaesu, Kenwood + THD72, Elecraft, Xiegu/Lab599/Flex,
+Ten-Tec, cross-vendor connect-path safety). Icom, connect-path,
+and Ten-Tec Orion vendors passed cleanly. Every fix here is
+traceable to a Hamlib source-file citation in code comments.
+
+Tier 2 findings deferred to v1.1.3 (K2 hardware re-verification
+at 8-N-2, potential PTT-command variants for specific Kenwood
+models, capability-flag audits for definition-only radios).
+
+Tier 3 findings (Ten-Tec Legacy protocol not yet reachable via a
+public factory, per-radio baud-rate ranges, additional K3
+extended-command probing) are tracked in ROADMAP.md.
+
 ## [1.1.1] - 2026-07-10
 
 Patch release fixing a safety-critical bug that keyed Yaesu radios

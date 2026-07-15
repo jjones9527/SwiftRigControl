@@ -1,7 +1,12 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.1.1 (cut 2026-07-10 — patch fixing
-Yaesu PTT-on-connect on `IOKitSerialPort.open()`, issue #11)
+**Current version:** v1.1.2 (cut 2026-07-15 — safety patch. Fixes
+Yaesu HF stop-bit / handshake mis-framing (issue #12), Kenwood
+setPTT / getPTT bugs that keyed the transmitter, Yaesu split /
+selectVFO command collision, plus per-radio serial-framing gaps
+and correctness fixes across seven vendors. Grounded in a
+Hamlib parity audit — see CHANGELOG.md for provenance. Follows
+v1.1.1 cut 2026-07-10 for Yaesu PTT-on-connect, issue #11.)
 **Swift tools:** 6.2, language mode `.v6` (strict concurrency)
 **Minimum platform:** macOS 14
 **License:** LGPL v3.0
@@ -1029,6 +1034,80 @@ The TH-D74, TH-D75, TM-D710, and TM-V71 share enough of the
 CR-terminated command surface that there's a real case for
 hoisting common framing/ID/PTT into a shared base. Defer
 until at least two of these have working concrete impls.
+
+---
+
+## Phase 5.8 — Post-audit follow-ups (v1.2)
+
+**Goal:** deliver the Tier 3 findings from the 2026-07-15
+Hamlib parity audit that don't belong in a patch release
+because they change the public API or add new behaviour rather
+than fix a bug. Every item here has a specific Hamlib
+reference; see the CHANGELOG entries for v1.1.2 for the audit
+provenance.
+
+### 5.8.1 K2 hardware re-verification at 8-N-2
+
+v1.1.2 switched the K2 from 8-N-1 to 8-N-2 per Hamlib
+`k2.c:130-134`. The K2 was previously hardware-verified at
+8-N-1 (worked because the K2's ATmega UART is tolerant of
+either stop-bit count). Before we can keep the
+`verificationStatus: .hardware` claim on the K2, we need to run
+`Tools/SwiftRigControlTools/HardwareValidation/K2Validator/`
+against a real K2 at the new profile and confirm frequency,
+mode, and PTT round-trips still pass.
+
+### 5.8.2 K2 extended-power probing (`K22;`)
+
+Hamlib `k2.c` sends `K2` during open to detect firmware level,
+then optionally enables `K22;` extended mode to unlock
+higher-resolution power reporting on QRO K2s. SwiftRigControl
+does not probe. Adding this requires a small amount of state on
+`ElecraftProtocol` (a `k2ExtendedMode` flag set during
+`connect()`), plus branch logic in `getPower()` / `setPower()`.
+Deferred because it is a feature addition, not a bug fix.
+
+### 5.8.3 Baud-rate range API on `RadioDefinition`
+
+Several radios (TS-870S: 1200-57600, TS-570D/S: 1200-57600,
+TS-850S: 300-4800) support a range of baud rates but
+SwiftRigControl currently exposes only `defaultBaudRate: Int`.
+Proposal: add `baudRateRange: ClosedRange<Int>?` — nil means
+"use `defaultBaudRate` only." `ConnectionType.serial(path:
+baudRate:)` already accepts an override, so this is purely a
+metadata / capability-reporting change. Additive API, no
+runtime behaviour change for existing callers.
+
+### 5.8.4 Kenwood per-radio PTT variants
+
+Hamlib exposes `RIG_PTT_ON_MIC` (→ `TX0;`) and `RIG_PTT_ON_DATA`
+(→ `TX1;`) as distinct PTT modes. SwiftRigControl's
+`setPTT(Bool)` maps only to bare `TX;` / `RX;` after v1.1.2.
+For operators who need to force mic-port PTT (e.g. driving a
+foot switch through mic input) or data-port PTT (rear jack for
+digital modes), a `setPTTVia(PTTSource)` variant would surface
+Hamlib's full capability. Skip until an app actually needs it.
+
+### 5.8.5 Kenwood mode-table completeness per model
+
+The Kenwood shared mode table (1-9) is not uniform across
+models — TS-990S, TS-590SG, TS-2000, and TH-D74 each accept
+slightly different subsets. Currently the shared
+`kenwoodCodeToMode` / `modeToKenwoodCode` accept all nine codes
+regardless of radio. This isn't a bug (unsupported codes throw
+at the wire level anyway), but a cleaner design would gate
+per-radio in `RigCapabilities.supportedModes`. Low priority.
+
+### 5.8.6 Ten-Tec hardware validators
+
+The Ten-Tec factories (`RadioDefinition.TenTec.orion` /
+`.orionII` / `.eagle` / `.jupiter` / `.pegasus`) shipped in
+v1.1.2 as `verificationStatus: .definition`. Any of them can be
+promoted to `.hardware` by running the appropriate validator
+under `Tools/SwiftRigControlTools/HardwareValidation/`. The
+Jupiter/Pegasus tuning-factor encoding is the most important to
+verify since it was rewritten from scratch in v1.1.2 and has
+not touched a real radio yet.
 
 ---
 

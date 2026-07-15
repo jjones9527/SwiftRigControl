@@ -8,11 +8,12 @@ import Foundation
 ///
 /// ## Command Format
 /// ```
-/// M<mode_char>\r          — Set mode
-/// N<6-byte freq>\r        — Set VFO A frequency (6 ASCII-encoded bytes)
-/// W<filter_byte>\r        — Set filter
-/// X\r                     — Query signal strength (returns 3 bytes)
-/// ?\r                     — Query firmware version
+/// M<mode_char>\r                  — Set mode
+/// N<CTF hi><CTF lo><FTF hi><FTF lo><BTF hi><BTF lo>\r
+///                                 — Set VFO A frequency (6 binary bytes)
+/// W<filter_byte>\r                — Set filter
+/// X\r                             — Query signal strength (returns 3 bytes)
+/// ?\r                             — Query firmware version
 /// ```
 ///
 /// ## Mode Codes
@@ -20,18 +21,29 @@ import Foundation
 /// '0' = AM   '1' = USB   '2' = LSB   '3' = CW   '4' = FM
 /// ```
 ///
-/// ## Frequency Encoding
-/// The Jupiter/Pegasus frequency command `N` uses a 6-byte encoding where each byte
-/// represents two BCD digits of the frequency in Hz. This is a proprietary Ten-Tec format
-/// derived from their CTF/FTF tuning factor scheme. The encoding for frequency `f` (Hz):
-/// - Byte 0: MHz high digit
-/// - Byte 1: MHz low digit
-/// - Bytes 2-5: remaining digits
+/// ## Frequency Encoding — Ten-Tec Tuning Factors
 ///
-/// In practice, the simplest compatible encoding is to send the frequency as a
-/// 6-character zero-padded decimal ASCII string (matches Hamlib's implementation in `tentec.c`).
+/// The `N` command payload is *not* ASCII digits — it is three 16-bit
+/// big-endian tuning factors (CTF, FTF, BTF) computed from the desired
+/// frequency, current mode, filter width, PBT offset, and (for CW) BFO.
 ///
-/// Reference: Hamlib `rigs/tentec/tentec.c`
+/// Formulas (Hamlib `rigs/tentec/tentec.c::tentec_tuning_factor_calc`):
+/// ```
+/// fcor       = (mode == CW) ? 0 : (width / 2) + 200
+/// mcor       = ±1 for LSB/USB/CW, 0 for AM/FM
+/// cwbfo      = (mode == CW) ? priv->cwbfo : 0
+/// adjtfreq   = freq_hz - 1250 + mcor * (fcor + pbt)
+/// CTF        = (adjtfreq / 2500) + 18000
+/// FTF        = floor((adjtfreq mod 2500) * 5.46)
+/// BTF        = floor((fcor + pbt + cwbfo + 8000) * 2.73)
+/// ```
+///
+/// Pre-fix code sent a 6-byte zero-padded ASCII decimal string — the
+/// Jupiter/Pegasus firmware doesn't understand that format at all, so
+/// the radio ignored every frequency set. This implementation ports
+/// the Hamlib tuning-factor calculation directly.
+///
+/// Reference: Hamlib `rigs/tentec/tentec.c:181` and `rigs/tentec/tentec.c:228`.
 public actor TenTecLegacyProtocol:
     CATProtocol,
     SupportsSignalStrength
@@ -48,8 +60,18 @@ public actor TenTecLegacyProtocol:
     /// Cached current frequency (legacy protocol has no reliable get-frequency query)
     private var cachedFrequency: UInt64 = 14_000_000
 
-    /// Cached current mode
+    /// Cached current mode — required to compute the tuning factors.
     private var cachedMode: Mode = .usb
+
+    /// Current filter width in Hz. Defaults match Hamlib's
+    /// `tentec_init` (`priv->width = kHz(6)` for AM start-up state).
+    private var currentWidthHz: Int = 2400
+
+    /// Passband tuning offset in Hz. Defaults to 0 like Hamlib.
+    private var passbandTuningHz: Int = 0
+
+    /// CW BFO offset in Hz. Defaults to 1000 like Hamlib's `tentec_init`.
+    private var cwBFOHz: Int = 1000
 
     /// Creates a legacy Ten-Tec protocol instance (Jupiter, Pegasus).
     ///
@@ -74,21 +96,78 @@ public actor TenTecLegacyProtocol:
 
     // MARK: - Frequency Control
 
-    /// Sets the VFO A frequency.
+    /// Sets the VFO A frequency using Ten-Tec's tuning-factor encoding.
     ///
-    /// The legacy Ten-Tec protocol only supports setting VFO A.
-    /// The frequency is encoded as 6 ASCII bytes representing the Hz value, zero-padded.
+    /// The legacy Ten-Tec protocol only supports setting VFO A. The
+    /// `vfo` argument is accepted for `CATProtocol` conformance but
+    /// ignored on-wire.
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        // Legacy protocol only controls VFO A — ignore VFO parameter
-        // Encode as 6-byte zero-padded decimal (Hamlib tentec.c approach)
-        let freqStr = String(format: "%06llu", hz)
-        let payload = Array(freqStr.utf8)
-        var bytes: [UInt8] = [0x4E]  // 'N'
-        bytes.append(contentsOf: payload)
+        let (ctf, ftf, btf) = Self.tuningFactors(
+            freqHz: Int(hz),
+            mode: cachedMode,
+            widthHz: currentWidthHz,
+            pbtHz: passbandTuningHz,
+            cwBFOHz: cwBFOHz
+        )
+
+        var bytes: [UInt8] = [0x4E] // 'N'
+        bytes.append(UInt8(truncatingIfNeeded: ctf >> 8))
+        bytes.append(UInt8(truncatingIfNeeded: ctf & 0xFF))
+        bytes.append(UInt8(truncatingIfNeeded: ftf >> 8))
+        bytes.append(UInt8(truncatingIfNeeded: ftf & 0xFF))
+        bytes.append(UInt8(truncatingIfNeeded: btf >> 8))
+        bytes.append(UInt8(truncatingIfNeeded: btf & 0xFF))
         bytes.append(Self.cr)
+
         try await transport.write(Data(bytes))
         cachedFrequency = hz
         // Legacy protocol does not respond to set commands
+    }
+
+    /// Ports Hamlib `tentec_tuning_factor_calc` (rigs/tentec/tentec.c:181).
+    ///
+    /// - Returns: `(ctf, ftf, btf)` — three 16-bit tuning factors that
+    ///   the `N` command sends to the radio as big-endian bytes.
+    /// - Note: Exposed `internal static` so unit tests can pin the byte
+    ///   patterns against Hamlib without going through the actor.
+    internal static func tuningFactors(
+        freqHz: Int,
+        mode: Mode,
+        widthHz: Int,
+        pbtHz: Int,
+        cwBFOHz: Int
+    ) -> (ctf: Int, ftf: Int, btf: Int) {
+        let mcor: Int
+        var fcor: Int = (widthHz / 2) + 200
+        var cwbfoLocal: Int = 0
+
+        switch mode {
+        case .am, .fm:
+            mcor = 0
+        case .cw, .cwR:
+            mcor = -1
+            cwbfoLocal = cwBFOHz
+            fcor = 0
+        case .lsb:
+            mcor = -1
+        case .usb:
+            mcor = 1
+        default:
+            // Unsupported modes fall back to USB semantics — matches
+            // Hamlib's `default: mcor = 1` branch (tentec.c:211).
+            mcor = 1
+        }
+
+        let adjtfreq = freqHz - 1250 + mcor * (fcor + pbtHz)
+
+        // C truncates toward zero; Swift's `/` on Int also truncates
+        // toward zero, so this matches Hamlib exactly for the sign
+        // conventions in play.
+        let ctf = (adjtfreq / 2500) + 18000
+        let ftf = Int(floor(Double(adjtfreq % 2500) * 5.46))
+        let btf = Int(floor(Double(fcor + pbtHz + cwbfoLocal + 8000) * 2.73))
+
+        return (ctf, ftf, btf)
     }
 
     /// Returns the cached frequency (legacy protocol has no reliable frequency query).

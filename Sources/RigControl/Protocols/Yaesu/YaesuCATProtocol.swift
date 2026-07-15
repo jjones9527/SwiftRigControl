@@ -43,20 +43,132 @@ public actor YaesuCATProtocol:
     /// The capabilities of this radio
     public let capabilities: RigCapabilities
 
+    /// Per-model behavioural quirks that the shared newcat command
+    /// set can't express on its own — things like whether the radio
+    /// supports the `ST` split command or which numeric parameters
+    /// its `FT` VFO-selection command expects.
+    public let quirks: Quirks
+
     /// Default timeout for radio responses
     private let responseTimeout: TimeInterval = 1.0
 
     /// Command terminator (semicolon)
     private static let terminator: UInt8 = 0x3B  // ';'
 
+    /// Per-model behavioural quirks.
+    ///
+    /// The Yaesu newcat command family is *mostly* uniform across
+    /// modern HF radios, but the `ST` (split) and `FT` (TX VFO
+    /// selection) commands diverge across models. This struct
+    /// captures the differences without leaking Yaesu-specifics
+    /// into the shared `RigCapabilities` type.
+    ///
+    /// Sourced from Hamlib `rigs/yaesu/newcat.c` — the
+    /// `valid_commands` table (which model supports which command)
+    /// and the model-specific branches inside `newcat_set_split_vfo`
+    /// / `newcat_set_tx_vfo`.
+    public struct Quirks: Sendable {
+        /// `true` when the radio supports the `ST0;` / `ST1;` split
+        /// command. FTDX-10, FT-DX101(D/MP), FT-710, FT-450 — but
+        /// FT-450's `ST` means Step, not Split, so Hamlib excludes
+        /// it there. See `newcat.c:578` and the exclusion at
+        /// `newcat.c:8327`.
+        public let supportsSTSplit: Bool
+
+        /// `true` when the radio's `FT` command uses the `FT2;` /
+        /// `FT3;` numeric encoding for VFO A/B (with `FT0;`/`FT1;`
+        /// reserved for toggling the TX function). Applies to
+        /// FT-950, FT-2000, FT-DX3000/5000/1200, FT-991(A),
+        /// FTDX-10, FT-DX101(D/MP). Other radios use the classic
+        /// `FT0;`/`FT1;` for A/B. See `newcat.c:8216-8222`.
+        public let usesFT23ForVFOSelection: Bool
+
+        /// `true` when the radio's `FT` command exists at all. The
+        /// FT-891 is the only known modern Yaesu HF radio that has
+        /// no `FT` command per `newcat.c:516`. Without `FT`, split
+        /// operation cannot be established via the newcat protocol.
+        public let supportsFTVFOSelection: Bool
+
+        public init(
+            supportsSTSplit: Bool = false,
+            usesFT23ForVFOSelection: Bool = false,
+            supportsFTVFOSelection: Bool = true
+        ) {
+            self.supportsSTSplit = supportsSTSplit
+            self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
+            self.supportsFTVFOSelection = supportsFTVFOSelection
+        }
+
+        /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
+        /// 1000MP): pre-newcat binary CAT — this shared newcat
+        /// implementation does not drive them anyway, but for the
+        /// factories that reference this struct we default to the
+        /// classic (non-newcat) semantics.
+        public static let classic = Quirks()
+
+        /// FT-950, FT-2000, FT-DX3000/5000/1200, FT-991, FT-991A —
+        /// no `ST` command, `FT` uses 2/3 for VFO A/B. Split is not
+        /// a first-class state on these radios; operators drive
+        /// split by explicitly selecting TX VFO.
+        public static let newcatNoST = Quirks(
+            supportsSTSplit: false,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true
+        )
+
+        /// FT-DX10, FT-DX101D, FT-DX101MP, FT-710 — full `ST`
+        /// support. `FT` still uses 2/3 for VFO selection on
+        /// FT-DX10/101(D/MP) per `newcat.c:8216-8218`; FT-710 uses
+        /// classic 0/1.
+        public static let newcatWithSTDX = Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true
+        )
+
+        /// FT-710 — supports `ST` split and uses classic `FT0;`/
+        /// `FT1;` for VFO A/B selection.
+        public static let ft710 = Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: false,
+            supportsFTVFOSelection: true
+        )
+
+        /// FT-450 / FT-450D — `ST` means Step, not Split, on this
+        /// radio. Hamlib explicitly disables split via `ST`
+        /// (`newcat.c:8327`). Fall back to `FT` for VFO selection.
+        public static let ft450 = Quirks(
+            supportsSTSplit: false,
+            usesFT23ForVFOSelection: false,
+            supportsFTVFOSelection: true
+        )
+
+        /// FT-891 — no `FT` command per `newcat.c:516`. Split via
+        /// newcat is not available on this radio; both split and
+        /// TX VFO selection must throw `unsupportedOperation`.
+        public static let ft891 = Quirks(
+            supportsSTSplit: false,
+            usesFT23ForVFOSelection: false,
+            supportsFTVFOSelection: false
+        )
+    }
+
     /// Initializes a new Yaesu CAT protocol instance.
     ///
     /// - Parameters:
     ///   - transport: The serial transport to use
     ///   - capabilities: The capabilities of this radio model
-    public init(transport: any SerialTransport, capabilities: RigCapabilities) {
+    ///   - quirks: Per-model quirks (defaults to `.classic` for
+    ///     source-compatibility with the pre-quirks factory
+    ///     signature).
+    public init(
+        transport: any SerialTransport,
+        capabilities: RigCapabilities,
+        quirks: Quirks = .classic
+    ) {
         self.transport = transport
         self.capabilities = capabilities
+        self.quirks = quirks
     }
 
     // MARK: - Connection
@@ -161,11 +273,19 @@ public actor YaesuCATProtocol:
     }
 
     public func getPTT() async throws -> Bool {
-        // Try reading TX status
+        // Query TX status. Modern Yaesu radios (FT-950, FTDX-10,
+        // FT-991A, etc.) can respond with TX0 (RX), TX1 (TX via
+        // front-panel mic), TX2 (TX via rear data jack), or TX3
+        // (TX via CAT/USB). Anything non-zero means the radio is
+        // transmitting — matches Hamlib `newcat_get_ptt`
+        // (rigs/yaesu/newcat.c:2282-2295). The pre-fix code
+        // recognised only TX1 and misreported TX2/TX3 as "not
+        // transmitting", which could confuse UI state and lead an
+        // operator to send another PTT while the radio was already
+        // keyed.
         try await sendCommand("TX")
         let response = try await receiveResponse()
 
-        // Response format: TXx; where x is 0 or 1
         guard response.hasPrefix("TX"),
               response.count >= 3 else {
             throw RigError.invalidResponse
@@ -174,21 +294,46 @@ public actor YaesuCATProtocol:
         let codeIndex = response.index(response.startIndex, offsetBy: 2)
         let codeChar = response[codeIndex]
 
-        return codeChar == "1"
+        switch codeChar {
+        case "0":                     return false
+        case "1", "2", "3":           return true
+        default:                      throw RigError.invalidResponse
+        }
     }
 
     // MARK: - VFO Control
 
     public func selectVFO(_ vfo: VFO) async throws {
-        let command: String
-        switch vfo {
-        case .a, .main:
-            command = "FT0"  // Select VFO A
-        case .b, .sub:
-            command = "FT1"  // Select VFO B
+        // The Yaesu newcat `FT` command has two encodings depending
+        // on the radio family. On FT-950 / FT-2000 / FT-DX3000 /
+        // FT-DX5000 / FT-DX1200 / FT-991(A) / FT-DX10 /
+        // FT-DX101(D/MP), `FT0;` and `FT1;` *toggle* the TX
+        // function, and `FT2;` / `FT3;` select VFO A / B — sending
+        // `FT0;` on those radios where the operator meant "select
+        // VFO A" would silently toggle TX-VFO assignment instead,
+        // which is exactly the class of error the pre-fix code
+        // could produce. On radios that use the classic 0/1
+        // encoding (FT-710, FT-450), the offset does not apply.
+        // FT-891 has no `FT` command at all per Hamlib
+        // `newcat.c:516`.
+        //
+        // Reference: Hamlib `newcat_set_tx_vfo` (newcat.c:8164) and
+        // the model-specific offset at newcat.c:8216-8222.
+        guard quirks.supportsFTVFOSelection else {
+            throw RigError.unsupportedOperation(
+                "TX VFO selection via CAT is not supported by this Yaesu radio (FT command unavailable)"
+            )
         }
 
-        try await sendCommand(command)
+        let digit: Character
+        switch vfo {
+        case .a, .main:
+            digit = quirks.usesFT23ForVFOSelection ? "2" : "0"
+        case .b, .sub:
+            digit = quirks.usesFT23ForVFOSelection ? "3" : "1"
+        }
+
+        try await sendCommand("FT\(digit)")
         _ = try await receiveResponse()
     }
 
@@ -404,22 +549,47 @@ public actor YaesuCATProtocol:
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {
+        // Yaesu's canonical split command is `ST0;` (off) / `ST1;`
+        // (on), *not* `FT0;`/`FT1;` — the pre-fix code used `FT`,
+        // which is TX-VFO selection. On FT-950/FT-2000/FT-991(A)/
+        // FT-DX3000/5000/1200/9000, sending `FT1;` where split was
+        // intended would silently reassign the TX VFO instead of
+        // enabling split, and could TX on the wrong frequency.
+        //
+        // Reference: Hamlib `newcat_set_split` (newcat.c:8317).
         guard capabilities.hasSplit else {
             throw RigError.unsupportedOperation("Split operation not supported")
         }
 
-        // Yaesu uses FT1 for split on, FT0 for split off
-        let command = enabled ? "FT1" : "FT0"
+        guard quirks.supportsSTSplit else {
+            // On radios without `ST` (FT-950/891/991/2000/DX3000
+            // etc.), Hamlib establishes split by explicitly
+            // selecting the TX VFO via `FT`. That is a semantically
+            // different operation (which VFO transmits, rather
+            // than an on/off toggle), so surface it explicitly
+            // rather than silently doing the wrong thing.
+            throw RigError.unsupportedOperation(
+                "Split cannot be toggled as a state on this Yaesu radio; use selectVFO() to set the TX VFO explicitly"
+            )
+        }
+
+        let command = enabled ? "ST1" : "ST0"
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
     public func getSplit() async throws -> Bool {
-        try await sendCommand("FT")
+        guard quirks.supportsSTSplit else {
+            throw RigError.unsupportedOperation(
+                "Split state cannot be read on this Yaesu radio (ST command unavailable)"
+            )
+        }
+
+        try await sendCommand("ST")
         let response = try await receiveResponse()
 
-        // Response format: FTx; where x is 0 or 1
-        guard response.hasPrefix("FT"),
+        // Response format: STx; where x is 0 (off) or 1 (on)
+        guard response.hasPrefix("ST"),
               response.count >= 3 else {
             throw RigError.invalidResponse
         }

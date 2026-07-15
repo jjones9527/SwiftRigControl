@@ -266,48 +266,63 @@ import Testing
     // MARK: - Split Operation Tests
 
     @Test func setSplitOn() async throws {
-        try await yaesuProtocol.connect()
-        await mockTransport.reset()
+        // Split via `ST` is only supported on FTDX-10 / FT-DX101(D/MP)
+        // / FT-710 / FT-450 per Hamlib newcat.c:578. Use those quirks
+        // for this test.
+        let mock = MockTransport()
+        let yaesu = YaesuCATProtocol(
+            transport: mock, capabilities: .full, quirks: .newcatWithSTDX
+        )
+        try await yaesu.connect()
+        await mock.reset()
 
-        let expectedCommand = "FT1;".data(using: .ascii)!
-        let response = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        let expectedCommand = "ST1;".data(using: .ascii)!
+        let response = "ST1;".data(using: .ascii)!
+        await mock.setResponse(for: expectedCommand, response: response)
 
-        try await yaesuProtocol.setSplit(true)
+        try await yaesu.setSplit(true)
 
-        let writes = await mockTransport.recordedWrites
+        let writes = await mock.recordedWrites
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FT1;")
+        #expect(command == "ST1;")
     }
 
     @Test func setSplitOff() async throws {
-        try await yaesuProtocol.connect()
-        await mockTransport.reset()
+        let mock = MockTransport()
+        let yaesu = YaesuCATProtocol(
+            transport: mock, capabilities: .full, quirks: .newcatWithSTDX
+        )
+        try await yaesu.connect()
+        await mock.reset()
 
-        let expectedCommand = "FT0;".data(using: .ascii)!
-        let response = "FT0;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        let expectedCommand = "ST0;".data(using: .ascii)!
+        let response = "ST0;".data(using: .ascii)!
+        await mock.setResponse(for: expectedCommand, response: response)
 
-        try await yaesuProtocol.setSplit(false)
+        try await yaesu.setSplit(false)
 
-        let writes = await mockTransport.recordedWrites
+        let writes = await mock.recordedWrites
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FT0;")
+        #expect(command == "ST0;")
     }
 
     @Test func getSplit() async throws {
-        try await yaesuProtocol.connect()
-        await mockTransport.reset()
+        let mock = MockTransport()
+        let yaesu = YaesuCATProtocol(
+            transport: mock, capabilities: .full, quirks: .newcatWithSTDX
+        )
+        try await yaesu.connect()
+        await mock.reset()
 
-        let queryCommand = "FT;".data(using: .ascii)!
-        let response = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: queryCommand, response: response)
+        let queryCommand = "ST;".data(using: .ascii)!
+        let response = "ST1;".data(using: .ascii)!
+        await mock.setResponse(for: queryCommand, response: response)
 
-        let splitEnabled = try await yaesuProtocol.getSplit()
+        let splitEnabled = try await yaesu.getSplit()
 
         #expect(splitEnabled)
     }
@@ -346,32 +361,37 @@ import Testing
     }
 
     @Test func splitOperation() async throws {
-        try await yaesuProtocol.connect()
-        await mockTransport.reset()
+        // Use ST-capable quirks for this split integration test.
+        let mock = MockTransport()
+        let yaesu = YaesuCATProtocol(
+            transport: mock, capabilities: .full, quirks: .newcatWithSTDX
+        )
+        try await yaesu.connect()
+        await mock.reset()
 
-        // 1. Enable split
-        let splitOnCmd = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: splitOnCmd, response: splitOnCmd)
-        try await yaesuProtocol.setSplit(true)
+        // 1. Enable split via ST1 (not FT1 — see fix for #12 audit)
+        let splitOnCmd = "ST1;".data(using: .ascii)!
+        await mock.setResponse(for: splitOnCmd, response: splitOnCmd)
+        try await yaesu.setSplit(true)
 
         // 2. Set VFO A frequency (RX)
         let vfoACmd = "FA00014230000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: vfoACmd, response: vfoACmd)
-        try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
+        await mock.setResponse(for: vfoACmd, response: vfoACmd)
+        try await yaesu.setFrequency(14_230_000, vfo: .a)
 
         // 3. Set VFO B frequency (TX)
         let vfoBCmd = "FB00014235000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: vfoBCmd, response: vfoBCmd)
-        try await yaesuProtocol.setFrequency(14_235_000, vfo: .b)
+        await mock.setResponse(for: vfoBCmd, response: vfoBCmd)
+        try await yaesu.setFrequency(14_235_000, vfo: .b)
 
-        let writes = await mockTransport.recordedWrites
+        let writes = await mock.recordedWrites
         #expect(writes.count == 3)
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
         let cmd2 = String(data: writes[1], encoding: .ascii)
         let cmd3 = String(data: writes[2], encoding: .ascii)
 
-        #expect(cmd1 == "FT1;")
+        #expect(cmd1 == "ST1;")
         #expect(cmd2 == "FA00014230000;")
         #expect(cmd3 == "FB00014235000;")
     }

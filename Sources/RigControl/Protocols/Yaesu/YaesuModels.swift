@@ -8,10 +8,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-10",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
+                quirks: .newcatWithSTDX
             )
         }
     )
@@ -22,15 +24,21 @@ extension RadioDefinition.Yaesu {
         model: "FT-991A",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft991A,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft991A
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft991A,
+                quirks: .newcatNoST
             )
         }
     )
 
     /// Yaesu FT-710 AESS HF/6m transceiver
+    ///
+    /// The FT-710 is the exception in modern Yaesu HF — its CAT
+    /// interface uses 8-N-1 without flow control, matching Hamlib
+    /// `rigs/yaesu/ft710.c`. Leave it on ``SerialDefaults/standard``.
     public static let ft710 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-710",
@@ -39,7 +47,8 @@ extension RadioDefinition.Yaesu {
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft710
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft710,
+                quirks: .ft710
             )
         }
     )
@@ -50,10 +59,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-891",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft891,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft891
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft891,
+                quirks: .ft891
             )
         }
     )
@@ -64,6 +75,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-817",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft817,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -78,10 +90,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-101D",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D,
+                quirks: .newcatWithSTDX
             )
         }
     )
@@ -92,10 +106,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-101MP",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP,
+                quirks: .newcatWithSTDX
             )
         }
     )
@@ -106,6 +122,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-857D",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft857D,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -120,6 +137,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-897D",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft897D,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -134,10 +152,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-450D",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D,
+                quirks: .ft450
             )
         }
     )
@@ -148,6 +168,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-818",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft818,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -162,10 +183,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-2000",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft2000,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft2000
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft2000,
+                quirks: .newcatNoST
             )
         }
     )
@@ -176,10 +199,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-3000",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000,
+                quirks: .newcatNoST
             )
         }
     )
@@ -190,10 +215,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-991",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft991,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft991
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft991,
+                quirks: .newcatNoST
             )
         }
     )
@@ -204,10 +231,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-950",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft950,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft950
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft950,
+                quirks: .newcatNoST
             )
         }
     )
@@ -218,10 +247,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-5000",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000,
+                quirks: .newcatNoST
             )
         }
     )
@@ -232,10 +263,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-1200",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx1200,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx1200
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx1200,
+                quirks: .newcatNoST
             )
         }
     )
@@ -246,6 +279,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-100",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft100,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -260,10 +294,12 @@ extension RadioDefinition.Yaesu {
         model: "FTDX-9000",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx9000,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx9000
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx9000,
+                quirks: .newcatNoST
             )
         }
     )
@@ -274,6 +310,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-847",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -288,6 +325,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-920",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft920,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -306,6 +344,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-1000MP",
         defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -320,6 +359,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-857",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft857,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -336,6 +376,7 @@ extension RadioDefinition.Yaesu {
         model: "FT-897",
         defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft897,
+        serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
@@ -350,10 +391,12 @@ extension RadioDefinition.Yaesu {
         model: "FT-450",
         defaultBaudRate: 38400,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft450,
+        serialDefaults: .yaesuHFDesktop,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft450
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft450,
+                quirks: .ft450
             )
         }
     )

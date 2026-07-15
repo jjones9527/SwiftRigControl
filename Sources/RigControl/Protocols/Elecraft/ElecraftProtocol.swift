@@ -46,12 +46,21 @@ public actor ElecraftProtocol:
     /// The capabilities of this radio
     public let capabilities: RigCapabilities
 
-    /// Default timeout for radio responses
-    let responseTimeout: TimeInterval = 1.0
+    /// Default timeout for radio responses. Per-radio because the
+    /// K2's slower processor can take up to 500ms to respond to
+    /// band-change frequency sets — Hamlib `k2.c:139` specifies
+    /// `.timeout = 2000` for exactly this reason. K3 and later
+    /// run comfortably at the 1s default.
+    let responseTimeout: TimeInterval
 
-    /// Inter-command delay for K2 (nanoseconds)
-    /// The K2's slower processor requires time between commands to prevent buffer overflow
-    let k2CommandDelay: UInt64 = 50_000_000  // 50ms
+    /// Inter-command delay for K2 (nanoseconds).
+    ///
+    /// The K2's slower processor requires time between commands to
+    /// prevent buffer overflow. Matches Hamlib `k2.c:137`
+    /// `post_write_delay = 100`ms. Pre-fix value was 50ms which,
+    /// under sustained rapid-fire command sequences, could cause
+    /// dropped bytes on the K2's UART.
+    let k2CommandDelay: UInt64 = 100_000_000  // 100ms — per Hamlib
 
     /// Whether this is a K2 radio (requires command delays)
     let isK2: Bool
@@ -69,6 +78,8 @@ public actor ElecraftProtocol:
         self.capabilities = capabilities
         // Detect K2 by checking max power (K2 = 15W, others >= 100W)
         self.isK2 = capabilities.maxPower <= 15
+        // K2 needs 2s per Hamlib k2.c:139; K3 and later are fine at 1s.
+        self.responseTimeout = self.isK2 ? 2.0 : 1.0
     }
 
     // MARK: - Connection

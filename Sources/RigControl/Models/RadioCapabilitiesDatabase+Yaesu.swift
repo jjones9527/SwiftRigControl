@@ -168,9 +168,14 @@ extension RadioCapabilitiesDatabase.Yaesu {
     )
 
     /// Yaesu FT-891 - HF/6m all-mode transceiver
+    ///
+    /// `hasSplit: false` because the FT-891 supports neither the
+    /// `ST` split command nor the `FT` TX-VFO command per Hamlib's
+    /// `newcat.c:516,578`. There is no CAT path to establish split
+    /// on this radio via the newcat protocol.
     public static let ft891 = RigCapabilities(
         hasVFOB: true,
-        hasSplit: true,
+        hasSplit: false,
         powerControl: true,
         maxPower: 100,
         supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm, .dataUSB, .dataLSB],

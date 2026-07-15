@@ -152,29 +152,43 @@ public actor KenwoodProtocol:
     // MARK: - PTT Control
 
     public func setPTT(_ enabled: Bool) async throws {
-        // Kenwood uses TX1; for on, TX0; for off
-        let command = enabled ? "TX1" : "TX0"
+        // The canonical Kenwood PTT commands per Hamlib
+        // `kenwood_set_ptt` (kenwood.c) are bare `TX;` (transmit)
+        // and `RX;` (receive). `TX0;` and `TX1;` are *also* valid
+        // but they mean "PTT via mic port" and "PTT via data port"
+        // respectively — they are both *keying* commands.
+        //
+        // Pre-fix code sent `TX0;` for PTT-off, which is actually
+        // "PTT on via mic port". On a Kenwood desktop rig, calling
+        // `setPTT(false)` therefore keyed the transmitter instead
+        // of releasing it. That is exactly the class of bug this
+        // audit was scoped to catch.
+        let command = enabled ? "TX" : "RX"
         try await sendCommand(command)
 
-        // Some Kenwood radios may not echo PTT commands
-        try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+        // Kenwood radios do not echo TX/RX.
+        try await Task.sleep(nanoseconds: 50_000_000)
     }
 
     public func getPTT() async throws -> Bool {
-        // Try reading TX status
-        try await sendCommand("TX")
+        // PTT status is read from byte 28 of the `IF;` response,
+        // not by re-sending `TX;` (which would key the transmitter
+        // — the pre-fix code did exactly that). Matches Hamlib
+        // `kenwood_get_ptt` in kenwood.c.
+        //
+        // The IF response is a fixed-width string; the exact
+        // layout is in each radio's programmer's reference but
+        // byte 28 (0-indexed) is universally the TX/RX flag
+        // across the Kenwood HF line.
+        try await sendCommand("IF")
         let response = try await receiveResponse()
 
-        // Response format: TXx; where x is 0 or 1
-        guard response.hasPrefix("TX"),
-              response.count >= 3 else {
+        guard response.hasPrefix("IF"), response.count > 28 else {
             throw RigError.invalidResponse
         }
 
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
-        let codeChar = response[codeIndex]
-
-        return codeChar == "1"
+        let idx = response.index(response.startIndex, offsetBy: 28)
+        return response[idx] == "1"
     }
 
     // MARK: - VFO Control
@@ -486,6 +500,21 @@ public actor KenwoodProtocol:
     }
 
     /// Converts a Mode enum to a Kenwood mode code.
+    ///
+    /// Kenwood mode table (matches Hamlib `rigs/kenwood/ts990s.c:92`
+    /// and `rigs/kenwood/kenwood.c`):
+    ///
+    /// | Code | Mode      |
+    /// | ---- | --------- |
+    /// | 1    | LSB       |
+    /// | 2    | USB       |
+    /// | 3    | CW        |
+    /// | 4    | FM        |
+    /// | 5    | AM        |
+    /// | 6    | FSK (RTTY)|
+    /// | 7    | CW-R      |
+    /// | 8    | FSK-R     |
+    /// | 9    | DATA      |
     private func modeToKenwoodCode(_ mode: Mode) throws -> Int {
         switch mode {
         case .lsb: return 1
@@ -493,9 +522,10 @@ public actor KenwoodProtocol:
         case .cw: return 3
         case .fm: return 4
         case .am: return 5
-        case .rtty: return 6  // FSK
+        case .rtty: return 6
         case .cwR: return 7
-        case .dataLSB: return 9  // DATA modes on Kenwood
+        case .rttyR: return 8
+        case .dataLSB: return 9
         default:
             throw RigError.unsupportedOperation("Mode \(mode) not supported by Kenwood protocol")
         }
@@ -511,6 +541,7 @@ public actor KenwoodProtocol:
         case 5: return .am
         case 6: return .rtty
         case 7: return .cwR
+        case 8: return .rttyR
         case 9: return .dataLSB
         default:
             throw RigError.invalidResponse

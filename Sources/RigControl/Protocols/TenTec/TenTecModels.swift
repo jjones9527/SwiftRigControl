@@ -36,12 +36,17 @@ public enum TenTecModel: String, CaseIterable, Sendable {
     }
 
     /// Default baud rate for this model
+    ///
+    /// All Ten-Tec models supported by SwiftRigControl use 57600
+    /// baud per Hamlib `rigs/tentec/*.c` (jupiter.c:139,
+    /// pegasus.c:75, and the Orion family). Pre-fix code specified
+    /// 38400 for Jupiter/Pegasus, which the radios do not accept.
     public var defaultBaudRate: Int {
         switch self {
         case .orion, .orionII, .eagle:
             return 57600
         case .jupiter, .pegasus:
-            return 38400
+            return 57600
         }
     }
 

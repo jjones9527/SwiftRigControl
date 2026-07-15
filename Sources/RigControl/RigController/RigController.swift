@@ -128,8 +128,11 @@ public actor RigController {
         let transport: any SerialTransport
         switch connection {
         case .serial(let path, let baudRate):
-            let actualBaudRate = baudRate ?? radio.defaultBaudRate
-            let config = SerialConfiguration(path: path, baudRate: actualBaudRate)
+            let config = Self.buildSerialConfiguration(
+                radio: radio,
+                path: path,
+                baudRateOverride: baudRate
+            )
             transport = IOKitSerialPort(configuration: config)
 
         case .tcp(let host, let port):
@@ -140,6 +143,31 @@ public actor RigController {
         }
 
         self.proto = radio.createProtocol(transport: transport)
+    }
+
+    /// Builds the `SerialConfiguration` that a `.serial` connection
+    /// would use for the given radio.
+    ///
+    /// Extracted so unit tests can verify that per-radio stop bits and
+    /// flow-control settings survive the trip from `SerialDefaults`
+    /// through `RigController.init` without opening a real serial
+    /// port. Not part of the public API.
+    internal static func buildSerialConfiguration(
+        radio: RadioDefinition,
+        path: String,
+        baudRateOverride: Int?
+    ) -> SerialConfiguration {
+        let baudRate = baudRateOverride ?? radio.defaultBaudRate
+        let d = radio.serialDefaults
+        return SerialConfiguration(
+            path: path,
+            baudRate: baudRate,
+            dataBits: 8,
+            stopBits: d.stopBits,
+            parity: d.parity,
+            hardwareFlowControl: d.hardwareFlowControl,
+            softwareFlowControl: d.softwareFlowControl
+        )
     }
 
     // MARK: - Radio Information
