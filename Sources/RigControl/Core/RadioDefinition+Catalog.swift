@@ -198,6 +198,75 @@ extension RadioDefinition.Lab599 {
     ]
 }
 
+// MARK: - v1.2.0 vendor namespaces (empty until follow-up PRs land)
+//
+// Each new vendor exposes an `allRadios` returning `[]` until the
+// vendor's protocol adapter, capabilities database, and model
+// factories land in a follow-up PR. The empty arrays let the
+// top-level `allSupportedRadios` and `allRadios(for:)` include the
+// new vendors without a special case, and give the drift test a
+// consistent shape.
+
+extension RadioDefinition.Guohetec {
+
+    /// Every Guohetec radio SwiftRigControl supports, alphabetically
+    /// by model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the Guohetec
+    /// adapter PR (Q900, PMR-171).
+    public static let allRadios: [RadioDefinition] = []
+}
+
+extension RadioDefinition.Anytone {
+
+    /// Every Anytone radio SwiftRigControl supports, alphabetically
+    /// by model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the Anytone adapter
+    /// PR (AT-D578UVIII).
+    public static let allRadios: [RadioDefinition] = []
+}
+
+extension RadioDefinition.Elad {
+
+    /// Every Elad radio SwiftRigControl supports, alphabetically by
+    /// model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the Elad adapter PR
+    /// (FDM-DUO).
+    public static let allRadios: [RadioDefinition] = []
+}
+
+extension RadioDefinition.CommRadio {
+
+    /// Every CommRadio radio SwiftRigControl supports, alphabetically
+    /// by model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the CommRadio adapter
+    /// PR (CTX-10).
+    public static let allRadios: [RadioDefinition] = []
+}
+
+extension RadioDefinition.Alinco {
+
+    /// Every Alinco radio SwiftRigControl supports, alphabetically
+    /// by model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the Alinco adapter
+    /// PR (DX-77, DX-SR8).
+    public static let allRadios: [RadioDefinition] = []
+}
+
+extension RadioDefinition.AOR {
+
+    /// Every AOR radio SwiftRigControl supports, alphabetically by
+    /// model.
+    ///
+    /// Empty in v1.2.0-plumbing — populated in the AOR adapter PR
+    /// (AR-8600, AR-7030+).
+    public static let allRadios: [RadioDefinition] = []
+}
+
 // MARK: - Top-level aggregate
 
 extension RadioDefinition {
@@ -205,7 +274,8 @@ extension RadioDefinition {
     /// Every radio SwiftRigControl supports across every vendor, in the
     /// order returned by the per-vendor `allRadios` arrays (each
     /// vendor's radios contiguously, vendors in the order Icom → Yaesu
-    /// → Kenwood → Elecraft → Xiegu → Flex → Ten-Tec → Lab599).
+    /// → Kenwood → Elecraft → Xiegu → Flex → Ten-Tec → Lab599 →
+    /// Guohetec → Anytone → Elad → CommRadio → Alinco → AOR).
     ///
     /// Callers that need a specific ordering (e.g. UI grouping by
     /// manufacturer) should sort or partition on the returned array's
@@ -224,6 +294,12 @@ extension RadioDefinition {
         + Flex.allRadios
         + TenTec.allRadios
         + Lab599.allRadios
+        + Guohetec.allRadios
+        + Anytone.allRadios
+        + Elad.allRadios
+        + CommRadio.allRadios
+        + Alinco.allRadios
+        + AOR.allRadios
     }()
 
     /// Every radio SwiftRigControl supports for a specific manufacturer.
@@ -237,15 +313,21 @@ extension RadioDefinition {
     ///   alphabetically by model.
     public static func allRadios(for manufacturer: Manufacturer) -> [RadioDefinition] {
         switch manufacturer {
-        case .icom:     return Icom.allRadios
-        case .yaesu:    return Yaesu.allRadios
-        case .kenwood:  return Kenwood.allRadios
-        case .elecraft: return Elecraft.allRadios
-        case .xiegu:    return Xiegu.allRadios
-        case .flex:     return Flex.allRadios
-        case .tentec:   return TenTec.allRadios
-        case .lab599:   return Lab599.allRadios
-        case .dummy:    return []
+        case .icom:      return Icom.allRadios
+        case .yaesu:     return Yaesu.allRadios
+        case .kenwood:   return Kenwood.allRadios
+        case .elecraft:  return Elecraft.allRadios
+        case .xiegu:     return Xiegu.allRadios
+        case .flex:      return Flex.allRadios
+        case .tentec:    return TenTec.allRadios
+        case .lab599:    return Lab599.allRadios
+        case .guohetec:  return Guohetec.allRadios
+        case .anytone:   return Anytone.allRadios
+        case .elad:      return Elad.allRadios
+        case .commradio: return CommRadio.allRadios
+        case .alinco:    return Alinco.allRadios
+        case .aor:       return AOR.allRadios
+        case .dummy:     return []
         }
     }
 }

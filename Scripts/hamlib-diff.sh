@@ -216,6 +216,13 @@ section_new_radios() {
         rigs/kenwood
         rigs/tentec
         rigs/flexradio
+        # v1.2.0 vendor expansion
+        rigs/guohetec
+        rigs/anytone
+        rigs/elad
+        rigs/commradio
+        rigs/alinco
+        rigs/aor
     )
 
     # `git log --diff-filter=A --name-only` on the vendor dirs lists
@@ -470,6 +477,46 @@ hamlib_to_swift() {
             # via CATProtocol + capability traits.
             echo "Sources/RigControl/Core/CATProtocol.swift"
             echo "Sources/RigControl/Core/CATProtocolTraits.swift"
+            ;;
+
+        # --- v1.2.0 new-vendor protocol adapters ---------------------
+        rigs/guohetec/guohetec.c|rigs/guohetec/guohetec.h)
+            echo "Sources/RigControl/Protocols/Guohetec/GuohetecProtocol.swift"
+            echo "Sources/RigControl/Protocols/Guohetec/GuohetecModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Guohetec.swift"
+            ;;
+        rigs/guohetec/q900.c|rigs/guohetec/pmr171.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Guohetec/GuohetecModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Guohetec.swift"
+            ;;
+        rigs/anytone/anytone.c|rigs/anytone/anytone.h)
+            echo "Sources/RigControl/Protocols/Anytone/AnytoneProtocol.swift"
+            echo "Sources/RigControl/Protocols/Anytone/AnytoneModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Anytone.swift"
+            ;;
+        rigs/elad/fdm_duo.c)
+            echo "Sources/RigControl/Protocols/Elad/EladProtocol.swift"
+            echo "Sources/RigControl/Protocols/Elad/EladModels.swift  (fdmDUO factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Elad.swift"
+            ;;
+        rigs/commradio/ctx10.c)
+            echo "Sources/RigControl/Protocols/CommRadio/CommRadioProtocol.swift"
+            echo "Sources/RigControl/Protocols/CommRadio/CommRadioModels.swift  (ctx10 factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+CommRadio.swift"
+            ;;
+        rigs/alinco/dx77.c)
+            echo "Sources/RigControl/Protocols/Alinco/AlincoProtocol.swift"
+            echo "Sources/RigControl/Protocols/Alinco/AlincoModels.swift  (dx77 / dxSR8 factories)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Alinco.swift"
+            ;;
+        rigs/aor/ar8600.c|rigs/aor/ar7030.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/AOR/AORProtocol.swift"
+            echo "Sources/RigControl/Protocols/AOR/AORModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+AOR.swift"
             ;;
 
         # --- Docs (informational, no code port) ----------------------

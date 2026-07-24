@@ -38,6 +38,14 @@ internal struct RadioIdentifyProbe {
             // and let the user configure manually.
             return .noResponse
 
+        case .guohetec, .anytone, .elad, .commradio, .alinco, .aor:
+            // v1.2.0 vendors — auto-detection not yet wired up.
+            // Each protocol adapter has a distinct identify
+            // sequence; adding those is a follow-up per adapter.
+            // Returning `noResponse` lets multi-radio discovery
+            // skip the port cleanly instead of erroring.
+            return .noResponse
+
         case .dummy:
             // The dummy radio isn't on any serial port. Return
             // noResponse so multi-radio discovery skips it

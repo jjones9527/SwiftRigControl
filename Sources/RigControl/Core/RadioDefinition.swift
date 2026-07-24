@@ -63,6 +63,30 @@ public struct RadioDefinition: Sendable {
         case lab599 = "Lab599"
         case flex = "FlexRadio"
 
+        // v1.2.0 additions. Downstream code that exhaustively switches
+        // on `Manufacturer` without a `default:` arm will fail to
+        // compile until updated — see the CHANGELOG for v1.2.0 for the
+        // migration note and the versioning-policy rationale for
+        // treating this as a minor bump.
+
+        /// Guohetec — Chinese HF SDR transceivers (PMR-171, Q900).
+        case guohetec = "Guohetec"
+
+        /// Anytone — Chinese DMR/tri-band transceivers (AT-D578UVIII).
+        case anytone = "Anytone"
+
+        /// Elad — Italian compact HF SDR transceivers (FDM-DUO).
+        case elad = "Elad"
+
+        /// CommRadio — small US amateur transceiver line (CTX-10).
+        case commradio = "CommRadio"
+
+        /// Alinco — Japanese amateur HF budget line (DX-77, DX-SR8).
+        case alinco = "Alinco"
+
+        /// AOR — wideband amateur receivers (AR-8600, AR-7030+).
+        case aor = "AOR"
+
         /// Generic in-memory dummy radio (no real manufacturer). Used
         /// by `RadioDefinition.dummy(...)` for previews, demo apps,
         /// and tutorials. The Swift analogue of Hamlib's Model 1.
@@ -353,6 +377,41 @@ public struct RadioDefinition: Sendable {
     /// that share the Kenwood-derived CAT command set documented
     /// in Hamlib `kenwood/flex6xxx.c`.
     public enum Flex {}
+
+    // v1.2.0 vendor namespaces — see Documentation/RADIO_PARITY_v1.2.md
+    // for the target radio list per vendor. Radios land in follow-up
+    // PRs; this plumbing PR creates the empty namespaces so consumer
+    // code that references `RadioDefinition.Guohetec` etc. compiles.
+
+    /// Guohetec — Chinese HF SDR transceivers (PMR-171, Q900).
+    /// Uses a proprietary binary protocol implemented in Hamlib
+    /// `rigs/guohetec/`.
+    public enum Guohetec {}
+
+    /// Anytone — Chinese DMR/tri-band transceivers (AT-D578UVIII).
+    /// Uses a serial CAT protocol implemented in Hamlib
+    /// `rigs/anytone/`.
+    public enum Anytone {}
+
+    /// Elad — Italian compact HF SDR transceivers (FDM-DUO).
+    /// Uses a text-based protocol implemented in Hamlib
+    /// `rigs/elad/`.
+    public enum Elad {}
+
+    /// CommRadio — US-designed amateur transceivers (CTX-10).
+    /// Uses a small serial protocol implemented in Hamlib
+    /// `rigs/commradio/`.
+    public enum CommRadio {}
+
+    /// Alinco — Japanese amateur HF budget line (DX-77, DX-SR8).
+    /// Uses a text-based protocol implemented in Hamlib
+    /// `rigs/alinco/`.
+    public enum Alinco {}
+
+    /// AOR — wideband amateur receivers (AR-8600, AR-7030+).
+    /// Uses a text-based protocol implemented in Hamlib
+    /// `rigs/aor/`.
+    public enum AOR {}
 }
 
 // MARK: - Connection Type

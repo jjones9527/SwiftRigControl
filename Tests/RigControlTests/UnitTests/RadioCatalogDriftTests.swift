@@ -160,7 +160,64 @@ import Testing
             RadioDefinition.allRadios(for: .lab599).map(\.model)
                 == RadioDefinition.Lab599.allRadios.map(\.model)
         )
+        // v1.2.0 new vendors — populated in follow-up adapter PRs.
+        // The dispatch match is enforced now so a new radio landing in
+        // a vendor namespace but not in `allRadios(for:)` fails CI.
+        #expect(
+            RadioDefinition.allRadios(for: .guohetec).map(\.model)
+                == RadioDefinition.Guohetec.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .anytone).map(\.model)
+                == RadioDefinition.Anytone.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .elad).map(\.model)
+                == RadioDefinition.Elad.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .commradio).map(\.model)
+                == RadioDefinition.CommRadio.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .alinco).map(\.model)
+                == RadioDefinition.Alinco.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .aor).map(\.model)
+                == RadioDefinition.AOR.allRadios.map(\.model)
+        )
         #expect(RadioDefinition.allRadios(for: .dummy).isEmpty)
+    }
+
+    // MARK: - v1.2.0 vendor namespaces — expected empty until adapter PRs land
+
+    @Test func guohetecCatalogIsEmptyUntilAdapterLands() {
+        // Empty is the correct state for v1.2.0-plumbing. Replace
+        // with a populated `expectedModels` check when the Guohetec
+        // adapter PR ships (see Documentation/RADIO_PARITY_v1.2.md
+        // Group A/B).
+        #expect(RadioDefinition.Guohetec.allRadios.isEmpty)
+    }
+
+    @Test func anytoneCatalogIsEmptyUntilAdapterLands() {
+        #expect(RadioDefinition.Anytone.allRadios.isEmpty)
+    }
+
+    @Test func eladCatalogIsEmptyUntilAdapterLands() {
+        #expect(RadioDefinition.Elad.allRadios.isEmpty)
+    }
+
+    @Test func commRadioCatalogIsEmptyUntilAdapterLands() {
+        #expect(RadioDefinition.CommRadio.allRadios.isEmpty)
+    }
+
+    @Test func alincoCatalogIsEmptyUntilAdapterLands() {
+        #expect(RadioDefinition.Alinco.allRadios.isEmpty)
+    }
+
+    @Test func aorCatalogIsEmptyUntilAdapterLands() {
+        #expect(RadioDefinition.AOR.allRadios.isEmpty)
     }
 
     // MARK: - Manufacturer tagging

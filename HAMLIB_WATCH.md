@@ -193,6 +193,69 @@ Xiegu radios speak CI-V and are supported in Hamlib via a shared file.
 | --- | --- |
 | TX-500 | `rigs/kenwood/tx500.c` |
 
+### Guohetec (0 radios shipped — v1.2.0 target)
+
+Chinese HF SDR line. Shared Guohetec framing lives in
+`rigs/guohetec/guohetec.c`. Q900 and PMR-171 land in the
+Guohetec adapter PR.
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/guohetec/guohetec.c` | Shared Guohetec framing |
+| `rigs/guohetec/guohetec.h` | Shared Guohetec types |
+| `rigs/guohetec/q900.c` | Q900 (planned v1.2.0) |
+| `rigs/guohetec/pmr171.c` | PMR-171 (planned v1.2.0) |
+
+### Anytone (0 radios shipped — v1.2.0 target)
+
+Chinese tri-band DMR flagship line. AT-D578UVIII lands in the
+Anytone adapter PR.
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/anytone/anytone.c` | Shared Anytone protocol |
+| `rigs/anytone/anytone.h` | Shared Anytone types |
+
+### Elad (0 radios shipped — v1.2.0 target)
+
+Italian compact HF SDR line. FDM-DUO lands in the Elad adapter
+PR.
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/elad/fdm_duo.c` | FDM-DUO (planned v1.2.0) |
+
+### CommRadio (0 radios shipped — v1.2.0 target)
+
+US-designed amateur transceiver line. CTX-10 lands in the
+CommRadio adapter PR.
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/commradio/ctx10.c` | CTX-10 (planned v1.2.0) |
+
+### Alinco (0 radios shipped — v1.2.0 target)
+
+Japanese amateur HF budget line. DX-77 and DX-SR8 land in the
+Alinco adapter PR.
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/alinco/dx77.c` | DX-77 + DX-SR8 (planned v1.2.0) |
+
+### AOR (0 radios shipped — v1.2.0 target)
+
+Wideband amateur receiver line. AR-8600 and AR-7030+ land in
+the AOR adapter PR. See `Documentation/RADIO_PARITY_v1.2.md`
+for the rationale on which AOR models are included vs
+deferred (14 further AOR models exist in Hamlib but fall
+below the 50-radio v1.2.0 cutoff).
+
+| Watched Hamlib source | Covers |
+| --- | --- |
+| `rigs/aor/ar8600.c` | AR-8600 (planned v1.2.0) |
+| `rigs/aor/ar7030.c` | AR-7030+ (planned v1.2.0) |
+
 ## Also watched (project-wide signal)
 
 These are not per-radio but affect the whole project. The script
