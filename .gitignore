@@ -25,8 +25,9 @@ DerivedData/
 # PDFs (copyrighted manufacturer manuals - users should download from source)
 *.pdf
 
-# Test scripts
+# Test scripts (ad-hoc; committed scripts live under Scripts/)
 *.sh
+!Scripts/*.sh
 
 # Editor directories
 .vscode/

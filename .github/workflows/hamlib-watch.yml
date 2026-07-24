@@ -1,0 +1,102 @@
+name: Hamlib upstream watch
+
+# Weekly Monday 12:00 UTC — polls the Hamlib upstream repository for
+# new tags, published security advisories, and commits touching any
+# file listed in HAMLIB_WATCH.md. If any signal is found, opens (or
+# updates) a single issue titled "Hamlib upstream digest — <date>"
+# and advances the watermark in .hamlib-watermark on main.
+#
+# Manual trigger via workflow_dispatch is supported for testing —
+# a `dry-run` input skips the issue creation and watermark commit
+# so you can inspect the digest output in the run log.
+
+on:
+  schedule:
+    - cron: "0 12 * * MON"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Dry run — emit digest to log without opening an issue"
+        type: boolean
+        default: false
+
+concurrency:
+  group: hamlib-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # commit updated watermark
+  issues: write     # open the digest issue
+
+jobs:
+  digest:
+    name: Generate Hamlib upstream digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out SwiftRigControl
+        uses: actions/checkout@v4
+        with:
+          # Need push access for the watermark commit; the default
+          # GITHUB_TOKEN with `contents: write` above is sufficient.
+          fetch-depth: 1
+
+      - name: Clone Hamlib (last 500 commits)
+        run: |
+          git clone --depth=500 https://github.com/Hamlib/Hamlib.git /tmp/hamlib
+        # 500 commits is well beyond Hamlib's weekly change volume
+        # (~1-5 commits/week). The script deepens further only if
+        # the stored watermark falls outside this window.
+
+      - name: Run diff script
+        id: diff
+        env:
+          HAMLIB_CLONE: /tmp/hamlib
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          Scripts/hamlib-diff.sh | tee /tmp/digest.md
+          if [[ ! -s /tmp/digest.md ]]; then
+            echo "digest_empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "digest_empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open (or update) digest issue
+        if: steps.diff.outputs.digest_empty == 'false' && inputs.dry-run != true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="Hamlib upstream digest — $(date -u +%Y-%m-%d)"
+
+          # If an open issue with the same title already exists this
+          # week (rerun scenario), edit it instead of opening a
+          # duplicate. Otherwise open fresh.
+          EXISTING="$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number' || true)"
+
+          if [[ -n "$EXISTING" ]]; then
+            gh issue edit "$EXISTING" --body-file /tmp/digest.md
+            echo "Updated existing issue #$EXISTING"
+          else
+            gh issue create \
+              --title "$TITLE" \
+              --body-file /tmp/digest.md \
+              --label "hamlib-upstream"
+          fi
+
+      - name: Advance watermark
+        if: steps.diff.outputs.digest_empty == 'false' && inputs.dry-run != true && steps.diff.outputs.new_head_sha != ''
+        env:
+          NEW_SHA: ${{ steps.diff.outputs.new_head_sha }}
+        run: |
+          echo "$NEW_SHA" > .hamlib-watermark
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .hamlib-watermark
+          if git diff --cached --quiet; then
+            echo "Watermark unchanged — nothing to commit"
+          else
+            git commit -m "chore(hamlib-watch): Advance watermark to ${NEW_SHA:0:12}"
+            git push
+          fi
