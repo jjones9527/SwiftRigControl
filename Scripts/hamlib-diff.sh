@@ -192,6 +192,94 @@ section_advisories() {
     fi
 }
 
+section_new_radios() {
+    # Surfaces newly-added .c source files under the vendor directories
+    # SwiftRigControl mirrors. Hamlib ships a new radio as either a
+    # single `rigs/<vendor>/<model>.c` or a subdirectory of files (the
+    # FTX-1 pattern). A .c add in a mirrored vendor dir is a strong
+    # signal that either (a) a new radio landed and we should evaluate
+    # porting it, or (b) an existing radio got a per-model refactor
+    # split-out — either way, worth a look.
+    #
+    # We restrict to .c files because Hamlib adds are noisy: doc files,
+    # shell scripts, and headers show up alongside the substantive
+    # source. If a vendor tree only sees new headers/docs without a
+    # corresponding .c, we skip the section for that commit.
+    local since="$1"
+
+    # Vendor directories to watch for new-radio adds. Kept in sync with
+    # the vendors SwiftRigControl covers — extending SwiftRigControl to
+    # a new vendor should also add the vendor dir here.
+    local vendor_dirs=(
+        rigs/icom
+        rigs/yaesu
+        rigs/kenwood
+        rigs/tentec
+        rigs/flexradio
+    )
+
+    # `git log --diff-filter=A --name-only` on the vendor dirs lists
+    # every commit that added a file. We keep only .c files (skip .h,
+    # docs, scripts, PDFs, etc.).
+    local raw
+    raw="$(git -C "$HAMLIB_CLONE" log \
+        --no-merges \
+        --diff-filter=A \
+        --format='COMMIT %h %s' \
+        --name-only \
+        "$since..HEAD" \
+        -- "${vendor_dirs[@]}" 2>/dev/null || true)"
+
+    if [[ -z "$raw" ]]; then return; fi
+
+    # Group by commit: each commit's added .c files under one bullet,
+    # with the commit subject as the heading. Skip commits whose only
+    # additions are non-.c files (headers, docs, scripts).
+    local out=""
+    local current_commit=""
+    local current_subject=""
+    local current_files=""
+    local emit_block
+
+    emit_block() {
+        [[ -z "$current_commit" || -z "$current_files" ]] && return
+        out+="- [\`$current_commit\`](https://github.com/Hamlib/Hamlib/commit/$current_commit) — $current_subject"$'\n'
+        # De-dup + sort so the file list is stable.
+        local unique_files
+        unique_files="$(printf '%s\n' $current_files | sort -u)"
+        while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            out+="    - \`$f\`"$'\n'
+        done <<< "$unique_files"
+    }
+
+    while IFS= read -r line; do
+        if [[ "$line" == COMMIT\ * ]]; then
+            emit_block
+            current_files=""
+            # Parse: "COMMIT <hash> <subject>"
+            current_commit="${line#COMMIT }"
+            current_commit="${current_commit%% *}"
+            current_subject="${line#COMMIT * }"
+        elif [[ "$line" == *.c ]]; then
+            current_files+="$line "
+        fi
+    done <<< "$raw"
+    emit_block
+
+    if [[ -z "$out" ]]; then return; fi
+
+    _ANYTHING_ACTIONABLE=1
+    echo "## Potentially new radios in Hamlib"
+    echo
+    echo "New \`.c\` source files added under vendor directories SwiftRigControl"
+    echo "mirrors. Usually either a new radio landed upstream or an existing"
+    echo "radio got a per-model refactor. Worth a look before triaging the"
+    echo "commit list below."
+    echo
+    echo "$out"
+}
+
 section_watched_commits() {
     local since="$1"
     local paths_file
@@ -262,6 +350,7 @@ trap "rm -f '$DIGEST_FILE'" EXIT
 
 {
     warn_missing_paths
+    section_new_radios "$WATERMARK"
     section_new_tags "$WATERMARK"
     section_watched_commits "$WATERMARK"
     section_advisories "$WATERMARK"
