@@ -38,6 +38,19 @@ public struct RadioDefinition: Sendable {
     /// Protocol factory closure
     private let protocolFactory: @Sendable (any SerialTransport) -> any CATProtocol
 
+    /// Optional closure that rebuilds this definition with a different
+    /// CI-V address, invoking the same vendor-namespace factory used to
+    /// build the original. Populated by Icom radio factories; `nil` for
+    /// every other manufacturer.
+    ///
+    /// The `RadioDefinition/civAddress` field alone cannot be mutated in
+    /// place because the `protocolFactory` closure captures the address
+    /// at construction time. A rebuilder is the only way to produce a
+    /// copy whose protocol will actually talk on the new bus address.
+    ///
+    /// See `withCivAddress(_:)`.
+    private let civAddressRebuilder: (@Sendable (UInt8?) -> RadioDefinition)?
+
     /// The manufacturer of a radio. The raw value is a
     /// human-readable name suitable for display in UI.
     public enum Manufacturer: String, Sendable {
@@ -234,6 +247,12 @@ public struct RadioDefinition: Sendable {
     ///     on ``SerialDefaults``.
     ///   - protocolFactory: Closure that builds a `CATProtocol`
     ///     conformer over a given transport.
+    ///   - civAddressRebuilder: Optional closure that rebuilds this
+    ///     definition with a new CI-V address, invoking the same vendor
+    ///     factory used to construct the original. Populated by Icom
+    ///     radio factories so `withCivAddress(_:)` can produce a copy
+    ///     whose `protocolFactory` also honours the new address; leave
+    ///     `nil` for non-Icom radios.
     public init(
         manufacturer: Manufacturer,
         model: String,
@@ -242,7 +261,8 @@ public struct RadioDefinition: Sendable {
         civAddress: UInt8? = nil,
         verificationStatus: VerificationStatus = .definition,
         serialDefaults: SerialDefaults = .standard,
-        protocolFactory: @escaping @Sendable (any SerialTransport) -> any CATProtocol
+        protocolFactory: @escaping @Sendable (any SerialTransport) -> any CATProtocol,
+        civAddressRebuilder: (@Sendable (UInt8?) -> RadioDefinition)? = nil
     ) {
         self.manufacturer = manufacturer
         self.model = model
@@ -252,6 +272,7 @@ public struct RadioDefinition: Sendable {
         self.verificationStatus = verificationStatus
         self.serialDefaults = serialDefaults
         self.protocolFactory = protocolFactory
+        self.civAddressRebuilder = civAddressRebuilder
     }
 
     /// Creates a protocol instance for this radio.
@@ -262,6 +283,37 @@ public struct RadioDefinition: Sendable {
     /// Full radio name (manufacturer + model)
     public var fullName: String {
         "\(manufacturer.rawValue) \(model)"
+    }
+
+    /// Returns a copy of this definition with the given CI-V bus
+    /// address, rebuilt through the same vendor factory that produced
+    /// the original.
+    ///
+    /// Meaningful only for Icom radios — every Icom factory in
+    /// `RadioDefinition.Icom` populates the internal rebuilder hook so
+    /// `withCivAddress(0x94)` produces a definition whose stored
+    /// `civAddress` **and** underlying `protocolFactory` both use the
+    /// new address. Non-Icom definitions return `self` unchanged.
+    ///
+    /// Passing `nil` restores the model's default CI-V address (the
+    /// value used when the factory is called without a `civAddress:`
+    /// argument).
+    ///
+    /// ## Example
+    ///
+    /// ```swift
+    /// // Two IC-7300s on the same bus need distinct addresses:
+    /// let rig1 = RadioDefinition.Icom.ic7300()                  // 0x94
+    /// let rig2 = RadioDefinition.Icom.ic7300().withCivAddress(0x95)
+    /// ```
+    ///
+    /// - Parameter civAddress: New CI-V bus address, or `nil` to use
+    ///   the radio's factory default.
+    /// - Returns: A copy of this definition wired to the new address,
+    ///   or `self` if the radio is not Icom.
+    public func withCivAddress(_ civAddress: UInt8?) -> RadioDefinition {
+        guard let civAddressRebuilder else { return self }
+        return civAddressRebuilder(civAddress)
     }
 
     // MARK: - Vendor namespaces

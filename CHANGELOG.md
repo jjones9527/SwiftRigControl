@@ -21,6 +21,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-24
+
+Additive catalog release. Downstream Swift apps that build radio
+pickers or model-name matchers currently hand-maintain parallel
+lists of every SwiftRigControl radio, and drift between the app
+and the library has caused user-visible bugs (a picker offering a
+radio the matcher couldn't find). This release makes
+SwiftRigControl the single source of truth for the catalog so
+downstream apps can iterate `Vendor.allRadios` instead of
+hard-coding arrays.
+
+No behavior changes for connected radios; no removals; no
+signature changes.
+
+### Added
+
+- `RadioDefinition.<Vendor>.allRadios` — a `[RadioDefinition]`
+  static on each vendor namespace (`Icom`, `Yaesu`, `Kenwood`,
+  `Elecraft`, `Xiegu`, `Flex`, `TenTec`, `Lab599`), sorted
+  alphabetically by model. Enumerates every shipped radio for that
+  vendor. Icom entries are built with each factory's default CI-V
+  address; use `withCivAddress(_:)` to override at connect time.
+
+- `RadioDefinition.allSupportedRadios` — top-level `[RadioDefinition]`
+  aggregate that concatenates every vendor's `allRadios`. The
+  generic in-memory `dummy(name:capabilities:)` factory is
+  intentionally excluded (it takes user-supplied name and
+  capabilities and has no canonical entry).
+
+- `RadioDefinition.allRadios(for: Manufacturer)` — returns the
+  matching vendor's array, or `[]` for `.dummy`.
+
+- `RadioDefinition.withCivAddress(_:)` — returns a copy of an
+  Icom definition rebuilt through the same factory with the given
+  CI-V bus address. Non-Icom definitions return `self`. Passing
+  `nil` restores the model's factory default. Every Icom factory
+  populates an internal rebuilder hook that `withCivAddress`
+  dispatches to, so both `RadioDefinition.civAddress` **and** the
+  underlying `protocolFactory` closure honour the new address —
+  a plain struct copy would not (the closure captures the
+  address at construction time).
+
+- `RadioDefinition.init` gains an optional
+  `civAddressRebuilder:` parameter (default `nil`) that the Icom
+  factories use to wire the rebuilder hook. Non-Icom callers can
+  ignore it.
+
+### Migration (downstream consumers)
+
+Apps that hand-maintain radio catalogs can now replace:
+
+```swift
+// Before
+let icomRadios: [RadioDefinition] = [
+    .Icom.ic7300(), .Icom.ic7300MK2(), .Icom.ic7600(), /* ... */
+]
+
+func matchIcom(_ model: String, civAddress: UInt8?) -> RadioDefinition? {
+    if model.contains("7300") { return .Icom.ic7300(civAddress: civAddress) }
+    // ...
+}
+```
+
+with:
+
+```swift
+// After
+let icomRadios = RadioDefinition.Icom.allRadios
+
+func match(_ model: String, civAddress: UInt8?) -> RadioDefinition? {
+    RadioDefinition.allSupportedRadios
+        .first { $0.model == model }?
+        .withCivAddress(civAddress)  // no-op for non-Icom
+}
+```
+
+Every future radio added here becomes zero-touch for consumers
+that shifted to `allRadios`.
+
+### Tests
+
+- `RadioCatalogDriftTests` — hand-maintained expected model-name
+  sets per vendor assert `Set` equality with
+  `Vendor.allRadios.map(\.model)`. When someone adds a new radio
+  to a vendor's Models file but forgets to register it in
+  `RadioDefinition+Catalog.swift`, the test fails until both
+  lists agree. Also covers alphabetical sort order, manufacturer
+  tagging, `allSupportedRadios` aggregation, `allRadios(for:)`
+  dispatch, and the `withCivAddress(_:)` contract (override,
+  restore-to-default, non-Icom no-op, and that every Icom
+  factory populates its rebuilder).
+
 ## [1.1.2] - 2026-07-15
 
 Safety-focused patch release. Started as a fix for the Yaesu HF

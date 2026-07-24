@@ -51,7 +51,18 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.1.2** (git tag, 2026-07-15), a
+The current work-in-progress is **v1.1.3** (2026-07-24), an
+additive catalog release that adds `Vendor.allRadios` static
+arrays, a top-level `RadioDefinition.allSupportedRadios` /
+`allRadios(for:)` aggregate, and a `withCivAddress(_:)` helper
+on `RadioDefinition` so downstream apps can drop the parallel
+hand-maintained radio-catalog lists that currently drift
+against the library. Ships every currently-known radio (45
+Icom, 25 Yaesu, 15 Kenwood, 6 Elecraft, 5 Ten-Tec, 3 Xiegu, 3
+FlexRadio-family, 1 Lab599 = 103 total). No radio behavior
+changes, no removals, no signature changes.
+
+The previously-shipped release is **v1.1.2** (git tag, 2026-07-15), a
 safety-focused patch release. Started as a fix for the Yaesu HF
 serial-framing bug (issue #12) but expanded into a full
 seven-vendor Hamlib parity audit that surfaced a Kenwood

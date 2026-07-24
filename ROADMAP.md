@@ -1,12 +1,17 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.1.2 (cut 2026-07-15 — safety patch. Fixes
-Yaesu HF stop-bit / handshake mis-framing (issue #12), Kenwood
-setPTT / getPTT bugs that keyed the transmitter, Yaesu split /
-selectVFO command collision, plus per-radio serial-framing gaps
-and correctness fixes across seven vendors. Grounded in a
-Hamlib parity audit — see CHANGELOG.md for provenance. Follows
-v1.1.1 cut 2026-07-10 for Yaesu PTT-on-connect, issue #11.)
+**Current version:** v1.1.3 (in flight 2026-07-24 — additive catalog
+release: `Vendor.allRadios` static arrays, `allSupportedRadios` +
+`allRadios(for:)` aggregate, `withCivAddress(_:)` helper. Lets
+downstream apps drop the parallel radio catalogs they were
+hand-maintaining. No behavior changes.) Previous release
+**v1.1.2** (cut 2026-07-15 — safety patch. Fixes Yaesu HF stop-bit
+/ handshake mis-framing (issue #12), Kenwood setPTT / getPTT bugs
+that keyed the transmitter, Yaesu split / selectVFO command
+collision, plus per-radio serial-framing gaps and correctness
+fixes across seven vendors. Grounded in a Hamlib parity audit —
+see CHANGELOG.md for provenance. Follows v1.1.1 cut 2026-07-10
+for Yaesu PTT-on-connect, issue #11.)
 **Swift tools:** 6.2, language mode `.v6` (strict concurrency)
 **Minimum platform:** macOS 14
 **License:** LGPL v3.0

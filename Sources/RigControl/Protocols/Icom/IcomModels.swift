@@ -55,7 +55,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7600,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7600
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7600(civAddress: $0) }
         )
     }
 
@@ -81,7 +82,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7300,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7300MK2
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7300MK2(civAddress: $0) }
         )
     }
 
@@ -104,7 +106,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7300,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7300
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7300(civAddress: $0) }
         )
     }
 
@@ -130,7 +133,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7610,  // Same command set as IC-7610
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7760
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7760(civAddress: $0) }
         )
     }
 
@@ -153,7 +157,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7610,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7610
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7610(civAddress: $0) }
         )
     }
 
@@ -179,7 +184,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC7100CommandSet(),
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7100
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7100(civAddress: $0) }
         )
     }
 
@@ -203,7 +209,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC9700CommandSet(),
                     capabilities: RadioCapabilitiesDatabase.Icom.ic9700
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic9700(civAddress: $0) }
         )
     }
 
@@ -226,7 +233,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC7100CommandSet.ic705,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic705
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic705(civAddress: $0) }
         )
     }
 
@@ -249,7 +257,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic703,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic703
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic703(civAddress: $0) }
         )
     }
 
@@ -274,7 +283,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC706CommandSet.ic706,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic706
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic706(civAddress: $0) }
         )
     }
 
@@ -297,7 +307,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC706CommandSet.ic706MKII,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic706MKII
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic706MKII(civAddress: $0) }
         )
     }
 
@@ -320,7 +331,8 @@ extension RadioDefinition.Icom {
                     commandSet: IC706CommandSet.ic706MKIIG,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic706MKIIG
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic706MKIIG(civAddress: $0) }
         )
     }
 
@@ -343,7 +355,8 @@ extension RadioDefinition.Icom {
                     commandSet: StandardIcomCommandSet.ic7000,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7000
                 )
-            }
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.ic7000(civAddress: $0) }
         )
     }
 
