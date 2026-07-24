@@ -280,6 +280,29 @@ section_new_radios() {
     echo "$out"
 }
 
+# Returns 0 if the subject looks like a low-signal refactor / cosmetic
+# change (skimmable), 1 if it looks like a substantive fix, feature,
+# or behavior change (port candidate). Default is 1 — better to
+# over-surface than to hide something actionable.
+#
+# The refactor patterns are the distinctive ones. Fix/feature language
+# is broad ("update", "add", "implement" can all be substantive) so we
+# treat unknowns as fixes.
+is_refactor_subject() {
+    local subject="$1"
+    # Case-insensitive match against a bar-delimited alternation.
+    # Anchored fragments — "reduce", "cleanup", "tidy" are unambiguous
+    # refactor language in Hamlib's history. "make X boolean/const/static"
+    # is the pervasive C-modernization pattern in recent commits.
+    local pattern='(^|[^a-z])(make (a few |more |some )?(variables|switches|flags|data|routines|extcmds|columns) (boolean|const|static|inline)|make .* (boolean|const|static)|(routines|data|columns|flags|variables) (made|converted to) (static|const|boolean)|reduce ([a-z ]+)?(scoping|scope)|scope reduction|shrink scope|clean up|cleanup|tidy up|tidy|rename macro|quell (clang |gcc )?warning|silence (clang |gcc )?warning|remove old-fashioned|remove redundant|remove all traces|change ncboolean|change .* to a .* typedef|convert .* to bool|get rid of static|first steps toward removing|use variable instead|use the data in|move tuning step list|update the last of|update .* (version|comments|news|releasenotes)|use bounded %|update news|trading a little more data)'
+    local lc
+    lc="$(echo "$subject" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$lc" =~ $pattern ]]; then
+        return 0  # is a refactor
+    fi
+    return 1  # not obviously a refactor → treat as substantive
+}
+
 section_watched_commits() {
     local since="$1"
     local paths_file
@@ -304,24 +327,54 @@ section_watched_commits() {
     if [[ -z "$commits" ]]; then return; fi
     _ANYTHING_ACTIONABLE=1
 
-    local count
-    count="$(echo "$commits" | wc -l | tr -d ' ')"
-    echo "## Commits touching watched Hamlib paths ($count since $(git -C "$HAMLIB_CLONE" show -s --format=%cs "$since" 2>/dev/null))"
-    echo
+    local since_date
+    since_date="$(git -C "$HAMLIB_CLONE" show -s --format=%cs "$since" 2>/dev/null)"
+
+    # Partition into two buckets.
+    local fixes=""
+    local refactors=""
+    local fix_count=0
+    local refactor_count=0
+
     while IFS='|' read -r sha date subject; do
         [[ -z "$sha" ]] && continue
-        # Show which watched files each commit touched — high-signal
-        # context for the human triaging the digest.
         local files
         files="$(git -C "$HAMLIB_CLONE" show --name-only --format= "$sha" -- $(cat "$paths_file") 2>/dev/null | \
             sort -u | head -5 | sed 's/^/    - /')"
-        echo "- [\`$sha\`](https://github.com/Hamlib/Hamlib/commit/$sha) — ${subject}"
-        echo "  <sub>${date}</sub>"
+        local entry
+        entry="- [\`$sha\`](https://github.com/Hamlib/Hamlib/commit/$sha) — ${subject}
+  <sub>${date}</sub>"
         if [[ -n "$files" ]]; then
-            echo "$files"
+            entry+="
+$files"
+        fi
+
+        if is_refactor_subject "$subject"; then
+            refactors+="$entry"$'\n'
+            refactor_count=$((refactor_count + 1))
+        else
+            fixes+="$entry"$'\n'
+            fix_count=$((fix_count + 1))
         fi
     done <<< "$commits"
-    echo
+
+    if [[ "$fix_count" -gt 0 ]]; then
+        echo "## Fixes / behavior changes touching watched Hamlib paths ($fix_count since $since_date)"
+        echo
+        echo "_Fixes, new capabilities, and behavior changes — port candidates._"
+        echo
+        echo "$fixes"
+    fi
+
+    if [[ "$refactor_count" -gt 0 ]]; then
+        echo "<details><summary><b>Refactors / cosmetic changes ($refactor_count) — skim only</b></summary>"
+        echo
+        echo "_Cleanup, renames, boolean/const conversions, scope reductions — not typically portable, but included for completeness._"
+        echo
+        echo "$refactors"
+        echo "</details>"
+        echo
+    fi
 }
 
 # --- main --------------------------------------------------------------
