@@ -280,6 +280,209 @@ section_new_radios() {
     echo "$out"
 }
 
+# Maps a Hamlib source file path to the SwiftRigControl file(s) a port
+# of that change would touch. Emits one Swift path per line to stdout;
+# emits nothing when the Hamlib path is genuinely out of scope (e.g.
+# a documentation file we watch but don't mirror).
+#
+# The rules follow SwiftRigControl's layout as of v1.1.3:
+#
+# - Icom shared framing → the Icom protocol core + every Icom model
+#   file (a change to icom.c potentially affects every Icom radio).
+# - Icom per-model → the specific factory + capability database entry
+#   + per-model CommandSet if one exists.
+# - Kenwood shared → KenwoodProtocol.swift + every Kenwood radio file
+#   (kenwood.c is used by Elecraft, Lab599, Flex, Xiegu too — those
+#   downstream vendors are added when appropriate).
+# - Yaesu newcat.c → YaesuCATProtocol.swift + every modern Yaesu; a
+#   yaesu.c change → every Yaesu (classic + modern).
+# - Ten-Tec framing → both TenTec protocols + every Ten-Tec radio.
+# - rigctld tests/rigctl_parse.c and tests/rigctld.c → our Network/
+#   layer, which is byte-compatible with Hamlib's rigctld.
+# - include/hamlib/rig.h → CATProtocol.swift + capability traits (the
+#   canonical Hamlib API surface, mirrored in Swift).
+#
+# When a Hamlib file has no clear Swift equivalent (e.g. rigs/dummy/
+# on a shared file we don't mirror), the function stays silent so the
+# port-work-orders section doesn't get polluted with dead-ends.
+hamlib_to_swift() {
+    local p="$1"
+    case "$p" in
+        # --- Icom -----------------------------------------------------
+        rigs/icom/icom.c|rigs/icom/icom.h|rigs/icom/frame.c|rigs/icom/frame.h)
+            # Shared CI-V framing / command dispatch — affects every
+            # Icom radio in SwiftRigControl.
+            echo "Sources/RigControl/Protocols/Icom/IcomCIVProtocol.swift"
+            echo "Sources/RigControl/Protocols/Icom/CIVFrame.swift"
+            echo "Sources/RigControl/Protocols/Icom/CIVCommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/StandardIcomCommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (+HF, +VHF variants)"
+            ;;
+        rigs/icom/xiegu.c)
+            # Xiegu uses the Icom CI-V family under the hood.
+            echo "Sources/RigControl/Protocols/Xiegu/XieguModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Xiegu.swift"
+            ;;
+        rigs/icom/ic7100.c)
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/IC7100CommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (ic7100 factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift  (or +IcomFlagships/+IcomCompact)"
+            ;;
+        rigs/icom/ic706.c)
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/IC706CommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (ic706/ic706MKII/ic706MKIIG factories)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+IcomLegacy.swift"
+            ;;
+        rigs/icom/ic746.c)
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/IC746CommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels+HF.swift  (ic746/ic746PRO factories)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift  (or +IcomLegacy)"
+            ;;
+        rigs/icom/ic756.c)
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/IC756CommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels+HF.swift  (ic756/PRO/PROII/PROIII)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+IcomLegacy.swift"
+            ;;
+        rigs/icom/ic9100.c)
+            # Also covers IC-9700 in Hamlib (shared CI-V family).
+            echo "Sources/RigControl/Protocols/Icom/CommandSets/IC9700CommandSet.swift"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (ic9700 factory)"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels+HF.swift  (ic9100 factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift"
+            ;;
+        rigs/icom/ic7300.c)
+            # Hamlib's ic7300.c also references IC-905 and IC-9700.
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (ic7300/ic7300MK2/ic9700)"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels+VHF.swift  (ic905)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift"
+            ;;
+        rigs/icom/ic7600.c|rigs/icom/ic7610.c|rigs/icom/ic7700.c|rigs/icom/ic7760.c|rigs/icom/ic7800.c|rigs/icom/ic785x.c|rigs/icom/ic7410.c|rigs/icom/ic7000.c|rigs/icom/ic7200.c|rigs/icom/ic718.c|rigs/icom/ic703.c|rigs/icom/ic735.c|rigs/icom/ic751.c|rigs/icom/ic820h.c|rigs/icom/ic910.c|rigs/icom/ic970.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift  (or +IcomLegacy/+IcomFlagships)"
+            ;;
+        rigs/icom/ic2730.c|rigs/icom/id4100.c|rigs/icom/id5100.c|rigs/icom/id31.c|rigs/icom/id51.c|rigs/icom/id52plus.c|rigs/icom/ic92d.c|rigs/icom/icr30.c|rigs/icom/icr75.c|rigs/icom/icr8600.c|rigs/icom/icr9500.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Icom/IcomModels+VHF.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift  (or +IcomCompact)"
+            ;;
+
+        # --- Kenwood family (Kenwood + Elecraft + Lab599 + Flex) ------
+        rigs/kenwood/kenwood.c|rigs/kenwood/kenwood.h)
+            # Shared Kenwood text-protocol logic — the safety patch in
+            # v1.1.2 was almost entirely driven by this file.
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodProtocol.swift  (+extensions)"
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            echo "Sources/RigControl/Protocols/Elecraft/  (downstream — same protocol base)"
+            echo "Sources/RigControl/Protocols/Kenwood/Lab599Models.swift  (downstream)"
+            echo "Sources/RigControl/Protocols/Kenwood/FlexModels.swift  (downstream)"
+            ;;
+        rigs/kenwood/elecraft.c)
+            echo "Sources/RigControl/Protocols/Elecraft/ElecraftProtocol.swift  (+extensions)"
+            echo "Sources/RigControl/Protocols/Elecraft/ElecraftModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Elecraft.swift"
+            ;;
+        rigs/kenwood/k2.c|rigs/kenwood/k3.c)
+            # k3.c covers KX2, KX3, K3, K3S, K4 in Hamlib.
+            echo "Sources/RigControl/Protocols/Elecraft/ElecraftModels.swift  (${p##*/} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Elecraft.swift"
+            ;;
+        rigs/kenwood/thd72.c|rigs/kenwood/thd74.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Kenwood/THD72Protocol.swift  (if TH-D72-specific)"
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            ;;
+        rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts2000.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            ;;
+        rigs/kenwood/tx500.c)
+            echo "Sources/RigControl/Protocols/Kenwood/Lab599Models.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Lab599.swift"
+            ;;
+        rigs/kenwood/flex.c|rigs/kenwood/flex6xxx.c|rigs/kenwood/flex.h)
+            echo "Sources/RigControl/Protocols/Kenwood/FlexModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Flex.swift"
+            ;;
+
+        # --- Yaesu ----------------------------------------------------
+        rigs/yaesu/newcat.c|rigs/yaesu/newcat.h)
+            # Every modern Yaesu (FT-710/891/950/991/991A/2000/FTDX-*).
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuCATProtocol.swift  (+extensions)"
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuModern.swift"
+            ;;
+        rigs/yaesu/yaesu.c|rigs/yaesu/yaesu.h)
+            # Classic Yaesu framing — FT-100/817/818/847/857/897/920/1000MP.
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuCATProtocol.swift"
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuLegacy.swift"
+            ;;
+        rigs/yaesu/ft710.c|rigs/yaesu/ft891.c|rigs/yaesu/ft950.c|rigs/yaesu/ft991.c|rigs/yaesu/ft2000.c|rigs/yaesu/ftdx10.c|rigs/yaesu/ftdx101.c|rigs/yaesu/ftdx101mp.c|rigs/yaesu/ft1200.c|rigs/yaesu/ft3000.c|rigs/yaesu/ft5000.c|rigs/yaesu/ft9000.c|rigs/yaesu/ft450.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuModern.swift"
+            ;;
+        rigs/yaesu/ft817.c|rigs/yaesu/ft847.c|rigs/yaesu/ft857.c|rigs/yaesu/ft897.c|rigs/yaesu/ft920.c|rigs/yaesu/ft100.c|rigs/yaesu/ft1000mp.c)
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuLegacy.swift"
+            ;;
+
+        # --- Ten-Tec --------------------------------------------------
+        rigs/tentec/tentec.c|rigs/tentec/tentec.h|rigs/tentec/tentec2.c|rigs/tentec/tentec2.h)
+            echo "Sources/RigControl/Protocols/TenTec/TenTecOrionProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecLegacyProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+TenTec.swift"
+            ;;
+        rigs/tentec/orion.c|rigs/tentec/orion.h)
+            echo "Sources/RigControl/Protocols/TenTec/TenTecOrionProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift  (orion/orionII/eagle)"
+            ;;
+        rigs/tentec/jupiter.c)
+            echo "Sources/RigControl/Protocols/TenTec/TenTecLegacyProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift  (jupiter)"
+            ;;
+        rigs/tentec/pegasus.c)
+            echo "Sources/RigControl/Protocols/TenTec/TenTecLegacyProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift  (pegasus)"
+            ;;
+
+        # --- rigctld & top-level API ---------------------------------
+        tests/rigctl_parse.c|tests/rigctld.c)
+            # The rigctld protocol bridge — byte-compatible with Hamlib's.
+            echo "Sources/RigControl/Network/RigctldCommandHandler.swift"
+            echo "Sources/RigControl/Network/RigctldCommandParser.swift"
+            echo "Sources/RigControl/Network/RigControlServer.swift"
+            ;;
+        include/hamlib/rig.h)
+            # Canonical Hamlib API surface — SwiftRigControl mirrors it
+            # via CATProtocol + capability traits.
+            echo "Sources/RigControl/Core/CATProtocol.swift"
+            echo "Sources/RigControl/Core/CATProtocolTraits.swift"
+            ;;
+
+        # --- Docs (informational, no code port) ----------------------
+        NEWS|ChangeLog|ReleaseNotes_*.md)
+            # No Swift equivalent — read for release-note context.
+            ;;
+
+        *)
+            # Unknown path — emit nothing rather than a wrong guess.
+            ;;
+    esac
+}
+
 # Returns 0 if the subject looks like a low-signal refactor / cosmetic
 # change (skimmable), 1 if it looks like a substantive fix, feature,
 # or behavior change (port candidate). Default is 1 — better to
@@ -301,6 +504,54 @@ is_refactor_subject() {
         return 0  # is a refactor
     fi
     return 1  # not obviously a refactor → treat as substantive
+}
+
+# Global buffer of unique Hamlib paths touched by any commit in the
+# digest. Populated by section_watched_commits and section_new_radios
+# as they iterate; consumed by section_port_work_orders at the end.
+_TOUCHED_HAMLIB_PATHS=""
+
+_record_touched_paths() {
+    # Append newline-separated paths (dedup happens at emit time).
+    _TOUCHED_HAMLIB_PATHS+="$1"$'\n'
+}
+
+section_port_work_orders() {
+    # For every unique Hamlib source file touched in the digest, emit
+    # the SwiftRigControl file(s) a port would touch. Turns the commit
+    # list from "here's what changed" into "here's what to edit."
+    [[ -z "$_TOUCHED_HAMLIB_PATHS" ]] && return
+
+    local unique_paths
+    unique_paths="$(echo "$_TOUCHED_HAMLIB_PATHS" | grep -v '^$' | sort -u)"
+    [[ -z "$unique_paths" ]] && return
+
+    local out=""
+    local any_mapping=0
+    while IFS= read -r path; do
+        [[ -z "$path" ]] && continue
+        local mapped
+        mapped="$(hamlib_to_swift "$path")"
+        if [[ -n "$mapped" ]]; then
+            out+="**\`$path\`**"$'\n'
+            while IFS= read -r swift; do
+                [[ -z "$swift" ]] && continue
+                out+="- \`$swift\`"$'\n'
+            done <<< "$mapped"
+            out+=$'\n'
+            any_mapping=1
+        fi
+    done <<< "$unique_paths"
+
+    [[ "$any_mapping" -eq 0 ]] && return
+
+    echo "## Port work orders"
+    echo
+    echo "For every unique Hamlib file touched above, the SwiftRigControl file(s)"
+    echo "a port would edit. Use as a work-order checklist when porting the fixes"
+    echo "in the previous section."
+    echo
+    echo "$out"
 }
 
 section_watched_commits() {
@@ -338,9 +589,18 @@ section_watched_commits() {
 
     while IFS='|' read -r sha date subject; do
         [[ -z "$sha" ]] && continue
-        local files
-        files="$(git -C "$HAMLIB_CLONE" show --name-only --format= "$sha" -- $(cat "$paths_file") 2>/dev/null | \
-            sort -u | head -5 | sed 's/^/    - /')"
+        local raw_files
+        raw_files="$(git -C "$HAMLIB_CLONE" show --name-only --format= "$sha" -- $(cat "$paths_file") 2>/dev/null | \
+            sort -u | head -5)"
+        local files=""
+        if [[ -n "$raw_files" ]]; then
+            files="$(echo "$raw_files" | sed 's/^/    - /')"
+            # Feed the port-work-orders section, but only for the fix
+            # bucket — refactors don't warrant port work orders.
+            if ! is_refactor_subject "$subject"; then
+                _record_touched_paths "$raw_files"
+            fi
+        fi
         local entry
         entry="- [\`$sha\`](https://github.com/Hamlib/Hamlib/commit/$sha) — ${subject}
   <sub>${date}</sub>"
@@ -406,6 +666,7 @@ trap "rm -f '$DIGEST_FILE'" EXIT
     section_new_radios "$WATERMARK"
     section_new_tags "$WATERMARK"
     section_watched_commits "$WATERMARK"
+    section_port_work_orders
     section_advisories "$WATERMARK"
 } > "$DIGEST_FILE"
 
