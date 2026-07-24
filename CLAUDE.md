@@ -51,16 +51,29 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The current work-in-progress is **v1.1.3** (2026-07-24), an
-additive catalog release that adds `Vendor.allRadios` static
+The current work-in-progress is **v1.2.0** (planned 2026-07-24+),
+a **radio-catalog expansion** release targeting ~50 of the most
+recently released radios SwiftRigControl doesn't yet cover, plus
+6 new vendor protocol adapters (Guohetec, Anytone, Elad,
+CommRadio, Alinco, AOR). Ships definition-only per CLAUDE.md's
+verification tier (no hardware validation of the new radios).
+Includes a `Manufacturer` enum expansion — additive but requires
+downstream consumers with exhaustive switches to add a `default:`
+arm; CHANGELOG will call this out. Full plan and audit:
+`Documentation/RADIO_PARITY_v1.2.md`.
+
+The previously-shipped release is **v1.1.3** (git tag, 2026-07-24),
+an additive catalog release that added `Vendor.allRadios` static
 arrays, a top-level `RadioDefinition.allSupportedRadios` /
 `allRadios(for:)` aggregate, and a `withCivAddress(_:)` helper
 on `RadioDefinition` so downstream apps can drop the parallel
 hand-maintained radio-catalog lists that currently drift
-against the library. Ships every currently-known radio (45
-Icom, 25 Yaesu, 15 Kenwood, 6 Elecraft, 5 Ten-Tec, 3 Xiegu, 3
-FlexRadio-family, 1 Lab599 = 103 total). No radio behavior
-changes, no removals, no signature changes.
+against the library. Shipped every then-known radio (45 Icom,
+25 Yaesu, 15 Kenwood, 6 Elecraft, 5 Ten-Tec, 3 Xiegu, 3
+FlexRadio-family, 1 Lab599 = 103 total). Also shipped the
+weekly `.github/workflows/hamlib-watch.yml` digest workflow +
+`Scripts/hamlib-diff.sh` + `HAMLIB_WATCH.md` for tracking
+upstream Hamlib changes.
 
 The previously-shipped release is **v1.1.2** (git tag, 2026-07-15), a
 safety-focused patch release. Started as a fix for the Yaesu HF

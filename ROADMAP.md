@@ -1,10 +1,17 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.1.3 (in flight 2026-07-24 — additive catalog
+**Current version:** v1.2.0 (planning 2026-07-24 — radio-catalog
+expansion release targeting ~50 of the most-recently-released
+Hamlib radios SwiftRigControl doesn't yet cover, plus 6 new
+vendor protocol adapters (Guohetec, Anytone, Elad, CommRadio,
+Alinco, AOR). Definition-only per CLAUDE.md's verification tier.
+Manufacturer enum expansion — additive but requires downstream
+consumers with exhaustive switches to add a `default:` arm.
+Full plan and audit: `Documentation/RADIO_PARITY_v1.2.md`.)
+Previous release **v1.1.3** (cut 2026-07-24 — additive catalog
 release: `Vendor.allRadios` static arrays, `allSupportedRadios` +
-`allRadios(for:)` aggregate, `withCivAddress(_:)` helper. Lets
-downstream apps drop the parallel radio catalogs they were
-hand-maintaining. No behavior changes.) Previous release
+`allRadios(for:)` aggregate, `withCivAddress(_:)` helper +
+weekly `hamlib-watch` GitHub Action digest workflow). Also
 **v1.1.2** (cut 2026-07-15 — safety patch. Fixes Yaesu HF stop-bit
 / handshake mis-framing (issue #12), Kenwood setPTT / getPTT bugs
 that keyed the transmitter, Yaesu split / selectVFO command
