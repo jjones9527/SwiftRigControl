@@ -404,7 +404,7 @@ hamlib_to_swift() {
             echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
             ;;
-        rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c)
+        rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c|rigs/kenwood/ts450s.c|rigs/kenwood/ts690.c|rigs/kenwood/ts940.c|rigs/kenwood/ts950.c)
             local base
             base="$(basename "$p" .c)"
             echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"

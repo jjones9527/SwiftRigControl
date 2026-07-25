@@ -107,6 +107,46 @@ Flex 6000-series that SwiftRigControl already ships as
 `Flex.flex6000` (model string `"6000-series"`). Not a gap; not
 included.
 
+#### Group G — Kenwood legacy HF (5 radios)
+
+Definition-only additions to the Kenwood catalog covering 1980s
+and early-1990s flagship HF transceivers that remain common on
+the air:
+
+- **TS-450S** (1991) — HF 100 W, no 6m. Optional AT-450 internal
+  ATU. Cross-checked against Hamlib `ts450s.c`.
+- **TS-690S** (1992) — TS-450S with 6m added. Cross-checked
+  against Hamlib `ts690.c`.
+- **TS-940S** (1985) — Kenwood's mid-1980s flagship HF, 100 W.
+  Cross-checked against Hamlib `ts940.c`. Note the model name is
+  "TS-940S" (with S suffix) even though the RIG_MODEL enum drops
+  it.
+- **TS-950S** (1988) — 150 W HF flagship. Unusual serial
+  framing — 8-N-2 with **no** flow control, requiring the new
+  `SerialDefaults.kenwoodLegacyNoHandshake` profile added in
+  this release.
+- **TS-950SDX** (1991) — DSP-equipped variant of TS-950S. Same
+  CAT surface and serial framing.
+
+All five use the existing `KenwoodProtocol` (`;`-terminated).
+Four of the five reuse the existing `SerialDefaults.kenwoodLegacy`
+profile (8-N-2, hardware handshake — same as the already-shipped
+TS-850S); TS-950S/SDX get the new `.kenwoodLegacyNoHandshake`
+profile.
+
+Doc drift correction: the `kenwoodLegacy` `SerialDefaults` docs
+previously listed only TS-850S as an example. Updated to note
+TS-450S / TS-690S / TS-940S all use the same profile per Hamlib.
+
+Total Kenwood count: 15 → 20.
+
+### v1.2.0 catalog totals so far
+
+Icom 45 → 51 (Group D); Flex 3 → 5 (Group I); Kenwood 15 → 20
+(Group G). SwiftRigControl total: 103 → 116 across three
+reuse-existing batches. Groups A, B, C, E, H, K, L (new-protocol
+adapters) and FTX-1 still pending.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

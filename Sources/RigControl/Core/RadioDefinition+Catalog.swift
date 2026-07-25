@@ -137,6 +137,12 @@ extension RadioDefinition.Kenwood {
         ts870S,
         ts890S,
         ts990S,
+        // v1.2.0 Group G — legacy HF
+        ts450S,
+        ts690S,
+        ts940S,
+        ts950S,
+        ts950SDX,
     ].sorted { $0.model < $1.model }
 }
 

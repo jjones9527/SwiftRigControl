@@ -134,7 +134,7 @@ always includes them in the diff scope.
 | FTDX-5000 | `rigs/yaesu/ft5000.c` |
 | FTDX-9000 | `rigs/yaesu/ft9000.c` |
 
-### Kenwood (15 radios)
+### Kenwood (20 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
@@ -153,6 +153,11 @@ always includes them in the diff scope.
 | TS-870S | `rigs/kenwood/ts870s.c` |
 | TS-890S | `rigs/kenwood/ts890s.c` |
 | TS-990S | `rigs/kenwood/ts990s.c` |
+| TS-450S | `rigs/kenwood/ts450s.c` (v1.2.0) |
+| TS-690S | `rigs/kenwood/ts690.c` (v1.2.0) |
+| TS-940S | `rigs/kenwood/ts940.c` (v1.2.0) |
+| TS-950S | `rigs/kenwood/ts950.c` (v1.2.0) |
+| TS-950SDX | `rigs/kenwood/ts950.c` (v1.2.0) |
 
 ### Elecraft (6 radios)
 

@@ -577,4 +577,181 @@ extension RadioCapabilitiesDatabase.Kenwood {
         availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
     )
 
+    // MARK: - v1.2.0 Group G — legacy HF still on the air
+
+    /// Kenwood TS-450S — HF 100W transceiver (1991)
+    ///
+    /// Late-Cold-War-era HF-only transceiver (no 6m). Optional
+    /// AT-450 internal ATU. Serial CAT runs at 4800 baud maximum,
+    /// 8-N-2 with hardware handshake per Hamlib `rigs/kenwood/ts450s.c`.
+    /// AM TX capped at 40 W per the same file's tx range list.
+    public static let ts450S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 100_000, max: 30_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 1_999_999, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_000, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 3_999_999, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_000, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .am], canTransmit: false),
+        ],
+        hasATU: true,   // Optional AT-450 internal ATU
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-690S — HF + 6m 100W transceiver (1992)
+    ///
+    /// TS-450S sibling with 6m added — HF bands identical to
+    /// TS-450, plus 50-54 MHz per Hamlib `rigs/kenwood/ts690.c`.
+    /// Serial CAT: 4800 baud, 8-N-2, hardware handshake.
+    public static let ts690S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
+        frequencyRange: FrequencyRange(min: 100_000, max: 54_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 1_999_999, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_000, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 3_999_999, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_000, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .am, .fm], canTransmit: false),
+            // 6m — TS-690's differentiator vs TS-450
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.lsb, .usb, .cw, .cwR, .fm, .am, .rtty, .rttyR], canTransmit: true, bandName: "6m"),
+        ],
+        hasATU: true,
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-940S — HF 100W flagship transceiver (1985)
+    ///
+    /// Kenwood's mid-1980s flagship HF. HF-only, 100 W, general-
+    /// coverage RX 150 kHz – 30 MHz. Serial CAT: 4800 baud, 8-N-2,
+    /// hardware handshake per Hamlib `rigs/kenwood/ts940.c`. Note
+    /// Hamlib model name is `TS-940S` (with S suffix) even though
+    /// the RIG_MODEL enum is `TS940`.
+    public static let ts940S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        // TS940_ALL_MODES lacks CWR/RTTYR — Hamlib treats reverse
+        // modes as data-mode variants that TS-940 doesn't expose.
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm],
+        frequencyRange: FrequencyRange(min: 150_000, max: 30_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 150_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 1_999_999, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_000, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 3_999_999, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_000, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .rtty, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .am], canTransmit: false),
+        ],
+        hasATU: false,  // No factory ATU; external AT-940 was optional
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-950S — HF 150W flagship transceiver (1988)
+    ///
+    /// Kenwood's late-1980s flagship HF, upgraded from the TS-940.
+    /// HF-only, 150 W. Serial CAT is unusual for the era: 4800
+    /// baud, 8-N-2, **no** hardware handshake per Hamlib
+    /// `rigs/kenwood/ts950.c`. Modes lack CW-reverse and
+    /// RTTY-reverse (Hamlib TS950_ALL_MODES: AM, CW, USB, LSB, FM,
+    /// RTTY only).
+    public static let ts950S = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 150,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm],
+        frequencyRange: FrequencyRange(min: 150_000, max: 30_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 150_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 1_800_000, max: 1_999_999, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 2_000_000, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 3_500_000, max: 3_999_999, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 4_000_000, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .rtty, .fm], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .am], canTransmit: false),
+        ],
+        hasATU: true,   // TS-950S/SDX includes factory antenna tuner
+        supportsSignalStrength: true
+    )
+
+    /// Kenwood TS-950SDX — DSP-equipped variant of TS-950S (1991)
+    ///
+    /// Same 150 W HF flagship as TS-950S but adds internal DSP
+    /// filtering. CAT surface is identical. Cross-checked against
+    /// Hamlib `rigs/kenwood/ts950.c` (`ts950sdx_caps`).
+    public static let ts950SDX = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 150,
+        supportedModes: [.lsb, .usb, .cw, .rtty, .am, .fm],
+        frequencyRange: FrequencyRange(min: 150_000, max: 30_000_000),
+        detailedFrequencyRanges: ts950S.detailedFrequencyRanges,
+        hasATU: true,
+        supportsSignalStrength: true
+    )
+
 }

@@ -202,18 +202,33 @@ public struct RadioDefinition: Sendable {
         )
 
         /// 8-N-2 with RTS/CTS hardware flow control. Legacy Kenwood
-        /// desktop HF profile — TS-850S.
+        /// desktop HF profile — TS-450S, TS-690S, TS-850S, TS-940S.
         ///
-        /// The TS-850S is a 1990s-era HF transceiver whose CAT
-        /// interface predates the 8-N-1 convention Kenwood adopted
-        /// for the TS-570 forward. Second stop bit + hardware
-        /// handshake is required for reliable communication.
+        /// These are 1990s-era HF transceivers whose CAT interfaces
+        /// predate the 8-N-1 convention Kenwood adopted for the
+        /// TS-570 forward. Second stop bit + hardware handshake is
+        /// required for reliable communication.
         ///
-        /// Source: Hamlib `rigs/kenwood/ts850.c` —
-        /// `.serial_stop_bits = 2, .serial_handshake = HARDWARE`.
+        /// Source: Hamlib `rigs/kenwood/ts850.c`, `ts450s.c`,
+        /// `ts690.c`, `ts940.c` — `.serial_stop_bits = 2,
+        /// .serial_handshake = HARDWARE`.
         public static let kenwoodLegacy = SerialDefaults(
             stopBits: 2,
             hardwareFlowControl: true
+        )
+
+        /// 8-N-2, no flow control. TS-950S/SDX profile.
+        ///
+        /// The TS-950S and TS-950SDX are contemporaries of the
+        /// TS-940 (late-1980s / early-1990s flagship HF radios)
+        /// but their CAT interfaces uniquely dropped hardware
+        /// handshake while keeping the 8-N-2 framing. Software
+        /// flow control is also disabled per Hamlib.
+        ///
+        /// Source: Hamlib `rigs/kenwood/ts950.c` —
+        /// `.serial_stop_bits = 2, .serial_handshake = NONE`.
+        public static let kenwoodLegacyNoHandshake = SerialDefaults(
+            stopBits: 2
         )
 
         /// 8-N-2, no flow control. Elecraft K2 profile.

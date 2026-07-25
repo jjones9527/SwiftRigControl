@@ -248,4 +248,104 @@ extension RadioDefinition.Kenwood {
             )
         }
     )
+
+    // MARK: - v1.2.0 Group G — legacy HF still on the air
+
+    /// Kenwood TS-450S — HF 100W transceiver (1991).
+    ///
+    /// HF-only sibling of the TS-690S. Cross-checked against
+    /// Hamlib `rigs/kenwood/ts450s.c` — 4800 baud maximum, 8-N-2,
+    /// hardware handshake.
+    public static let ts450S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-450S",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts450S,
+        serialDefaults: .kenwoodLegacy,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts450S
+            )
+        }
+    )
+
+    /// Kenwood TS-690S — HF + 6m 100W transceiver (1992).
+    ///
+    /// TS-450S with 6m added. Cross-checked against Hamlib
+    /// `rigs/kenwood/ts690.c` — 4800 baud, 8-N-2, hardware
+    /// handshake (same profile as TS-450S / TS-940S / TS-850S).
+    public static let ts690S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-690S",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts690S,
+        serialDefaults: .kenwoodLegacy,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts690S
+            )
+        }
+    )
+
+    /// Kenwood TS-940S — HF 100W flagship transceiver (1985).
+    ///
+    /// Kenwood's mid-1980s flagship. Cross-checked against Hamlib
+    /// `rigs/kenwood/ts940.c` — 4800 baud, 8-N-2, hardware
+    /// handshake. Note the model name is "TS-940S" (with S suffix)
+    /// even though Hamlib's `RIG_MODEL_TS940` enum drops it.
+    public static let ts940S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-940S",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts940S,
+        serialDefaults: .kenwoodLegacy,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts940S
+            )
+        }
+    )
+
+    /// Kenwood TS-950S — HF 150W flagship transceiver (1988).
+    ///
+    /// Cross-checked against Hamlib `rigs/kenwood/ts950.c`. Uses
+    /// the unusual `kenwoodLegacyNoHandshake` serial profile
+    /// (8-N-2, no flow control) — the TS-950S is the only radio
+    /// in this era's Kenwood catalog that drops hardware handshake
+    /// while keeping the 8-N-2 framing.
+    public static let ts950S = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-950S",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts950S,
+        serialDefaults: .kenwoodLegacyNoHandshake,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts950S
+            )
+        }
+    )
+
+    /// Kenwood TS-950SDX — DSP-equipped variant of TS-950S (1991).
+    ///
+    /// Same 150 W flagship as TS-950S, with internal DSP filtering.
+    /// Cross-checked against Hamlib `rigs/kenwood/ts950.c`
+    /// (`ts950sdx_caps`). Same serial framing as TS-950S.
+    public static let ts950SDX = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TS-950SDX",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.ts950SDX,
+        serialDefaults: .kenwoodLegacyNoHandshake,
+        protocolFactory: { transport in
+            KenwoodProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts950SDX
+            )
+        }
+    )
 }

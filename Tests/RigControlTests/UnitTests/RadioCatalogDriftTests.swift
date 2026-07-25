@@ -56,6 +56,8 @@ import Testing
             "TH-D72", "TH-D72A", "TH-D74", "TH-D75", "TS-2000",
             "TS-480HX", "TS-480SAT", "TS-570D", "TS-570S", "TS-590S",
             "TS-590SG", "TS-850S", "TS-870S", "TS-890S", "TS-990S",
+            // v1.2.0 Group G — legacy HF still on the air
+            "TS-450S", "TS-690S", "TS-940S", "TS-950S", "TS-950SDX",
         ]
         let actual = Set(RadioDefinition.Kenwood.allRadios.map(\.model))
         #expect(actual == expected)
