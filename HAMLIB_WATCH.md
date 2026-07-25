@@ -104,7 +104,7 @@ always includes them in the diff scope.
 | IC ID-1 | `rigs/icom/id1.c` (v1.2.0) |
 | IC-RX7 | `rigs/icom/icrx7.c` (v1.2.0) |
 
-### Yaesu (29 radios)
+### Yaesu (30 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
@@ -137,6 +137,7 @@ always includes them in the diff scope.
 | mcHF QRP | `rigs/yaesu/ft847.c` (v1.2.0) |
 | FT-1000MP MARK-V | `rigs/yaesu/ft1000mp.c` (v1.2.0) |
 | FT-1000MP MARK-V Field | `rigs/yaesu/ft1000mp.c` (v1.2.0) |
+| FTX-1 | `rigs/yaesu/ftx1/*.c` (v1.2.0 — 18-file subsystem in Hamlib; core in ftx1.c / ftx1_freq.c / ftx1_mode.c) |
 
 ### Kenwood (20 radios)
 

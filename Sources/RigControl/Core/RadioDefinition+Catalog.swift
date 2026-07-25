@@ -119,6 +119,8 @@ extension RadioDefinition.Yaesu {
         mchfQRP,
         ft1000MPMkV,
         ft1000MPMkVField,
+        // v1.2.0 — Yaesu newcat freq-format fix + FTX-1
+        ftx1,
     ].sorted { $0.model < $1.model }
 }
 

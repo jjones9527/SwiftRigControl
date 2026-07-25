@@ -18,6 +18,34 @@ extension RadioDefinition.Yaesu {
         }
     )
 
+    /// Yaesu FTX-1 HF/6m transceiver (2025 flagship portable)
+    ///
+    /// Uses ``YaesuCATProtocol`` with ``YaesuCATProtocol/Quirks/ftx1``
+    /// — the FTX-1 speaks semicolon-terminated newcat but with
+    /// FTX-1-specific mode codes (3 = CW-USB rather than CW, 7 =
+    /// CW-LSB rather than CW-R) and a memory-mode escape prelude
+    /// (`SV0;`) before `MD` / `FA` / `FB` set commands so mode /
+    /// frequency changes actually persist. See
+    /// `Quirks.ftx1` for full source citations against Hamlib
+    /// `rigs/yaesu/ftx1/`.
+    ///
+    /// RF coverage matches the FTDX-10 (HF + 6m, 100 W), so the
+    /// FTdx10 capabilities entry is reused rather than duplicated.
+    public static let ftx1 = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FTX-1",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
+        serialDefaults: .yaesuHFDesktop,
+        protocolFactory: { transport in
+            YaesuCATProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
+                quirks: .ftx1
+            )
+        }
+    )
+
     /// Yaesu FT-991A HF/VHF/UHF all-mode transceiver
     public static let ft991A = RadioDefinition(
         manufacturer: .yaesu,

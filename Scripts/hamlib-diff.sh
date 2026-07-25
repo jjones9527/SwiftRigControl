@@ -435,10 +435,19 @@ hamlib_to_swift() {
 
         # --- Yaesu ----------------------------------------------------
         rigs/yaesu/newcat.c|rigs/yaesu/newcat.h)
-            # Every modern Yaesu (FT-710/891/950/991/991A/2000/FTDX-*).
+            # Every modern Yaesu (FT-710/891/950/991/991A/2000/FTDX-*)
+            # AND the FTX-1 (which is built on top of newcat with
+            # FTX-1-specific extensions in rigs/yaesu/ftx1/).
             echo "Sources/RigControl/Protocols/Yaesu/YaesuCATProtocol.swift  (+extensions)"
             echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuModern.swift"
+            ;;
+        rigs/yaesu/ftx1/*.c|rigs/yaesu/ftx1/*.h|rigs/yaesu/ftx1.c|rigs/yaesu/ftx1.h)
+            # FTX-1 (2025) — newcat-based with FTX-1-specific mode
+            # codes, memory-mode escape prelude, and per-subsystem
+            # extensions in the ftx1/ subdirectory.
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuCATProtocol.swift  (Quirks.ftx1)"
+            echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift  (ftx1 factory)"
             ;;
         rigs/yaesu/yaesu.c|rigs/yaesu/yaesu.h)
             # Classic Yaesu framing — FT-100/817/818/847/857/897/920/1000MP.

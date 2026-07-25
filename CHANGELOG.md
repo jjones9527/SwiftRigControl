@@ -335,6 +335,84 @@ Test count 578 → 606 (28 new); zero regressions. Clean build.
 
 Yaesu catalog: 25 → 29. Total: 116 → 120.
 
+#### FTX-1 + Yaesu newcat frequency-format bug fix
+
+Adds `Yaesu.ftx1` for Yaesu's 2025 flagship portable, and fixes a
+**latent bug affecting every newcat Yaesu radio in the catalog**
+that was uncovered while porting FTX-1.
+
+**The bug.** Since v1.0.0 our `YaesuCATProtocol.setFrequency` has
+emitted an 11-digit format (`FA00014230000;`) that no real Yaesu
+radio accepts. Hamlib's newcat uses either **9 digits**
+(`FA014230000;` — modern radios: FT-DX10, FT-DX101(D/MP), FT-991,
+FT-991A, FT-710, FT-891, FTX-1) or **8 digits** (older newcat
+radios that respond to `IF` with a 27- or 30-byte payload) — see
+`rigs/yaesu/newcat.c` `newcat_set_freq` and the variable-width
+dispatch driven by the `IF` response length. `getFrequency` had
+the same 11-digit parser assumption. Neither would match real
+hardware.
+
+Because none of these radios have been hardware-verified in
+SwiftRigControl (the current 5-radio verified tier is Icom
+IC-7100/7600/9700, Elecraft K2, Kenwood TH-D72A — no Yaesu),
+the bug went undetected. It affects: FT-950, FT-991, FT-991A,
+FT-2000, FT-450, FT-450D, FT-710, FT-891, FT-DX10,
+FT-DX101D/MP, FT-DX1200/3000/5000, FT-9000, and the new FTX-1
+— 15 currently-shipping definitions.
+
+**The fix.** `YaesuCATProtocol.Quirks` gains a
+`frequencyDigits: Int` field with a default of 9 (correct for
+every modern newcat radio). Both `setFrequency` and
+`getFrequency` now use it. A specific older radio needing 8
+digits can override via a new Quirks case in a follow-up
+release. The existing `YaesuCATProtocolTests` were updated to
+assert the correct 9-digit wire format; two new regression tests
+guard against the bug returning.
+
+**Also added:** `Quirks.modeCodeTable: [Mode: Character]?` for
+per-radio mode-selector table overrides, and
+`Quirks.requiresMemoryModeEscape: Bool` for the FTX-1's
+`SV0;` prelude requirement. Both default to inactive; only the
+new `Quirks.ftx1` static uses them.
+
+**FTX-1 specifics** (from `rigs/yaesu/ftx1/`, added to Hamlib in
+2025):
+
+- Same semicolon-terminated newcat protocol as FT-DX10 / FT-710,
+  with 9-digit frequency format.
+- Mode codes diverge from the shared newcat table on codes 3
+  and 7: FTX-1 uses `3` = CW-USB (shared table: CW) and `7` =
+  CW-LSB (shared: CW-R). Swift `.cw` maps to `3` and `.cwR` to
+  `7` on FTX-1. C4FM and PSK codes exist in Hamlib but have no
+  Swift `Mode` equivalent and are omitted from the table.
+- Memory-mode escape prelude: FTX-1 silently treats `MD` / `FA` /
+  `FB` sets as transient overlays while Main is in Memory mode.
+  Hamlib's `ftx1_ensure_vfo_mode()` sends `SV0;` before each set;
+  `Quirks.requiresMemoryModeEscape = true` mirrors that behavior.
+
+New radio `Yaesu.ftx1` shares the FTdx10 capabilities (same HF+6m,
+100 W coverage). Registered in `Yaesu.allRadios` and the drift
+test.
+
+**HAMLIB_WATCH.md** gains a row for `rigs/yaesu/ftx1/*.c`.
+`Scripts/hamlib-diff.sh` `hamlib_to_swift()` gets an explicit
+case mapping the FTX-1 subdirectory to `YaesuCATProtocol.swift`
+(Quirks.ftx1) + `YaesuModels.swift`.
+
+**Not in scope for this fix**, and tracked as follow-up:
+- `RG`, `GT`, `SH` commands emitted without the VFO qualifier
+  byte Hamlib uses (`RG0%03d` vs our `RG%03d`, etc.). These are
+  the same class of bug and affect the same 15 radios; audit
+  visible in the commit message trail.
+- `RU` / `RD` clarifier commands use `%+05d` (5-char with sign)
+  where Hamlib uses `%04ld` (4-digit unsigned, direction encoded
+  in command letter).
+
+Test count 606 → 612 (6 new); zero regressions. Clean build.
+
+Yaesu catalog: 29 → 30. Total: 120 → 121. Yaesu amateur-2000+
+coverage: 100% (FTX-1 was the last remaining hole).
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

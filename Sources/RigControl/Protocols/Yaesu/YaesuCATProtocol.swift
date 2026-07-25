@@ -89,14 +89,52 @@ public actor YaesuCATProtocol:
         /// operation cannot be established via the newcat protocol.
         public let supportsFTVFOSelection: Bool
 
+        /// Number of decimal digits the radio's `FA` / `FB` frequency
+        /// commands expect on the wire. Modern newcat radios use 9
+        /// (FT-DX10 / FT-DX101 / FT-991A / FT-710 / FTX-1). Older
+        /// newcat radios (identifiable by a 27- or 30-byte `IF`
+        /// response per `newcat.c`) use 8. Default is 9.
+        ///
+        /// Prior to v1.2.0 this was hard-coded to 11, which no real
+        /// Yaesu radio actually accepts — a latent bug affecting
+        /// every newcat radio in the catalog. See the v1.2.0
+        /// CHANGELOG for the fix.
+        public let frequencyDigits: Int
+
+        /// FTX-1-specific mode selector table, or `nil` to use the
+        /// shared newcat `MD` table (`1=LSB, 2=USB, 3=CW-USB, 4=FM,
+        /// 5=AM, 6=RTTY-LSB, 7=CW-LSB, 8=DATA-LSB, 9=RTTY-USB,
+        /// A=DATA-FM, B=FM-N, C=DATA-USB, D=AM-N` — the FTX-1 table
+        /// per `rigs/yaesu/ftx1/ftx1_mode.c` file header).
+        ///
+        /// The FTX-1 differs from the shared newcat table on codes
+        /// 3 (CW-USB vs CW), 7 (CW-LSB vs CW-R), and adds C4FM entries
+        /// (H, I) plus a PSK entry (E). Radios that use the shared
+        /// table can leave this `nil`.
+        public let modeCodeTable: [Mode: Character]?
+
+        /// When `true`, `setMode` / `setFrequency` should send an
+        /// `SV;` (or equivalent) prelude to force the radio out of
+        /// Memory mode before the actual set command. Required by
+        /// the FTX-1 per Hamlib `rigs/yaesu/ftx1/ftx1_mode.c`
+        /// ("Memory-mode MD sets on Main are accepted but do not
+        /// persist — they act as a transient memory-tune overlay").
+        public let requiresMemoryModeEscape: Bool
+
         public init(
             supportsSTSplit: Bool = false,
             usesFT23ForVFOSelection: Bool = false,
-            supportsFTVFOSelection: Bool = true
+            supportsFTVFOSelection: Bool = true,
+            frequencyDigits: Int = 9,
+            modeCodeTable: [Mode: Character]? = nil,
+            requiresMemoryModeEscape: Bool = false
         ) {
             self.supportsSTSplit = supportsSTSplit
             self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
             self.supportsFTVFOSelection = supportsFTVFOSelection
+            self.frequencyDigits = frequencyDigits
+            self.modeCodeTable = modeCodeTable
+            self.requiresMemoryModeEscape = requiresMemoryModeEscape
         }
 
         /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
@@ -151,6 +189,49 @@ public actor YaesuCATProtocol:
             usesFT23ForVFOSelection: false,
             supportsFTVFOSelection: false
         )
+
+        /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO
+        /// selection, plus FTX-1-specific mode codes and a memory-
+        /// mode escape prelude requirement.
+        ///
+        /// Mode codes per `rigs/yaesu/ftx1/ftx1_mode.c` differ from
+        /// the shared newcat table on codes 3 and 7:
+        /// - Shared newcat: 3 = CW, 7 = CW-R
+        /// - FTX-1:         3 = CW-USB, 7 = CW-LSB
+        ///
+        /// FTX-1 also introduces new mode codes not present in
+        /// earlier newcat radios: `E` (PSK), `H` (C4FM-DN),
+        /// `I` (C4FM-VW). We map `.cw` → `3` (CW-USB) and
+        /// `.cwR` → `7` (CW-LSB) as the most operator-obvious
+        /// meaning. C4FM and PSK do not have direct Swift `Mode`
+        /// enum equivalents and are omitted from the table.
+        ///
+        /// Memory-mode escape: the FTX-1's `MD` set is silently
+        /// treated as a transient overlay when Main is in Memory
+        /// mode. Setting `requiresMemoryModeEscape = true` triggers
+        /// an `SV0;` prelude (VFO mode restore) before each `MD` /
+        /// `FA` / `FB` set — matches Hamlib's `ftx1_ensure_vfo_mode()`
+        /// behavior in `ftx1_mode.c` and `ftx1_freq.c`.
+        public static let ftx1 = Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true,
+            frequencyDigits: 9,
+            modeCodeTable: [
+                .lsb:      "1",
+                .usb:      "2",
+                .cw:       "3",   // CW-USB on FTX-1
+                .fm:       "4",
+                .am:       "5",
+                .rtty:     "6",   // RTTY-LSB
+                .cwR:      "7",   // CW-LSB on FTX-1
+                .dataLSB:  "8",
+                .rttyR:    "9",   // RTTY-USB
+                .fmN:      "B",
+                .dataUSB:  "C",
+            ],
+            requiresMemoryModeEscape: true
+        )
     }
 
     /// Initializes a new Yaesu CAT protocol instance.
@@ -188,13 +269,28 @@ public actor YaesuCATProtocol:
     // MARK: - Frequency Control
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        let command: String
+        // Some radios (FTX-1) silently ignore FA/FB while Main is in
+        // Memory mode. Force a VFO-mode restore first when the quirk
+        // is set. See `Quirks.ftx1` for the source citation.
+        if quirks.requiresMemoryModeEscape {
+            try await sendCommand("SV0")
+            _ = try await receiveResponse()
+        }
+
+        let prefix: String
         switch vfo {
         case .a, .main:
-            command = String(format: "FA%011llu", hz)
+            prefix = "FA"
         case .b, .sub:
-            command = String(format: "FB%011llu", hz)
+            prefix = "FB"
         }
+
+        // Newcat frequency format is prefix + N-digit decimal Hz.
+        // N is 9 for FTX-1 / FT-DX10 / FT-DX101 / FT-991A / FT-710
+        // and 8 for older newcat radios (per `newcat.c` IF-response
+        // length dispatch). Prior to v1.2.0 this was hard-coded to
+        // 11, which no real Yaesu accepts.
+        let command = "\(prefix)\(String(format: "%0\(quirks.frequencyDigits)llu", hz))"
 
         try await sendCommand(command)
 
@@ -203,25 +299,29 @@ public actor YaesuCATProtocol:
     }
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
-        let command: String
+        let prefix: String
         switch vfo {
         case .a, .main:
-            command = "FA"
+            prefix = "FA"
         case .b, .sub:
-            command = "FB"
+            prefix = "FB"
         }
 
-        try await sendCommand(command)
+        try await sendCommand(prefix)
         let response = try await receiveResponse()
 
-        // Response format: FAxxxxxxxxxx; or FBxxxxxxxxxx;
-        guard response.hasPrefix(command),
-              response.count >= command.count + 11 else {
+        // Response format: FA<N-digit hex>; where N = quirks.frequencyDigits
+        // (9 for modern newcat, 8 for older). Prior to v1.2.0 this
+        // was hard-coded to 11 — no real Yaesu response matches
+        // that. See CHANGELOG for the fix.
+        let digits = quirks.frequencyDigits
+        guard response.hasPrefix(prefix),
+              response.count >= prefix.count + digits else {
             throw RigError.invalidResponse
         }
 
-        let startIndex = response.index(response.startIndex, offsetBy: command.count)
-        let endIndex = response.index(startIndex, offsetBy: 11)
+        let startIndex = response.index(response.startIndex, offsetBy: prefix.count)
+        let endIndex = response.index(startIndex, offsetBy: digits)
         let freqString = String(response[startIndex..<endIndex])
 
         guard let freq = UInt64(freqString) else {
@@ -234,8 +334,30 @@ public actor YaesuCATProtocol:
     // MARK: - Mode Control
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        let modeCode = try modeToYaesuCode(mode)
-        let command = "MD\(modeCode)"
+        // Memory-mode escape prelude (FTX-1 quirk). See setFrequency
+        // for the source citation.
+        if quirks.requiresMemoryModeEscape {
+            try await sendCommand("SV0")
+            _ = try await receiveResponse()
+        }
+
+        // Radios with a custom mode-code table (FTX-1) look up the
+        // character directly; older newcat radios use the shared
+        // numeric table.
+        let modeCodeChar: Character
+        if let table = quirks.modeCodeTable {
+            guard let ch = table[mode] else {
+                throw RigError.unsupportedOperation(
+                    "Mode \(mode.rawValue) not supported by this Yaesu variant"
+                )
+            }
+            modeCodeChar = ch
+        } else {
+            let numericCode = try modeToYaesuCode(mode)
+            modeCodeChar = Character("\(numericCode)")
+        }
+
+        let command = "MD\(modeCodeChar)"
 
         try await sendCommand(command)
         _ = try await receiveResponse()
@@ -254,6 +376,15 @@ public actor YaesuCATProtocol:
         let codeIndex = response.index(response.startIndex, offsetBy: 2)
         let codeChar = response[codeIndex]
 
+        // Custom table lookup (FTX-1) — invert the character table.
+        if let table = quirks.modeCodeTable {
+            for (mode, ch) in table where ch == codeChar {
+                return mode
+            }
+            throw RigError.invalidResponse
+        }
+
+        // Shared numeric table.
         guard let modeCode = Int(String(codeChar)) else {
             throw RigError.invalidResponse
         }

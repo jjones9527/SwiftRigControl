@@ -37,8 +37,8 @@ import Testing
         try await yaesuProtocol.connect()
         await mockTransport.reset()
 
-        let expectedCommand = "FA00014230000;".data(using: .ascii)!
-        let response = "FA00014230000;".data(using: .ascii)!
+        let expectedCommand = "FA014230000;".data(using: .ascii)!
+        let response = "FA014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
@@ -47,7 +47,7 @@ import Testing
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FA00014230000;")
+        #expect(command == "FA014230000;")
     }
 
     @Test func getFrequency() async throws {
@@ -55,7 +55,7 @@ import Testing
         await mockTransport.reset()
 
         let queryCommand = "FA;".data(using: .ascii)!
-        let response = "FA00014230000;".data(using: .ascii)!
+        let response = "FA014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let freq = try await yaesuProtocol.getFrequency(vfo: .a)
@@ -67,8 +67,8 @@ import Testing
         try await yaesuProtocol.connect()
         await mockTransport.reset()
 
-        let expectedCommand = "FB00007100000;".data(using: .ascii)!
-        let response = "FB00007100000;".data(using: .ascii)!
+        let expectedCommand = "FB007100000;".data(using: .ascii)!
+        let response = "FB007100000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await yaesuProtocol.setFrequency(7_100_000, vfo: .b)
@@ -77,7 +77,7 @@ import Testing
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FB00007100000;")
+        #expect(command == "FB007100000;")
     }
 
     // MARK: - Mode Tests
@@ -334,7 +334,7 @@ import Testing
         await mockTransport.reset()
 
         // 1. Set frequency
-        let freqCmd = "FA00014230000;".data(using: .ascii)!
+        let freqCmd = "FA014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: freqCmd, response: freqCmd)
         try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
 
@@ -355,7 +355,7 @@ import Testing
         let cmd2 = String(data: writes[1], encoding: .ascii)
         let cmd3 = String(data: writes[2], encoding: .ascii)
 
-        #expect(cmd1 == "FA00014230000;")
+        #expect(cmd1 == "FA014230000;")
         #expect(cmd2 == "MD2;")
         #expect(cmd3 == "TX1;")
     }
@@ -375,12 +375,12 @@ import Testing
         try await yaesu.setSplit(true)
 
         // 2. Set VFO A frequency (RX)
-        let vfoACmd = "FA00014230000;".data(using: .ascii)!
+        let vfoACmd = "FA014230000;".data(using: .ascii)!
         await mock.setResponse(for: vfoACmd, response: vfoACmd)
         try await yaesu.setFrequency(14_230_000, vfo: .a)
 
         // 3. Set VFO B frequency (TX)
-        let vfoBCmd = "FB00014235000;".data(using: .ascii)!
+        let vfoBCmd = "FB014235000;".data(using: .ascii)!
         await mock.setResponse(for: vfoBCmd, response: vfoBCmd)
         try await yaesu.setFrequency(14_235_000, vfo: .b)
 
@@ -392,8 +392,8 @@ import Testing
         let cmd3 = String(data: writes[2], encoding: .ascii)
 
         #expect(cmd1 == "ST1;")
-        #expect(cmd2 == "FA00014230000;")
-        #expect(cmd3 == "FB00014235000;")
+        #expect(cmd2 == "FA014230000;")
+        #expect(cmd3 == "FB014235000;")
     }
 
     // MARK: - VFO operations (v1.1 parity)
@@ -464,5 +464,139 @@ import Testing
         await #expect(throws: RigError.self) {
             try await yaesuProtocol.setFunction(.autoFrequencyControl, enabled: true)
         }
+    }
+
+    // MARK: - Frequency-format regression (v1.2.0 fix)
+    //
+    // Prior to v1.2.0 the FA/FB commands used an 11-digit format
+    // (FA00014230000;) that no real Yaesu radio accepts. The correct
+    // newcat format is 9-digit (FA014230000;) per Hamlib
+    // `rigs/yaesu/newcat.c` — Hamlib's SNPRINTF(..., "FA%09.0f;", ...)
+    // sites at newcat.c lines ~1587 and ~1592 plus the variable-width
+    // dispatch in `newcat_set_freq` (width_frequency = 8 or 9 based on
+    // the IF response length). These tests guard against that class
+    // of format-string regression.
+
+    @Test func setFrequencyDefaultsToNineDigitNewcatFormat() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expectedCmd = "FA014230000;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expectedCmd, response: expectedCmd)
+
+        try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "FA014230000;")
+    }
+
+    @Test func setFrequencyZeroPadsLowFrequencyToNineDigits() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expectedCmd = "FA001800000;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expectedCmd, response: expectedCmd)
+
+        try await yaesuProtocol.setFrequency(1_800_000, vfo: .a)   // 160m
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "FA001800000;")
+    }
+
+    // MARK: - FTX-1 quirks (v1.2.0)
+
+    @Test func ftx1SetFrequencyEmitsMemoryModeEscapeThenNineDigitFA() async throws {
+        // FTX-1 requires an SV0; prelude before FA/FB set commands
+        // because FA/FB are silently ignored while Main is in Memory
+        // mode. See `Quirks.ftx1` for the Hamlib source citation.
+        let transport = MockTransport()
+        let ftx1 = YaesuCATProtocol(
+            transport: transport,
+            capabilities: .full,
+            quirks: .ftx1
+        )
+        try await ftx1.connect()
+        await transport.reset()
+
+        let svCmd = "SV0;".data(using: .ascii)!
+        let faCmd = "FA014230000;".data(using: .ascii)!
+        await transport.setResponse(for: svCmd, response: svCmd)
+        await transport.setResponse(for: faCmd, response: faCmd)
+
+        try await ftx1.setFrequency(14_230_000, vfo: .a)
+
+        let writes = await transport.recordedWrites
+        // Two writes expected: SV0; then FA014230000;
+        #expect(writes.count == 2)
+        #expect(String(data: writes[0], encoding: .ascii) == "SV0;")
+        #expect(String(data: writes[1], encoding: .ascii) == "FA014230000;")
+    }
+
+    @Test func ftx1SetModeMapsCWToCode3() async throws {
+        // On FTX-1, MD code 3 = CW-USB (not CW as in the shared
+        // newcat table where 3 = CW-R). Swift .cw maps to the
+        // FTX-1's CW-USB per `Quirks.ftx1.modeCodeTable`.
+        let transport = MockTransport()
+        let ftx1 = YaesuCATProtocol(
+            transport: transport,
+            capabilities: .full,
+            quirks: .ftx1
+        )
+        try await ftx1.connect()
+        await transport.reset()
+
+        let svCmd = "SV0;".data(using: .ascii)!
+        let mdCmd = "MD3;".data(using: .ascii)!
+        await transport.setResponse(for: svCmd, response: svCmd)
+        await transport.setResponse(for: mdCmd, response: mdCmd)
+
+        try await ftx1.setMode(.cw, vfo: .a)
+
+        let writes = await transport.recordedWrites
+        // SV0; prelude then MD3;
+        #expect(writes.count == 2)
+        #expect(String(data: writes[0], encoding: .ascii) == "SV0;")
+        #expect(String(data: writes[1], encoding: .ascii) == "MD3;")
+    }
+
+    @Test func ftx1SetModeMapsCWReverseToCode7() async throws {
+        // FTX-1: MD code 7 = CW-LSB (Swift .cwR).
+        let transport = MockTransport()
+        let ftx1 = YaesuCATProtocol(
+            transport: transport,
+            capabilities: .full,
+            quirks: .ftx1
+        )
+        try await ftx1.connect()
+        await transport.reset()
+
+        let svCmd = "SV0;".data(using: .ascii)!
+        let mdCmd = "MD7;".data(using: .ascii)!
+        await transport.setResponse(for: svCmd, response: svCmd)
+        await transport.setResponse(for: mdCmd, response: mdCmd)
+
+        try await ftx1.setMode(.cwR, vfo: .a)
+
+        let writes = await transport.recordedWrites
+        #expect(String(data: writes[1], encoding: .ascii) == "MD7;")
+    }
+
+    @Test func ftx1GetFrequencyDecodesNineDigitResponse() async throws {
+        let transport = MockTransport()
+        let ftx1 = YaesuCATProtocol(
+            transport: transport,
+            capabilities: .full,
+            quirks: .ftx1
+        )
+        try await ftx1.connect()
+        await transport.reset()
+
+        let query = "FA;".data(using: .ascii)!
+        let response = "FA014230000;".data(using: .ascii)!
+        await transport.setResponse(for: query, response: response)
+
+        let freq = try await ftx1.getFrequency(vfo: .a)
+
+        #expect(freq == 14_230_000)
     }
 }

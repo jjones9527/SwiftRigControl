@@ -49,6 +49,8 @@ import Testing
             // v1.2.0 — YaesuFT847CAT + YaesuFT1000MPCAT batch
             "FT-847UNI", "mcHF QRP",
             "FT-1000MP MARK-V", "FT-1000MP MARK-V Field",
+            // v1.2.0 — Yaesu newcat freq-format fix + FTX-1
+            "FTX-1",
         ]
         let actual = Set(RadioDefinition.Yaesu.allRadios.map(\.model))
         #expect(actual == expected)
