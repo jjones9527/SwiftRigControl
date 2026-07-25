@@ -323,4 +323,31 @@ import Testing
             _ = try await proto.getPTT()
         }
     }
+
+    // MARK: - FT-847 getPTT polarity (v1.2.0 audit fix)
+
+    @Test func ft847GetPTTBit7SetMeansPTTOff() async throws {
+        // Per Hamlib ft847_get_ptt() (ft847.c line 1673):
+        //   *ptt = (p->tx_status & 0x80) ? RIG_PTT_OFF : RIG_PTT_ON;
+        // Prior to v1.2.0 Swift had this inverted. Regression test.
+        let (transport, proto) = try await makeFT847()
+
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xF7])
+        // 0xFF = bit 7 set = radio idle / RX per Hamlib.
+        await transport.setResponse(for: query, response: Data([0xFF]))
+
+        let ptt = try await proto.getPTT()
+        #expect(ptt == false)
+    }
+
+    @Test func ft847GetPTTBit7ClearMeansPTTOn() async throws {
+        let (transport, proto) = try await makeFT847()
+
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xF7])
+        // 0x50 = bit 7 clear = radio TXing per Hamlib.
+        await transport.setResponse(for: query, response: Data([0x50]))
+
+        let ptt = try await proto.getPTT()
+        #expect(ptt == true)
+    }
 }

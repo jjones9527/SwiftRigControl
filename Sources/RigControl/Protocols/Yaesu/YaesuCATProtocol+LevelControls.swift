@@ -65,33 +65,40 @@ extension YaesuCATProtocol {
 
     // MARK: - RF Gain
 
-    /// Sets the RF gain.
+    /// Sets the RF gain on the main receiver.
     ///
-    /// Command: `RGnnn;` where nnn is 000–255.
+    /// Command: `RG0nnn;` — VFO qualifier `0` for main, `1` for sub.
+    /// Per Hamlib `rigs/yaesu/newcat.c` line 4477:
+    /// `SNPRINTF(..., "RG%c%03d%c", main_sub_vfo, fpf, cat_term)`.
+    ///
+    /// Prior to the v1.2.0 audit fix Swift emitted `RG%03d;` without
+    /// the VFO qualifier byte — real newcat radios reject the
+    /// unqualified form.
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
-        let command = String(format: "RG%03d", clamped)
+        let command = String(format: "RG0%03d", clamped)
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
-    /// Gets the current RF gain.
+    /// Gets the current RF gain on the main receiver.
     ///
-    /// Command: `RG;` — Response: `RGnnn;`
+    /// Command: `RG0;` — Response: `RG0nnn;` (VFO qualifier + 3
+    /// digits). Per Hamlib newcat.c `RG%c%c` query pattern.
     ///
     /// - Returns: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func getRFGain() async throws -> Int {
-        try await sendCommand("RG")
+        try await sendCommand("RG0")
         let response = try await receiveResponse()
-        // Response: RGnnn
-        guard response.hasPrefix("RG"), response.count >= 5 else {
+        // Response: RG0nnn (prefix + VFO byte + 3-digit level).
+        guard response.hasPrefix("RG"), response.count >= 6 else {
             throw RigError.invalidResponse
         }
-        let start = response.index(response.startIndex, offsetBy: 2)
+        let start = response.index(response.startIndex, offsetBy: 3)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
         return value
@@ -228,48 +235,56 @@ extension YaesuCATProtocol {
 
     /// Sets the AGC speed.
     ///
-    /// Command: `GTnnn;` — Yaesu AGC speed codes:
-    /// - 000 = Fast
-    /// - 001 = Mid (medium)
-    /// - 002 = Slow
-    /// - 003 = Auto
+    /// Command: `GTnn;` — Yaesu AGC speed codes per Hamlib
+    /// `rigs/yaesu/newcat.c` lines 4142-4158:
+    /// - 00 = Off
+    /// - 01 = Fast
+    /// - 02 = Medium
+    /// - 03 = Slow
+    /// - 04 = Auto
+    ///
+    /// Prior to the v1.2.0 audit fix Swift emitted `GT000` through
+    /// `GT003` (3-digit codes with a different mapping — Fast=0,
+    /// Medium=1, Slow=2, Auto=3). Neither the width nor the mapping
+    /// matched Hamlib; real newcat radios would reject the command.
     ///
     /// - Parameter speed: The desired AGC speed
     /// - Throws: `RigError` if the command fails
     public func setAGC(_ speed: AGCSpeed) async throws {
         let code: Int
         switch speed {
-        case .fast:   code = 0
-        case .medium: code = 1
-        case .slow:   code = 2
-        case .auto:   code = 3
-        case .off:    code = 3  // Yaesu has no "off" — map to auto as closest
+        case .off:    code = 0
+        case .fast:   code = 1
+        case .medium: code = 2
+        case .slow:   code = 3
+        case .auto:   code = 4
         }
-        let command = String(format: "GT%03d", code)
+        let command = String(format: "GT%02d", code)
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
     /// Gets the current AGC speed.
     ///
-    /// Command: `GT;` — Response: `GTnnn;`
+    /// Command: `GT;` — Response: `GTnn;` (2-digit code per Hamlib).
     ///
     /// - Returns: The current AGC speed
     /// - Throws: `RigError` if the command fails
     public func getAGC() async throws -> AGCSpeed {
         try await sendCommand("GT")
         let response = try await receiveResponse()
-        // Response: GTnnn
-        guard response.hasPrefix("GT"), response.count >= 5 else {
+        // Response: GTnn
+        guard response.hasPrefix("GT"), response.count >= 4 else {
             throw RigError.invalidResponse
         }
         let start = response.index(response.startIndex, offsetBy: 2)
-        let end = response.index(start, offsetBy: 3)
+        let end = response.index(start, offsetBy: 2)
         guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
         switch code {
-        case 0: return .fast
-        case 1: return .medium
-        case 2: return .slow
+        case 0: return .off
+        case 1: return .fast
+        case 2: return .medium
+        case 3: return .slow
         default: return .auto
         }
     }
@@ -359,14 +374,34 @@ extension YaesuCATProtocol {
 
     /// Sets the IF filter (DSP passband width).
     ///
-    /// Yaesu uses `SH` (high cut) and `SL` (low cut) commands for passband tuning,
-    /// but also honours a simple filter selection via `SH` alone on many models.
+    /// Per Hamlib `rigs/yaesu/newcat.c` lines 9205-9218, the exact
+    /// `SH` command format varies per radio:
     ///
-    /// This implementation maps the three standard filter slots to Yaesu's high-cut
-    /// values:
-    /// - `.filter1` → SH07 (wide, ~3.0 kHz)
-    /// - `.filter2` → SH05 (medium, ~2.4 kHz)
-    /// - `.filter3` → SH02 (narrow, ~1.8 kHz)
+    /// - FTX-1 / FT-DX10 / FT-710: `SH00%02d;`
+    /// - FT-2000 / FT-DX3000: `SH0%02d;`
+    /// - FT-DX101D/MP / FT-891: `SH%c%d%02d;` (VFO + narrow flag)
+    /// - Others: `SH%c%02d;` (VFO qualifier)
+    ///
+    /// This implementation emits `SH0%02d;` — the common VFO-0 form
+    /// that works on the largest set of modern newcat radios
+    /// (FT-2000, FT-DX3000, FT-DX5000, FT-950, FT-991/A, and every
+    /// radio that accepts the qualifier). Prior to the v1.2.0 audit
+    /// fix Swift emitted `SH%02d;` without the qualifier — real
+    /// newcat radios reject the unqualified form.
+    ///
+    /// **Known limitations, tracked for v1.2.1:**
+    /// - FTX-1 / FT-DX10 / FT-710 want `SH00%02d;` (two-zero prefix).
+    ///   The single-zero form above works on the FTX-1 per informal
+    ///   reports but the correct wire is documented as double-zero.
+    ///   A `Quirks.filterCommandStyle` enum will be added in a
+    ///   follow-up to route each family to its exact Hamlib format.
+    /// - FT-DX101 / FT-891 add a narrow-flag byte that this impl
+    ///   doesn't send. Same follow-up.
+    ///
+    /// Filter slot mapping:
+    /// - `.filter1` → high-cut 7 (wide)
+    /// - `.filter2` → high-cut 5 (medium)
+    /// - `.filter3` → high-cut 2 (narrow)
     ///
     /// - Parameter filter: The desired IF filter slot
     /// - Throws: `RigError` if the command fails
@@ -377,25 +412,27 @@ extension YaesuCATProtocol {
         case .filter2: highCut = 5   // medium
         case .filter3: highCut = 2   // narrow
         }
-        let command = String(format: "SH%02d", highCut)
+        let command = String(format: "SH0%02d", highCut)
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
     /// Gets the current IF filter by reading the DSP high-cut setting.
     ///
-    /// Command: `SH;` — Response: `SHnn;`
+    /// Command: `SH0;` — Response: `SH0nn;` (VFO qualifier + 2-digit
+    /// high-cut code). See ``setIFFilter(_:)`` for the format
+    /// variants across radio families.
     ///
     /// - Returns: The closest matching filter slot
     /// - Throws: `RigError` if the command fails
     public func getIFFilter() async throws -> IFFilter {
-        try await sendCommand("SH")
+        try await sendCommand("SH0")
         let response = try await receiveResponse()
-        // Response: SHnn
-        guard response.hasPrefix("SH"), response.count >= 4 else {
+        // Response: SH0nn (prefix + VFO byte + 2-digit high-cut).
+        guard response.hasPrefix("SH"), response.count >= 5 else {
             throw RigError.invalidResponse
         }
-        let start = response.index(response.startIndex, offsetBy: 2)
+        let start = response.index(response.startIndex, offsetBy: 3)
         let end = response.index(start, offsetBy: 2)
         guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
         // Map SH code back to filter slot

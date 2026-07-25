@@ -170,11 +170,15 @@ public actor YaesuFT847CAT: CATProtocol {
 
     public func getPTT() async throws -> Bool {
         try requireBidirectional()
-        // Get RX status = 0xE7 → 1-byte response. Bit 7 is TX flag
-        // per Hamlib ft847_get_ptt().
+        // Get TX status = 0xF7 → 1-byte response. Per Hamlib
+        // `ft847_get_ptt()` (ft847.c line 1673):
+        //   *ptt = (p->tx_status & 0x80) ? RIG_PTT_OFF : RIG_PTT_ON;
+        // Bit 7 SET means PTT OFF (RX); bit 7 CLEAR means PTT ON.
+        // Prior to the v1.2.0 audit fix Swift had this inverted —
+        // getPTT reported false when the radio was transmitting.
         let response = try await sendStatusCommand(opcode: 0xF7,
                                                     expectedLength: 1)
-        return response[0] & 0x80 != 0
+        return response[0] & 0x80 == 0
     }
 
     // MARK: - VFO

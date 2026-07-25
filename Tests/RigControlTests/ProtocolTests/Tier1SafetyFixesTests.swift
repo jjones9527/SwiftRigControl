@@ -297,23 +297,63 @@ import Testing
         #expect(RadioDefinition.Yaesu.ft891.capabilities.hasSplit == false)
     }
 
-    // MARK: - Kenwood mode code 8 (FSK-R)
+    // MARK: - Kenwood mode code 9 (FSK-R / RTTY-R)
 
-    @Test func kenwoodModeCode8RoundTripsToRTTYR() async throws {
-        // Verifying by exercising setMode(.rttyR) → we should see
-        // "MD8;" go out on the wire.
+    @Test func kenwoodModeCode9RoundTripsToRTTYR() async throws {
+        // v1.2.0 audit fix: prior to this release Swift emitted
+        // `MD8;` for `.rttyR`, but per Hamlib
+        // `rigs/kenwood/kenwood.c` `kenwood_mode_table` (line ~150)
+        // mode 8 is `RIG_MODE_NONE` (TUNE), and mode 9 is
+        // `RIG_MODE_RTTYR` (FSK-R). The pre-fix code would put the
+        // radio into TUNE mode instead of RTTY-Reverse, silently.
         let mock = MockTransport()
         let kw = KenwoodProtocol(transport: mock, capabilities: .full)
         try await kw.connect()
         await mock.reset()
 
-        let cmd = "MD8;".data(using: .ascii)!
+        let cmd = "MD9;".data(using: .ascii)!
         await mock.setResponse(for: cmd, response: cmd)
 
         try await kw.setMode(.rttyR, vfo: .a)
 
         let writes = await mock.recordedWrites
         #expect(writes.count == 1)
-        #expect(String(data: writes[0], encoding: .ascii) == "MD8;")
+        #expect(String(data: writes[0], encoding: .ascii) == "MD9;")
+    }
+
+    @Test func kenwoodModeDataLSBEmitsMD12() async throws {
+        // v1.2.0 audit fix: DATA-LSB is Kenwood's PKT-LSB, mode 12
+        // per kenwood_mode_table. Prior code emitted MD9;.
+        let mock = MockTransport()
+        let kw = KenwoodProtocol(transport: mock, capabilities: .full)
+        try await kw.connect()
+        await mock.reset()
+
+        let cmd = "MD12;".data(using: .ascii)!
+        await mock.setResponse(for: cmd, response: cmd)
+
+        try await kw.setMode(.dataLSB, vfo: .a)
+
+        let writes = await mock.recordedWrites
+        #expect(writes.count == 1)
+        #expect(String(data: writes[0], encoding: .ascii) == "MD12;")
+    }
+
+    @Test func kenwoodModeDataUSBEmitsMD13() async throws {
+        // v1.2.0 audit fix: DATA-USB is Kenwood's PKT-USB, mode 13
+        // per kenwood_mode_table. Not previously supported.
+        let mock = MockTransport()
+        let kw = KenwoodProtocol(transport: mock, capabilities: .full)
+        try await kw.connect()
+        await mock.reset()
+
+        let cmd = "MD13;".data(using: .ascii)!
+        await mock.setResponse(for: cmd, response: cmd)
+
+        try await kw.setMode(.dataUSB, vfo: .a)
+
+        let writes = await mock.recordedWrites
+        #expect(writes.count == 1)
+        #expect(String(data: writes[0], encoding: .ascii) == "MD13;")
     }
 }

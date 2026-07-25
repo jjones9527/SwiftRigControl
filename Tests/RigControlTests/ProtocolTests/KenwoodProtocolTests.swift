@@ -114,6 +114,11 @@ import Testing
     }
 
     @Test func modeMappings() async throws {
+        // Cross-checked against Hamlib `rigs/kenwood/kenwood.c`
+        // `kenwood_mode_table` (lines 141-167). Prior to v1.2.0,
+        // Swift emitted `MD8;` for `.rttyR` (which is TUNE mode on
+        // real hardware) and `MD9;` for `.dataLSB` (which is
+        // RIG_MODE_RTTYR). Fixed in the v1.2.0 audit-fix batch.
         try await kenwoodProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
@@ -124,7 +129,11 @@ import Testing
             (.am, "MD5;"),
             (.rtty, "MD6;"),
             (.cwR, "MD7;"),
-            (.dataLSB, "MD9;"),  // Kenwood uses 9 for data mode
+            // 8 = RIG_MODE_NONE (TUNE) — no direct Mode equivalent.
+            (.rttyR, "MD9;"),
+            // 10 = PSK, 11 = PSK-R — not exposed on Swift Mode.
+            (.dataLSB, "MD12;"),
+            (.dataUSB, "MD13;"),
         ]
 
         for (mode, expectedCmd) in modeMappings {

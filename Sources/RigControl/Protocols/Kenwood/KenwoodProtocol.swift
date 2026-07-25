@@ -513,8 +513,17 @@ public actor KenwoodProtocol:
     /// | 5    | AM        |
     /// | 6    | FSK (RTTY)|
     /// | 7    | CW-R      |
-    /// | 8    | FSK-R     |
-    /// | 9    | DATA      |
+    /// | 8    | (reserved — TUNE on some radios, PKTUSB on SDRuno) |
+    /// | 9    | FSK-R (RTTY-R) |
+    /// | 12   | PKT-LSB (DATA-LSB) |
+    /// | 13   | PKT-USB (DATA-USB) |
+    ///
+    /// Sourced from Hamlib `rigs/kenwood/kenwood.c` `kenwood_mode_table`
+    /// (lines 141-167). Prior to v1.2.0 SwiftRigControl had `.rttyR`
+    /// mapped to 8 and `.dataLSB` mapped to 9, both wrong per the
+    /// Hamlib table. On real TS-series radios, `MD8;` triggers TUNE
+    /// mode (`RIG_MODE_NONE`) and `MD12;` / `MD13;` are the correct
+    /// PKT-LSB / PKT-USB selectors.
     private func modeToKenwoodCode(_ mode: Mode) throws -> Int {
         switch mode {
         case .lsb: return 1
@@ -524,8 +533,9 @@ public actor KenwoodProtocol:
         case .am: return 5
         case .rtty: return 6
         case .cwR: return 7
-        case .rttyR: return 8
-        case .dataLSB: return 9
+        case .rttyR: return 9
+        case .dataLSB: return 12
+        case .dataUSB: return 13
         default:
             throw RigError.unsupportedOperation("Mode \(mode) not supported by Kenwood protocol")
         }
@@ -541,8 +551,11 @@ public actor KenwoodProtocol:
         case 5: return .am
         case 6: return .rtty
         case 7: return .cwR
-        case 8: return .rttyR
-        case 9: return .dataLSB
+        // 8 = TUNE (no direct Mode equivalent); throw so callers see
+        // the mismatch rather than silently mapping to something wrong.
+        case 9: return .rttyR
+        case 12: return .dataLSB
+        case 13: return .dataUSB
         default:
             throw RigError.invalidResponse
         }

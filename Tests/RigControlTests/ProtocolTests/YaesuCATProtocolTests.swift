@@ -599,4 +599,114 @@ import Testing
 
         #expect(freq == 14_230_000)
     }
+
+    // MARK: - v1.2.0 audit fixes — level controls
+    //
+    // These commands (GT / RG / SH / RU / RD) were emitted in a wire
+    // format no real Yaesu radio accepts. Each fix is documented in
+    // the CHANGELOG for v1.2.0 audit-fixes with a Hamlib source
+    // citation. These tests guard against regression.
+
+    @Test func setAGCFastEmits2DigitGT01() async throws {
+        // Per Hamlib newcat.c:4142-4158, GT uses 2-digit fixed codes:
+        // GT00=OFF, GT01=FAST, GT02=MEDIUM, GT03=SLOW, GT04=AUTO.
+        // Prior code emitted GT000 (3-digit) with Fast=0 mapping.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expected = "GT01;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expected, response: expected)
+
+        try await yaesuProtocol.setAGC(.fast)
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "GT01;")
+    }
+
+    @Test func setAGCAutoEmitsGT04() async throws {
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expected = "GT04;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expected, response: expected)
+
+        try await yaesuProtocol.setAGC(.auto)
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "GT04;")
+    }
+
+    @Test func setRFGainEmitsVFOQualifiedFormat() async throws {
+        // Per Hamlib newcat.c:4477: RG%c%03d — VFO qualifier byte
+        // required. Prior code emitted RG%03d without qualifier.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expected = "RG0128;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expected, response: expected)
+
+        try await yaesuProtocol.setRFGain(128)
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "RG0128;")
+    }
+
+    @Test func setIFFilterEmitsVFOQualifiedSH() async throws {
+        // Per Hamlib newcat.c:9205-9218: SH format is model-specific
+        // but always includes a VFO qualifier byte. Prior code
+        // emitted SH%02d without the qualifier.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expected = "SH007;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expected, response: expected)
+
+        try await yaesuProtocol.setIFFilter(.filter1)  // wide
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH007;")
+    }
+
+    @Test func setRITEmitsRCPreludeThenUnsignedRUForPositiveOffset() async throws {
+        // Per Hamlib newcat.c:2930-2936:
+        //   SNPRINTF(..., "RC%cRU%04ld%c", cat_term, labs(rit), cat_term);
+        // Prior code emitted RU%+05d (signed 5-digit with '+' sign
+        // character) which real newcat radios reject. Fixed to
+        // unsigned 4-digit with RC; prelude.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let rcCmd = "RC;".data(using: .ascii)!
+        let ruCmd = "RU0100;".data(using: .ascii)!
+        let rtCmd = "RT1;".data(using: .ascii)!
+        await mockTransport.setResponse(for: rcCmd, response: rcCmd)
+        await mockTransport.setResponse(for: ruCmd, response: ruCmd)
+        await mockTransport.setResponse(for: rtCmd, response: rtCmd)
+
+        try await yaesuProtocol.setRIT(RITXITState(enabled: true, offset: 100))
+
+        let writes = await mockTransport.recordedWrites
+        #expect(writes.count == 3)
+        #expect(String(data: writes[0], encoding: .ascii) == "RC;")
+        #expect(String(data: writes[1], encoding: .ascii) == "RU0100;")
+        #expect(String(data: writes[2], encoding: .ascii) == "RT1;")
+    }
+
+    @Test func setRITEmitsRDForNegativeOffsetUnsigned() async throws {
+        // Negative offset uses RD (down) with absolute value.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let rcCmd = "RC;".data(using: .ascii)!
+        let rdCmd = "RD0250;".data(using: .ascii)!
+        let rtCmd = "RT1;".data(using: .ascii)!
+        await mockTransport.setResponse(for: rcCmd, response: rcCmd)
+        await mockTransport.setResponse(for: rdCmd, response: rdCmd)
+        await mockTransport.setResponse(for: rtCmd, response: rtCmd)
+
+        try await yaesuProtocol.setRIT(RITXITState(enabled: true, offset: -250))
+
+        let writes = await mockTransport.recordedWrites
+        #expect(String(data: writes[1], encoding: .ascii) == "RD0250;")
+    }
 }

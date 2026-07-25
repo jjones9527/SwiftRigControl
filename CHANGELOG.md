@@ -508,6 +508,130 @@ Kenwood catalog: 20 → 24. Total: 122 → 126. Kenwood
 amateur-2000+ coverage now covers every Hamlib RIG_MODEL_TMD710
 / RIG_MODEL_TMV71 / RIG_MODEL_THF6A / RIG_MODEL_THF7E entry.
 
+#### Audit-fix batch — 6 critical bugs found by protocol audit
+
+Before cutting v1.2.0 we ran a byte-level protocol audit across
+every one of the 126 catalog radios, spread across 6 parallel
+sub-agent reports. The Icom CI-V family (51 radios) passed with
+100% Hamlib match. The other 5 families surfaced 6 critical bugs
+plus a handful of medium / low issues. This batch fixes the 6
+criticals with regression tests for each.
+
+**Fix 1: Kenwood mode codes 8 and 9 swapped.** Prior code mapped
+`.rttyR` → `MD8;` and `.dataLSB` → `MD9;`. Per Hamlib
+`rigs/kenwood/kenwood.c` `kenwood_mode_table` (lines 141-167),
+mode 8 is `RIG_MODE_NONE` (TUNE on most radios) and mode 9 is
+`RIG_MODE_RTTYR` (FSK-R). Sending `MD8;` for reverse RTTY put
+the radio into TUNE mode silently. Also adds `.dataUSB` → `MD13;`
+(PKT-USB) which wasn't previously mapped; `.dataLSB` now correctly
+maps to `MD12;` (PKT-LSB). Affects every Kenwood HF radio,
+Elecraft K-series, Lab599 TX-500, and Flex-family radios using
+`KenwoodProtocol` — 27 radios total.
+
+**Fix 2: FT-847 getPTT bit polarity inverted.** Per Hamlib
+`ft847.c:1673`:
+
+```c
+*ptt = (p->tx_status & 0x80) ? RIG_PTT_OFF : RIG_PTT_ON;
+```
+
+Bit 7 SET means PTT OFF, bit 7 CLEAR means PTT ON. Swift had
+this inverted — `getPTT()` returned `false` while the radio was
+transmitting and `true` while idle. Affects FT-847, FT-847UNI,
+mcHF QRP.
+
+**Fix 3: Yaesu newcat GT (AGC) command format completely wrong.**
+Prior code emitted 3-digit codes (`GT000`, `GT001`, `GT002`,
+`GT003`) with mapping Fast=0, Medium=1, Slow=2, Auto=3. Per
+Hamlib `newcat.c:4142-4158`, the correct wire is 2-digit codes
+with mapping OFF=00, FAST=01, MEDIUM=02, SLOW=03, AUTO=04. Real
+newcat radios reject both the width and the mapping. Affects all
+24 modern Yaesu radios (FT-DX10 / FT-DX101(D/MP) / FT-DX1200 /
+FT-DX3000 / FT-DX5000 / FT-9000 / FT-450(D) / FT-710 / FT-891 /
+FT-950 / FT-991(A) / FT-2000 / FTX-1).
+
+**Fix 4: Yaesu newcat RG (RF gain) missing VFO qualifier.** Prior
+code emitted `RG%03d;`. Per Hamlib `newcat.c:4477`:
+
+```c
+SNPRINTF(..., "RG%c%03d%c", main_sub_vfo, fpf, cat_term);
+```
+
+Correct wire is `RG0%03d;` (main receiver) or `RG1%03d;` (sub).
+Query is `RG0;` not `RG;`. Response is `RG0nnn;` with VFO byte
+between prefix and value. Affects all 24 modern Yaesu radios.
+
+**Fix 5: Yaesu newcat SH (IF filter / bandwidth) missing VFO
+qualifier.** Prior code emitted `SH%02d;`. Per Hamlib
+`newcat.c:9205-9218` the format varies per radio family
+(`SH00%02d;` for FTX-1/FT-DX10/FT-710, `SH0%02d;` for FT-2000
+family, `SH%c%d%02d;` for FT-DX101 with narrow-flag). This fix
+emits `SH0%02d;` — the common single-VFO-qualifier form that
+works on the broadest set of modern newcat radios. **Follow-up
+for v1.2.1**: add a `Quirks.filterCommandStyle` enum for the
+per-family variants that need `SH00` or the narrow-flag byte.
+
+**Fix 6: Yaesu newcat RU/RD (RIT/XIT clarifier) format.** Prior
+code emitted `RU%+05d;` (signed 5-digit with `+` sign character).
+Per Hamlib `newcat.c:2930-2936`:
+
+```c
+SNPRINTF(..., "RC%cRU%04ld%c", cat_term, labs(rit), cat_term);
+```
+
+Correct wire is:
+1. `RC;` clarifier-clear prelude
+2. `RU<4-digit-unsigned>;` for positive offsets (direction in
+   command letter)
+3. `RD<4-digit-unsigned>;` for negative offsets
+4. `RT1;` / `RT0;` to enable/disable
+
+Real newcat radios reject the signed form with the `+` sign
+character. Affects all 24 modern Yaesu radios that support
+RIT/XIT.
+
+**Note on Fix 2 as originally scoped.** The audit report also
+flagged Elecraft K2 signal strength (SM vs SM0) as critical. On
+inspection, `ElecraftProtocol.getSignalStrength` already handles
+this correctly via `isK2 ? "SM" : "SM0"`. The K2 test at
+`ElecraftProtocolTests.swift:21` was already passing. Not a bug;
+skipped.
+
+**Regression tests added:** 10 new tests in
+`YaesuCATProtocolTests` (GT/RG/SH/RU/RD formats) and
+`YaesuLegacyCATTests` (FT-847 getPTT polarity) plus updates to
+existing `KenwoodProtocolTests.modeMappings` and
+`Tier1SafetyFixesTests.kenwoodModeCode9RoundTripsToRTTYR`. Prior
+to these regression tests, the buggy behaviors had zero test
+coverage — which is why they persisted through the earlier v1.1.2
+safety audit.
+
+**Deferred to v1.2.1 patch release** (medium / low severity;
+non-blocking):
+
+- Yaesu newcat MD command missing VFO qualifier on
+  `RIG_TARGETABLE_MODE` radios (FT-DX101D/MP, FT-9000).
+- Yaesu newcat SH per-family variants (FTX-1/FT-DX10/FT-710 want
+  `SH00%02d;`; FT-DX101/FT-891 add narrow-flag byte).
+- Kenwood AF gain format variants — TS-450S/TS-690S need `AG;`
+  bare instead of the current `AG0`.
+- Kenwood squelch VFO-aware — TS-890S dual-RX needs `SQ1nnn;`
+  for sub-receiver.
+- TH-D72 power-level API contract (integer watts vs normalized
+  0.0-1.0 float).
+- THFamilyCAT step persistence (front-panel step changes get
+  overwritten by cached snapshot).
+- Ten-Tec Orion II setMode missing bandwidth command follow-up.
+- Ten-Tec Orion split command shape (`*E` vs Hamlib's `*KV`).
+- Ten-Tec legacy S-meter reads 1 byte instead of Hamlib's 3.
+- Icom test coverage — 21 StandardIcomCommandSet radios have no
+  model-specific tests.
+- Yaesu newcat test coverage — RG/GT/SH/RU/RD/AG/etc. now have
+  fix-regression tests but not full behavioral coverage.
+
+**Verification:** clean build; **635 tests pass** (was 625;
++10 new). Zero regressions.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

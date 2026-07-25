@@ -544,12 +544,21 @@ public actor YaesuCATProtocol:
 
     /// Sets the RIT (Receiver Incremental Tuning) state.
     ///
-    /// Yaesu radios using Kenwood-compatible CAT commands use:
-    /// - `RT1;` to enable RIT
-    /// - `RT0;` to disable RIT
-    /// - `RU+nnnn;` or `RD+nnnn;` to set offset (in Hz, -9999 to +9999)
+    /// Per Hamlib `rigs/yaesu/newcat.c` `newcat_set_rit`:
+    /// - `RC;` (clarifier-clear) prelude — clears any accumulated
+    ///   offset so the new value is absolute, not relative.
+    /// - `RUnnnn;` (positive offset) or `RDnnnn;` (negative offset) —
+    ///   4-digit **unsigned** decimal, direction encoded in the
+    ///   command letter (`RU` = up / positive, `RD` = down /
+    ///   negative). Hamlib uses `%04ld` with `labs()`.
+    /// - `RT1;` to enable, `RT0;` to disable.
     ///
-    /// - Parameter state: The desired RIT state (enabled/disabled and offset)
+    /// Prior to the v1.2.0 audit fix Swift emitted signed 5-digit
+    /// values (`RU+0100;`) which real newcat radios reject — the
+    /// `+` sign character is not part of the on-wire format.
+    ///
+    /// - Parameter state: The desired RIT state (enabled/disabled
+    ///   and offset in Hz, -9999 to +9999)
     /// - Throws: `RigError` if operation fails
     public func setRIT(_ state: RITXITState) async throws {
         // Validate offset range
@@ -557,13 +566,17 @@ public actor YaesuCATProtocol:
             throw RigError.invalidParameter("RIT offset must be between -9999 and +9999 Hz")
         }
 
-        // Set RIT offset using RU (up) or RD (down) command
-        // Format: RU+nnnn; or RD-nnnn; (signed offset value)
+        // Clear any accumulated offset before setting a new one.
+        try await sendCommand("RC")
+        _ = try await receiveResponse()
+
+        // Direction encoded in command letter; value is unsigned.
+        let magnitude = abs(state.offset)
         let command: String
         if state.offset >= 0 {
-            command = String(format: "RU%+05d", state.offset)
+            command = String(format: "RU%04d", magnitude)
         } else {
-            command = String(format: "RD%+05d", state.offset)
+            command = String(format: "RD%04d", magnitude)
         }
 
         try await sendCommand(command)
