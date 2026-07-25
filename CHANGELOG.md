@@ -196,6 +196,64 @@ standalone, an invariant that every non-flagged radio in
 adapter that needs `windowsCompanion` won't silently ship
 mis-flagged), and a display-name check.
 
+#### YaesuPortableCAT — fixes 8 previously-broken Yaesu definitions
+
+Adds a new `YaesuPortableCAT` actor implementing the pre-newcat
+5-byte binary CAT protocol used by the FT-817 family of portable
+and mobile Yaesu transceivers. Rewires 8 existing radio
+definitions from the incorrect `YaesuCATProtocol` (the modern
+newcat driver) to the new `YaesuPortableCAT`:
+
+- FT-817, FT-818 (portables)
+- FT-857, FT-857D (mobiles)
+- FT-897, FT-897D (mobile/portable base)
+- FT-100 (mobile)
+- FT-920 (base with DSP)
+
+**Prior to this release these 8 definitions shipped with a
+protocol adapter that didn't drive them.** `YaesuCATProtocol`
+was designed for the modern semicolon-terminated newcat radios
+(FT-950 / FT-991 / FTdx / FT-710) and its inline documentation
+already noted "this shared newcat implementation does not drive
+[the FT-817 family] anyway." Any Mac app that shipped a
+picker containing one of these 8 radios and let an operator
+connect would fail silently (no bytes emitted, no responses
+parseable). This release closes that gap.
+
+Frame layout: 5-byte fixed `[P1, P2, P3, P4, Opcode]` frames,
+no checksum, no terminator. Set commands read a 1-byte ACK
+(`ft817_read_ack()` in Hamlib). Status commands (opcode `0x03`
+for freq+mode, `0xF7` for TX status) return fixed-length
+payloads without ACK. Frequency is 8-digit **big-endian** BCD
+in 10-Hz units. Mode selectors: LSB=0x00, USB=0x01, CW=0x02,
+CW-R=0x03, AM=0x04, FM=0x08, FM-N=0x88, DIG=0x0A, PKT=0x0C
+(both DATA-USB and DATA-LSB collapse to PKT, matching hardware).
+
+Every byte fixture in the 23-test protocol suite is derived
+directly from Hamlib `rigs/yaesu/ft817.c`. That's the closest
+we can get to hardware verification without owning one of
+these radios, but downstream operators should treat FT-817
+family support as "definition-only against the reference
+implementation" until a hardware validator lands.
+
+**Two other Yaesu radios kept using YaesuCATProtocol** but
+gained explicit `> Warning:` doc blocks flagging the same
+class of bug pending a follow-up port:
+
+- `Yaesu.ft847` — FT-847 uses a distinct pre-newcat CAT with
+  satellite-mode VFO opcodes (0x03/0x13/0x23 per Hamlib
+  `rigs/yaesu/ft847.c`). Needs `YaesuFT847Protocol`.
+- `Yaesu.ft1000MP` — FT-1000MP uses pre-newcat CAT with
+  dual-VFO opcodes (0x0A/0x8A) and **little-endian** BCD (per
+  Hamlib `rigs/yaesu/ft1000mp.c`) — opposite endian to the
+  FT-817 family. Needs `YaesuFT1000MPProtocol`.
+
+Both are lower-usage than the FT-817 family; their fixes are
+tracked for a follow-up release.
+
+Test count 555 → 578 (23 new); zero regressions. Clean build
+under Swift 6 strict concurrency.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio
