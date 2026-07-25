@@ -311,4 +311,73 @@ import Testing
             )
         }
     }
+
+    // MARK: - HostRequirement
+
+    @Test func standaloneIsTheDefaultHostRequirement() {
+        // Every existing radio (except the four flagged Flex
+        // definitions) should default to .standalone — the field
+        // was added as additive with a default value; no other
+        // factory should have been touched.
+        let flaggedModels: Set<String> = [
+            "PowerSDR", "Thetis", "SDR-Console", "PiHPSDR",
+        ]
+        for radio in RadioDefinition.allSupportedRadios {
+            if flaggedModels.contains(radio.model) { continue }
+            #expect(
+                radio.hostRequirement == .standalone,
+                "\(radio.fullName) unexpectedly non-standalone: \(radio.hostRequirement)"
+            )
+        }
+    }
+
+    @Test func powerSDRRequiresWindowsHost() {
+        #expect(
+            RadioDefinition.Flex.powerSDR.hostRequirement
+                == .windowsCompanion(app: "PowerSDR")
+        )
+    }
+
+    @Test func thetisRequiresWindowsHost() {
+        #expect(
+            RadioDefinition.Flex.thetis.hostRequirement
+                == .windowsCompanion(app: "Thetis")
+        )
+    }
+
+    @Test func sdrConsoleRequiresWindowsHost() {
+        #expect(
+            RadioDefinition.Flex.sdrConsole.hostRequirement
+                == .windowsCompanion(app: "SDR-Console")
+        )
+    }
+
+    @Test func pihpsdrRequiresLinuxHost() {
+        #expect(
+            RadioDefinition.Flex.pihpsdr.hostRequirement
+                == .linuxCompanion(app: "PiHPSDR")
+        )
+    }
+
+    @Test func flex6000IsStandaloneTCPRadio() {
+        // The Flex 6000-series exposes CAT over its built-in TCP
+        // server — no companion machine required. This is the
+        // one Flex radio a Mac can use standalone.
+        #expect(RadioDefinition.Flex.flex6000.hostRequirement == .standalone)
+    }
+
+    @Test func hostRequirementDisplayNamesAreHumanReadable() {
+        #expect(
+            RadioDefinition.HostRequirement.standalone.displayName
+                == "Standalone"
+        )
+        #expect(
+            RadioDefinition.HostRequirement.windowsCompanion(app: "PowerSDR").displayName
+                == "Requires Windows host running PowerSDR"
+        )
+        #expect(
+            RadioDefinition.HostRequirement.linuxCompanion(app: "PiHPSDR").displayName
+                == "Requires Linux/Pi host running PiHPSDR"
+        )
+    }
 }

@@ -35,10 +35,17 @@ extension RadioDefinition.Flex {
     /// PowerSDR (FlexRadio / Apache Labs) — virtual serial CAT
     /// bridge.
     ///
+    /// > Note: Requires a **Windows** PC running PowerSDR. PowerSDR
+    /// > itself is Windows-only; this definition targets the virtual
+    /// > COM port PowerSDR exposes. A Mac alone cannot drive this
+    /// > radio — connect from macOS to a Windows machine over a
+    /// > serial-over-network tunnel (e.g. `socat`, `com2tcp`) whose
+    /// > endpoint on the Windows side is PowerSDR's CAT port.
+    /// > See ``RadioDefinition/hostRequirement`` /
+    /// > ``RadioDefinition/HostRequirement/windowsCompanion(app:)``.
+    ///
     /// PowerSDR drives the original FlexRadio 1500/3000/5000A and
-    /// Apache Labs ANAN HPSDR boxes. CAT is delivered through a
-    /// virtual COM port that PowerSDR's "CAT Control" feature opens
-    /// — typically paired with com0com or a Mac equivalent.
+    /// Apache Labs ANAN HPSDR boxes.
     ///
     /// ```swift
     /// let rig = try RigController(
@@ -59,14 +66,22 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.powerSDR
             )
-        }
+        },
+        hostRequirement: .windowsCompanion(app: "PowerSDR")
     )
 
     /// Thetis (TAPR) — open-source PowerSDR fork.
     ///
+    /// > Note: Requires a **Windows** PC running Thetis. Thetis is
+    /// > Windows-only; this definition targets the virtual COM port
+    /// > Thetis exposes for CAT control. A Mac alone cannot drive
+    /// > this radio — connect from macOS to the Windows machine over
+    /// > a serial-over-network tunnel. See
+    /// > ``RadioDefinition/hostRequirement`` /
+    /// > ``RadioDefinition/HostRequirement/windowsCompanion(app:)``.
+    ///
     /// Thetis is the TAPR-maintained fork of PowerSDR used with
-    /// HPSDR / ANAN hardware. CAT is delivered through a virtual
-    /// COM port and uses the same command set as PowerSDR.
+    /// HPSDR / ANAN hardware.
     ///
     /// ```swift
     /// let rig = try RigController(
@@ -87,16 +102,25 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.thetis
             )
-        }
+        },
+        hostRequirement: .windowsCompanion(app: "Thetis")
     )
 
     // MARK: - v1.2.0 Group I — TS-2000-emulation SDR clients
 
     /// SDR-Console (Simon Brown) — Windows-first SDR client.
     ///
-    /// SDR-Console (`sdr-radio.com`) drives external SDR hardware
-    /// through a TS-2000-style Kenwood CAT emulation, typically
-    /// paired with a virtual serial port. Cross-checked against
+    /// > Note: Requires a **Windows** PC running SDR-Console.
+    /// > SDR-Console (`sdr-radio.com`) is Windows-only; this
+    /// > definition targets the virtual serial port SDR-Console
+    /// > exposes for CAT control. A Mac alone cannot drive this
+    /// > radio — connect from macOS to the Windows machine over a
+    /// > serial-over-network tunnel. See
+    /// > ``RadioDefinition/hostRequirement`` /
+    /// > ``RadioDefinition/HostRequirement/windowsCompanion(app:)``.
+    ///
+    /// SDR-Console drives external SDR hardware through a
+    /// TS-2000-style Kenwood CAT emulation. Cross-checked against
     /// Hamlib `rigs/kenwood/ts2000.c` (`RIG_MODEL_SDRCONSOLE`) —
     /// the Hamlib backend explicitly registers SDR-Console as a
     /// distinct model even though the wire protocol is a TS-2000
@@ -122,12 +146,22 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.sdrConsole
             )
-        }
+        },
+        hostRequirement: .windowsCompanion(app: "SDR-Console")
     )
 
     /// PiHPSDR (OpenHPSDR) — open-source SDR client for HPSDR /
     /// ANAN hardware, most commonly running on Raspberry Pi (also
     /// desktop Linux).
+    ///
+    /// > Note: Requires a **Linux** or **Raspberry Pi** host running
+    /// > PiHPSDR. PiHPSDR does not run on macOS; this definition
+    /// > targets the virtual serial port PiHPSDR exposes for CAT
+    /// > control. A Mac alone cannot drive this radio — connect
+    /// > from macOS to the Pi/Linux machine over a
+    /// > serial-over-network tunnel (e.g. `socat`). See
+    /// > ``RadioDefinition/hostRequirement`` /
+    /// > ``RadioDefinition/HostRequirement/linuxCompanion(app:)``.
     ///
     /// Cross-checked against Hamlib `rigs/kenwood/pihpsdr.c`
     /// (`RIG_MODEL_HPSDR`) — the header comment cites the file as
@@ -153,6 +187,7 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.pihpsdr
             )
-        }
+        },
+        hostRequirement: .linuxCompanion(app: "PiHPSDR")
     )
 }

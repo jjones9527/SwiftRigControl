@@ -147,6 +147,55 @@ Icom 45 → 51 (Group D); Flex 3 → 5 (Group I); Kenwood 15 → 20
 reuse-existing batches. Groups A, B, C, E, H, K, L (new-protocol
 adapters) and FTX-1 still pending.
 
+#### HostRequirement — flag radios that need a companion machine
+
+Adds a new `RadioDefinition.HostRequirement` enum plus a
+`hostRequirement: HostRequirement` field on `RadioDefinition`
+that flags whether a radio can be driven from a Mac by itself or
+requires a companion Windows / Linux host running the SDR
+application whose CAT bridge SwiftRigControl connects to.
+
+Cases:
+
+- `.standalone` (default) — physical CAT over USB serial, or
+  TCP-native software radio like the Flex 6000-series SmartSDR
+  TCP bridge. Works with only a Mac. This is what every radio
+  in the catalog defaults to.
+- `.windowsCompanion(app: String)` — the CAT interface is a
+  virtual serial port exposed by a Windows-only SDR app. A Mac
+  can connect via serial-over-network tunnel (e.g. `socat`,
+  `com2tcp`), but a Mac alone cannot drive it.
+- `.linuxCompanion(app: String)` — same story for a Linux /
+  Raspberry Pi host.
+
+Four existing Flex-namespace definitions are flagged
+appropriately as of this release:
+
+- `Flex.powerSDR` → `.windowsCompanion(app: "PowerSDR")`
+- `Flex.thetis` → `.windowsCompanion(app: "Thetis")`
+- `Flex.sdrConsole` → `.windowsCompanion(app: "SDR-Console")`
+- `Flex.pihpsdr` → `.linuxCompanion(app: "PiHPSDR")`
+
+Their DocC comments gain a `> Note:` block explaining the
+companion-host requirement so anyone reading the API (or a
+picker UI) sees the constraint upfront, not after failing to
+connect. `Flex.flex6000` stays `.standalone` — SmartSDR exposes
+CAT on a TCP socket the Mac can connect to directly.
+
+Additive, non-breaking: existing callers that don't touch
+`hostRequirement` see zero source impact. Adding the field with
+a default value means every not-explicitly-flagged radio
+correctly defaults to `.standalone`. `HostRequirement` conforms
+to `Sendable` and `Equatable` for switch dispatch and picker-UI
+filtering.
+
+Drift-test coverage: `RadioCatalogDriftTests` gains seven new
+assertions covering the flagged four, `Flex.flex6000` as
+standalone, an invariant that every non-flagged radio in
+`allSupportedRadios` is `.standalone` (so a future non-Flex
+adapter that needs `windowsCompanion` won't silently ship
+mis-flagged), and a display-name check.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

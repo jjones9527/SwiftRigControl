@@ -35,6 +35,20 @@ public struct RadioDefinition: Sendable {
     /// ``SerialDefaults``.
     public let serialDefaults: SerialDefaults
 
+    /// Whether this definition targets a physical radio (or a
+    /// TCP-native software radio like Flex 6000-series) or requires
+    /// a companion host machine running the SDR application whose
+    /// CAT bridge SwiftRigControl connects to.
+    ///
+    /// See ``HostRequirement`` for the meaning of each case.
+    /// Downstream picker UIs on macOS should treat anything other
+    /// than ``HostRequirement/standalone`` as needing a second
+    /// machine on the operator's network — the definition is still
+    /// valid (SwiftRigControl can absolutely connect to a Windows
+    /// PC's PowerSDR over a serial-over-network tunnel), but the
+    /// Mac alone is not sufficient.
+    public let hostRequirement: HostRequirement
+
     /// Protocol factory closure
     private let protocolFactory: @Sendable (any SerialTransport) -> any CATProtocol
 
@@ -116,6 +130,61 @@ public struct RadioDefinition: Sendable {
             switch self {
             case .hardware:   return "Hardware verified"
             case .definition: return "Definition only"
+            }
+        }
+    }
+
+    /// Whether a radio definition can be driven from a Mac by itself,
+    /// or whether it needs a companion machine running the SDR
+    /// application whose CAT bridge SwiftRigControl connects to.
+    ///
+    /// Most radios are ``standalone`` — physical CAT over USB serial,
+    /// or a TCP-native software radio like the Flex 6000-series
+    /// SmartSDR TCP bridge. A few definitions target virtual serial
+    /// ports exposed by SDR applications that only run on Windows
+    /// (PowerSDR, Thetis, SDR-Console) or Linux/Raspberry Pi
+    /// (PiHPSDR); those need ``windowsCompanion(app:)`` or
+    /// ``linuxCompanion(app:)`` so a picker UI can flag them.
+    ///
+    /// The definition is still valid from a Mac — SwiftRigControl
+    /// can absolutely connect to the companion machine's virtual
+    /// serial port over a serial-over-network tunnel — but a Mac
+    /// alone is not sufficient.
+    public enum HostRequirement: Sendable, Equatable {
+
+        /// Physical radio (CAT over USB serial) or TCP-native
+        /// software radio (e.g. Flex 6000-series SmartSDR TCP on
+        /// port 4992). Works with only a Mac.
+        case standalone
+
+        /// The radio's CAT interface is a virtual serial port
+        /// exposed by an SDR application that only runs on
+        /// **Windows**. Examples: PowerSDR, Thetis, SDR-Console.
+        /// A Mac can connect via serial-over-network tunnel, but
+        /// a Mac alone cannot drive this definition.
+        ///
+        /// - Parameter app: The Windows application name (e.g.
+        ///   `"PowerSDR"`, `"Thetis"`, `"SDR-Console"`).
+        case windowsCompanion(app: String)
+
+        /// The radio's CAT interface is a virtual serial port
+        /// exposed by an SDR application that only runs on
+        /// **Linux** or **Raspberry Pi**. Example: PiHPSDR.
+        /// A Mac can connect over the network but not natively.
+        ///
+        /// - Parameter app: The Linux application name (e.g.
+        ///   `"PiHPSDR"`).
+        case linuxCompanion(app: String)
+
+        /// Human-readable label suitable for UI display.
+        public var displayName: String {
+            switch self {
+            case .standalone:
+                return "Standalone"
+            case .windowsCompanion(let app):
+                return "Requires Windows host running \(app)"
+            case .linuxCompanion(let app):
+                return "Requires Linux/Pi host running \(app)"
             }
         }
     }
@@ -292,6 +361,13 @@ public struct RadioDefinition: Sendable {
     ///     radio factories so `withCivAddress(_:)` can produce a copy
     ///     whose `protocolFactory` also honours the new address; leave
     ///     `nil` for non-Icom radios.
+    ///   - hostRequirement: Whether this definition can be driven from
+    ///     a Mac by itself (``HostRequirement/standalone`` — the
+    ///     default) or needs a companion Windows / Linux host running
+    ///     the SDR application whose CAT bridge SwiftRigControl
+    ///     connects to. Set this on definitions like PowerSDR /
+    ///     Thetis / SDR-Console (Windows-only apps) or PiHPSDR
+    ///     (Linux/Pi-only). See ``HostRequirement``.
     public init(
         manufacturer: Manufacturer,
         model: String,
@@ -301,7 +377,8 @@ public struct RadioDefinition: Sendable {
         verificationStatus: VerificationStatus = .definition,
         serialDefaults: SerialDefaults = .standard,
         protocolFactory: @escaping @Sendable (any SerialTransport) -> any CATProtocol,
-        civAddressRebuilder: (@Sendable (UInt8?) -> RadioDefinition)? = nil
+        civAddressRebuilder: (@Sendable (UInt8?) -> RadioDefinition)? = nil,
+        hostRequirement: HostRequirement = .standalone
     ) {
         self.manufacturer = manufacturer
         self.model = model
@@ -312,6 +389,7 @@ public struct RadioDefinition: Sendable {
         self.serialDefaults = serialDefaults
         self.protocolFactory = protocolFactory
         self.civAddressRebuilder = civAddressRebuilder
+        self.hostRequirement = hostRequirement
     }
 
     /// Creates a protocol instance for this radio.
