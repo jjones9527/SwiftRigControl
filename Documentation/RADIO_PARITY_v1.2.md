@@ -95,14 +95,50 @@ doesn't.
 | 17 | IC-RX7 | Icom | `rigs/icom/icrx7.c` | 2007 | reuse-existing | ~1 hour |
 | 18 | IC-910 (base) | Icom | `rigs/icom/ic910.c` | 2001 (base variant of already-shipped 910H) | reuse-existing | ~1 hour |
 
-### Group E: Kenwood mobile/handheld modern (4 radios)
+### Group E: Kenwood mobile/handheld modern (4 radios) — **RE-SCOPED**
+
+**Correction 2026-07-24 while starting Group E implementation:**
+the parity plan classified TM-D710, TM-V71, TH-F6A, TH-F7E as
+"reuse-existing (Kenwood text)" at ~2 hours each. That's wrong.
+
+On reading Hamlib, all four radios use `.cmdtrm = EOM_TH` — the
+CR (`\r`) terminator, **not** the `;` terminator our existing
+`KenwoodProtocol` implements. Kenwood's TH-family CAT (TM mobiles
++ TH handhelds) is a distinct protocol from the semicolon-based
+Kenwood HF/desktop CAT. SwiftRigControl already has one hand-coded
+CR-terminator implementation — `THD72Protocol.swift` — but it is
+specifically wired for the TH-D72's `FO` string layout, `BC 0/1`
+VFO selection, and 3-level RF power. It is not a generic TH-family
+base.
+
+Hamlib's own implementation breakdown reflects the same reality:
+- `th.c` — 2574 LOC of shared TH-family code
+- `thd72.c` — 1777 LOC of TH-D72-specific extensions
+- `tmd710.c` — 2982 LOC covering TM-D710 + TM-V71 (they share
+  a file because they share protocol details, distinct from TH-D72)
+- `thf6a.c` / `thf7.c` — each ~500-800 LOC + heavy shared use
+  of `th.c`
+
+Correct classification: **new-protocol adapters**, not
+reuse-existing. Realistic effort:
+
+- **TMFamilyProtocol** (~1 day) + TM-D710 and TM-V71 factories
+  (~1 hour on top).
+- **THFamilyProtocol** (~1 day) + TH-F6A and TH-F7E factories
+  (~1 hour on top). Or refactor `THD72Protocol` into a shared
+  base — similar total work.
+
+Note both would still be "definition-only" per the release plan
+(no hardware verification of new radios in v1.2.0), so the win is
+protocol correctness against Hamlib rather than field-tested
+delivery.
 
 | # | Model | Vendor | Hamlib source | ~Year | Reuse | Effort |
 |---|---|---|---|---|---|---|
-| 19 | TM-D710 | Kenwood | `rigs/kenwood/tmd710.c` | 2007 (still sold) | reuse-existing (text) | ~4 hours |
-| 20 | TM-V71 | Kenwood | `rigs/kenwood/tmv7.c` (family) | 2005 (still sold) | reuse-existing | ~2 hours |
-| 21 | TH-F6A | Kenwood | `rigs/kenwood/thf6a.c` | 2001 | reuse-existing | ~2 hours |
-| 22 | TH-F7E | Kenwood | `rigs/kenwood/thf7.c` | 2001 | reuse-existing | ~2 hours |
+| 19 | TM-D710(G) | Kenwood | `rigs/kenwood/tmd710.c` | 2007 (still sold) | **new-adapter (TM-family)** | shares adapter |
+| 20 | TM-V71(A) | Kenwood | `rigs/kenwood/tmd710.c` (shared file) | 2005 (still sold) | **new-adapter (TM-family)** | ~1 day total |
+| 21 | TH-F6A | Kenwood | `rigs/kenwood/thf6a.c` + `th.c` | 2001 | **new-adapter (TH-family)** | shares adapter |
+| 22 | TH-F7E | Kenwood | `rigs/kenwood/thf7.c` + `th.c` | 2001 | **new-adapter (TH-family)** | ~1 day total |
 
 ### Group F: Yaesu legacy HF still-common (5 radios)
 
@@ -233,15 +269,16 @@ Each new vendor also gets:
 
 Rough hour counts across the 50 radios:
 
-- **~10 hours** — the 19 radios that reuse an existing protocol adapter
+- **~8 hours** — the 15 radios that reuse an existing protocol adapter
   (mostly ~1-2 hours each: capabilities entry + factory + drift-test row).
-  Group D shipped 6 of these in commit `1569291`.
+  Groups D and I shipped 8 of these across commits `1569291`
+  (Icom Group D, 6 radios) and `df338a7` (Flex Group I, 2 radios).
 - **~1.5 days** — FTX-1 alone (largest single port; new subsystems in
   Hamlib's `ftx1_*.c` files).
-- **~6 days** — new-vendor protocol adapters (~1 day each for
-  Guohetec, Anytone, Elad, Alinco, AOR, FlexSmartSDR + ~½ day for
-  CommRadio). FlexSmartSDR ships the 8 slice factories on top of
-  the adapter.
+- **~8 days** — new protocol adapters (~1 day each for
+  Guohetec, Anytone, Elad, Alinco, AOR, FlexSmartSDR, plus the
+  Kenwood TM-family and TH-family adapters that Group E turned
+  out to need + ~½ day for CommRadio).
 - **~1 day** — plumbing (Manufacturer enum expansion, `allRadios`
   arrays, drift test, `HAMLIB_WATCH.md` mapping, `hamlib_to_swift()`
   in the digest script, CHANGELOG, ROADMAP). Shipped in
@@ -335,18 +372,21 @@ Land groups in this order to minimize plumbing rework:
    `hamlib_to_swift()` scaffolding. One coherent PR, no new radios
    yet. Gives every subsequent PR clean edit surfaces.
    **Shipped: commit `7bda86d`.**
-2. **Reuse-existing radios by vendor** (Groups D, E, F, G, I, J) —
-   these are the ~19 radios that just need factories + capability
+2. **Reuse-existing radios by vendor** (Groups D, F, G, I, J) —
+   these are the ~15 radios that just need factories + capability
    entries. Batch by existing vendor (all Icom together, all Kenwood
    together, etc.). ~1-2 hours per radio; one PR per vendor batch.
    **Group D shipped: commit `1569291`.**
-3. **New protocol adapters** (Groups A, B, C, H, K, L) — one
+   **Group I shipped: commit `df338a7`.**
+3. **New protocol adapters** (Groups A, B, C, E, H, K, L) — one
    adapter per PR: Guohetec first (Q900 + PMR-171), then Anytone,
-   Elad, CommRadio, Alinco, AOR, FlexSmartSDR. Each PR ships the
+   Elad, CommRadio, Alinco, AOR, FlexSmartSDR, plus the Kenwood
+   TM-family (TM-D710, TM-V71) and TH-family (TH-F6A, TH-F7E)
+   adapters that Group E turned out to need. Each PR ships the
    adapter + all radios in that new vendor. ~1 day per PR. Note
-   Group H (SmartSDR A–H) was originally scheduled as reuse-existing
-   but is actually a new protocol — see Group H section for the
-   re-scope note.
+   Groups E and H were originally scheduled as reuse-existing
+   but are actually new protocols — see their sections for the
+   re-scope notes.
 4. **FTX-1 last** — the largest single port; deserves its own PR with
    dedicated test coverage. FTX-1's ~15-file backend in Hamlib may
    surface new commands (memory-mode voice, CTCSS/DCS handling,
