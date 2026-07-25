@@ -123,4 +123,29 @@ extension RadioCapabilitiesDatabase {
         requiresVFOSelection: false,
         requiresModeFilter: false
     )
+
+    /// Ten-Tec RX-320 — PC-controlled HF general-coverage receiver (1998).
+    ///
+    /// 100 kHz – 30 MHz continuous RX in AM / CW / SSB. No transmitter.
+    /// 1200 baud serial only per Hamlib `rigs/tentec/rx320.c`. Uses the
+    /// same shared `tentec_*` command set as the Jupiter (TT-538) and
+    /// Pegasus (TT-550), so drives cleanly via ``TenTecLegacyProtocol``
+    /// (whose `setPTT` already throws `.unsupportedOperation` — correct
+    /// for a receiver).
+    public static let tenTecRX320 = RigCapabilities(
+        hasVFOB: false,
+        hasSplit: false,
+        powerControl: false,
+        maxPower: 0,
+        supportedModes: [.lsb, .usb, .cw, .am],
+        frequencyRange: FrequencyRange(min: 100_000, max: 30_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 30_000_000,
+                                    modes: [.lsb, .usb, .cw, .am],
+                                    canTransmit: false),
+        ],
+        supportsSignalStrength: true,
+        requiresVFOSelection: false,
+        requiresModeFilter: false
+    )
 }

@@ -413,6 +413,34 @@ Test count 606 → 612 (6 new); zero regressions. Clean build.
 Yaesu catalog: 29 → 30. Total: 120 → 121. Yaesu amateur-2000+
 coverage: 100% (FTX-1 was the last remaining hole).
 
+#### Group J narrower fix — RX-320 (Ten-Tec)
+
+Adds `TenTec.rx320` — Ten-Tec RX-320 PC-controlled HF general-
+coverage receiver (1998). 100 kHz – 30 MHz, AM/CW/SSB, no
+transmitter.
+
+Uses the existing `TenTecLegacyProtocol` — the RX-320 shares the
+`tentec_*` command family with the Jupiter (TT-538) and Pegasus
+(TT-550) per Hamlib `rigs/tentec/rx320.c`. `TenTecLegacyProtocol`
+already throws `.unsupportedOperation` on `setPTT`, which is
+correct behavior for a receiver.
+
+**Correction from earlier plan.** The v1.2.0 plan's Group J
+originally listed three radios (RX-320, RX-340, RX-350). On
+reading the Hamlib sources, only RX-320 reuses an existing
+protocol:
+- RX-320: shared `tentec_*` (matches our TenTecLegacyProtocol).
+- RX-340: distinct per-radio `rx340_*` (~590 LOC in Hamlib).
+- RX-350: `tentec2_*` — a separate Argonaut-V-family protocol
+  (~600 LOC combined in tentec2.c + rx350.c).
+
+RX-340 and RX-350 each need their own protocol adapter and are
+deferred to a follow-up "Ten-Tec receivers" adapter PR alongside
+the other new-vendor adapters.
+
+Test count 612 unchanged (RX-320 rides the drift test); Ten-Tec
+catalog 5 → 6. Total 121 → 122.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

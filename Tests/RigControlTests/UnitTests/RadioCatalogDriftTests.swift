@@ -97,6 +97,8 @@ import Testing
             "Orion (TT-565)",
             "Orion II (TT-599)",
             "Pegasus (TT-550)",
+            // v1.2.0 Group J — Ten-Tec receivers
+            "RX-320",
         ]
         let actual = Set(RadioDefinition.TenTec.allRadios.map(\.model))
         #expect(actual == expected)

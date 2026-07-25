@@ -123,4 +123,30 @@ extension RadioDefinition.TenTec {
             )
         }
     )
+
+    // MARK: - Receivers
+
+    /// Ten-Tec RX-320 — PC-controlled HF general-coverage receiver (1998).
+    ///
+    /// 100 kHz – 30 MHz continuous RX, AM / CW / SSB, no transmitter.
+    /// Uses the same shared `tentec_*` command family as the Jupiter
+    /// and Pegasus, so drives via ``TenTecLegacyProtocol``. That
+    /// protocol's `setPTT` throws `.unsupportedOperation`, which is
+    /// the correct behavior for a receiver.
+    ///
+    /// Serial: **1200 baud fixed** (both min and max) per Hamlib
+    /// `rigs/tentec/rx320.c`.
+    public static let rx320 = RadioDefinition(
+        manufacturer: .tentec,
+        model: "RX-320",
+        defaultBaudRate: 1200,
+        capabilities: RadioCapabilitiesDatabase.tenTecRX320,
+        serialDefaults: .tentecModern,
+        protocolFactory: { transport in
+            TenTecLegacyProtocol(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.tenTecRX320
+            )
+        }
+    )
 }

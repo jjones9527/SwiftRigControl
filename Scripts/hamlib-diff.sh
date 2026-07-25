@@ -487,6 +487,12 @@ hamlib_to_swift() {
             echo "Sources/RigControl/Protocols/TenTec/TenTecLegacyProtocol.swift"
             echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift  (pegasus)"
             ;;
+        rigs/tentec/rx320.c)
+            # RX-320 shares the tentec_* command family with Jupiter
+            # and Pegasus — drives via TenTecLegacyProtocol (receiver-only).
+            echo "Sources/RigControl/Protocols/TenTec/TenTecLegacyProtocol.swift"
+            echo "Sources/RigControl/Protocols/TenTec/TenTecRadioDefinitions.swift  (rx320)"
+            ;;
 
         # --- rigctld & top-level API ---------------------------------
         tests/rigctl_parse.c|tests/rigctld.c)

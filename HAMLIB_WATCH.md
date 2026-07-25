@@ -175,7 +175,7 @@ always includes them in the diff scope.
 | KX2 | `rigs/kenwood/k3.c` |
 | KX3 | `rigs/kenwood/k3.c` |
 
-### Ten-Tec (5 radios)
+### Ten-Tec (6 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
@@ -184,6 +184,7 @@ always includes them in the diff scope.
 | Eagle | `rigs/tentec/orion.c` (shared Orion protocol; Eagle uses TT-599 variant) |
 | Jupiter (TT-538) | `rigs/tentec/jupiter.c` |
 | Pegasus (TT-550) | `rigs/tentec/pegasus.c` |
+| RX-320 | `rigs/tentec/rx320.c` (v1.2.0 — shared `tentec_*` command family with Jupiter / Pegasus) |
 
 ### Xiegu (3 radios)
 

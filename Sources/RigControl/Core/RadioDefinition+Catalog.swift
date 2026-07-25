@@ -210,6 +210,8 @@ extension RadioDefinition.TenTec {
         orion,
         orionII,
         pegasus,
+        // v1.2.0 Group J — Ten-Tec receivers
+        rx320,
     ].sorted { $0.model < $1.model }
 }
 
