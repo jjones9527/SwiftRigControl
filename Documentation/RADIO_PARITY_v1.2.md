@@ -124,23 +124,42 @@ doesn't.
 | 31 | TS-950S | Kenwood | `rigs/kenwood/ts950.c` (family) | 1988 | reuse-existing | ~2 hours |
 | 32 | TS-950SDX | Kenwood | `rigs/kenwood/ts950.c` (family) | 1991 | reuse-existing | ~1 hour |
 
-### Group H: FlexRadio SmartSDR variants (8 radios)
+### Group H: FlexRadio SmartSDR slice adapters (8 radios) — **RE-SCOPED**
 
-The Flex 6000-series uses TCP CAT we already implement. SmartSDR A-H
-are variant labels for different concurrent-connection slots. All
-reuse the existing `Flex.flex6000` protocol; each is essentially a
-factory + capabilities entry.
+**Correction 2026-07-24 while starting Group H implementation:**
+the initial parity plan claimed SmartSDR A–H were factory aliases
+of the existing `Flex.flex6000` protocol. **They are not.** On
+reading `~/Developer/hamlib/rigs/flexradio/smartsdr.c` (672 LOC,
+added 2024 per copyright), SmartSDR A–H speak Flex's proprietary
+**SmartSDR TCP API on port 4992** — a text-line-oriented protocol
+with per-slice `C0|slice set N ...` commands, not the Kenwood CAT
+that `flex6000` currently mirrors. The A–H suffix is a slice
+selector (0–7) into a shared TCP connection.
+
+Correct classification: **new-vendor-protocol adapter**, not
+reuse-existing. Ship alongside the other new-adapter PRs (Groups
+A/B/C/K/L). Estimated effort: ~1 day for the adapter itself, then
+the 8 slice factories are ~1 hour together on top.
 
 | # | Model | Vendor | Hamlib source | ~Year | Reuse | Effort |
 |---|---|---|---|---|---|---|
-| 33 | SmartSDR-A | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 34 | SmartSDR-B | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 35 | SmartSDR-C | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 36 | SmartSDR-D | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 37 | SmartSDR-E | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 38 | SmartSDR-F | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 39 | SmartSDR-G | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
-| 40 | SmartSDR-H | Flex | `rigs/kenwood/flex6xxx.c` | 2014+ | reuse-existing | ~1 hour |
+| 33 | SmartSDR-A (slice 0) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 34 | SmartSDR-B (slice 1) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 35 | SmartSDR-C (slice 2) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 36 | SmartSDR-D (slice 3) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 37 | SmartSDR-E (slice 4) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 38 | SmartSDR-F (slice 5) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 39 | SmartSDR-G (slice 6) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | shares adapter |
+| 40 | SmartSDR-H (slice 7) | Flex | `rigs/flexradio/smartsdr.c` | 2024 | **new-adapter** | ~1 day total |
+
+**Adapter deliverable:** new
+`Sources/RigControl/Protocols/FlexSmartSDR/FlexSmartSDRProtocol.swift`
+speaking the SmartSDR TCP API (port 4992 default), with an
+integer `slice: Int` parameter distinguishing A–H. Reuses our
+existing `TCPSerialTransport`. Does **not** touch the existing
+`Flex.flex6000` factory — that keeps its Kenwood-derived
+protocol path. Both paths coexist; downstream apps pick whichever
+matches their SmartSDR client version.
 
 ### Group I: SDR-Console + Flex kits (3 radios)
 
@@ -176,9 +195,9 @@ below the 50-radio cutoff.
 | 49 | AR-8600 | AOR | `rigs/aor/ar8600.c` | 2001 | **new-vendor-protocol** | ~1 day |
 | 50 | AR-7030+ | AOR | `rigs/aor/ar7030.c` | 2003 (rare — professional HF receiver still respected by DXers) | reuse (same AOR adapter) | ~4 hours |
 
-## New vendor adapters added by this release
+## New protocol adapters added by this release
 
-Six new `Sources/RigControl/Protocols/<Vendor>/` folders:
+Seven new `Sources/RigControl/Protocols/<Vendor>/` folders:
 
 - **Guohetec** — for PMR-171, Q900. New `GuohetecProtocol.swift`.
   Chinese HF SDR line, growing operator base.
@@ -192,6 +211,12 @@ Six new `Sources/RigControl/Protocols/<Vendor>/` folders:
   Japanese amateur HF, budget-market presence.
 - **AOR** — for AR-8600, AR-7030+. New `AORProtocol.swift`.
   Wideband amateur receivers.
+- **FlexSmartSDR** — for SmartSDR Slice A–H. New
+  `FlexSmartSDRProtocol.swift`. Reuses the existing FlexRadio
+  vendor namespace (no new `Manufacturer` case). Coexists with
+  the existing `Flex.flex6000` factory, which speaks the older
+  Kenwood-derived CAT and remains the correct choice for older
+  SmartSDR client versions.
 
 Each new vendor also gets:
 - A new `RadioDefinition.Manufacturer` enum case (additive — see note
@@ -208,15 +233,19 @@ Each new vendor also gets:
 
 Rough hour counts across the 50 radios:
 
-- **~15 hours** — the 27 radios that reuse an existing protocol adapter
+- **~10 hours** — the 19 radios that reuse an existing protocol adapter
   (mostly ~1-2 hours each: capabilities entry + factory + drift-test row).
+  Group D shipped 6 of these in commit `1569291`.
 - **~1.5 days** — FTX-1 alone (largest single port; new subsystems in
   Hamlib's `ftx1_*.c` files).
-- **~5 days** — new-vendor protocol adapters (~1 day each for
-  Guohetec, Anytone, Elad, Alinco, AOR + ~½ day for CommRadio).
+- **~6 days** — new-vendor protocol adapters (~1 day each for
+  Guohetec, Anytone, Elad, Alinco, AOR, FlexSmartSDR + ~½ day for
+  CommRadio). FlexSmartSDR ships the 8 slice factories on top of
+  the adapter.
 - **~1 day** — plumbing (Manufacturer enum expansion, `allRadios`
   arrays, drift test, `HAMLIB_WATCH.md` mapping, `hamlib_to_swift()`
-  in the digest script, CHANGELOG, ROADMAP).
+  in the digest script, CHANGELOG, ROADMAP). Shipped in
+  commit `7bda86d`.
 
 **Total: roughly 3 weeks part-time / 8-10 focused workdays** for a
 definition-only v1.2.0 with no hardware verification of any new
@@ -305,14 +334,19 @@ Land groups in this order to minimize plumbing rework:
    update drift-test structure, extend `HAMLIB_WATCH.md` and
    `hamlib_to_swift()` scaffolding. One coherent PR, no new radios
    yet. Gives every subsequent PR clean edit surfaces.
-2. **Reuse-existing radios by vendor** (Groups D, E, F, G, H, I, J) —
-   these are the ~30 radios that just need factories + capability
+   **Shipped: commit `7bda86d`.**
+2. **Reuse-existing radios by vendor** (Groups D, E, F, G, I, J) —
+   these are the ~19 radios that just need factories + capability
    entries. Batch by existing vendor (all Icom together, all Kenwood
    together, etc.). ~1-2 hours per radio; one PR per vendor batch.
-3. **New-vendor adapters** (Groups A, B, C, K, L) — one adapter per
-   PR: Guohetec first (Q900 + PMR-171), then Anytone, Elad,
-   CommRadio, Alinco, AOR. Each PR ships the adapter + all radios in
-   that new vendor. ~1 day per PR.
+   **Group D shipped: commit `1569291`.**
+3. **New protocol adapters** (Groups A, B, C, H, K, L) — one
+   adapter per PR: Guohetec first (Q900 + PMR-171), then Anytone,
+   Elad, CommRadio, Alinco, AOR, FlexSmartSDR. Each PR ships the
+   adapter + all radios in that new vendor. ~1 day per PR. Note
+   Group H (SmartSDR A–H) was originally scheduled as reuse-existing
+   but is actually a new protocol — see Group H section for the
+   re-scope note.
 4. **FTX-1 last** — the largest single port; deserves its own PR with
    dedicated test coverage. FTX-1's ~15-file backend in Hamlib may
    surface new commands (memory-mode voice, CTCSS/DCS handling,
