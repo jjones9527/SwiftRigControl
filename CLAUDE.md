@@ -51,22 +51,54 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The current work-in-progress is **v1.2.0** (planned 2026-07-24+),
-a **radio-catalog expansion** release targeting ~50 of the most
-recently released radios SwiftRigControl doesn't yet cover, plus
-6 new vendor protocol adapters (Guohetec, Anytone, Elad,
-CommRadio, Alinco, AOR). Ships definition-only per CLAUDE.md's
-verification tier (no hardware validation of the new radios).
-Includes a `Manufacturer` enum expansion — additive but requires
-downstream consumers with exhaustive switches to add a `default:`
-arm; CHANGELOG will call this out. Full plan and audit:
-`Documentation/RADIO_PARITY_v1.2.md`.
+The shipped version is **v1.2.0** (git tag, 2026-07-25) — the
+largest single release in project history. Catalog grew 103 →
+126 radios (23 additions: 6 Icom receivers + specialty, 2 Flex
+family, 5 Kenwood legacy HF, 4 Yaesu classic variants, FTX-1,
+Ten-Tec RX-320, 4 Kenwood TH/TM family). Adds **5 new protocol
+adapters** — `YaesuPortableCAT` (FT-817 family), `YaesuFT847CAT`,
+`YaesuFT1000MPCAT`, `TMFamilyCAT`, `THFamilyCAT` — plus a
+`Family` enum on the existing `THD72Protocol` (drives TH-D72
+and TH-D74/D75 variants correctly for the first time).
 
-The previously-shipped release is **v1.1.3** (git tag, 2026-07-24),
-an additive catalog release that added `Vendor.allRadios` static
-arrays, a top-level `RadioDefinition.allSupportedRadios` /
-`allRadios(for:)` aggregate, and a `withCivAddress(_:)` helper
-on `RadioDefinition` so downstream apps can drop the parallel
+**25 latent protocol bugs fixed** via a byte-level Hamlib audit
+that gated the ship decision:
+- FT-817 family shipping wrong protocol adapter (8 radios)
+- FT-847 and FT-1000MP shipping wrong adapter
+- 15 modern Yaesu newcat radios shipping 11-digit FA/FB
+  frequency format (correct is 9-digit)
+- TH-D74 / TH-D75 wired to KenwoodProtocol instead of the
+  CR-terminated THD72Protocol
+- Kenwood mode codes 8 and 9 swapped across every Kenwood HF +
+  Elecraft + Lab599 + Flex family radio (27 radios)
+- FT-847 getPTT bit polarity inverted
+- Yaesu newcat GT (AGC), RG (RF gain), SH (IF filter), RU/RD
+  (RIT/XIT) commands emitting wire formats no real newcat radio
+  accepts (24 radios each)
+
+Also ships **new infrastructure**:
+- `Vendor.allRadios` static arrays + `withCivAddress(_:)` helper
+- `HostRequirement` enum flagging Flex definitions that require
+  a Windows/Linux companion machine
+- Weekly `hamlib-watch` GitHub Action surfacing new Hamlib
+  additions, security advisories, and fix-vs-refactor bucketed
+  commits
+- 6 new `Manufacturer` enum cases (Guohetec, Anytone, Elad,
+  CommRadio, Alinco, AOR) — additive scaffolding for v1.3.0+
+  vendor adapters
+- `Documentation/RADIO_PARITY_v1.2.md` — audit table plus
+  release-batch planning
+
+Test count 542 → 635. Zero regressions. **11 follow-up items
+deferred to v1.2.1 patch**, tracked in the [1.2.0] section of
+CHANGELOG.
+
+The previously-shipped release is **v1.1.3** (git tag,
+2026-07-24), an additive catalog release that added
+`Vendor.allRadios` static arrays, a top-level
+`RadioDefinition.allSupportedRadios` / `allRadios(for:)`
+aggregate, and a `withCivAddress(_:)` helper on
+`RadioDefinition` so downstream apps can drop the parallel
 hand-maintained radio-catalog lists that currently drift
 against the library. Shipped every then-known radio (45 Icom,
 25 Yaesu, 15 Kenwood, 6 Elecraft, 5 Ten-Tec, 3 Xiegu, 3

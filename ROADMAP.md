@@ -1,15 +1,19 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.0 (planning 2026-07-24 — radio-catalog
-expansion release targeting ~50 of the most-recently-released
-Hamlib radios SwiftRigControl doesn't yet cover, plus 6 new
-vendor protocol adapters (Guohetec, Anytone, Elad, CommRadio,
-Alinco, AOR). Definition-only per CLAUDE.md's verification tier.
-Manufacturer enum expansion — additive but requires downstream
-consumers with exhaustive switches to add a `default:` arm.
-Full plan and audit: `Documentation/RADIO_PARITY_v1.2.md`.)
-Previous release **v1.1.3** (cut 2026-07-24 — additive catalog
-release: `Vendor.allRadios` static arrays, `allSupportedRadios` +
+**Current version:** v1.2.0 (cut 2026-07-25 — largest release
+in SwiftRigControl history. Catalog grew 103 → 126 radios (23
+additions across Icom, Yaesu, Kenwood, Flex, Ten-Tec), 5 new
+protocol adapters (`YaesuPortableCAT`, `YaesuFT847CAT`,
+`YaesuFT1000MPCAT`, `TMFamilyCAT`, `THFamilyCAT`), plus 25
+latent protocol bugs fixed via a Hamlib byte-level audit that
+gated the ship decision. Test count 542 → 635. Follow-up items
+for v1.2.1 patch tracked at the end of CHANGELOG's [1.2.0]
+section. Includes new `Vendor.allRadios` statics,
+`withCivAddress(_:)`, `HostRequirement` flag, and a weekly
+Hamlib upstream-watch GitHub Action. Full plan:
+`Documentation/RADIO_PARITY_v1.2.md`.) Previous release
+**v1.1.3** (cut 2026-07-24 — additive catalog release:
+`Vendor.allRadios` static arrays, `allSupportedRadios` +
 `allRadios(for:)` aggregate, `withCivAddress(_:)` helper +
 weekly `hamlib-watch` GitHub Action digest workflow). Also
 **v1.1.2** (cut 2026-07-15 — safety patch. Fixes Yaesu HF stop-bit

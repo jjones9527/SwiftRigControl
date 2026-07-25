@@ -21,16 +21,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### v1.2.0 in-progress work
+## [1.2.0] - 2026-07-25
 
-v1.2.0 is a radio-catalog expansion targeting ~50 of the
-most-recently-released Hamlib radios SwiftRigControl doesn't yet
-cover, plus 6 new vendor protocol adapters (Guohetec, Anytone,
-Elad, CommRadio, Alinco, AOR). See
-`Documentation/RADIO_PARITY_v1.2.md` for the full target list and
-batching plan.
+### v1.2.0 highlights
 
-Landed so far (unreleased):
+v1.2.0 is the largest single release in SwiftRigControl history.
+Catalog grew **103 → 126 radios** (23 additions across the
+Icom, Yaesu, Kenwood, Flex, and Ten-Tec families), plus **25
+latent protocol bugs fixed** that were quietly shipping in
+prior releases against radios that had never been hardware-
+verified.
+
+The release started as a radio-catalog expansion (see
+`Documentation/RADIO_PARITY_v1.2.md`) but expanded to include
+substantial protocol-correctness work as latent bugs surfaced
+during the byte-level Hamlib audit that gated the ship
+decision. Every latent-broken definition in the catalog now
+either (a) uses the correct protocol adapter for the first
+time or (b) is explicitly flagged for follow-up in v1.2.1.
+
+**Catalog additions (23):**
+- 6 Icom receivers + specialty (IC-R6, IC-R20, IC-R7100,
+  IC-F8101, IC ID-1, IC-RX7)
+- 2 Flex family (SDR-Console, PiHPSDR)
+- 5 Kenwood legacy HF (TS-450S, TS-690S, TS-940S, TS-950S,
+  TS-950SDX)
+- 4 Yaesu classic (FT-847UNI, mcHF QRP, FT-1000MP MARK-V,
+  FT-1000MP MARK-V Field)
+- 1 Yaesu new flagship (FTX-1, 2025)
+- 1 Ten-Tec receiver (RX-320)
+- 4 Kenwood TH/TM family (TM-D710(G), TM-V71(A), TH-F6A,
+  TH-F7E)
+
+**New protocol adapters (5):**
+- `YaesuPortableCAT` — pre-newcat 5-byte binary for FT-817
+  family (fixes 8 broken definitions)
+- `YaesuFT847CAT` — pre-newcat with satellite mode
+- `YaesuFT1000MPCAT` — pre-newcat with little-endian BCD
+- `TMFamilyCAT` — 13-field CSV FO command
+- `THFamilyCAT` — FQ + MD discrete commands
+Plus a `Family` enum extension on the existing `THD72Protocol`
+to correctly drive TH-D74 and TH-D75 (fixes 2 broken
+definitions).
+
+**Latent bugs fixed (25):**
+- FT-817-family shipping wrong protocol adapter (8 radios,
+  YaesuPortableCAT batch)
+- FT-847, FT-1000MP wrong adapter (YaesuFT847CAT + FT1000MP
+  batch)
+- 15 modern Yaesu newcat radios shipping 11-digit FA/FB
+  frequency format (correct wire is 9-digit; FTX-1 batch)
+- TH-D74, TH-D75 wired to KenwoodProtocol instead of the
+  CR-terminated THD72Protocol (Group E batch)
+- Kenwood mode codes 8 and 9 swapped, affecting every Kenwood
+  HF radio + Elecraft K-series + Lab599 TX-500 + Flex family
+  (audit-fix batch, 27 radios)
+- FT-847 getPTT bit polarity inverted (3 radios)
+- Yaesu newcat GT (AGC) command completely wrong format (24
+  radios)
+- Yaesu newcat RG (RF gain) missing VFO qualifier (24 radios)
+- Yaesu newcat SH (IF filter) missing VFO qualifier (24
+  radios)
+- Yaesu newcat RU/RD (RIT/XIT) signed vs unsigned + missing
+  `RC;` prelude (24 radios)
+
+**New infrastructure:**
+- `Vendor.allRadios` static arrays + `withCivAddress(_:)`
+  helper — downstream apps can now enumerate radios instead
+  of hand-maintaining parallel picker lists.
+- `HostRequirement` enum — flags 4 Flex definitions that
+  require a Windows/Linux companion machine (PowerSDR,
+  Thetis, SDR-Console, PiHPSDR).
+- Weekly Hamlib upstream-watch GitHub Action — surfaces new
+  Hamlib radios, security advisories, and fix-vs-refactor
+  bucketed commits touching files SwiftRigControl mirrors.
+- `Documentation/RADIO_PARITY_v1.2.md` — audit table plus
+  release-batch planning.
+- 6 new `Manufacturer` enum cases (Guohetec, Anytone, Elad,
+  CommRadio, Alinco, AOR) — additive scaffolding for future
+  vendor adapters. Radios in these vendors deferred to
+  v1.3.0+ per the parity plan.
+
+**Test coverage:** 542 → 635 tests. Every fix has regression
+coverage. Zero regressions across the release.
+
+**Known follow-ups deferred to v1.2.1 patch:** 11 items — Yaesu
+MD VFO qualifier for `RIG_TARGETABLE_MODE` radios, SH
+per-family variants (FTX-1/FT-DX10/FT-710 want `SH00%02d;`),
+Kenwood AG/SQ format variants (TS-450S/TS-690S / TS-890S
+dual-RX), TH-D72 power quantization API contract, THFamilyCAT
+step persistence, Ten-Tec Orion II bandwidth follow-up, Orion
+split command shape, legacy S-meter parsing, plus per-radio
+test coverage expansion. See individual entries below.
+
+### Detailed changes below
 
 #### Plumbing
 
