@@ -177,6 +177,9 @@ extension RadioDefinition.Flex {
         flex6000,
         powerSDR,
         thetis,
+        // v1.2.0 Group I — TS-2000-emulation SDR clients
+        sdrConsole,
+        pihpsdr,
     ].sorted { $0.model < $1.model }
 }
 

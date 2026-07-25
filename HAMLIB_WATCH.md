@@ -185,13 +185,15 @@ Xiegu radios speak CI-V and are supported in Hamlib via a shared file.
 | X6100 | `rigs/icom/xiegu.c` |
 | X6200 | `rigs/icom/xiegu.c` |
 
-### FlexRadio family (3 radios)
+### FlexRadio family (5 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
 | 6000-series | `rigs/kenwood/flex6xxx.c` |
-| PowerSDR | `rigs/kenwood/flex.c` |
-| Thetis | `rigs/kenwood/flex.c` |
+| PowerSDR | `rigs/kenwood/flex6xxx.c` |
+| Thetis | `rigs/kenwood/flex6xxx.c` |
+| SDR-Console | `rigs/kenwood/ts2000.c` (v1.2.0 — SDR-Console registers as its own model in ts2000.c) |
+| PiHPSDR | `rigs/kenwood/pihpsdr.c` (v1.2.0 — dedicated file, TS-2000 emulation) |
 
 ### Lab599 (1 radio)
 

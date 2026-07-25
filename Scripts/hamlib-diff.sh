@@ -404,11 +404,25 @@ hamlib_to_swift() {
             echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
             ;;
-        rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts2000.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c)
+        rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c)
             local base
             base="$(basename "$p" .c)"
             echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            ;;
+        rigs/kenwood/ts2000.c)
+            # ts2000.c holds both TS-2000 AND SDR-Console (which
+            # emulates TS-2000 CAT and registers under this file).
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (ts2000 factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            echo "Sources/RigControl/Protocols/Kenwood/FlexModels.swift  (sdrConsole factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Flex.swift"
+            ;;
+        rigs/kenwood/pihpsdr.c)
+            # PiHPSDR is a distinct Kenwood-family SDR client (TS-2000
+            # emulation per the file header).
+            echo "Sources/RigControl/Protocols/Kenwood/FlexModels.swift  (pihpsdr factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Flex.swift"
             ;;
         rigs/kenwood/tx500.c)
             echo "Sources/RigControl/Protocols/Kenwood/Lab599Models.swift"

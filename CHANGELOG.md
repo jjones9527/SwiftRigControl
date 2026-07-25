@@ -82,6 +82,31 @@ entries to `IcomRadioModel`, `RadioCapabilitiesDatabase.Icom`,
 `StandardIcomCommandSet`, `Icom.allRadios`, and the drift-test
 `expectedModels` set. Total Icom count: 45 → 51.
 
+#### Group I — Flex-family TS-2000-emulation SDR clients (2 radios)
+
+- **SDR-Console** (Simon Brown / SDR Radio) — Windows-first SDR
+  client that drives external SDR hardware via a TS-2000-style
+  Kenwood CAT emulation, typically bridged through a virtual
+  serial port. Registered in Hamlib as `RIG_MODEL_SDRCONSOLE` in
+  `rigs/kenwood/ts2000.c`.
+- **PiHPSDR** (OpenHPSDR) — open-source SDR client for HPSDR /
+  ANAN hardware, running on Raspberry Pi or desktop Linux.
+  Registered in Hamlib as `RIG_MODEL_HPSDR` in
+  `rigs/kenwood/pihpsdr.c` (dedicated file, TS-2000-derived per
+  the file header).
+
+Both use the existing `KenwoodProtocol` (no new protocol code)
+and land as static factories on the existing `RadioDefinition.Flex`
+namespace alongside `flex6000`, `powerSDR`, `thetis`. Total Flex
+count: 3 → 5.
+
+**Correction from earlier plan.** The v1.2.0 plan's Group I also
+listed "Elecraft F6K" as a separate radio; on reading
+`rigs/kenwood/flex6xxx.c` I confirmed `RIG_MODEL_F6K` is the
+Flex 6000-series that SwiftRigControl already ships as
+`Flex.flex6000` (model string `"6000-series"`). Not a gap; not
+included.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

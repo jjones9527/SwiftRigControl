@@ -74,7 +74,11 @@ import Testing
     }
 
     @Test func flexCatalogMatchesExpectedModels() {
-        let expected: Set<String> = ["6000-series", "PowerSDR", "Thetis"]
+        let expected: Set<String> = [
+            "6000-series", "PowerSDR", "Thetis",
+            // v1.2.0 Group I — TS-2000-emulation SDR clients
+            "SDR-Console", "PiHPSDR",
+        ]
         let actual = Set(RadioDefinition.Flex.allRadios.map(\.model))
         #expect(actual == expected)
     }

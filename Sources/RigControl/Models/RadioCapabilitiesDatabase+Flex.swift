@@ -170,4 +170,73 @@ extension RadioCapabilitiesDatabase.Flex {
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown],
         supportedFunctions: [.vox, .autoNotch, .mute, .tuner]
     )
+
+    // MARK: - v1.2.0 Group I — TS-2000-emulation SDR clients
+
+    /// SDR-Console (Simon Brown, SDR Radio) — Windows-first SDR
+    /// client that drives external SDR hardware via a TS-2000-style
+    /// Kenwood CAT emulation, typically bridged through a virtual
+    /// serial port. Cross-checked against Hamlib
+    /// `rigs/kenwood/ts2000.c` (`RIG_MODEL_SDRCONSOLE`) — the
+    /// Hamlib backend registers SDR-Console as a distinct model
+    /// even though the wire protocol is a TS-2000 subset.
+    ///
+    /// The exposed CAT surface is intentionally narrow: get/set
+    /// frequency, mode, AGC, S-meter, slope-high/low IF filter,
+    /// meter switching. SDR-Console does not expose PTT-off-air
+    /// through CAT — RIG_LEVEL_SET is NONE per Hamlib. RF power
+    /// depends on the underlying hardware; we advertise 100 W as
+    /// a conservative upper bound and let the operator constrain
+    /// via the SDR-Console UI.
+    public static let sdrConsole = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: false,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .dataLSB, .dataUSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 165_000_000),
+        detailedFrequencyRanges: flexFrequencyRanges,
+        hasATU: false,
+        supportsSignalStrength: true,
+        // SDRCONSOLE_LEVEL_GET includes AGC, STRENGTH, METER,
+        // SLOPE_HIGH, SLOPE_LOW; SET is NONE per Hamlib ts2000.c.
+        antennaCount: 1
+    )
+
+    /// PiHPSDR (OpenHPSDR) — open-source software SDR client
+    /// running on Raspberry Pi (and desktop Linux), driving HPSDR
+    /// and ANAN hardware. Exposes a TS-2000-derived Kenwood CAT
+    /// surface. Cross-checked against Hamlib
+    /// `rigs/kenwood/pihpsdr.c` (`RIG_MODEL_HPSDR`) — the header
+    /// comment explicitly cites the file as "TS-2000 Emulation
+    /// (derived from ts2000.c)".
+    ///
+    /// Full-transmit HF + 6m + 2m per band-plan tables. PiHPSDR
+    /// exposes a rich feature set: TONE/TSQL/BC/NB/NR/ANF/COMP,
+    /// preamp, attenuator, mic-gain, CW pitch, VOX delay, break-in
+    /// delay, meter switching. 100 W HF/6m max per the tx_range
+    /// table; AM TX capped at 25 W per Hamlib.
+    public static let pihpsdr = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .rtty],
+        frequencyRange: FrequencyRange(min: 30_000, max: 165_000_000),
+        detailedFrequencyRanges: flexFrequencyRanges,
+        hasATU: false,
+        supportsSignalStrength: true,
+        supportsCTCSS: true,   // PIHPSDR_FUNC_ALL: TONE + TSQL
+        supportsDCS: false,
+        supportsRFPowerMeter: true,
+        supportsCompMeter: true,
+        supportsCWKeyer: true,
+        antennaCount: 2,       // PIHPSDR_ANTS = ANT_1 | ANT_2
+        supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown],
+        // PIHPSDR_FUNC_ALL: TONE, TSQL, BC (beat cancel), NB, NR,
+        // ANF, COMP. CTCSS lives on `SupportsCTCSS`; NB/NR/ANF
+        // live on dedicated traits; only the pure on/off bits
+        // land here.
+        supportedFunctions: [.autoNotch, .beatCancel]
+    )
 }
