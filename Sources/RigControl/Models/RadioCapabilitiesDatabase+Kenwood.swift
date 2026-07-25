@@ -754,4 +754,121 @@ extension RadioCapabilitiesDatabase.Kenwood {
         supportsSignalStrength: true
     )
 
+    // MARK: - v1.2.0 Group E — TM/TH-F family (CR-terminated CAT)
+
+    /// Kenwood TM-D710(G) — dual-band FM mobile transceiver (2007+).
+    ///
+    /// 2m + 70cm amateur bands (50 W / 35 W), wideband RX 118-524 MHz.
+    /// Modes: FM, FM-N, AM per Hamlib `rigs/kenwood/tmd710.c`
+    /// TMD710_MODES / TMD710_MODES_TX. Cross-checked against
+    /// `.cmdtrm = EOM_TH`, 57600 baud maximum.
+    public static let tmd710 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 50,
+        supportedModes: [.fm, .fmN, .am],
+        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 118_000_000, max: 143_999_999,
+                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
+                                    modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 148_000_001, max: 429_999_999,
+                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
+                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 450_000_001, max: 524_000_000,
+                                    modes: [.fm, .fmN, .am], canTransmit: false),
+        ],
+        hasDualReceiver: true,
+        hasATU: false,
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        antennaCount: 1
+    )
+
+    /// Kenwood TM-V71(A) — dual-band FM mobile transceiver (2005+).
+    ///
+    /// Same protocol and RF footprint as the TM-D710 minus the
+    /// D-STAR / TNC hardware. Same Hamlib backend (`tmd710.c`
+    /// covers both).
+    public static let tmv71 = tmd710
+
+    /// Kenwood TH-F6A — tri-band FM/SSB HT (2m + 1.25m + 70cm).
+    ///
+    /// 5 W FM TX on three amateur bands; broadband RX 100 kHz –
+    /// 1.3 GHz in FM / WFM / AM / LSB / USB / CW (non-FM modes are
+    /// RX-only per Hamlib `THF6_MODES_TX`).
+    public static let thf6a = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 5,
+        supportedModes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw],
+        frequencyRange: FrequencyRange(min: 100_000, max: 1_300_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 143_999_999,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
+                                    modes: [.fm], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 148_000_001, max: 221_999_999,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+            DetailedFrequencyRange(min: 222_000_000, max: 225_000_000,
+                                    modes: [.fm], canTransmit: true, bandName: "1.25m"),
+            DetailedFrequencyRange(min: 225_000_001, max: 429_999_999,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
+                                    modes: [.fm], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 450_000_001, max: 1_300_000_000,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+        ],
+        hasATU: false,
+        supportsSignalStrength: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        antennaCount: 1
+    )
+
+    /// Kenwood TH-F7E — European dual-band variant of TH-F6A.
+    ///
+    /// 2m + 70cm amateur TX only (no 1.25m allocation in Region 1).
+    /// Same protocol as TH-F6A per Hamlib `thf7.c`.
+    public static let thf7e = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: false,
+        powerControl: true,
+        maxPower: 5,
+        supportedModes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw],
+        frequencyRange: FrequencyRange(min: 100_000, max: 1_300_000_000),
+        detailedFrequencyRanges: [
+            DetailedFrequencyRange(min: 100_000, max: 143_999_999,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+            DetailedFrequencyRange(min: 144_000_000, max: 146_000_000,
+                                    modes: [.fm], canTransmit: true, bandName: "2m (R1)"),
+            DetailedFrequencyRange(min: 146_000_001, max: 429_999_999,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+            DetailedFrequencyRange(min: 430_000_000, max: 440_000_000,
+                                    modes: [.fm], canTransmit: true, bandName: "70cm (R1)"),
+            DetailedFrequencyRange(min: 440_000_001, max: 1_300_000_000,
+                                    modes: [.fm, .wfm, .am, .lsb, .usb, .cw],
+                                    canTransmit: false),
+        ],
+        hasATU: false,
+        supportsSignalStrength: true,
+        region: .region1,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        antennaCount: 1
+    )
 }

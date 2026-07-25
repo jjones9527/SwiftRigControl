@@ -38,10 +38,68 @@ public actor THD72Protocol:
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 
+    /// Which specific TH-family radio is on the other end. Different
+    /// members of the TH family use the same overall FO-string protocol
+    /// but with different field offsets and response lengths.
+    ///
+    /// The FO layouts are cross-referenced against Hamlib's per-radio
+    /// backends. See ``Family`` for the specific offsets each variant
+    /// uses.
+    public let family: Family
+
     private let responseTimeout: TimeInterval = 2.0
 
     /// CR terminator used by TH-series Kenwood handhelds (EOM_TH in Hamlib).
     private static let terminator: UInt8 = 0x0D  // '\r'
+
+    /// Which TH-family radio this protocol instance is driving.
+    ///
+    /// All TH-family radios use CR-terminated commands and an
+    /// `FO`-string protocol where frequency, mode, and other radio
+    /// state are packed into a fixed-position ASCII response. What
+    /// varies between family members:
+    ///
+    /// - **Response length** — TH-D72's FO response is 53 bytes;
+    ///   TH-D74's is 72 bytes.
+    /// - **Mode field position** — TH-D72 puts mode at character 51;
+    ///   TH-D74 puts it at character 31.
+    ///
+    /// The frequency field (10 ASCII digits at characters 5-14) and
+    /// PTT commands (`TX` / `RX`) and VFO selection (`BC 0` / `BC 1`)
+    /// are identical across the family, so those don't need to vary
+    /// per-variant.
+    public enum Family: Sendable {
+
+        /// TH-D72 / TH-D72A. FO response = 53 bytes, mode at 51.
+        /// Cross-checked against Hamlib `rigs/kenwood/thd72.c`.
+        case thd72
+
+        /// TH-D74. FO response = 72 bytes, mode at 31. Cross-checked
+        /// against Hamlib `rigs/kenwood/thd74.c` line 274 (72-byte
+        /// buffer) and line 537 (mode at position 31).
+        ///
+        /// TH-D75 (2023) uses the TH-D74's CAT command set per the
+        /// Kenwood service documentation — the same case drives both.
+        case thd74
+
+        /// Character offset at which the mode selector lives in the
+        /// FO response.
+        internal var modeCharOffset: Int {
+            switch self {
+            case .thd72: return 51
+            case .thd74: return 31
+            }
+        }
+
+        /// Minimum length required for a valid FO response. Used to
+        /// guard the parser against truncated reads.
+        internal var minimumResponseLength: Int {
+            switch self {
+            case .thd72: return 52
+            case .thd74: return 32
+            }
+        }
+    }
 
     /// Creates a TH-D72/TH-D72A protocol instance.
     ///
@@ -50,9 +108,17 @@ public actor THD72Protocol:
     ///     virtual COM port over USB).
     ///   - capabilities: Capability set; usually
     ///     ``RadioCapabilitiesDatabase/Kenwood/thd72A``.
-    public init(transport: any SerialTransport, capabilities: RigCapabilities) {
+    ///   - family: Which TH-family variant to use. Defaults to
+    ///     ``Family/thd72`` for source-compatibility with the
+    ///     original single-variant init.
+    public init(
+        transport: any SerialTransport,
+        capabilities: RigCapabilities,
+        family: Family = .thd72
+    ) {
         self.transport = transport
         self.capabilities = capabilities
+        self.family = family
     }
 
     // MARK: - Connection
@@ -92,9 +158,11 @@ public actor THD72Protocol:
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         let modeIndex = try modeToTHD72Index(mode)
         var info = try await fetchFOString(vfo: vfo)
-        guard info.count >= 52 else { throw RigError.invalidResponse }
+        let offset = family.modeCharOffset
+        let minLen = family.minimumResponseLength
+        guard info.count >= minLen else { throw RigError.invalidResponse }
         var chars = Array(info)
-        chars[51] = Character(String(modeIndex))
+        chars[offset] = Character(String(modeIndex))
         info = String(chars)
         try await sendFOString(info)
     }
@@ -301,11 +369,15 @@ public actor THD72Protocol:
         return freq
     }
 
-    /// Parses the mode from the final field of an FO response string (index 51).
+    /// Parses the mode from the mode-field of an FO response string.
+    /// Position depends on the ``Family`` variant — 51 for TH-D72,
+    /// 31 for TH-D74.
     /// 0 = FM, 1 = FM-N, 2 = AM
     private func parseMode(from foString: String) throws -> Mode {
-        guard foString.count >= 52 else { throw RigError.invalidResponse }
-        let modeChar = foString[foString.index(foString.startIndex, offsetBy: 51)]
+        let offset = family.modeCharOffset
+        let minLen = family.minimumResponseLength
+        guard foString.count >= minLen else { throw RigError.invalidResponse }
+        let modeChar = foString[foString.index(foString.startIndex, offsetBy: offset)]
         switch modeChar {
         case "0": return .fm
         case "1": return .fmN

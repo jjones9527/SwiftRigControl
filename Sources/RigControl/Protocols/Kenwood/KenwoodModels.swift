@@ -127,33 +127,53 @@ extension RadioDefinition.Kenwood {
         }
     )
 
-    /// Kenwood TH-D74A tri-band handheld with D-STAR and APRS
+    /// Kenwood TH-D74A tri-band handheld with D-STAR and APRS.
+    ///
+    /// Uses ``THD72Protocol`` with ``THD72Protocol/Family/thd74`` —
+    /// the TH-D74 shares the TH-D72's CR-terminated FO-string
+    /// protocol but its FO response is 72 bytes (not 53) with the
+    /// mode selector at character 31 (not 51). Prior to v1.2.0 this
+    /// factory shipped wired to `KenwoodProtocol` (semicolon-
+    /// terminated), which cannot drive a real TH-D74 — that was a
+    /// latent bug hidden because no TH-D74 was hardware-verified.
+    /// Cross-checked against Hamlib `rigs/kenwood/thd74.c`
+    /// (`.cmdtrm = EOM_TH`, lines 274 + 537).
     public static let thd74 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D74",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd74,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
-            KenwoodProtocol(
+            THD72Protocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.thd74
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd74,
+                family: .thd74
             )
         }
     )
 
     /// Kenwood TH-D75A tri-band handheld with D-STAR and APRS
-    /// (2023 successor to the TH-D74). CAT command set is
-    /// backward-compatible with the TH-D74, so we reuse
-    /// `KenwoodProtocol`.
+    /// (2023 successor to the TH-D74).
+    ///
+    /// TH-D75 does not exist in Hamlib as of 4.7.2, but Kenwood's
+    /// service documentation states the CAT command set is
+    /// backward-compatible with the TH-D74. Uses ``THD72Protocol``
+    /// with ``THD72Protocol/Family/thd74`` accordingly. Same latent-
+    /// bug story as TH-D74: prior to v1.2.0 this factory shipped
+    /// wired to `KenwoodProtocol` (semicolon-terminated), which
+    /// cannot drive a TH-D74-family radio.
     public static let thd75 = RadioDefinition(
         manufacturer: .kenwood,
         model: "TH-D75",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd75,
+        serialDefaults: .kenwoodDesktop,
         protocolFactory: { transport in
-            KenwoodProtocol(
+            THD72Protocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.thd75
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thd75,
+                family: .thd74
             )
         }
     )
@@ -345,6 +365,85 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts950SDX
+            )
+        }
+    )
+
+    // MARK: - v1.2.0 Group E — CR-terminated TH/TM CAT
+
+    /// Kenwood TM-D710(G) — dual-band FM mobile transceiver.
+    ///
+    /// Uses ``TMFamilyCAT`` — the TM-family radios use a
+    /// comma-separated `FO` command with 13 fields per Hamlib
+    /// `rigs/kenwood/tmd710.c`. Different from the TH-D72's
+    /// fixed-position FO layout, so its own protocol type.
+    public static let tmD710 = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TM-D710(G)",
+        defaultBaudRate: 57600,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710,
+        serialDefaults: .kenwoodDesktop,
+        protocolFactory: { transport in
+            TMFamilyCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.tmd710
+            )
+        }
+    )
+
+    /// Kenwood TM-V71(A) — dual-band FM mobile transceiver.
+    ///
+    /// Same wire protocol as TM-D710 per Hamlib `rigs/kenwood/tmd710.c`
+    /// (both models share the same source file). Minus the D-STAR /
+    /// TNC hardware, otherwise identical.
+    public static let tmV71 = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TM-V71(A)",
+        defaultBaudRate: 57600,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71,
+        serialDefaults: .kenwoodDesktop,
+        protocolFactory: { transport in
+            TMFamilyCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71
+            )
+        }
+    )
+
+    /// Kenwood TH-F6A — tri-band FM/SSB HT (2m + 1.25m + 70cm).
+    ///
+    /// Uses ``THFamilyCAT`` — the TH-F family uses discrete
+    /// per-item commands (`FQ` for frequency, `MD` for mode) rather
+    /// than the omnibus FO string TH-D72 / TM-D710 use. Cross-checked
+    /// against Hamlib `rigs/kenwood/thf6a.c` + shared `th.c` helpers.
+    public static let thF6A = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TH-F6A",
+        defaultBaudRate: 9600,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thf6a,
+        serialDefaults: .kenwoodDesktop,
+        protocolFactory: { transport in
+            THFamilyCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thf6a
+            )
+        }
+    )
+
+    /// Kenwood TH-F7E — European dual-band variant of TH-F6A.
+    ///
+    /// Same wire protocol as TH-F6A per Hamlib `rigs/kenwood/thf7.c`
+    /// (both share `th.c` helpers). 2m + 70cm TX only.
+    public static let thF7E = RadioDefinition(
+        manufacturer: .kenwood,
+        model: "TH-F7E",
+        defaultBaudRate: 9600,
+        capabilities: RadioCapabilitiesDatabase.Kenwood.thf7e,
+        serialDefaults: .kenwoodDesktop,
+        protocolFactory: { transport in
+            THFamilyCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Kenwood.thf7e
             )
         }
     )

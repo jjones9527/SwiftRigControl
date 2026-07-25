@@ -400,8 +400,24 @@ hamlib_to_swift() {
         rigs/kenwood/thd72.c|rigs/kenwood/thd74.c)
             local base
             base="$(basename "$p" .c)"
-            echo "Sources/RigControl/Protocols/Kenwood/THD72Protocol.swift  (if TH-D72-specific)"
+            echo "Sources/RigControl/Protocols/Kenwood/THD72Protocol.swift  (Family.thd72 / .thd74)"
             echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factory)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            ;;
+        rigs/kenwood/tmd710.c|rigs/kenwood/tmv7.c)
+            # TM family (TM-D710, TM-V71) — comma-separated FO command
+            # with 13 fields, distinct from TH-D72's fixed-position FO.
+            local base
+            base="$(basename "$p" .c)"
+            echo "Sources/RigControl/Protocols/Kenwood/TMFamilyCAT.swift"
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (${base} factories)"
+            echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
+            ;;
+        rigs/kenwood/thf6a.c|rigs/kenwood/thf7.c|rigs/kenwood/th.c|rigs/kenwood/th.h)
+            # TH-F family (TH-F6A, TH-F7E) — discrete FQ / MD commands
+            # via shared th.c helpers.
+            echo "Sources/RigControl/Protocols/Kenwood/THFamilyCAT.swift"
+            echo "Sources/RigControl/Protocols/Kenwood/KenwoodModels.swift  (thf6/thf7 factories)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Kenwood.swift"
             ;;
         rigs/kenwood/ts590.c|rigs/kenwood/ts480.c|rigs/kenwood/ts570.c|rigs/kenwood/ts850.c|rigs/kenwood/ts870s.c|rigs/kenwood/ts890s.c|rigs/kenwood/ts990s.c|rigs/kenwood/ts450s.c|rigs/kenwood/ts690.c|rigs/kenwood/ts940.c|rigs/kenwood/ts950.c)

@@ -139,7 +139,7 @@ always includes them in the diff scope.
 | FT-1000MP MARK-V Field | `rigs/yaesu/ft1000mp.c` (v1.2.0) |
 | FTX-1 | `rigs/yaesu/ftx1/*.c` (v1.2.0 — 18-file subsystem in Hamlib; core in ftx1.c / ftx1_freq.c / ftx1_mode.c) |
 
-### Kenwood (20 radios)
+### Kenwood (24 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
@@ -163,6 +163,10 @@ always includes them in the diff scope.
 | TS-940S | `rigs/kenwood/ts940.c` (v1.2.0) |
 | TS-950S | `rigs/kenwood/ts950.c` (v1.2.0) |
 | TS-950SDX | `rigs/kenwood/ts950.c` (v1.2.0) |
+| TM-D710(G) | `rigs/kenwood/tmd710.c` (v1.2.0 — TMFamilyCAT with comma-separated FO) |
+| TM-V71(A) | `rigs/kenwood/tmd710.c` (v1.2.0 — shared with TM-D710) |
+| TH-F6A | `rigs/kenwood/thf6a.c` + `rigs/kenwood/th.c` (v1.2.0 — THFamilyCAT with FQ + MD) |
+| TH-F7E | `rigs/kenwood/thf7.c` + `rigs/kenwood/th.c` (v1.2.0 — same protocol as TH-F6A) |
 
 ### Elecraft (6 radios)
 

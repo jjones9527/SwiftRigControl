@@ -150,6 +150,11 @@ extension RadioDefinition.Kenwood {
         ts940S,
         ts950S,
         ts950SDX,
+        // v1.2.0 Group E — TH/TM CR-terminated CAT
+        tmD710,
+        tmV71,
+        thF6A,
+        thF7E,
     ].sorted { $0.model < $1.model }
 }
 

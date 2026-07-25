@@ -441,6 +441,73 @@ the other new-vendor adapters.
 Test count 612 unchanged (RX-320 rides the drift test); Ten-Tec
 catalog 5 → 6. Total 121 → 122.
 
+#### Group E — Kenwood TH/TM CR-terminated CAT (4 new + 2 fixed)
+
+Adds two new protocol adapters and 4 new radios, plus fixes a
+latent bug affecting the existing `Kenwood.thd74` /
+`Kenwood.thd75` factories.
+
+**The latent bug (2 fixed).** `Kenwood.thd74` and
+`Kenwood.thd75` were shipping wired to `KenwoodProtocol`
+(semicolon-terminated), but Hamlib documents both radios'
+`.cmdtrm = EOM_TH` (CR-terminated) with an `FO`-string protocol
+like the TH-D72. Same class of bug as the FT-817 family and
+Yaesu newcat freq-format bugs fixed earlier in this release —
+hidden because neither TH-D74 nor TH-D75 was hardware-verified.
+
+Fix: `THD72Protocol` gains a `Family` enum with `.thd72`
+(existing behavior, default) and `.thd74` (TH-D74 + TH-D75).
+Family carries per-variant field offsets — TH-D72's FO response
+is 53 bytes with mode at char 51; TH-D74's is 72 bytes with mode
+at char 31. TH-D75 uses the TH-D74 family case per Kenwood's
+service documentation (TH-D75 is not yet in Hamlib but is
+documented as TH-D74-compatible). Both factories rewired to use
+`THD72Protocol` with `family: .thd74`.
+
+**Two new protocol adapters.**
+
+`TMFamilyCAT` — covers TM-D710(G) and TM-V71(A) dual-band FM
+mobiles. Different from `THD72Protocol` despite the family
+resemblance: the FO command uses **13 comma-separated fields**
+instead of a fixed-position ASCII string, and VFO is embedded in
+FO field 0 rather than selected with a separate `BC` command.
+Cross-checked against Hamlib `rigs/kenwood/tmd710.c`
+`tmd710_push_fo()` (line ~1008) — one file covers both radios.
+
+`THFamilyCAT` — covers TH-F6A and TH-F7E. Distinct again: no
+omnibus FO command; frequency comes off the wire via `FQ` (11-
+digit Hz + hex tuning step) and mode via a separate `MD`
+command. Cross-checked against Hamlib `rigs/kenwood/th.c` shared
+helpers (used by both `thf6a.c` and `thf7.c`).
+
+Three focused actors — one per family — matches Hamlib's own
+file layout. Unifying would produce a `switch family` explosion
+where the three protocols diverge on almost every command.
+
+**Four new radios:**
+
+- **TM-D710(G)** (2007+) — dual-band FM mobile, 2m (50 W) +
+  70cm (35 W), wideband RX 118-524 MHz. Uses `TMFamilyCAT`.
+- **TM-V71(A)** (2005+) — TM-D710 minus D-STAR / TNC hardware.
+  Same wire protocol.
+- **TH-F6A** — tri-band FM/SSB handheld (2m + 1.25m + 70cm,
+  5 W FM). Broadband RX 100 kHz – 1.3 GHz in FM/WFM/AM/LSB/USB/CW.
+  Uses `THFamilyCAT`.
+- **TH-F7E** — European TH-F6A variant (2m + 70cm TX, no 1.25m
+  allocation in Region 1). Same wire protocol.
+
+Verification: 13 new protocol tests covering all three actors
+(THD72Protocol .thd72 baseline + .thd74 variant, TMFamilyCAT
+FO round-trip + VFO routing + PTT + mode mapping, THFamilyCAT
+FQ format + MD command + step round-trip). Every fixture cites
+the specific Hamlib source line.
+
+Test count 612 → 625. Zero regressions. Clean build.
+
+Kenwood catalog: 20 → 24. Total: 122 → 126. Kenwood
+amateur-2000+ coverage now covers every Hamlib RIG_MODEL_TMD710
+/ RIG_MODEL_TMV71 / RIG_MODEL_THF6A / RIG_MODEL_THF7E entry.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio
