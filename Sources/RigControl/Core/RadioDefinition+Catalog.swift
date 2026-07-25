@@ -114,6 +114,11 @@ extension RadioDefinition.Yaesu {
         ftdx3000,
         ftdx5000,
         ftdx9000,
+        // v1.2.0 — YaesuFT847CAT + YaesuFT1000MPCAT batch
+        ft847UNI,
+        mchfQRP,
+        ft1000MPMkV,
+        ft1000MPMkVField,
     ].sorted { $0.model < $1.model }
 }
 

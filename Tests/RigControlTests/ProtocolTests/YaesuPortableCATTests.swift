@@ -35,15 +35,15 @@ import Testing
         //   byte 1: 0x42 → digits 4,2
         //   byte 2: 0x30 → digits 3,0
         //   byte 3: 0x00 → digits 0,0
-        let bytes = YaesuPortableCAT.encodeBCDBigEndian8(1_423_000)
+        let bytes = YaesuBinaryFrame.encodeBCDBigEndian8(1_423_000)
         #expect(bytes == [0x01, 0x42, 0x30, 0x00])
     }
 
     @Test func bcdRoundTripsSmallValues() throws {
         for value: UInt64 in [0, 1, 10, 100, 1_000, 10_000, 100_000,
                                 1_000_000, 12_345_678, 99_999_999] {
-            let encoded = YaesuPortableCAT.encodeBCDBigEndian8(value)
-            let decoded = try YaesuPortableCAT.decodeBCDBigEndian8(Data(encoded)[0..<4])
+            let encoded = YaesuBinaryFrame.encodeBCDBigEndian8(value)
+            let decoded = try YaesuBinaryFrame.decodeBCDBigEndian8(Data(encoded)[0..<4])
             #expect(decoded == value,
                     "BCD round-trip failed for \(value): got \(decoded)")
         }
@@ -52,7 +52,7 @@ import Testing
     @Test func bcdDecodeRejectsInvalidNibbles() {
         // 0xAB has high nibble 0xA (>9) — not a decimal digit.
         #expect(throws: RigError.self) {
-            _ = try YaesuPortableCAT.decodeBCDBigEndian8(Data([0xAB, 0x00, 0x00, 0x00])[0..<4])
+            _ = try YaesuBinaryFrame.decodeBCDBigEndian8(Data([0xAB, 0x00, 0x00, 0x00])[0..<4])
         }
     }
 

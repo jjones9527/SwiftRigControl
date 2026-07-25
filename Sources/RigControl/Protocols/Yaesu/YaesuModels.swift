@@ -321,19 +321,12 @@ extension RadioDefinition.Yaesu {
         }
     )
 
-    /// Yaesu FT-847 HF/VHF/UHF all-band transceiver
+    /// Yaesu FT-847 HF/VHF/UHF all-band satellite transceiver
     ///
-    /// > Warning: This definition currently uses ``YaesuCATProtocol``,
-    /// > which is the modern **newcat** driver. The FT-847 actually
-    /// > uses a distinct pre-newcat 5-byte binary CAT with satellite
-    /// > VFO opcodes (per Hamlib `rigs/yaesu/ft847.c`). CAT operations
-    /// > against a real FT-847 will not work correctly until a
-    /// > dedicated `YaesuFT847Protocol` lands in a follow-up release.
-    /// > The FT-817 family (FT-817/818/857/857D/897/897D/100/920) was
-    /// > migrated to ``YaesuPortableCAT`` in this release; FT-847
-    /// > deserves its own port because it adds satellite-mode VFO
-    /// > tagging (opcodes 0x03/0x13/0x23) that the FT-817 family
-    /// > doesn't have.
+    /// Uses ``YaesuFT847CAT`` — the fire-and-forget pre-newcat 5-byte
+    /// binary CAT with satellite-mode support (opcodes 0x4E / 0x8E
+    /// toggle sat mode; 0x11 / 0x21 for SAT RX / SAT TX freq). Big-
+    /// endian BCD frequency encoding per Hamlib `rigs/yaesu/ft847.c`.
     public static let ft847 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-847",
@@ -341,7 +334,50 @@ extension RadioDefinition.Yaesu {
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
-            YaesuCATProtocol(
+            YaesuFT847CAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft847
+            )
+        }
+    )
+
+    /// Yaesu FT-847UNI — FT-847 with the unidirectional CAT wiring
+    /// mod (~2000).
+    ///
+    /// Same wire protocol as the FT-847, but the internal CAT
+    /// transceiver has TX only — the radio does not send status
+    /// responses. Uses ``YaesuFT847CAT`` with the
+    /// `isUnidirectional: true` initializer flag; all getters throw
+    /// `RigError.unsupportedOperation`. Setters continue to work.
+    public static let ft847UNI = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-847UNI",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
+        serialDefaults: .yaesuHFPortable,
+        protocolFactory: { transport in
+            YaesuFT847CAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
+                isUnidirectional: true
+            )
+        }
+    )
+
+    /// mcHF QRP — open-source Yaesu-compatible HF QRP kit.
+    ///
+    /// The mcHF was designed to speak the FT-847 CAT protocol so it
+    /// could piggyback on existing CAT-driven digital-mode software.
+    /// Uses ``YaesuFT847CAT`` unchanged. Cross-checked against
+    /// Hamlib `rigs/yaesu/ft847.c` `RIG_MODEL_MCHFQRP`.
+    public static let mchfQRP = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "mcHF QRP",
+        defaultBaudRate: 38400,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
+        serialDefaults: .yaesuHFPortable,
+        protocolFactory: { transport in
+            YaesuFT847CAT(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft847
             )
@@ -368,18 +404,16 @@ extension RadioDefinition.Yaesu {
 
     // MARK: - Legacy Models (Pre-2005)
 
-    /// Yaesu FT-1000MP HF 200W flagship transceiver with dual receiver
+    /// Yaesu FT-1000MP HF 100W flagship transceiver with dual receiver (1995)
     ///
     /// Default baud rate is 4800 — lower than modern Yaesu radios.
     ///
-    /// > Warning: This definition currently uses ``YaesuCATProtocol``,
-    /// > which is the modern **newcat** driver. The FT-1000MP actually
-    /// > uses a distinct pre-newcat 5-byte binary CAT with dual-VFO
-    /// > opcodes (0x0A/0x8A) and **little-endian** BCD encoding (per
-    /// > Hamlib `rigs/yaesu/ft1000mp.c`) — the opposite endian to the
-    /// > FT-817 family's ``YaesuPortableCAT``. CAT operations against
-    /// > a real FT-1000MP will not work correctly until a dedicated
-    /// > `YaesuFT1000MPProtocol` lands in a follow-up release.
+    /// Uses ``YaesuFT1000MPCAT`` — the pre-newcat 5-byte binary CAT
+    /// with dual-VFO opcodes (0x0A for VFO A freq, 0x8A for VFO B)
+    /// and **little-endian** BCD encoding per Hamlib
+    /// `rigs/yaesu/ft1000mp.c`. Fire-and-forget writes; getters throw
+    /// `.unsupportedOperation` pending status-block decoder work in a
+    /// future release.
     public static let ft1000MP = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-1000MP",
@@ -387,7 +421,46 @@ extension RadioDefinition.Yaesu {
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
-            YaesuCATProtocol(
+            YaesuFT1000MPCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP
+            )
+        }
+    )
+
+    /// Yaesu FT-1000MP MARK-V — 200W upgrade of the FT-1000MP (2000)
+    ///
+    /// Same CAT protocol as the FT-1000MP per Hamlib
+    /// `rigs/yaesu/ft1000mp.c` line 132: "The FT1000MP MARK-V Field
+    /// appears to be identical to FT1000MP, whereas the FT1000MP
+    /// MARK-V is a FT1000MP with 200W." Only the maxPower differs —
+    /// the CAT surface is bit-for-bit identical.
+    public static let ft1000MPMkV = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-1000MP MARK-V",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
+        serialDefaults: .yaesuHFPortable,
+        protocolFactory: { transport in
+            YaesuFT1000MPCAT(
+                transport: transport,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP
+            )
+        }
+    )
+
+    /// Yaesu FT-1000MP MARK-V Field — 100W field-portable variant (2001)
+    ///
+    /// Same CAT protocol as the FT-1000MP per Hamlib
+    /// `rigs/yaesu/ft1000mp.c`.
+    public static let ft1000MPMkVField = RadioDefinition(
+        manufacturer: .yaesu,
+        model: "FT-1000MP MARK-V Field",
+        defaultBaudRate: 4800,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
+        serialDefaults: .yaesuHFPortable,
+        protocolFactory: { transport in
+            YaesuFT1000MPCAT(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP
             )

@@ -46,6 +46,9 @@ import Testing
             "FT-891", "FT-897", "FT-897D", "FT-920", "FT-950", "FT-991",
             "FT-991A", "FTDX-10", "FTDX-101D", "FTDX-101MP", "FTDX-1200",
             "FTDX-3000", "FTDX-5000", "FTDX-9000",
+            // v1.2.0 — YaesuFT847CAT + YaesuFT1000MPCAT batch
+            "FT-847UNI", "mcHF QRP",
+            "FT-1000MP MARK-V", "FT-1000MP MARK-V Field",
         ]
         let actual = Set(RadioDefinition.Yaesu.allRadios.map(\.model))
         #expect(actual == expected)

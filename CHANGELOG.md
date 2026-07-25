@@ -254,6 +254,87 @@ tracked for a follow-up release.
 Test count 555 → 578 (23 new); zero regressions. Clean build
 under Swift 6 strict concurrency.
 
+#### YaesuFT847CAT + YaesuFT1000MPCAT — finish the Yaesu binary CAT port
+
+Adds two new pre-newcat Yaesu binary CAT actors and 4 new radios,
+finishing the Yaesu classic-family port started in the previous
+release. Fixes the two remaining "warning-flagged" definitions
+(`Yaesu.ft847`, `Yaesu.ft1000MP`) that were still shipping the
+wrong protocol adapter, and adds the previously-deferred Group F
+variants.
+
+**`YaesuFT847CAT`** — covers the FT-847 family:
+
+- Big-endian BCD frequency encoding (like the FT-817 family)
+- Mode selector in byte 0 (P1)
+- **Fire-and-forget** set commands — no ACK read (contrast with
+  FT-817 which reads a 1-byte ACK). Attempting to read a
+  nonexistent ACK would time out and mask real errors.
+- **Satellite mode** support via `setSatelliteMode(_:)` — toggles
+  the radio between main-VFO (opcode 0x03/0x07/0x01) and
+  sat-VFO (opcodes 0x13/0x23 for SAT RX / SAT TX freq queries;
+  0x11/0x21 for SAT RX / SAT TX freq sets)
+- **Unidirectional variant** flag `isUnidirectional: Bool` —
+  when true (FT-847UNI, FT-650), getters throw
+  `.unsupportedOperation`; setters continue to write
+
+**`YaesuFT1000MPCAT`** — covers the FT-1000MP family:
+
+- **Little-endian** BCD frequency encoding (opposite endian to
+  the FT-817/847 families). See
+  `YaesuBinaryFrame.encodeBCDLittleEndian8(_:)`.
+- Mode selector in byte 3 (P4). High bit of P4 tags VFO A vs
+  VFO B: 0x00-0x0B for A, 0x80-0x8B for B.
+- Dual-VFO frequency opcodes: 0x0A for VFO A, 0x8A for VFO B.
+- Fire-and-forget set commands.
+- Getters (`getFrequency`, `getMode`, `getPTT`) throw
+  `.unsupportedOperation` in this release — the FT-1000MP's
+  16-byte status-update-block response uses a distinct
+  non-BCD encoding (raw big-endian binary × 10/16, per the
+  radio's 1.5625 Hz PLL step) that deserves a dedicated
+  hardware-verified implementation.
+
+Both new actors share a new `YaesuBinaryFrame` enum with static
+BCD encode/decode helpers for both endiannesses. The
+`YaesuPortableCAT` big-endian helpers were refactored into this
+shared location — no behavior change, but callers reading
+`YaesuPortableCAT.encodeBCDBigEndian8(_:)` should now read
+`YaesuBinaryFrame.encodeBCDBigEndian8(_:)`. The `internal`
+visibility means downstream consumers were not affected.
+
+**Rewired factories:**
+
+- `Yaesu.ft847` — no longer uses `YaesuCATProtocol`. Now uses
+  `YaesuFT847CAT`.
+- `Yaesu.ft1000MP` — no longer uses `YaesuCATProtocol`. Now
+  uses `YaesuFT1000MPCAT`.
+
+Both had `> Warning:` doc blocks in the previous release
+flagging them as broken; those warnings are removed.
+
+**New radios (4):**
+
+- `Yaesu.ft847UNI` — FT-847 with the unidirectional CAT mod.
+  Same wire protocol; unidirectional flag on.
+- `Yaesu.mchfQRP` — mcHF QRP open-source kit. Wire protocol
+  identical to FT-847 per Hamlib.
+- `Yaesu.ft1000MPMkV` — 200W upgrade of the FT-1000MP (2000).
+  Hamlib documents these as "identical" wire protocol; only
+  maxPower differs, which we currently don't model per-variant
+  (both share `RadioCapabilitiesDatabase.Yaesu.ft1000MP`).
+- `Yaesu.ft1000MPMkVField` — 100W field-portable MkV (2001).
+  Same wire protocol.
+
+Cross-referenced against Hamlib `rigs/yaesu/ft847.c` ncmd table
+(lines 236-318) and `rigs/yaesu/ft1000mp.c` ncmd table (lines
+168-217). Every byte fixture in the 28-test suite maps to a
+specific Hamlib table entry with line-number citations in the
+test comments.
+
+Test count 578 → 606 (28 new); zero regressions. Clean build.
+
+Yaesu catalog: 25 → 29. Total: 116 → 120.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

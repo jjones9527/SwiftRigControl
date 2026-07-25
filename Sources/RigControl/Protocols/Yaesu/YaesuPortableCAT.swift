@@ -127,7 +127,7 @@ public actor YaesuPortableCAT:
         // VFO. `vfo` is accepted for CATProtocol conformance but
         // ignored here.
         let tenHzUnits = hz / 10
-        let bcd = Self.encodeBCDBigEndian8(tenHzUnits)
+        let bcd = YaesuBinaryFrame.encodeBCDBigEndian8(tenHzUnits)
         let frame = Data([bcd[0], bcd[1], bcd[2], bcd[3], 0x01])
         try await transport.write(frame)
         _ = try await readAckByte()
@@ -137,7 +137,7 @@ public actor YaesuPortableCAT:
         let response = try await sendStatusCommand(opcode: 0x03,
                                                     expectedLength: 5)
         // bytes 0-3: BCD-BE frequency in 10-Hz units.
-        let tenHzUnits = try Self.decodeBCDBigEndian8(response[0..<4])
+        let tenHzUnits = try YaesuBinaryFrame.decodeBCDBigEndian8(response[0..<4])
         return tenHzUnits * 10
     }
 
@@ -234,63 +234,6 @@ public actor YaesuPortableCAT:
             throw RigError.invalidResponse
         }
         return byte
-    }
-
-    // MARK: - BCD encoding
-
-    /// Encodes a value into 4 bytes of 8-digit big-endian BCD.
-    ///
-    /// Each nibble is one decimal digit. Big-endian means the most
-    /// significant digit lands in the high nibble of byte 0.
-    ///
-    /// For frequency: pass Hz/10 (the FT-817 family truncates to
-    /// 10 Hz resolution).
-    ///
-    /// Cross-checked against Hamlib `to_bcd_be(data, freq/10, 8)`
-    /// in `ft817_set_freq()`.
-    ///
-    /// - Parameter value: The value to encode. Must fit in 8 decimal
-    ///   digits (0-99_999_999).
-    /// - Returns: 4-byte big-endian BCD representation.
-    internal static func encodeBCDBigEndian8(_ value: UInt64) -> [UInt8] {
-        var digits: [UInt8] = []
-        var v = value
-        for _ in 0..<8 {
-            digits.append(UInt8(v % 10))
-            v /= 10
-        }
-        // digits[0] is least-significant. Pack from most-significant
-        // end back into 4 bytes, high nibble first.
-        var bytes = [UInt8](repeating: 0, count: 4)
-        for i in 0..<4 {
-            let high = digits[7 - 2 * i]
-            let low  = digits[7 - 2 * i - 1]
-            bytes[i] = (high << 4) | low
-        }
-        return bytes
-    }
-
-    /// Decodes 4 bytes of 8-digit big-endian BCD back into an
-    /// integer. Inverse of ``encodeBCDBigEndian8(_:)``.
-    ///
-    /// - Parameter bytes: A 4-byte slice.
-    /// - Returns: The decoded integer value.
-    /// - Throws: ``RigError/invalidResponse`` if any nibble is not a
-    ///   valid decimal digit (0-9).
-    internal static func decodeBCDBigEndian8(_ bytes: Data.SubSequence) throws -> UInt64 {
-        guard bytes.count == 4 else {
-            throw RigError.invalidResponse
-        }
-        var value: UInt64 = 0
-        for byte in bytes {
-            let high = (byte >> 4) & 0x0F
-            let low  = byte & 0x0F
-            guard high < 10 && low < 10 else {
-                throw RigError.invalidResponse
-            }
-            value = value * 100 + UInt64(high) * 10 + UInt64(low)
-        }
-        return value
     }
 
     // MARK: - Mode encoding
