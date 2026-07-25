@@ -200,6 +200,26 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-R9500 Professional wideband receiver
     case icr9500 = "IC-R9500"
 
+    // MARK: - v1.2.0 Group D — additional receivers + specialty
+
+    /// IC-R6 Compact handheld wideband receiver (2009)
+    case icr6 = "IC-R6"
+
+    /// IC-R20 Dual-VFO handheld wideband receiver (2004)
+    case icr20 = "IC-R20"
+
+    /// IC-R7100 VHF/UHF communications receiver (1993)
+    case icr7100 = "IC-R7100"
+
+    /// IC-F8101 HF SSB commercial-adjacent transceiver (2010)
+    case icf8101 = "IC-F8101"
+
+    /// IC ID-1 first-generation 1.2 GHz D-STAR mobile (2004)
+    case id1 = "IC ID-1"
+
+    /// IC-RX7 Compact handheld wideband receiver (2007)
+    case icrx7 = "IC-RX7"
+
     // MARK: - Properties
 
     /// Default CI-V address for this radio model
@@ -267,6 +287,15 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .icr75: return 0x5A
         case .icr30: return 0x9C
         case .icr9500: return 0x72
+
+        // v1.2.0 Group D additions
+        case .icr6:    return 0x7E  // Hamlib icr6.c
+        case .icr20:   return 0x6C  // Hamlib icr20.c
+        case .icr7100: return 0x34  // Hamlib icr7000.c (R7000 = 0x08, R7100 = 0x34)
+        case .icf8101: return 0x8A  // Hamlib icf8101.c
+        case .id1:     return 0x01  // Hamlib id1.c — same as IC-92AD default (0x01);
+                                    // if both on the same bus, set a custom address
+        case .icrx7:   return 0x78  // Hamlib icrx7.c
         }
     }
 
@@ -279,7 +308,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     public var supportsDSTAR: Bool {
         switch self {
         case .ic7100, .ic9700, .ic9100, .ic705, .id4100, .id5100,
-             .id31, .id51, .id52, .ic92d:
+             .id31, .id51, .id52, .ic92d, .id1:
             return true
         default:
             return false
@@ -302,7 +331,10 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7600, .ic7760, .ic7610, .ic7851, .ic7850, .ic7800,
              .ic756, .ic756pro, .ic756proII, .ic756proIII,
              .ic9700, .ic9100, .ic910h, .ic2730, .id4100, .id5100,
-             .id51, .id52, .ic92d:
+             .id51, .id52, .ic92d,
+             // v1.2.0 Group D — IC-R20 markets "Dual receive" (two
+             // independent VFOs with simultaneous audio).
+             .icr20:
             return true
         default:
             return false

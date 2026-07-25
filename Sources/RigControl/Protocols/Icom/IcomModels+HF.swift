@@ -387,4 +387,35 @@ extension RadioDefinition.Icom {
             civAddressRebuilder: { RadioDefinition.Icom.ic820H(civAddress: $0) }
         )
     }
+
+    // MARK: - v1.2.0 Group D — HF SSB commercial-adjacent
+
+    /// Icom IC-F8101 HF SSB transceiver (2010)
+    ///
+    /// Full-transmit HF 1.6-30 MHz SSB, 100 W. Designed as a
+    /// commercial-adjacent land-mobile HF radio but exposes a
+    /// standard CI-V CAT interface. Serial link runs at up to
+    /// 38400 baud per Hamlib `icf8101.c`.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x8A)
+    /// - Returns: RadioDefinition for IC-F8101
+    public static func icF8101(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-F8101",
+            defaultBaudRate: 38400,
+            capabilities: RadioCapabilitiesDatabase.Icom.icF8101,
+            civAddress: civAddress ?? IcomRadioModel.icf8101.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icf8101,
+                    commandSet: StandardIcomCommandSet.icF8101,
+                    capabilities: RadioCapabilitiesDatabase.Icom.icF8101
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.icF8101(civAddress: $0) }
+        )
+    }
 }

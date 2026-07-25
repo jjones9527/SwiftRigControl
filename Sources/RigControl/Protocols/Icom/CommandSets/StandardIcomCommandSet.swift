@@ -262,4 +262,55 @@ extension StandardIcomCommandSet {
     public static var ic92d: StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x01, vfoModel: .targetable)
     }
+
+    // MARK: - v1.2.0 Group D — receivers + specialty
+
+    /// IC-R6 compact handheld wideband receiver (2009)
+    /// - VFO Model: Current Only (single-VFO handheld)
+    /// - 19200 baud, receiver only
+    /// - Per Hamlib `icr6.c`, default CI-V address 0x7E.
+    public static var icR6: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x7E, vfoModel: .currentOnly)
+    }
+
+    /// IC-R20 dual-VFO handheld wideband receiver (2004)
+    /// - VFO Model: Targetable (A/B with simultaneous audio)
+    /// - 19200 baud, receiver only
+    /// - Per Hamlib `icr20.c`, default CI-V address 0x6C.
+    public static var icR20: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x6C, vfoModel: .targetable)
+    }
+
+    /// IC-R7100 VHF/UHF communications receiver (1993)
+    /// - VFO Model: Current Only
+    /// - **1200 baud** (very slow — older serial hardware), receiver only
+    /// - Per Hamlib `icr7000.c`, default CI-V address 0x34.
+    public static var icR7100: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x34, vfoModel: .currentOnly)
+    }
+
+    /// IC-F8101 HF SSB transceiver (2010)
+    /// - VFO Model: Targetable
+    /// - **38400 baud** (higher than most Icoms of the era)
+    /// - Per Hamlib `icf8101.c`, default CI-V address 0x8A. 100 W TX.
+    public static var icF8101: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x8A, vfoModel: .targetable)
+    }
+
+    /// ID-1 first-generation 1.2 GHz D-STAR mobile (2004)
+    /// - VFO Model: Targetable
+    /// - 19200 baud, 10 W TX
+    /// - Per Hamlib `id1.c`, default CI-V address 0x01 (shared
+    ///   with IC-92AD — set a custom address if both on one bus).
+    public static var id1: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .targetable)
+    }
+
+    /// IC-RX7 compact handheld wideband receiver (2007)
+    /// - VFO Model: Current Only
+    /// - 19200 baud, receiver only
+    /// - Per Hamlib `icrx7.c`, default CI-V address 0x78.
+    public static var icRX7: StandardIcomCommandSet {
+        StandardIcomCommandSet(civAddress: 0x78, vfoModel: .currentOnly)
+    }
 }

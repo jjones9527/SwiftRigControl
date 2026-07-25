@@ -74,6 +74,13 @@ extension RadioDefinition.Icom {
         id51(),
         id5100(),
         id52(),
+        // v1.2.0 Group D — receivers + specialty
+        icF8101(),
+        icR20(),
+        icR6(),
+        icR7100(),
+        icRX7(),
+        id1(),
     ].sorted { $0.model < $1.model }
 }
 

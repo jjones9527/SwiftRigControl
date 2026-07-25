@@ -21,6 +21,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### v1.2.0 in-progress work
+
+v1.2.0 is a radio-catalog expansion targeting ~50 of the
+most-recently-released Hamlib radios SwiftRigControl doesn't yet
+cover, plus 6 new vendor protocol adapters (Guohetec, Anytone,
+Elad, CommRadio, Alinco, AOR). See
+`Documentation/RADIO_PARITY_v1.2.md` for the full target list and
+batching plan.
+
+Landed so far (unreleased):
+
+#### Plumbing
+
+- Extend `RadioDefinition.Manufacturer` with 6 new cases:
+  `.guohetec`, `.anytone`, `.elad`, `.commradio`, `.alinco`,
+  `.aor`. Additive but requires downstream consumers with
+  exhaustive switches to add a `default:` arm.
+- Add 6 empty vendor namespaces
+  (`RadioDefinition.Guohetec/Anytone/Elad/CommRadio/Alinco/AOR`),
+  each with an `allRadios: [RadioDefinition] = []` array to be
+  populated by follow-up adapter PRs.
+- Extend `allSupportedRadios`, `allRadios(for:)`,
+  `RadioIdentifyProbe`, and `RadioCatalogDriftTests` for the 6
+  new vendors.
+- Extend `HAMLIB_WATCH.md` with per-vendor sections listing the
+  upstream Hamlib source paths each adapter will mirror. Extend
+  `Scripts/hamlib-diff.sh` `vendor_dirs` list and
+  `hamlib_to_swift()` case arms.
+
+#### Group D — Icom receivers + specialty (6 radios)
+
+Definition-only additions to the Icom catalog, all reusing the
+existing `IcomCIVProtocol` + `StandardIcomCommandSet`:
+
+- **IC-R6** (2009) — compact handheld wideband receiver, 100 kHz
+  – 1.31 GHz, AM/FM/WFM. Per Hamlib `icr6.c` the CAT interface
+  does not expose the memory-channel list.
+- **IC-R20** (2004) — dual-VFO handheld wideband receiver, 150
+  kHz – 3.305 GHz, AM/CW/SSB/FM/WFM, ~1250 CAT-accessible memory
+  channels. Marketed as "Dual receive."
+- **IC-R7100** (1993) — VHF/UHF communications receiver, 25 MHz
+  – 2 GHz, AM/SSB/FM/WFM. Notoriously slow serial link — 1200
+  baud maximum per Hamlib `icr7000.c`.
+- **IC-F8101** (2010) — HF SSB transceiver, 1.6–30 MHz, 100 W.
+  Commercial-adjacent land-mobile HF radio; serial link tops
+  out at 38400 baud per Hamlib `icf8101.c`.
+- **IC ID-1** (2004) — first-generation 1.2 GHz D-STAR mobile,
+  10 W TX. Industry's first D-STAR transceiver. Default CI-V
+  address 0x01 shared with IC-92AD — set a custom address if
+  both are on one bus. Model string is `IC ID-1` (with space)
+  matching Hamlib's `id1.c` `model_name`.
+- **IC-RX7** (2007) — compact handheld wideband receiver, 150
+  kHz – 1.3 GHz, AM/FM/WFM. Predecessor to the IC-R6. Per
+  Hamlib `icrx7.c` the CAT interface does not expose the
+  memory-channel list.
+
+All six use the existing `IcomCIVProtocol` and add matching
+entries to `IcomRadioModel`, `RadioCapabilitiesDatabase.Icom`,
+`StandardIcomCommandSet`, `Icom.allRadios`, and the drift-test
+`expectedModels` set. Total Icom count: 45 → 51.
+
 ## [1.1.3] - 2026-07-24
 
 Additive catalog release. Downstream Swift apps that build radio

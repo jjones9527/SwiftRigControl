@@ -48,7 +48,7 @@ always includes them in the diff scope.
 
 ## Per-radio mapping
 
-### Icom (45 radios)
+### Icom (51 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
@@ -97,6 +97,12 @@ always includes them in the diff scope.
 | ID-51 | `rigs/icom/id51.c` |
 | ID-5100 | `rigs/icom/id5100.c` |
 | ID-52 | `rigs/icom/id52plus.c` |
+| IC-R6 | `rigs/icom/icr6.c` (v1.2.0) |
+| IC-R20 | `rigs/icom/icr20.c` (v1.2.0) |
+| IC-R7100 | `rigs/icom/icr7000.c` (v1.2.0 — shared with IC-R7000 in Hamlib) |
+| IC-F8101 | `rigs/icom/icf8101.c` (v1.2.0) |
+| IC ID-1 | `rigs/icom/id1.c` (v1.2.0) |
+| IC-RX7 | `rigs/icom/icrx7.c` (v1.2.0) |
 
 ### Yaesu (25 radios)
 

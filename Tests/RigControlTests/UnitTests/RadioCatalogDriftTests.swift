@@ -32,6 +32,8 @@ import Testing
             "IC-820H", "IC-905", "IC-9100", "IC-910H", "IC-92D",
             "IC-970", "IC-9700", "IC-R30", "IC-R75", "IC-R8600",
             "IC-R9500", "ID-31", "ID-4100", "ID-51", "ID-5100", "ID-52",
+            // v1.2.0 Group D — receivers + specialty
+            "IC-F8101", "IC-R20", "IC-R6", "IC-R7100", "IC-RX7", "IC ID-1",
         ]
         let actual = Set(RadioDefinition.Icom.allRadios.map(\.model))
         #expect(actual == expected)

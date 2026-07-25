@@ -363,13 +363,13 @@ hamlib_to_swift() {
             echo "Sources/RigControl/Protocols/Icom/IcomModels+VHF.swift  (ic905)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift"
             ;;
-        rigs/icom/ic7600.c|rigs/icom/ic7610.c|rigs/icom/ic7700.c|rigs/icom/ic7760.c|rigs/icom/ic7800.c|rigs/icom/ic785x.c|rigs/icom/ic7410.c|rigs/icom/ic7000.c|rigs/icom/ic7200.c|rigs/icom/ic718.c|rigs/icom/ic703.c|rigs/icom/ic735.c|rigs/icom/ic751.c|rigs/icom/ic820h.c|rigs/icom/ic910.c|rigs/icom/ic970.c)
+        rigs/icom/ic7600.c|rigs/icom/ic7610.c|rigs/icom/ic7700.c|rigs/icom/ic7760.c|rigs/icom/ic7800.c|rigs/icom/ic785x.c|rigs/icom/ic7410.c|rigs/icom/ic7000.c|rigs/icom/ic7200.c|rigs/icom/ic718.c|rigs/icom/ic703.c|rigs/icom/ic735.c|rigs/icom/ic751.c|rigs/icom/ic820h.c|rigs/icom/ic910.c|rigs/icom/ic970.c|rigs/icom/icf8101.c)
             local base
             base="$(basename "$p" .c)"
             echo "Sources/RigControl/Protocols/Icom/IcomModels.swift  (${base} factory)"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+Icom.swift  (or +IcomLegacy/+IcomFlagships)"
             ;;
-        rigs/icom/ic2730.c|rigs/icom/id4100.c|rigs/icom/id5100.c|rigs/icom/id31.c|rigs/icom/id51.c|rigs/icom/id52plus.c|rigs/icom/ic92d.c|rigs/icom/icr30.c|rigs/icom/icr75.c|rigs/icom/icr8600.c|rigs/icom/icr9500.c)
+        rigs/icom/ic2730.c|rigs/icom/id4100.c|rigs/icom/id5100.c|rigs/icom/id31.c|rigs/icom/id51.c|rigs/icom/id52plus.c|rigs/icom/ic92d.c|rigs/icom/icr30.c|rigs/icom/icr75.c|rigs/icom/icr8600.c|rigs/icom/icr9500.c|rigs/icom/icr6.c|rigs/icom/icr20.c|rigs/icom/icrx7.c|rigs/icom/id1.c|rigs/icom/icr7000.c)
             local base
             base="$(basename "$p" .c)"
             echo "Sources/RigControl/Protocols/Icom/IcomModels+VHF.swift  (${base} factory)"

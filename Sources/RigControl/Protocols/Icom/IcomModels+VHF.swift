@@ -396,4 +396,135 @@ extension RadioDefinition.Icom {
             civAddressRebuilder: { RadioDefinition.Icom.icR30(civAddress: $0) }
         )
     }
+
+    // MARK: - v1.2.0 Group D — receivers + specialty
+
+    /// Icom IC-R6 compact handheld wideband receiver (~2009)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x7E)
+    /// - Returns: RadioDefinition for IC-R6
+    public static func icR6(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-R6",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.Icom.icR6,
+            civAddress: civAddress ?? IcomRadioModel.icr6.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icr6,
+                    commandSet: StandardIcomCommandSet.icR6,
+                    capabilities: RadioCapabilitiesDatabase.Icom.icR6
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.icR6(civAddress: $0) }
+        )
+    }
+
+    /// Icom IC-R20 dual-VFO handheld wideband receiver (~2004)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x6C)
+    /// - Returns: RadioDefinition for IC-R20
+    public static func icR20(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-R20",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.Icom.icR20,
+            civAddress: civAddress ?? IcomRadioModel.icr20.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icr20,
+                    commandSet: StandardIcomCommandSet.icR20,
+                    capabilities: RadioCapabilitiesDatabase.Icom.icR20
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.icR20(civAddress: $0) }
+        )
+    }
+
+    /// Icom IC-R7100 VHF/UHF communications receiver (1993)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x34)
+    /// - Returns: RadioDefinition for IC-R7100
+    ///
+    /// Note: 1200 baud only per Hamlib `icr7000.c`.
+    public static func icR7100(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-R7100",
+            defaultBaudRate: 1200,
+            capabilities: RadioCapabilitiesDatabase.Icom.icR7100,
+            civAddress: civAddress ?? IcomRadioModel.icr7100.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icr7100,
+                    commandSet: StandardIcomCommandSet.icR7100,
+                    capabilities: RadioCapabilitiesDatabase.Icom.icR7100
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.icR7100(civAddress: $0) }
+        )
+    }
+
+    /// Icom ID-1 first-generation 1.2 GHz D-STAR mobile (2004)
+    ///
+    /// The industry's first D-STAR transceiver. FM voice + 128 kbps
+    /// DD data mode on the 1240-1300 MHz band, 10 W TX.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x01)
+    /// - Returns: RadioDefinition for IC ID-1
+    ///
+    /// Note: The default CI-V address 0x01 is shared with the
+    /// IC-92AD. If both radios are on the same bus, set a custom
+    /// address on one of them.
+    public static func id1(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC ID-1",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.Icom.id1,
+            civAddress: civAddress ?? IcomRadioModel.id1.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .id1,
+                    commandSet: StandardIcomCommandSet.id1,
+                    capabilities: RadioCapabilitiesDatabase.Icom.id1
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.id1(civAddress: $0) }
+        )
+    }
+
+    /// Icom IC-RX7 compact handheld wideband receiver (2007)
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: 0x78)
+    /// - Returns: RadioDefinition for IC-RX7
+    public static func icRX7(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "IC-RX7",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.Icom.icRX7,
+            civAddress: civAddress ?? IcomRadioModel.icrx7.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .icrx7,
+                    commandSet: StandardIcomCommandSet.icRX7,
+                    capabilities: RadioCapabilitiesDatabase.Icom.icRX7
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.icRX7(civAddress: $0) }
+        )
+    }
 }

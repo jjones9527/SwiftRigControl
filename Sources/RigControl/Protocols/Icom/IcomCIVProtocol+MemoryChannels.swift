@@ -190,6 +190,21 @@ extension IcomCIVProtocol {
             return 1304  // Hamlib ic92d.c:143-151 — 1200 regular + 100 scan-edge + 4 call.
         case .icr8600, .icr75, .icr30, .icr9500:
             return 99
+
+        // v1.2.0 Group D — receivers + specialty
+        case .icr20:
+            return 1250  // Hamlib icr20.c: 1200 MEM + 100 auto-write + 50 edge
+        case .icr7100:
+            return 99    // Hamlib icr7000.c
+        case .icf8101:
+            return 500   // Hamlib icf8101.c
+        case .id1:
+            return 104   // Hamlib id1.c: 99 MEM + 2 edge + 3 call
+        case .icr6, .icrx7:
+            // Both are documented in Hamlib as having no CAT-accessible
+            // memory list (RIG_CHAN_END). Zero signals "no memory
+            // channels reachable via CAT."
+            return 0
         }
     }
 
