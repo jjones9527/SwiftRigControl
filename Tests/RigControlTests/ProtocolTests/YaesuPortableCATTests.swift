@@ -266,6 +266,39 @@ import Testing
         #expect(writes.isEmpty)
     }
 
+    // MARK: - Low-baud-rate framing (v1.2.1 regression)
+
+    @Test func getFrequencyReassemblesChunkedResponseAtLowBaudRate() async throws {
+        // Regression for the FT-857 4800-baud "invalid response"
+        // report (issue #12 followup — MacWinlink beta30 field
+        // report). At 4800 baud each byte takes ~2 ms to transit,
+        // so a 5-byte status frame straddles multiple OS reads.
+        //
+        // Before the fix, `sendStatusCommand` called
+        // `transport.read(timeout:)` once and rejected any response
+        // shorter than `expectedLength` with `.invalidResponse`. The
+        // fix routes through `transport.readExact(count:timeout:)`
+        // which accumulates until the full frame arrives.
+        //
+        // Simulate the arrival pattern with the mock's chunked
+        // response: 1 + 2 + 2 bytes across three reads. If the fix
+        // is in place, `getFrequency` returns the decoded value.
+        let (transport, proto) = try await makeProtocol()
+
+        // 14_230_000 Hz → 01 42 30 00 + USB mode selector 0x01.
+        await transport.setChunkedResponse([
+            Data([0x01]),
+            Data([0x42, 0x30]),
+            Data([0x00, 0x01])
+        ])
+
+        let freq = try await proto.getFrequency(vfo: .a)
+        #expect(freq == 14_230_000)
+
+        let writes = await transport.recordedWrites
+        #expect(writes == [Data([0x00, 0x00, 0x00, 0x00, 0x03])])
+    }
+
     // MARK: - Unsupported modes
 
     @Test func setModeThrowsForRTTY() async throws {

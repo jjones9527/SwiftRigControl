@@ -51,8 +51,21 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.0** (git tag, 2026-07-25) — the
-largest single release in project history. Catalog grew 103 →
+The shipped version is **v1.2.1** (git tag, 2026-07-29), a
+targeted safety patch. Fixes a low-baud-rate serial-framing bug
+in `YaesuPortableCAT` and `YaesuFT847CAT` that surfaced as
+"Received invalid response from radio" on FT-857 at 4800 baud
+(MacWinlink beta30 field report). Adds
+`SerialTransport.readExact(count:timeout:)` — the fixed-length
+counterpart to `readUntil(terminator:timeout:)` — with a
+source-compatible default extension and an `IOKitSerialPort`
+`Darwin.read` override that inherits the remaining time budget.
+Every Yaesu binary status/ACK path now accumulates across
+multiple OS reads instead of rejecting partial frames. Test
+count 635 → 640. Zero regressions.
+
+The previously-shipped version was **v1.2.0** (git tag,
+2026-07-25) — the largest single release in project history. Catalog grew 103 →
 126 radios (23 additions: 6 Icom receivers + specialty, 2 Flex
 family, 5 Kenwood legacy HF, 4 Yaesu classic variants, FTX-1,
 Ten-Tec RX-320, 4 Kenwood TH/TM family). Adds **5 new protocol

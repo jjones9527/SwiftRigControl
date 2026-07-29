@@ -208,11 +208,8 @@ public actor YaesuFT847CAT: CATProtocol {
                                     expectedLength: Int) async throws -> Data {
         let frame = Data([0x00, 0x00, 0x00, 0x00, opcode])
         try await transport.write(frame)
-        let response = try await transport.read(timeout: responseTimeout)
-        guard response.count >= expectedLength else {
-            throw RigError.invalidResponse
-        }
-        return response.prefix(expectedLength)
+        return try await transport.readExact(count: expectedLength,
+                                             timeout: responseTimeout)
     }
 
     private func requireBidirectional() throws {

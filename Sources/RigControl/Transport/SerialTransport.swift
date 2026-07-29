@@ -35,6 +35,38 @@ public protocol SerialTransport: Actor {
     /// - Throws: `RigError.timeout` if frame not received within timeout
     func readUntil(terminator: UInt8, timeout: TimeInterval) async throws -> Data
 
+    /// Reads exactly `count` bytes with a **total-elapsed** timeout.
+    ///
+    /// Accumulates bytes across multiple underlying reads until either
+    /// `count` bytes have been received or `timeout` elapses. On
+    /// timeout throws ``RigError/timeout`` regardless of how many
+    /// partial bytes were received — matching the semantic of
+    /// ``readUntil(terminator:timeout:)``.
+    ///
+    /// Use this for fixed-length binary protocols (Yaesu portable /
+    /// FT-847 / FT-100 CAT, and any protocol with a per-command known
+    /// response length) where a single underlying `read` may return a
+    /// partial frame — particularly at low baud rates (≤ 4800 baud).
+    /// At 4800 baud a 5-byte frame takes ~10 ms to transit, which is
+    /// longer than typical read-poll intervals; without accumulation
+    /// the caller receives 1–3 bytes and mistakes it for a
+    /// malformed response.
+    ///
+    /// **Default implementation** provided as a protocol extension
+    /// below wraps ``read(timeout:)`` and accumulates. This keeps
+    /// existing external `SerialTransport` conformers source-
+    /// compatible — they get correct behavior for free but can
+    /// override for a more efficient direct-syscall implementation.
+    ///
+    /// - Parameters:
+    ///   - count: Exact number of bytes to return.
+    ///   - timeout: Total time budget in seconds.
+    /// - Returns: Exactly `count` bytes.
+    /// - Throws: ``RigError/timeout`` if the full count is not
+    ///   received within the timeout; ``RigError/notConnected`` if
+    ///   the port is closed.
+    func readExact(count: Int, timeout: TimeInterval) async throws -> Data
+
     /// Checks if the port is currently open.
     var isOpen: Bool { get async }
 
@@ -73,6 +105,40 @@ public protocol SerialTransport: Actor {
     /// - Throws: `RigError.serialPortError` if the port is not open or
     ///   the underlying ioctl fails.
     func setRTS(_ enabled: Bool) async throws
+}
+
+// MARK: - Default readExact implementation
+
+extension SerialTransport {
+    /// Portable default: repeatedly calls ``read(timeout:)`` with the
+    /// remaining time budget and accumulates into a buffer until
+    /// `count` bytes have been received or the total budget expires.
+    ///
+    /// Transports with direct file-descriptor access
+    /// (``IOKitSerialPort``) override this with a tighter
+    /// `Darwin.read` loop to avoid the per-iteration
+    /// `Task.sleep` overhead of the shared `read(timeout:)`.
+    public func readExact(count: Int, timeout: TimeInterval) async throws -> Data {
+        precondition(count >= 0, "readExact count must be non-negative")
+        if count == 0 { return Data() }
+
+        var buffer = Data()
+        buffer.reserveCapacity(count)
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while buffer.count < count {
+            let remaining = deadline.timeIntervalSinceNow
+            if remaining <= 0 {
+                throw RigError.timeout
+            }
+            let chunk = try await read(timeout: remaining)
+            if !chunk.isEmpty {
+                let needed = count - buffer.count
+                buffer.append(chunk.prefix(needed))
+            }
+        }
+        return buffer
+    }
 }
 
 /// Configuration for serial port connections.

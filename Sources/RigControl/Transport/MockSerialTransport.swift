@@ -77,6 +77,17 @@ public actor MockSerialTransport: SerialTransport {
     /// throws `RigError.timeout`.
     private var shouldThrowOnRead: Bool = false
 
+    /// If set, the next scripted response for the next matching write
+    /// is delivered in this sequence of chunks, one per `read(timeout:)`
+    /// call. Simulates low-baud-rate serial where a fixed-length frame
+    /// straddles multiple OS reads (the FT-857 4800-baud
+    /// `readExact` regression scenario).
+    private var chunkedResponse: [Data] = []
+
+    /// Delay (seconds) between chunks when serving a chunked response.
+    /// Applied inside `read(timeout:)` before returning each chunk.
+    private var chunkDelay: TimeInterval = 0
+
     private var _isOpen: Bool = false
 
     public var isOpen: Bool {
@@ -112,6 +123,12 @@ public actor MockSerialTransport: SerialTransport {
         }
         if shouldThrowOnRead {
             throw RigError.timeout
+        }
+        if !chunkedResponse.isEmpty {
+            if chunkDelay > 0 {
+                try await Task.sleep(nanoseconds: UInt64(chunkDelay * 1_000_000_000))
+            }
+            return chunkedResponse.removeFirst()
         }
         if let lastWrite = recordedWrites.last,
            let response = mockResponses[lastWrite] {
@@ -160,8 +177,26 @@ public actor MockSerialTransport: SerialTransport {
         recordedDTR.removeAll()
         recordedRTS.removeAll()
         mockResponses.removeAll()
+        chunkedResponse.removeAll()
+        chunkDelay = 0
         shouldThrowOnWrite = false
         shouldThrowOnRead = false
+    }
+
+    /// Serves the next series of reads as `chunks`, one chunk per
+    /// `read(timeout:)` call. Use this to reproduce the low-baud-rate
+    /// scenario where a fixed-length frame arrives spread across
+    /// multiple OS reads — the case that ``SerialTransport/readExact``
+    /// exists to handle.
+    ///
+    /// - Parameters:
+    ///   - chunks: Sequence of byte slices to deliver, in order.
+    ///   - delay: Optional inter-chunk delay (seconds). Defaults to 0
+    ///     for fast tests; set to a small value (e.g. `0.005`) to
+    ///     model 4800-baud arrival timing.
+    public func setChunkedResponse(_ chunks: [Data], delay: TimeInterval = 0) {
+        chunkedResponse = chunks
+        chunkDelay = delay
     }
 
     /// Scripts the response that should be returned the next time the

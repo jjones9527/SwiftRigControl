@@ -265,6 +265,55 @@ public actor IOKitSerialPort: SerialTransport {
         throw RigError.timeout
     }
 
+    /// Reads exactly `count` bytes with a total-elapsed timeout.
+    ///
+    /// Overrides the default protocol implementation with a tight
+    /// `Darwin.read` accumulation loop that inherits the remaining
+    /// time budget on each iteration. This avoids the double-timing
+    /// cost of calling ``read(timeout:)`` in a loop (each iteration
+    /// of that path would re-arm a full `Task.sleep`-paced poll).
+    ///
+    /// At low baud rates (≤ 4800 baud) a single OS-level read often
+    /// returns 1–3 bytes of a 5-byte fixed-length frame; the loop
+    /// keeps pumping bytes into the buffer until the frame is
+    /// complete or the deadline elapses.
+    public func readExact(count: Int, timeout: TimeInterval) async throws -> Data {
+        precondition(count >= 0, "readExact count must be non-negative")
+        if count == 0 { return Data() }
+
+        guard fileDescriptor >= 0 else {
+            throw RigError.notConnected
+        }
+
+        var result = Data()
+        result.reserveCapacity(count)
+        var chunk = [UInt8](repeating: 0, count: count)
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while result.count < count {
+            if Date() >= deadline {
+                throw RigError.timeout
+            }
+
+            let want = count - result.count
+            let bytesRead = Darwin.read(fileDescriptor, &chunk, want)
+
+            if bytesRead > 0 {
+                result.append(contentsOf: chunk[..<bytesRead])
+                if result.count >= count {
+                    return result
+                }
+                continue
+            } else if bytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK {
+                throw RigError.serialPortError("Read failed: \(String(cString: strerror(errno)))")
+            }
+
+            try await Task.sleep(nanoseconds: 1_000_000) // 1 ms
+        }
+
+        return result
+    }
+
     /// Flushes input and output buffers.
     public func flush() async throws {
         guard fileDescriptor >= 0 else {
@@ -330,6 +379,10 @@ public actor IOKitSerialPort: SerialTransport {
     }
 
     public func readUntil(terminator: UInt8, timeout: TimeInterval) async throws -> Data {
+        throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
+    }
+
+    public func readExact(count: Int, timeout: TimeInterval) async throws -> Data {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
 

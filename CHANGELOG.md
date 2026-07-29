@@ -21,6 +21,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-29
+
+### Fixed
+
+- **Low-baud-rate framing for Yaesu binary CAT (FT-857 report,
+  MacWinlink beta30 field report).** `YaesuPortableCAT` and
+  `YaesuFT847CAT` read fixed-length status frames — 5-byte
+  frequency/mode responses and 1-byte TX/RX status. The old code
+  called `transport.read(timeout:)` once and treated any shorter
+  response as `RigError.invalidResponse`. At 4800 baud (FT-857 /
+  FT-897 factory default) each byte takes ~2 ms, so a single
+  `Darwin.read` typically returns 1–3 bytes of a 5-byte frame and
+  the caller saw a spurious "Received invalid response from
+  radio." flrig on the same hardware worked because it accumulates.
+  Fix: introduce `SerialTransport.readExact(count:timeout:)`, the
+  fixed-length counterpart to `readUntil(terminator:timeout:)`,
+  and route every Yaesu binary status/ACK path through it. Frames
+  now accumulate across multiple OS reads until the full expected
+  length arrives or the timeout budget expires.
+
+### Added
+
+- **`SerialTransport.readExact(count:timeout:)`** protocol
+  requirement plus a source-compatible default extension that
+  loops `read(timeout:)` and accumulates. `IOKitSerialPort`
+  overrides with a tighter `Darwin.read` loop that inherits the
+  remaining budget on each iteration to avoid double-timing.
+  `MockSerialTransport` and the test-scoped `MockTransport`
+  gain a `setChunkedResponse(_:)` helper for scripting
+  multi-chunk arrival patterns in tests.
+
+### Tests
+
+- `ReadExactTests` — verifies zero-count, accumulation across
+  chunks, over-read trimming, and `.timeout` (not
+  `.invalidResponse`) on a silent wire.
+- `YaesuPortableCATTests.getFrequencyReassemblesChunkedResponseAtLowBaudRate`
+  — regression for the FT-857 4800-baud report; scripts a 1 + 2 +
+  2 byte arrival pattern and confirms `getFrequency` decodes
+  correctly.
+
+Test count 635 → 640. Zero regressions.
+
 ## [1.2.0] - 2026-07-25
 
 ### v1.2.0 highlights

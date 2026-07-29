@@ -210,15 +210,17 @@ public actor YaesuPortableCAT:
     ///
     /// Status commands do **not** consume an ACK byte — the response
     /// itself is the acknowledgement.
+    ///
+    /// Uses ``SerialTransport/readExact(count:timeout:)`` so that low-
+    /// baud transports (4800 baud on FT-857/897) can accumulate the
+    /// response across multiple OS reads — a single ~2 ms `Darwin.read`
+    /// commonly returns 1–3 bytes of a 5-byte frame at that speed.
     private func sendStatusCommand(opcode: UInt8,
                                     expectedLength: Int) async throws -> Data {
         let frame = Data([0x00, 0x00, 0x00, 0x00, opcode])
         try await transport.write(frame)
-        let response = try await transport.read(timeout: responseTimeout)
-        guard response.count >= expectedLength else {
-            throw RigError.invalidResponse
-        }
-        return response.prefix(expectedLength)
+        return try await transport.readExact(count: expectedLength,
+                                             timeout: responseTimeout)
     }
 
     /// Reads the 1-byte ACK that terminates every set command.
@@ -229,11 +231,9 @@ public actor YaesuPortableCAT:
     /// accept any byte as success.
     @discardableResult
     private func readAckByte() async throws -> UInt8 {
-        let response = try await transport.read(timeout: responseTimeout)
-        guard let byte = response.first else {
-            throw RigError.invalidResponse
-        }
-        return byte
+        let response = try await transport.readExact(count: 1,
+                                                     timeout: responseTimeout)
+        return response[response.startIndex]
     }
 
     // MARK: - Mode encoding

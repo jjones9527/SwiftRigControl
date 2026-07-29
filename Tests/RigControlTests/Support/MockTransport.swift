@@ -7,6 +7,8 @@ actor MockTransport: SerialTransport {
     var recordedWrites: [Data] = []
     var shouldThrowOnWrite: Bool = false
     var shouldThrowOnRead: Bool = false
+    /// Chunks delivered one-per-read to simulate low-baud arrival.
+    var chunkedResponse: [Data] = []
     private var _isOpen: Bool = false
 
     var isOpen: Bool {
@@ -40,6 +42,10 @@ actor MockTransport: SerialTransport {
 
         if shouldThrowOnRead {
             throw RigError.timeout
+        }
+
+        if !chunkedResponse.isEmpty {
+            return chunkedResponse.removeFirst()
         }
 
         // Return the most recent mock response
@@ -85,12 +91,21 @@ actor MockTransport: SerialTransport {
     func reset() {
         recordedWrites.removeAll()
         mockResponses.removeAll()
+        chunkedResponse.removeAll()
         shouldThrowOnWrite = false
         shouldThrowOnRead = false
     }
 
     func setResponse(for command: Data, response: Data) {
         mockResponses[command] = response
+    }
+
+    /// Queue a chunked response — each element is returned on a
+    /// successive `read(timeout:)` call. Used to model low-baud
+    /// arrival where a fixed-length frame straddles multiple OS reads
+    /// (the FT-857 4800-baud `readExact` regression scenario).
+    func setChunkedResponse(_ chunks: [Data]) {
+        chunkedResponse = chunks
     }
 
     // Actor-safe property setters for testing
