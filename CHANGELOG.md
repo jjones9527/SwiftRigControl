@@ -695,8 +695,10 @@ qualifier.** Prior code emitted `SH%02d;`. Per Hamlib
 family, `SH%c%d%02d;` for FT-DX101 with narrow-flag). This fix
 emits `SH0%02d;` — the common single-VFO-qualifier form that
 works on the broadest set of modern newcat radios. **Follow-up
-for v1.2.1**: add a `Quirks.filterCommandStyle` enum for the
-per-family variants that need `SH00` or the narrow-flag byte.
+for a future patch release**: add a `Quirks.filterCommandStyle`
+enum for the per-family variants that need `SH00` or the narrow-
+flag byte. (Not addressed in v1.2.1, which was a targeted Yaesu
+binary-CAT framing fix.)
 
 **Fix 6: Yaesu newcat RU/RD (RIT/XIT clarifier) format.** Prior
 code emitted `RU%+05d;` (signed 5-digit with `+` sign character).
@@ -733,8 +735,10 @@ to these regression tests, the buggy behaviors had zero test
 coverage — which is why they persisted through the earlier v1.1.2
 safety audit.
 
-**Deferred to v1.2.1 patch release** (medium / low severity;
-non-blocking):
+**Deferred to a future patch release** (medium / low severity;
+non-blocking — rolled forward past v1.2.1, which shipped as a
+targeted Yaesu binary-CAT framing fix and did not sweep this
+backlog):
 
 - Yaesu newcat MD command missing VFO qualifier on
   `RIG_TARGETABLE_MODE` radios (FT-DX101D/MP, FT-9000).

@@ -1,18 +1,29 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.0 (cut 2026-07-25 — largest release
+**Current version:** v1.2.1 (cut 2026-07-29 — targeted safety
+patch. Fixes low-baud-rate serial framing in `YaesuPortableCAT`
+and `YaesuFT847CAT` that surfaced as "Received invalid response
+from radio" on FT-857 at 4800 baud (MacWinlink beta30 field
+report). Adds `SerialTransport.readExact(count:timeout:)` — the
+fixed-length counterpart to `readUntil(terminator:timeout:)` —
+with a source-compatible default extension and an
+`IOKitSerialPort` `Darwin.read` override that inherits the
+remaining time budget. Every Yaesu binary status/ACK path now
+accumulates across multiple OS reads instead of rejecting
+partial frames. Test count 635 → 640, zero regressions.)
+Previous release **v1.2.0** (cut 2026-07-25 — largest release
 in SwiftRigControl history. Catalog grew 103 → 126 radios (23
 additions across Icom, Yaesu, Kenwood, Flex, Ten-Tec), 5 new
 protocol adapters (`YaesuPortableCAT`, `YaesuFT847CAT`,
 `YaesuFT1000MPCAT`, `TMFamilyCAT`, `THFamilyCAT`), plus 25
 latent protocol bugs fixed via a Hamlib byte-level audit that
-gated the ship decision. Test count 542 → 635. Follow-up items
-for v1.2.1 patch tracked at the end of CHANGELOG's [1.2.0]
-section. Includes new `Vendor.allRadios` statics,
+gated the ship decision. Test count 542 → 635. Additional
+follow-up items for v1.2.2+ tracked at the end of CHANGELOG's
+[1.2.0] section. Includes new `Vendor.allRadios` statics,
 `withCivAddress(_:)`, `HostRequirement` flag, and a weekly
 Hamlib upstream-watch GitHub Action. Full plan:
-`Documentation/RADIO_PARITY_v1.2.md`.) Previous release
-**v1.1.3** (cut 2026-07-24 — additive catalog release:
+`Documentation/RADIO_PARITY_v1.2.md`.) Also **v1.1.3**
+(cut 2026-07-24 — additive catalog release:
 `Vendor.allRadios` static arrays, `allSupportedRadios` +
 `allRadios(for:)` aggregate, `withCivAddress(_:)` helper +
 weekly `hamlib-watch` GitHub Action digest workflow). Also
