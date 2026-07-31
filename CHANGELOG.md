@@ -21,6 +21,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-07-31
+
+### Fixed
+
+- **THFamilyCAT step field computed from frequency, not
+  snapshotted.** `setFrequency` on TH-F6A / TH-F7E emits
+  `FQ <freq>,<step>\r`. Prior releases snapshotted the step
+  from the last successful `getFrequency` and reused it on
+  every subsequent set (defaulting to `0` if no get had run
+  yet). Per Hamlib `rigs/kenwood/th.c:209-241` the step is
+  **computed from the frequency on every set** — not a
+  persistent user setting — and the get-side response's step
+  field is discarded. Symptoms of the old bug:
+  - A fresh actor's first `setFrequency(902_125_000, ...)`
+    emitted step `0` (5-kHz grid) which the radio rejects
+    above 470 MHz — the UHF band needs step `4` (10-kHz grid).
+  - Front-panel step changes on the radio silently overwritten
+    the moment the app called `setFrequency` again — the app's
+    cached snapshot of an earlier get won the race.
+  Fix: replace the `currentStepIndex` field + snapshot with a
+  pure `computeStepAndRoundedFreq(hz:)` static that reproduces
+  Hamlib's algorithm byte-for-byte (5-kHz vs 6.25-kHz grid
+  pick, override to 10-kHz + step `4` above 470 MHz, C-style
+  half-up rounding). `getFrequency` no longer stores anything
+  locally.
+
+### Refactor
+
+Structural cleanup with **zero behavior change** — the four
+largest source files split under the 500-line CLAUDE.md soft
+cap:
+
+- `RadioCapabilitiesDatabase+Icom.swift` 1049 → 544 lines,
+  with two new sibling files:
+  - `RadioCapabilitiesDatabase+IcomV11.swift` (IC-7760,
+    IC-7300MK2, D-STAR handhelds — 320 lines)
+  - `RadioCapabilitiesDatabase+IcomV12.swift` (v1.2.0
+    receivers + specialty — 204 lines)
+- `YaesuCATProtocol.swift` 977 → 663 lines, extracting the
+  `Quirks` struct and its per-family presets to
+  `YaesuCATProtocol+Quirks.swift` (314 lines). The Quirks
+  block grew ~130 → ~320 lines through the v1.2.0-v1.2.3
+  wire-format audits — moving it out means further Quirks
+  additions won't grow the main actor file.
+- `RigctldCommandHandler.swift` 900 → 548 lines, extracting
+  the level-control set/get dispatch (~355 lines) to
+  `RigctldCommandHandler+LevelControl.swift`.
+- `RadioCapabilitiesDatabase+Kenwood.swift` 874 → 426 lines,
+  with legacy HF + TM/TH mobile/handheld families moved to
+  `RadioCapabilitiesDatabase+KenwoodLegacy.swift` (461 lines).
+
+`RigctldCommandHandler.rigController` visibility widened from
+`private` to internal so the level-control extension file can
+reach it. Not part of the public API surface — the actor's
+public methods are unchanged.
+
+### Tests
+
+- Updated `thFamilyGetFrequencyRoundTripsStep` (renamed to
+  `thFamilyGetFrequencyDiscardsStepFieldFromResponse`) to
+  reflect Hamlib-parity: a get response's step is ignored on
+  the subsequent set.
+- Updated `thFamilySetFrequencyEmitsFQWith11DigitsPlusHexStep`
+  expected wire — 146 MHz now emits step `1` (Hamlib's
+  strict-less-than tie-breaker between the 5-kHz and 6.25-kHz
+  grids falls through to step `1`).
+- Four new tests: `computeStepAndRoundedFreq` for the 5-kHz
+  grid, 6.25-kHz grid, and above-470-MHz UHF branch; plus an
+  integration test for the UHF branch through `setFrequency`.
+
+Test count 651 → 655. Zero regressions.
+
 ## [1.2.3] - 2026-07-30
 
 ### Fixed
@@ -861,11 +933,13 @@ safety audit.
 
 **Deferred to a future patch release** (medium / low severity;
 non-blocking — rolled forward past v1.2.1 (Yaesu binary-CAT
-framing fix), v1.2.2 (Yaesu newcat SH per-family dispatch), and
-v1.2.3 (Yaesu newcat MD qualifier byte):
+framing fix), v1.2.2 (Yaesu newcat SH per-family dispatch),
+v1.2.3 (Yaesu newcat MD qualifier byte), and v1.2.4
+(THFamilyCAT step + structural refactor):
 
 - Yaesu newcat MD qualifier byte — **shipped in v1.2.3.**
 - Yaesu newcat SH per-family variants — **shipped in v1.2.2.**
+- THFamilyCAT step persistence — **shipped in v1.2.4.**
 - Kenwood AF gain format variants — TS-450S/TS-690S do not
   expose AF gain via CAT at all per Hamlib (`RIG_LEVEL_AF` not
   in `LEVEL_ALL`). Real fix is a level-capability audit across

@@ -1,8 +1,22 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.3 (cut 2026-07-30 — Yaesu newcat MD
-(mode) command qualifier byte. Prior releases emitted
-`MD<char>;` — no qualifier byte at all. Hamlib emits
+**Current version:** v1.2.4 (cut 2026-07-31 — THFamilyCAT
+(TH-F6A / TH-F7E) step field now computed from the frequency
+per Hamlib `th.c:209-241` instead of snapshotted from the last
+`getFrequency`. Fixes above-470-MHz UHF sets on a fresh actor
+(previously defaulted to step `0` = 5-kHz grid; UHF needs step
+`4` = 10-kHz grid) and eliminates the stale-cache race between
+front-panel step changes and app-initiated sets. Also ships a
+zero-behavior structural refactor: four largest files split
+under the 500-line soft cap
+(`RadioCapabilitiesDatabase+Icom.swift` 1049 → 544,
+`YaesuCATProtocol.swift` 977 → 663,
+`RigctldCommandHandler.swift` 900 → 548,
+`RadioCapabilitiesDatabase+Kenwood.swift` 874 → 426) with
+five new sibling extension files. Test count 651 → 655, zero
+regressions.) Previous release **v1.2.3** (cut 2026-07-30 —
+Yaesu newcat MD (mode) command qualifier byte. Prior releases
+emitted `MD<char>;` — no qualifier byte at all. Hamlib emits
 `MD0<char>;` universally, with `MD1<char>;` for VFO B on radios
 with `RIG_TARGETABLE_MODE`. Real newcat radios accept the short
 form opportunistically but the correct wire has always
@@ -11,8 +25,8 @@ radios (FT-2000, FTDX-5000, FTDX-9000, FTDX-10, FT-710,
 FTDX-101D/MP, FTX-1) `setMode(vfo: .b)` now correctly addresses
 sub VFO instead of silently landing on main. Added
 `Quirks.hasTargetableMode` field + `withTargetableMode(_:)`
-copy-with-override helper. Test count 647 → 651, zero
-regressions.) Previous release **v1.2.2** (cut 2026-07-30 —
+copy-with-override helper. Test count 647 → 651.) Also
+**v1.2.2** (cut 2026-07-30 —
 Yaesu newcat SH (IF filter / bandwidth) per-family wire-format
 dispatch. Prior releases shipped one universal `SH0%02d;`
 form; per Hamlib `newcat.c:9202-9220` there are four

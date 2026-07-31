@@ -59,13 +59,6 @@ public actor THFamilyCAT:
     /// CR terminator (EOM_TH in Hamlib).
     private static let terminator: UInt8 = 0x0D
 
-    /// Current tuning-step index — needed because the FQ command
-    /// requires it as its second parameter, but SwiftRigControl's
-    /// `CATProtocol.setFrequency(_:vfo:)` doesn't take one. We
-    /// snapshot the step from the last successful `getFrequency`
-    /// (initial default 0 = 5 kHz, matching Hamlib's default).
-    private var currentStepIndex: UInt8 = 0
-
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities
@@ -85,10 +78,26 @@ public actor THFamilyCAT:
     // MARK: - Frequency
 
     public func setFrequency(_ hz: UInt64, vfo: VFO) async throws {
-        // Format matches Hamlib `th_set_freq()`:
+        // Format matches Hamlib `th_set_freq()` at
+        // `rigs/kenwood/th.c:209-241`:
         //   FQ %011lld,%X
-        let stepHex = String(currentStepIndex, radix: 16, uppercase: true)
-        let command = String(format: "FQ %011llu,%@", hz, stepHex)
+        //
+        // The step field is not a persistent user setting to
+        // preserve — Hamlib computes it from the frequency on
+        // every set. See `computeStepAndRoundedFreq(hz:)` for the
+        // algorithm; the short version is: pick the 5-kHz grid
+        // (step 0) or 6.25-kHz grid (step 1) that gives the
+        // smaller error, and override to the 10-kHz grid (step 4)
+        // above 470 MHz.
+        //
+        // Prior to the v1.2.4 fix this method snapshotted the
+        // step from the last `getFrequency` call and reused it on
+        // every subsequent set — which meant a fresh actor (no
+        // prior get) always sent step 0, wrong for VHF/UHF
+        // above 470 MHz.
+        let (freqSent, step) = Self.computeStepAndRoundedFreq(hz: hz)
+        let stepHex = String(step, radix: 16, uppercase: true)
+        let command = String(format: "FQ %011llu,%@", freqSent, stepHex)
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
@@ -98,20 +107,55 @@ public actor THFamilyCAT:
         let response = try await receiveResponse()
 
         // Response format: FQ <freq>,<step>
+        // The step field is discarded — Hamlib does the same at
+        // `th.c:250-282`, and it is recomputed on every set. Keeping
+        // it locally would just mask a stale-cache bug the next
+        // time the front panel changed the grid.
         guard response.hasPrefix("FQ ") else {
             throw RigError.invalidResponse
         }
         let body = String(response.dropFirst(3))
         let parts = body.split(separator: ",")
         guard parts.count >= 2,
-              let freq = UInt64(parts[0]),
-              let step = UInt8(parts[1], radix: 16) else {
+              let freq = UInt64(parts[0]) else {
             throw RigError.invalidResponse
         }
-        // Snapshot the step so setFrequency can round-trip it
-        // faithfully on the next call.
-        currentStepIndex = step
         return freq
+    }
+
+    /// Reproduces Hamlib's `th_set_freq()` step / freq computation
+    /// (`rigs/kenwood/th.c:220-240`).
+    ///
+    /// Returns the rounded frequency to send on the wire and the
+    /// step index that pairs with it. `internal` so the tests can
+    /// assert per-grid boundary behavior without going through the
+    /// transport.
+    ///
+    /// The algorithm:
+    /// 1. Round `hz` to the nearest 5 kHz and 6.25 kHz grid.
+    /// 2. Pick whichever grid gives the smaller error. Step is
+    ///    `0` for the 5-kHz grid, `1` for the 6.25-kHz grid.
+    /// 3. If the chosen freq is ≥ 470 MHz, override to the
+    ///    10-kHz grid (step `4` in the TH-F6A `.tuning_steps`
+    ///    table — see `rigs/kenwood/thf6a.c:210-222`).
+    internal static func computeStepAndRoundedFreq(hz: UInt64) -> (freq: UInt64, step: UInt8) {
+        let freqDouble = Double(hz)
+        let freq5 = (freqDouble / 5000.0).rounded() * 5000.0
+        let freq625 = (freqDouble / 6250.0).rounded() * 6250.0
+        let step: UInt8
+        var freqSent: Double
+        if abs(freq5 - freqDouble) < abs(freq625 - freqDouble) {
+            step = 0
+            freqSent = freq5
+        } else {
+            step = 1
+            freqSent = freq625
+        }
+        if freqSent >= 470_000_000 {
+            freqSent = (freqSent / 10_000.0).rounded() * 10_000.0
+            return (UInt64(freqSent), 4)
+        }
+        return (UInt64(freqSent), step)
     }
 
     // MARK: - Mode

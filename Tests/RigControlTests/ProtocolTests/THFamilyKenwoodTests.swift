@@ -175,14 +175,20 @@ import Testing
     // MARK: - THFamilyCAT
 
     @Test func thFamilySetFrequencyEmitsFQWith11DigitsPlusHexStep() async throws {
+        // Format matches Hamlib `th_set_freq()` at th.c:239:
+        //   FQ %011lld,%X\r
+        // 146 MHz aligns exactly to both the 5-kHz and 6.25-kHz
+        // grids (error 0 on each). Hamlib's tie-breaker
+        // (`abs(freq5-freq) < abs(freq625-freq)`, strict less-than)
+        // falls through to step 1 on a tie. This test locks the
+        // Hamlib-parity behavior; a caller who cares that a
+        // specific frequency lands on step 0 can nudge by 5 kHz.
         let transport = MockTransport()
         let proto = THFamilyCAT(transport: transport, capabilities: .full)
         try await proto.connect()
         await transport.reset()
 
-        // Default step index = 0 → hex "0".
-        // Format matches Hamlib th_set_freq(): "FQ %011lld,%X\r".
-        let expectedWrite = "FQ 00146000000,0\r".data(using: .ascii)!
+        let expectedWrite = "FQ 00146000000,1\r".data(using: .ascii)!
         await transport.setResponse(for: expectedWrite, response: expectedWrite)
 
         try await proto.setFrequency(146_000_000, vfo: .a)
@@ -192,14 +198,22 @@ import Testing
         #expect(writes[0] == expectedWrite)
     }
 
-    @Test func thFamilyGetFrequencyRoundTripsStep() async throws {
+    @Test func thFamilyGetFrequencyDiscardsStepFieldFromResponse() async throws {
+        // Per Hamlib th.c:250-282 the step field on the FQ
+        // response is not preserved — it's recomputed from the
+        // frequency on every set (see `computeStepAndRoundedFreq`).
+        // Prior to the v1.2.4 fix the step was snapshotted from
+        // getFrequency and reused on subsequent sets, which
+        // silently produced the wrong wire when the front panel
+        // changed the grid or when setFrequency was called before
+        // any getFrequency.
         let transport = MockTransport()
         let proto = THFamilyCAT(transport: transport, capabilities: .full)
         try await proto.connect()
         await transport.reset()
 
-        // Radio's stored step is 3 (hex "3"). getFrequency should
-        // snapshot it so the next setFrequency emits step=3.
+        // Radio reports step 3 in the response — we should ignore
+        // it and read only the frequency.
         let getQuery = "FQ\r".data(using: .ascii)!
         let getResp = "FQ 00146000000,3\r".data(using: .ascii)!
         await transport.setResponse(for: getQuery, response: getResp)
@@ -207,15 +221,63 @@ import Testing
         let freq = try await proto.getFrequency(vfo: .a)
         #expect(freq == 146_000_000)
 
-        // Now setFrequency should emit hex "3" as the step.
+        // A subsequent setFrequency must compute the step from the
+        // new frequency, not carry over the reported `3`. 147.5 MHz
+        // aligns exactly to both the 5-kHz and 6.25-kHz grids; the
+        // tie-breaker matches Hamlib's strict-less-than at th.c:227
+        // and picks step 1.
         await transport.reset()
-        let expectedWrite = "FQ 00147500000,3\r".data(using: .ascii)!
+        let expectedWrite = "FQ 00147500000,1\r".data(using: .ascii)!
         await transport.setResponse(for: expectedWrite, response: expectedWrite)
 
         try await proto.setFrequency(147_500_000, vfo: .a)
 
         let writes = await transport.recordedWrites
         #expect(writes.count == 1)
+        #expect(writes[0] == expectedWrite)
+    }
+
+    @Test func thFamilyComputesStepZeroForFiveKilohertzGrid() {
+        // 146.005 MHz is exactly on the 5-kHz grid → step 0.
+        let (freq, step) = THFamilyCAT.computeStepAndRoundedFreq(hz: 146_005_000)
+        #expect(step == 0)
+        #expect(freq == 146_005_000)
+    }
+
+    @Test func thFamilyComputesStepOneForSixPointTwoFiveKilohertzGrid() {
+        // 145.006250 MHz aligns exactly to the 6.25-kHz grid
+        // (145_006_250 / 6250 = 23_201), doesn't align to 5-kHz
+        // (145_006_250 / 5000 = 29001.25). The 6.25-kHz choice
+        // gives error 0; 5-kHz gives error 1250. Pick step 1.
+        let (freq, step) = THFamilyCAT.computeStepAndRoundedFreq(hz: 145_006_250)
+        #expect(step == 1)
+        #expect(freq == 145_006_250)
+    }
+
+    @Test func thFamilyForcesStepFourAndTenKilohertzRoundingAbove470MHz() {
+        // Per Hamlib th.c:240-241: above 470 MHz the algorithm
+        // overrides to the 10-kHz grid and step 4. 902.125 MHz on
+        // a 10-kHz grid rounds to 902.130 MHz (half-up per C's
+        // `round()`, which Swift's `.rounded()` matches).
+        let (freq, step) = THFamilyCAT.computeStepAndRoundedFreq(hz: 902_125_000)
+        #expect(step == 4)
+        #expect(freq == 902_130_000)
+    }
+
+    @Test func thFamilySetFrequencyEmitsStepFourAboveUHFBoundary() async throws {
+        // Integration test: 902.125 MHz on the wire becomes
+        // FQ 00902130000,4\r.
+        let transport = MockTransport()
+        let proto = THFamilyCAT(transport: transport, capabilities: .full)
+        try await proto.connect()
+        await transport.reset()
+
+        let expectedWrite = "FQ 00902130000,4\r".data(using: .ascii)!
+        await transport.setResponse(for: expectedWrite, response: expectedWrite)
+
+        try await proto.setFrequency(902_125_000, vfo: .a)
+
+        let writes = await transport.recordedWrites
         #expect(writes[0] == expectedWrite)
     }
 

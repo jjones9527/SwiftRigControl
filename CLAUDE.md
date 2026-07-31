@@ -51,29 +51,37 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.3** (git tag, 2026-07-30), a
-Yaesu newcat mode-command fix. Prior releases emitted
-`MD<char>;` — no qualifier byte at all. Hamlib emits
-`MD0<char>;` universally, with `MD1<char>;` for VFO B on radios
-with `RIG_TARGETABLE_MODE`. Real newcat radios accept the
-short form opportunistically but the correct wire has always
-included the qualifier. On the 8 shipped targetable-mode radios
-(FT-2000, FTDX-5000, FTDX-9000, FTDX-10, FT-710, FTDX-101D/MP,
-FTX-1), `setMode(vfo: .b)` now correctly addresses sub VFO
-instead of silently landing on main. Added
-`YaesuCATProtocol.Quirks.hasTargetableMode` field and
-`withTargetableMode(_:)` copy-with-override helper. `getMode`
-response parser now reads the mode character at index 3
-(post-qualifier). Test count 647 → 651. Zero regressions.
+The shipped version is **v1.2.4** (git tag, 2026-07-31),
+combining a Kenwood TH-family (TH-F6A / TH-F7E) wire-format
+fix and a zero-behavior structural refactor of the four
+largest source files.
 
-The previously-shipped version was **v1.2.2** (git tag,
-2026-07-30), a Yaesu newcat SH (IF filter / bandwidth) per-
-family dispatch fix.
+**Bug fix:** `THFamilyCAT.setFrequency` now computes the step
+field from the frequency per Hamlib `rigs/kenwood/th.c:209-241`
+instead of snapshotting it from the last `getFrequency` call.
+Fixes above-470-MHz UHF sets on a fresh actor (previously
+defaulted to step `0` = 5-kHz grid; UHF needs step `4` =
+10-kHz grid) and eliminates the stale-cache race between
+front-panel step changes and app-initiated sets.
 
-Before that, **v1.2.1** (2026-07-29) fixed a low-baud-rate
-serial-framing bug in `YaesuPortableCAT` and `YaesuFT847CAT`
-that surfaced as "Received invalid response from radio" on
-FT-857 at 4800 baud (MacWinlink beta30 field report). Added
+**Refactor:** Four files split under the 500-line
+CLAUDE.md soft cap:
+- `RadioCapabilitiesDatabase+Icom.swift` 1049 → 544 (+ two
+  sibling extension files)
+- `YaesuCATProtocol.swift` 977 → 663 (+ `+Quirks.swift`)
+- `RigctldCommandHandler.swift` 900 → 548 (+
+  `+LevelControl.swift`)
+- `RadioCapabilitiesDatabase+Kenwood.swift` 874 → 426 (+
+  `+KenwoodLegacy.swift`)
+
+No public API changes. Test count 651 → 655. Zero regressions.
+
+The previously-shipped version was **v1.2.3** (git tag,
+2026-07-30), a Yaesu newcat mode-command qualifier byte fix.
+Prior to that, **v1.2.2** (2026-07-30) fixed Yaesu newcat SH
+per-family dispatch, and **v1.2.1** (2026-07-29) fixed a
+low-baud-rate serial-framing bug in `YaesuPortableCAT` and
+`YaesuFT847CAT` (MacWinlink beta30 field report). Added
 `SerialTransport.readExact(count:timeout:)`.
 
 Prior to that, **v1.2.0** (git tag, 2026-07-25) was the largest
