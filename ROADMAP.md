@@ -1,6 +1,18 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.4 (cut 2026-07-31 — THFamilyCAT
+**Current version:** v1.2.5 (cut 2026-07-31 — Catalog-drift
+test coverage buildout. Two new suites: a 7-test
+`StandardIcomCommandSetVariantsTests` locking every CI-V
+address and echo-flag on all 30 named Icom factory variants
+against Hamlib, plus a 12-test `YaesuQuirksPresetsTests`
+locking every field of every named Yaesu `Quirks` preset and
+verifying the `withTargetableMode(_:)` copy-with-override
+helper. Full Hamlib audit found zero mismatches in the shipped
+catalog — the tests are a regression net for future edits.
+Also flags the VFO-model parity question on IC-7610 / IC-7600
+/ IC-7000 as deferred pending an architecture review. Test
+count 655 → 674, zero regressions.) Previous release **v1.2.4**
+(cut 2026-07-31 — THFamilyCAT
 (TH-F6A / TH-F7E) step field now computed from the frequency
 per Hamlib `th.c:209-241` instead of snapshotted from the last
 `getFrequency`. Fixes above-470-MHz UHF sets on a fresh actor

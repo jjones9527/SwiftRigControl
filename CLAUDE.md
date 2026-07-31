@@ -51,10 +51,34 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.4** (git tag, 2026-07-31),
-combining a Kenwood TH-family (TH-F6A / TH-F7E) wire-format
-fix and a zero-behavior structural refactor of the four
-largest source files.
+The shipped version is **v1.2.5** (git tag, 2026-07-31), a
+test-coverage buildout. Two new drift-test suites plug gaps
+that would otherwise let silent regressions ship:
+
+- `StandardIcomCommandSetVariantsTests` locks every `civAddress`
+  and `echoesCommands` flag on the 30 named
+  `StandardIcomCommandSet` factory variants against Hamlib.
+- `YaesuQuirksPresetsTests` locks every field of every named
+  `YaesuCATProtocol.Quirks` preset.
+
+Also verified: universal command-shape parity across every Icom
+variant (5-byte BCD frequency, standard PTT frame, percentage
+power units) and the `withTargetableMode(_:)` helper's copy
+semantics.
+
+Full Hamlib audit found **zero mismatches** in the shipped
+catalog — the tests are a regression net for future edits, not
+bug fixes. Deferred: the VFO-model parity question on IC-7610 /
+IC-7600 / IC-7000 (where Hamlib flags targetable-VFO but our
+code uses `.mainSub`) is deeper than a drift test can answer and
+awaits an architecture review.
+
+Test count 655 → 674. Zero regressions.
+
+The previously-shipped version was **v1.2.4** (git tag,
+2026-07-31), combining a Kenwood TH-family (TH-F6A / TH-F7E)
+wire-format fix and a zero-behavior structural refactor of the
+four largest source files.
 
 **Bug fix:** `THFamilyCAT.setFrequency` now computes the step
 field from the frequency per Hamlib `rigs/kenwood/th.c:209-241`

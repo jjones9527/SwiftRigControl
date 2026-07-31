@@ -21,6 +21,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-07-31
+
+### Added
+
+Two new catalog-drift test suites plugging coverage gaps that
+would otherwise let silent regressions ship:
+
+- **`StandardIcomCommandSetVariantsTests`** — 7 tests covering
+  all 30 named `StandardIcomCommandSet` factory variants
+  (`.ic7300`, `.ic7610`, `.ic7000`, `.icR8600`, `.id52`, etc.).
+  Each variant's `civAddress` and `echoesCommands` flag was
+  hand-audited against the corresponding `~/Developer/hamlib/
+  rigs/icom/*.c` file and captured in an `IcomVariantSpec`
+  table. If someone mistypes a CI-V byte or accidentally flips
+  the echo flag, the drift test fails. Also verifies universal
+  properties — every variant round-trips frequency through
+  5-byte BCD, emits the standard `0x1C 0x00` PTT frame, and
+  uses percentage power units. **Full audit found zero
+  mismatches** in the shipped catalog — the tests are a
+  regression net for future edits, not a bug fix.
+- **`YaesuQuirksPresetsTests`** — 12 tests locking every field
+  of every named `YaesuCATProtocol.Quirks` preset (`.classic`,
+  `.newcatNoST`, `.ft2000Family`, `.newcatWithSTDX`,
+  `.ftdx10Family`, `.ftdx101Family`, `.ft710`, `.ft450`,
+  `.ft891`, `.ftx1`). Each expected value is traceable to a
+  Hamlib citation in `YaesuCATProtocol+Quirks.swift`. Also
+  covers the `withTargetableMode(_:)` copy-with-override
+  helper — verifies it preserves every other field and both
+  the true/false override paths. The FTX-1 preset test
+  additionally spot-checks the custom mode-code table for the
+  CW / CW-R distinction (codes 3 = CW-USB, 7 = CW-LSB) that
+  differs from the shared newcat table.
+
+### Deferred
+
+- **VFO-model parity audit** for `StandardIcomCommandSet` variants
+  — the question of whether IC-7610 (dual-receiver, but supports
+  per-VFO targeting per Hamlib `RIG_TARGETABLE_FREQ |
+  RIG_TARGETABLE_MODE`) should ship as `.targetable` or
+  `.mainSub` is deeper than a drift test can answer. Locking
+  either the current or the flipped choice prematurely would
+  freeze a possible bug. Left for a future architecture review
+  release.
+
+Test count 655 → 674. Zero regressions.
+
 ## [1.2.4] - 2026-07-31
 
 ### Fixed
