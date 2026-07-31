@@ -51,22 +51,26 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.2** (git tag, 2026-07-30), a
-Yaesu newcat wire-format fix. Prior releases dispatched a single
-`SH0%02d;` form for every Yaesu newcat radio; per Hamlib
-`newcat.c:9202-9220` there are four incompatible SH (IF filter /
-bandwidth) variants. FTDX-10, FT-710, FTX-1, FTDX-101D/MP, and
-FT-891 silently rejected the old form. Fixed by adding
-`YaesuCATProtocol.Quirks.SHCommandStyle` (four cases citing the
-exact Hamlib line each) and three named per-family presets
-(`.ftdx10Family`, `.ftdx101Family`, `.ft2000Family`). Existing
-`.ftx1`, `.ft710`, `.ft891` presets updated with their correct
-`filterCommandStyle`. `getIFFilter` response parser rewritten to
-accept both 6-char `SHXnn;` and 7-char `SHXYnn;` reply widths.
-Test count 640 → 647. Zero regressions.
+The shipped version is **v1.2.3** (git tag, 2026-07-30), a
+Yaesu newcat mode-command fix. Prior releases emitted
+`MD<char>;` — no qualifier byte at all. Hamlib emits
+`MD0<char>;` universally, with `MD1<char>;` for VFO B on radios
+with `RIG_TARGETABLE_MODE`. Real newcat radios accept the
+short form opportunistically but the correct wire has always
+included the qualifier. On the 8 shipped targetable-mode radios
+(FT-2000, FTDX-5000, FTDX-9000, FTDX-10, FT-710, FTDX-101D/MP,
+FTX-1), `setMode(vfo: .b)` now correctly addresses sub VFO
+instead of silently landing on main. Added
+`YaesuCATProtocol.Quirks.hasTargetableMode` field and
+`withTargetableMode(_:)` copy-with-override helper. `getMode`
+response parser now reads the mode character at index 3
+(post-qualifier). Test count 647 → 651. Zero regressions.
 
-The previously-shipped version was **v1.2.1** (git tag,
-2026-07-29), a targeted safety patch fixing a low-baud-rate
+The previously-shipped version was **v1.2.2** (git tag,
+2026-07-30), a Yaesu newcat SH (IF filter / bandwidth) per-
+family dispatch fix.
+
+Before that, **v1.2.1** (2026-07-29) fixed a low-baud-rate
 serial-framing bug in `YaesuPortableCAT` and `YaesuFT847CAT`
 that surfaced as "Received invalid response from radio" on
 FT-857 at 4800 baud (MacWinlink beta30 field report). Added

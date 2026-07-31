@@ -83,11 +83,15 @@ import Testing
     // MARK: - Mode Tests
 
     @Test func setMode() async throws {
+        // Per Hamlib newcat.c:1785 the MD set command always
+        // includes a qualifier byte: `MD0<char>;` for VFO A (or on
+        // radios without RIG_TARGETABLE_MODE regardless of VFO).
+        // Prior code emitted `MD<char>;` without the qualifier.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
 
-        let expectedCommand = "MD2;".data(using: .ascii)!
-        let response = "MD2;".data(using: .ascii)!
+        let expectedCommand = "MD02;".data(using: .ascii)!
+        let response = "MD02;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await yaesuProtocol.setMode(.usb, vfo: .a)
@@ -96,15 +100,19 @@ import Testing
         #expect(writes.count == 1)
 
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "MD2;")
+        #expect(command == "MD02;")
     }
 
     @Test func getMode() async throws {
+        // Per Hamlib newcat.c:1883 the MD get command is `MD0;`
+        // (or `MD1;` on targetable-mode radios addressing VFO B).
+        // Response is `MD<q><char>;` where `<q>` echoes the
+        // qualifier byte.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
 
-        let queryCommand = "MD;".data(using: .ascii)!
-        let response = "MD2;".data(using: .ascii)!
+        let queryCommand = "MD0;".data(using: .ascii)!
+        let response = "MD02;".data(using: .ascii)!
         await mockTransport.setResponse(for: queryCommand, response: response)
 
         let mode = try await yaesuProtocol.getMode(vfo: .a)
@@ -116,15 +124,15 @@ import Testing
         try await yaesuProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
-            (.lsb, "MD1;"),
-            (.usb, "MD2;"),
-            (.cw, "MD3;"),
-            (.fm, "MD4;"),
-            (.am, "MD5;"),
-            (.rtty, "MD6;"),
-            (.cwR, "MD7;"),
-            (.dataLSB, "MD8;"),
-            (.dataUSB, "MD9;"),
+            (.lsb, "MD01;"),
+            (.usb, "MD02;"),
+            (.cw, "MD03;"),
+            (.fm, "MD04;"),
+            (.am, "MD05;"),
+            (.rtty, "MD06;"),
+            (.cwR, "MD07;"),
+            (.dataLSB, "MD08;"),
+            (.dataUSB, "MD09;"),
         ]
 
         for (mode, expectedCmd) in modeMappings {
@@ -339,7 +347,7 @@ import Testing
         try await yaesuProtocol.setFrequency(14_230_000, vfo: .a)
 
         // 2. Set mode to USB
-        let modeCmd = "MD2;".data(using: .ascii)!
+        let modeCmd = "MD02;".data(using: .ascii)!
         await mockTransport.setResponse(for: modeCmd, response: modeCmd)
         try await yaesuProtocol.setMode(.usb, vfo: .a)
 
@@ -356,7 +364,7 @@ import Testing
         let cmd3 = String(data: writes[2], encoding: .ascii)
 
         #expect(cmd1 == "FA014230000;")
-        #expect(cmd2 == "MD2;")
+        #expect(cmd2 == "MD02;")
         #expect(cmd3 == "TX1;")
     }
 
@@ -546,17 +554,20 @@ import Testing
         await transport.reset()
 
         let svCmd = "SV0;".data(using: .ascii)!
-        let mdCmd = "MD3;".data(using: .ascii)!
+        // FTX-1 has RIG_TARGETABLE_MODE per rigs/yaesu/ftx1/ftx1.c,
+        // so the MD command emits the VFO qualifier byte (`0` for
+        // VFO A).
+        let mdCmd = "MD03;".data(using: .ascii)!
         await transport.setResponse(for: svCmd, response: svCmd)
         await transport.setResponse(for: mdCmd, response: mdCmd)
 
         try await ftx1.setMode(.cw, vfo: .a)
 
         let writes = await transport.recordedWrites
-        // SV0; prelude then MD3;
+        // SV0; prelude then MD03;
         #expect(writes.count == 2)
         #expect(String(data: writes[0], encoding: .ascii) == "SV0;")
-        #expect(String(data: writes[1], encoding: .ascii) == "MD3;")
+        #expect(String(data: writes[1], encoding: .ascii) == "MD03;")
     }
 
     @Test func ftx1SetModeMapsCWReverseToCode7() async throws {
@@ -571,14 +582,14 @@ import Testing
         await transport.reset()
 
         let svCmd = "SV0;".data(using: .ascii)!
-        let mdCmd = "MD7;".data(using: .ascii)!
+        let mdCmd = "MD07;".data(using: .ascii)!
         await transport.setResponse(for: svCmd, response: svCmd)
         await transport.setResponse(for: mdCmd, response: mdCmd)
 
         try await ftx1.setMode(.cwR, vfo: .a)
 
         let writes = await transport.recordedWrites
-        #expect(String(data: writes[1], encoding: .ascii) == "MD7;")
+        #expect(String(data: writes[1], encoding: .ascii) == "MD07;")
     }
 
     @Test func ftx1GetFrequencyDecodesNineDigitResponse() async throws {
@@ -768,6 +779,76 @@ import Testing
 
         let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
         #expect(cmd == "SH005;")
+    }
+
+    // MARK: - MD qualifier byte (v1.2.3)
+
+    @Test func setModeEmitsQualifierByteOnNonTargetableRadio() async throws {
+        // Default fixture uses `.classic` quirks with
+        // hasTargetableMode: false. The qualifier byte is still
+        // emitted — always `0` — because Hamlib newcat.c:1785
+        // builds `MD0x;` universally, then only overwrites the `0`
+        // for targetable radios. Passing VFO B on a non-targetable
+        // radio still emits `MD0<char>;` — front-panel VFO
+        // selection dictates which VFO changes.
+        try await yaesuProtocol.connect()
+        await mockTransport.reset()
+
+        let expected = "MD02;".data(using: .ascii)!
+        await mockTransport.setResponse(for: expected, response: expected)
+
+        try await yaesuProtocol.setMode(.usb, vfo: .b)
+
+        let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "MD02;")
+    }
+
+    @Test func setModeEmitsVFOBQualifierOnTargetableMode() async throws {
+        // On radios with RIG_TARGETABLE_MODE (FT-2000, FTDX-5000,
+        // FTDX-9000, FTDX-10, FT-710, FTDX-101D/MP, FTX-1),
+        // setMode with vfo: .b addresses sub via `MD1<char>;`.
+        // Hamlib newcat.c:1797-1800.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftdx10Family)
+
+        let expected = "MD12;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setMode(.usb, vfo: .b)
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "MD12;")
+    }
+
+    @Test func getModeQueryEmitsVFOBQualifierOnTargetableMode() async throws {
+        // On targetable radios getMode(vfo: .b) queries `MD1;` and
+        // parses the response `MD1<char>;` (7 chars incl. terminator
+        // — actually 5: MD1x;). The parser reads the character at
+        // index 3, matching the post-qualifier byte.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftdx101Family)
+
+        let query = "MD1;".data(using: .ascii)!
+        let response = "MD17;".data(using: .ascii)!   // CW-R on shared table
+        await transport.setResponse(for: query, response: response)
+
+        let mode = try await proto.getMode(vfo: .b)
+        #expect(mode == .cwR)
+    }
+
+    @Test func setModeIgnoresVFOArgumentOnNonTargetableRadio() async throws {
+        // `.newcatNoST` covers FT-950 / FT-991 / FT-991A / FTDX-1200
+        // — none of which have RIG_TARGETABLE_MODE. Passing vfo: .b
+        // must still emit `MD0<char>;` (VFO A qualifier). Sub-VFO
+        // mode addressing on these radios requires selecting VFO B
+        // first via FT / ST.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .newcatNoST)
+
+        let expected = "MD03;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setMode(.cw, vfo: .b)
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "MD03;")
     }
 
     @Test func getIFFilterParsesNarrowFlagResponse() async throws {

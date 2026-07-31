@@ -129,6 +129,25 @@ public actor YaesuCATProtocol:
         /// FTDX-9000 / FT-450(D).
         public let filterCommandStyle: SHCommandStyle
 
+        /// `true` when the radio implements `RIG_TARGETABLE_MODE` per
+        /// Hamlib — meaning the `MD` command's qualifier byte
+        /// selects VFO A (`0`) or VFO B (`1`) rather than always
+        /// addressing main. Applies to FT-2000, FTDX-5000, FTDX-9000,
+        /// FTDX-10, FT-710, FTDX-101D/MP, and FTX-1. On these radios
+        /// `setMode(mode, vfo: .b)` emits `MD1<char>;` instead of
+        /// `MD0<char>;`.
+        ///
+        /// On non-targetable radios (FT-950, FT-991/A, FTDX-3000,
+        /// FTDX-1200, FT-450(D), FT-891) the qualifier is always `0`
+        /// and the `vfo` argument to `setMode` / `getMode` is
+        /// ignored on the wire — the front-panel VFO selection
+        /// dictates which VFO the mode change lands on.
+        ///
+        /// Cross-checked against `.targetable_vfo` in each Hamlib
+        /// backend (`rigs/yaesu/*.c`); see `newcat.c:1797-1800`
+        /// (set) and `newcat.c:1879-1882` (get) for the dispatch.
+        public let hasTargetableMode: Bool
+
         /// `SH` command wire format.
         ///
         /// Every value cites the Hamlib line where the format is
@@ -165,7 +184,8 @@ public actor YaesuCATProtocol:
             frequencyDigits: Int = 9,
             modeCodeTable: [Mode: Character]? = nil,
             requiresMemoryModeEscape: Bool = false,
-            filterCommandStyle: SHCommandStyle = .qualifierOnly
+            filterCommandStyle: SHCommandStyle = .qualifierOnly,
+            hasTargetableMode: Bool = false
         ) {
             self.supportsSTSplit = supportsSTSplit
             self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
@@ -174,6 +194,7 @@ public actor YaesuCATProtocol:
             self.modeCodeTable = modeCodeTable
             self.requiresMemoryModeEscape = requiresMemoryModeEscape
             self.filterCommandStyle = filterCommandStyle
+            self.hasTargetableMode = hasTargetableMode
         }
 
         /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
@@ -223,19 +244,22 @@ public actor YaesuCATProtocol:
         )
 
         /// FT-DX10 — ST-DX split, `FT` 2/3 VFO, and the double-zero
-        /// SH form (`SH00%02d;`). Hamlib `newcat.c:9214`.
+        /// SH form (`SH00%02d;`). Has RIG_TARGETABLE_MODE. Hamlib
+        /// `newcat.c:9214`, `rigs/yaesu/ftdx10.c:.targetable_vfo`.
         public static let ftdx10Family = Quirks(
             supportsSTSplit: true,
             usesFT23ForVFOSelection: true,
             supportsFTVFOSelection: true,
-            filterCommandStyle: .doubleZero
+            filterCommandStyle: .doubleZero,
+            hasTargetableMode: true
         )
 
         /// FT-DX101D / FT-DX101MP — ST-DX split, `FT` 2/3 VFO, and
         /// the VFO-plus-narrow SH form (`SH%c%d%02d;`). The narrow
         /// flag reflects the actual bandwidth-on state on these
-        /// radios (unlike the FT-891 which always sends `1`).
-        /// Hamlib `newcat.c:9205-9207`.
+        /// radios (unlike the FT-891 which always sends `1`). Has
+        /// RIG_TARGETABLE_MODE. Hamlib `newcat.c:9205-9207`,
+        /// `rigs/yaesu/ftdx101.c:.targetable_vfo`.
         ///
         /// **Implementation note:** SwiftRigControl's `IFFilter` API
         /// has three symbolic slots and no separate "bandwidth off"
@@ -245,17 +269,20 @@ public actor YaesuCATProtocol:
             supportsSTSplit: true,
             usesFT23ForVFOSelection: true,
             supportsFTVFOSelection: true,
-            filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: false)
+            filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: false),
+            hasTargetableMode: true
         )
 
         /// FT-710 — supports `ST` split, uses classic `FT0;`/`FT1;`
         /// for VFO A/B selection, and the double-zero SH form
-        /// (`SH00%02d;`). Hamlib `newcat.c:9214`.
+        /// (`SH00%02d;`). Has RIG_TARGETABLE_MODE. Hamlib
+        /// `newcat.c:9214`, `rigs/yaesu/ft710.c:.targetable_vfo`.
         public static let ft710 = Quirks(
             supportsSTSplit: true,
             usesFT23ForVFOSelection: false,
             supportsFTVFOSelection: true,
-            filterCommandStyle: .doubleZero
+            filterCommandStyle: .doubleZero,
+            hasTargetableMode: true
         )
 
         /// FT-450 / FT-450D — `ST` means Step, not Split, on this
@@ -280,6 +307,24 @@ public actor YaesuCATProtocol:
             supportsFTVFOSelection: false,
             filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: true)
         )
+
+        /// Returns a copy of this preset with `hasTargetableMode`
+        /// overridden. Convenience for factory sites where a
+        /// preset shared across models needs per-radio targetable-
+        /// mode gating (e.g. `.ft2000Family` is shared by FT-2000
+        /// which is targetable and FTDX-3000 which is not).
+        public func withTargetableMode(_ enabled: Bool = true) -> Quirks {
+            Quirks(
+                supportsSTSplit: supportsSTSplit,
+                usesFT23ForVFOSelection: usesFT23ForVFOSelection,
+                supportsFTVFOSelection: supportsFTVFOSelection,
+                frequencyDigits: frequencyDigits,
+                modeCodeTable: modeCodeTable,
+                requiresMemoryModeEscape: requiresMemoryModeEscape,
+                filterCommandStyle: filterCommandStyle,
+                hasTargetableMode: enabled
+            )
+        }
 
         /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO
         /// selection, plus FTX-1-specific mode codes and a memory-
@@ -322,7 +367,10 @@ public actor YaesuCATProtocol:
                 .dataUSB:  "C",
             ],
             requiresMemoryModeEscape: true,
-            filterCommandStyle: .doubleZero   // Hamlib newcat.c:9214
+            filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
+            // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
+            // which includes RIG_TARGETABLE_MODE.
+            hasTargetableMode: true
         )
     }
 
@@ -449,23 +497,37 @@ public actor YaesuCATProtocol:
             modeCodeChar = Character("\(numericCode)")
         }
 
-        let command = "MD\(modeCodeChar)"
+        // Wire format: `MD0<char>;` (VFO A) or `MD1<char>;` (VFO B).
+        // Hamlib `newcat.c:1785, 1797-1800`. On radios without
+        // RIG_TARGETABLE_MODE the qualifier is always `0` and the
+        // `vfo` argument is ignored on the wire (front-panel
+        // selection dictates which VFO the mode change lands on).
+        let qualifier = modeQualifierByte(for: vfo)
+        let command = "MD\(qualifier)\(modeCodeChar)"
 
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
-        try await sendCommand("MD")
+        // Wire format: `MD0;` (VFO A) or `MD1;` (VFO B) on
+        // targetable radios; `MD0;` universally otherwise. Hamlib
+        // `newcat.c:1883-1885`.
+        let qualifier = modeQualifierByte(for: vfo)
+        try await sendCommand("MD\(qualifier)")
         let response = try await receiveResponse()
 
-        // Response format: MDx; where x is mode code
+        // Response format: `MD<q><char>;` where `<q>` echoes the
+        // requested VFO qualifier byte and `<char>` is the mode
+        // code. Prior to the v1.2.3 fix the parser expected 3-char
+        // `MD<char>;` (no qualifier) which real newcat radios
+        // don't emit.
         guard response.hasPrefix("MD"),
-              response.count >= 3 else {
+              response.count >= 4 else {
             throw RigError.invalidResponse
         }
 
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
+        let codeIndex = response.index(response.startIndex, offsetBy: 3)
         let codeChar = response[codeIndex]
 
         // Custom table lookup (FTX-1) — invert the character table.
@@ -482,6 +544,16 @@ public actor YaesuCATProtocol:
         }
 
         return try yaesuCodeToMode(modeCode)
+    }
+
+    /// The `MD` qualifier byte for the given `vfo` per the current
+    /// quirks. Returns `"0"` for VFO A / main and `"1"` for VFO B /
+    /// sub, but only respects the caller's VFO argument when the
+    /// radio has RIG_TARGETABLE_MODE — on non-targetable radios the
+    /// qualifier is always `"0"` per Hamlib `newcat.c:1797-1800`.
+    private func modeQualifierByte(for vfo: VFO) -> Character {
+        guard quirks.hasTargetableMode else { return "0" }
+        return (vfo == .b) ? "1" : "0"
     }
 
     // MARK: - PTT Control

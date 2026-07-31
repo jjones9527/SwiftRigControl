@@ -21,6 +21,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-07-30
+
+### Fixed
+
+- **Yaesu newcat `MD` (mode) command emits the qualifier byte.**
+  Every Yaesu newcat radio in Hamlib emits `MD0<char>;` (VFO A
+  / non-targetable radios) or `MD1<char>;` (VFO B on radios with
+  `RIG_TARGETABLE_MODE`) per `newcat.c:1785, 1797-1800`. Prior
+  SwiftRigControl releases emitted `MD<char>;` — no qualifier
+  byte at all. Real newcat radios accept the short form
+  opportunistically but the correct wire has always included the
+  qualifier.
+
+  Additionally, on the 8 shipped radios with
+  `RIG_TARGETABLE_MODE` (FT-2000, FTDX-5000, FTDX-9000, FTDX-10,
+  FT-710, FTDX-101D/MP, FTX-1), `setMode(mode, vfo: .b)` now
+  correctly addresses VFO B via `MD1<char>;` instead of silently
+  landing on VFO A. Same for `getMode(vfo: .b)`.
+
+  On non-targetable radios (FT-950, FT-991/A, FTDX-3000,
+  FTDX-1200, FT-450(D), FT-891) the qualifier is always `0` and
+  the `vfo` argument is ignored on the wire — front-panel VFO
+  selection dictates which VFO the mode change lands on.
+  Matches Hamlib.
+
+### Added
+
+- **`YaesuCATProtocol.Quirks.hasTargetableMode`** — new Bool
+  field (default `false`) driving the MD qualifier dispatch.
+  Each preset annotated with its Hamlib citation.
+- **`YaesuCATProtocol.Quirks.withTargetableMode(_:)`** — copy-
+  with-override helper for factory sites where a shared preset
+  needs per-radio targetable-mode gating (e.g. `.ft2000Family`
+  is shared by FT-2000 (targetable) and FTDX-3000 (not);
+  `.newcatNoST` is shared by FT-950 / FT-991 (not) and
+  FTDX-5000 / FTDX-9000 (targetable)).
+
+### Changed
+
+- **`.ftdx10Family`, `.ftdx101Family`, `.ft710`, `.ftx1` presets
+  now default to `hasTargetableMode: true`.**
+- **Factory updates in `YaesuModels.swift`:** FT-2000 →
+  `.ft2000Family.withTargetableMode()`; FTDX-5000, FTDX-9000 →
+  `.newcatNoST.withTargetableMode()`. All other factories
+  unchanged.
+- **`getMode` response parser** now reads the mode character at
+  index 3 (post-qualifier), matching the `MD<q><char>;` wire
+  format Hamlib emits.
+
+### Tests
+
+- Three updated tests (`setMode`, `getMode`, `modeMappings`,
+  `completeWorkflow`, `ftx1SetModeMapsCWToCode3`,
+  `ftx1SetModeMapsCWReverseToCode7`) to lock the new correct
+  wire.
+- Four new regression tests:
+  `setModeEmitsQualifierByteOnNonTargetableRadio`,
+  `setModeEmitsVFOBQualifierOnTargetableMode`,
+  `getModeQueryEmitsVFOBQualifierOnTargetableMode`,
+  `setModeIgnoresVFOArgumentOnNonTargetableRadio`.
+
+Test count 647 → 651. Zero regressions.
+
 ## [1.2.2] - 2026-07-30
 
 ### Fixed
@@ -798,10 +861,10 @@ safety audit.
 
 **Deferred to a future patch release** (medium / low severity;
 non-blocking — rolled forward past v1.2.1 (Yaesu binary-CAT
-framing fix) and v1.2.2 (Yaesu newcat SH per-family dispatch):
+framing fix), v1.2.2 (Yaesu newcat SH per-family dispatch), and
+v1.2.3 (Yaesu newcat MD qualifier byte):
 
-- Yaesu newcat MD command missing VFO qualifier on
-  `RIG_TARGETABLE_MODE` radios (FT-DX101D/MP, FT-9000).
+- Yaesu newcat MD qualifier byte — **shipped in v1.2.3.**
 - Yaesu newcat SH per-family variants — **shipped in v1.2.2.**
 - Kenwood AF gain format variants — TS-450S/TS-690S do not
   expose AF gain via CAT at all per Hamlib (`RIG_LEVEL_AF` not

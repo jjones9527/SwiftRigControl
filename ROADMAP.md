@@ -1,16 +1,28 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.2 (cut 2026-07-30 — Yaesu newcat SH
-(IF filter / bandwidth) per-family wire-format dispatch. Prior
-releases shipped one universal `SH0%02d;` form; per Hamlib
-`newcat.c:9202-9220` there are four incompatible variants
-across the family. FTDX-10, FT-710, FTX-1 (double-zero
-`SH00%02d;`), FTDX-101D/MP, FT-891 (VFO + narrow flag), and
-FT-2000/FTDX-3000 (zero without qualifier) silently rejected
-the old form. Fixed via a new `Quirks.SHCommandStyle` enum and
-three named presets (`.ftdx10Family`, `.ftdx101Family`,
-`.ft2000Family`). Test count 640 → 647, zero regressions.)
-Previous release **v1.2.1** (cut 2026-07-29 — targeted safety
+**Current version:** v1.2.3 (cut 2026-07-30 — Yaesu newcat MD
+(mode) command qualifier byte. Prior releases emitted
+`MD<char>;` — no qualifier byte at all. Hamlib emits
+`MD0<char>;` universally, with `MD1<char>;` for VFO B on radios
+with `RIG_TARGETABLE_MODE`. Real newcat radios accept the short
+form opportunistically but the correct wire has always
+included the qualifier, and on the 8 shipped targetable-mode
+radios (FT-2000, FTDX-5000, FTDX-9000, FTDX-10, FT-710,
+FTDX-101D/MP, FTX-1) `setMode(vfo: .b)` now correctly addresses
+sub VFO instead of silently landing on main. Added
+`Quirks.hasTargetableMode` field + `withTargetableMode(_:)`
+copy-with-override helper. Test count 647 → 651, zero
+regressions.) Previous release **v1.2.2** (cut 2026-07-30 —
+Yaesu newcat SH (IF filter / bandwidth) per-family wire-format
+dispatch. Prior releases shipped one universal `SH0%02d;`
+form; per Hamlib `newcat.c:9202-9220` there are four
+incompatible variants across the family. FTDX-10, FT-710,
+FTX-1 (double-zero `SH00%02d;`), FTDX-101D/MP, FT-891 (VFO +
+narrow flag), and FT-2000/FTDX-3000 (zero without qualifier)
+silently rejected the old form. Fixed via a new
+`Quirks.SHCommandStyle` enum and three named presets
+(`.ftdx10Family`, `.ftdx101Family`, `.ft2000Family`). Test
+count 640 → 647.) Also **v1.2.1** (cut 2026-07-29 — targeted safety
 patch. Fixes low-baud-rate serial framing in `YaesuPortableCAT`
 and `YaesuFT847CAT` that surfaced as "Received invalid response
 from radio" on FT-857 at 4800 baud (MacWinlink beta30 field

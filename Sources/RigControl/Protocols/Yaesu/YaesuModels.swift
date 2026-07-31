@@ -230,7 +230,11 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft2000,
-                quirks: .ft2000Family
+                // FT-2000 has RIG_TARGETABLE_MODE per Hamlib
+                // `rigs/yaesu/ft2000.c` — FTDX-3000 does not, so
+                // override on this factory rather than baking the
+                // flag into the shared `.ft2000Family` preset.
+                quirks: .ft2000Family.withTargetableMode()
             )
         }
     )
@@ -294,7 +298,9 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000,
-                quirks: .newcatNoST
+                // FTDX-5000 has RIG_TARGETABLE_MODE per Hamlib
+                // `rigs/yaesu/ft5000.c`.
+                quirks: .newcatNoST.withTargetableMode()
             )
         }
     )
@@ -344,7 +350,9 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx9000,
-                quirks: .newcatNoST
+                // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
+                // `rigs/yaesu/ft9000.c`.
+                quirks: .newcatNoST.withTargetableMode()
             )
         }
     )
