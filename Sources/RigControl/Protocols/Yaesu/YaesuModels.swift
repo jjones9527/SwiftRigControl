@@ -13,7 +13,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
-                quirks: .newcatWithSTDX
+                quirks: .ftdx10Family
             )
         }
     )
@@ -127,7 +127,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D,
-                quirks: .newcatWithSTDX
+                quirks: .ftdx101Family
             )
         }
     )
@@ -143,7 +143,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP,
-                quirks: .newcatWithSTDX
+                quirks: .ftdx101Family
             )
         }
     )
@@ -230,7 +230,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft2000,
-                quirks: .newcatNoST
+                quirks: .ft2000Family
             )
         }
     )
@@ -246,7 +246,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000,
-                quirks: .newcatNoST
+                quirks: .ft2000Family
             )
         }
     )

@@ -652,9 +652,11 @@ import Testing
     }
 
     @Test func setIFFilterEmitsVFOQualifiedSH() async throws {
-        // Per Hamlib newcat.c:9205-9218: SH format is model-specific
-        // but always includes a VFO qualifier byte. Prior code
-        // emitted SH%02d without the qualifier.
+        // Default fixture uses `.classic` quirks, which resolves to
+        // `SHCommandStyle.qualifierOnly` — `SH%c%02d;` with the main
+        // VFO byte `0`. Prior to the v1.2.0 audit fix Swift emitted
+        // `SH%02d;` without the qualifier — real newcat radios
+        // reject that. See Hamlib newcat.c:9218.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
 
@@ -665,6 +667,123 @@ import Testing
 
         let cmd = String(data: await mockTransport.recordedWrites[0], encoding: .ascii)
         #expect(cmd == "SH007;")
+    }
+
+    // MARK: - SH per-family variants (v1.2.2)
+
+    /// Helper: build a fresh YaesuCATProtocol with a specific quirks
+    /// preset, connected against a fresh MockTransport.
+    private func makeYaesuProtocol(
+        quirks: YaesuCATProtocol.Quirks
+    ) async throws -> (MockTransport, YaesuCATProtocol) {
+        let transport = MockTransport()
+        let proto = YaesuCATProtocol(
+            transport: transport,
+            capabilities: .full,
+            quirks: quirks
+        )
+        try await proto.connect()
+        await transport.reset()
+        return (transport, proto)
+    }
+
+    @Test func setIFFilterEmitsDoubleZeroForFTDX10Family() async throws {
+        // FTDX-10 / FT-710 / FTX-1 want `SH00%02d;` — literal
+        // double-zero prefix. Hamlib newcat.c:9214.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftdx10Family)
+
+        let expected = "SH0007;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter1)   // wide
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH0007;")
+    }
+
+    @Test func setIFFilterEmitsDoubleZeroForFT710() async throws {
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ft710)
+
+        let expected = "SH0002;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter3)   // narrow
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH0002;")
+    }
+
+    @Test func setIFFilterEmitsDoubleZeroForFTX1() async throws {
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftx1)
+
+        let expected = "SH0005;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter2)   // medium
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH0005;")
+    }
+
+    @Test func setIFFilterEmitsVFOAndNarrowForFTDX101Family() async throws {
+        // FTDX-101D/MP want `SH%c%d%02d;` — VFO byte + narrow flag
+        // + 2-digit high-cut. Our IFFilter API has no off-state so
+        // the flag is always `1`. Hamlib newcat.c:9205-9207.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftdx101Family)
+
+        let expected = "SH0107;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter1)   // wide
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH0107;")
+    }
+
+    @Test func setIFFilterEmitsVFOAndNarrowForFT891() async throws {
+        // FT-891 shares the `.vfoAndNarrow` wire but Hamlib hard-codes
+        // the flag to `1` regardless of bandwidth-on state. Same wire
+        // as FTDX-101 from our API's perspective. Hamlib newcat.c:9207.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ft891)
+
+        let expected = "SH0102;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter3)   // narrow
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH0102;")
+    }
+
+    @Test func setIFFilterEmitsZeroWithoutQualifierForFT2000Family() async throws {
+        // FT-2000 / FTDX-3000 use `SH0%02d;` — zero always in the
+        // qualifier slot, no per-VFO addressing. Hamlib newcat.c:9210.
+        // Wire is identical to `.qualifierOnly` when addressing VFO 0.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ft2000Family)
+
+        let expected = "SH005;".data(using: .ascii)!
+        await transport.setResponse(for: expected, response: expected)
+
+        try await proto.setIFFilter(.filter2)   // medium
+
+        let cmd = String(data: await transport.recordedWrites[0], encoding: .ascii)
+        #expect(cmd == "SH005;")
+    }
+
+    @Test func getIFFilterParsesNarrowFlagResponse() async throws {
+        // FTDX-101 responses are 7-char `SH01nn;` where the last two
+        // digits are the high-cut code. Prior to the v1.2.2 fix the
+        // parser expected 6-char `SH0nn;` and slice-decoded the wrong
+        // bytes on FTDX-101.
+        let (transport, proto) = try await makeYaesuProtocol(quirks: .ftdx101Family)
+
+        let query = "SH0;".data(using: .ascii)!
+        // Radio replies with narrow=1 + code 02 (narrow).
+        let response = "SH0102;".data(using: .ascii)!
+        await transport.setResponse(for: query, response: response)
+
+        let filter = try await proto.getIFFilter()
+        #expect(filter == .filter3)   // narrow (code 2)
     }
 
     @Test func setRITEmitsRCPreludeThenUnsignedRUForPositiveOffset() async throws {

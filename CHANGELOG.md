@@ -21,6 +21,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-30
+
+### Fixed
+
+- **Yaesu newcat SH (IF filter / bandwidth) command dispatched
+  per-family.** Prior to this release every Yaesu newcat radio
+  emitted the same `SH0%02d;` wire format. Per Hamlib
+  `rigs/yaesu/newcat.c:9202-9220` there are actually **four
+  incompatible SH variants** across the family:
+  - `SH%c%02d;` — FT-950, FT-991(A), FTDX-5000, FTDX-1200,
+    FTDX-9000, FT-450(D)
+  - `SH0%02d;` — FT-2000, FTDX-3000
+  - `SH00%02d;` — FTDX-10, FT-710, FTX-1
+  - `SH%c%d%02d;` — FTDX-101D/MP (real narrow flag),
+    FT-891 (flag always `1`)
+
+  Radios in the double-zero and vfo-plus-narrow families
+  silently rejected the old form. FTDX-10, FT-710, FTX-1,
+  FTDX-101D/MP, and FT-891 (6 radios in the shipped catalog)
+  are affected. Fix: introduce
+  `YaesuCATProtocol.Quirks.SHCommandStyle` and route
+  `setIFFilter` / `getIFFilter` through it. The `get` response
+  parser also learned to handle both the 6-char `SHXnn;` and
+  7-char `SHXYnn;` reply widths (FTDX-101 emits the wider form
+  with the narrow flag echoed back).
+
+### Added
+
+- **`YaesuCATProtocol.Quirks.SHCommandStyle`** enum with four
+  cases (`.qualifierOnly`, `.zeroWithoutQualifier`, `.doubleZero`,
+  `.vfoAndNarrow(narrowAlwaysOn:)`), each citing the Hamlib line
+  where the format is emitted.
+- **`filterCommandStyle`** field on `Quirks` (defaults to
+  `.qualifierOnly` for source compatibility).
+- Three new named `Quirks` presets:
+  - `.ftdx10Family` — ST-DX split + `.doubleZero` SH (FTDX-10)
+  - `.ftdx101Family` — ST-DX split + `.vfoAndNarrow` SH
+    (FTDX-101D/MP)
+  - `.ft2000Family` — no-ST split + `.zeroWithoutQualifier` SH
+    (FT-2000, FTDX-3000)
+
+  Existing `.ftx1`, `.ft710`, `.ft891` presets updated to their
+  correct `filterCommandStyle`.
+
+### Changed
+
+- **Factory updates in `YaesuModels.swift`:** FTDX-10 →
+  `.ftdx10Family`; FTDX-101D/MP → `.ftdx101Family`; FT-2000,
+  FTDX-3000 → `.ft2000Family`. `.newcatWithSTDX` and
+  `.newcatNoST` presets retained for source compatibility but
+  no longer used by any built-in factory.
+
+### Tests
+
+- Six new `SH` per-family assertions in
+  `YaesuCATProtocolTests`: double-zero for FTDX-10/FT-710/FTX-1,
+  vfo-and-narrow for FTDX-101/FT-891, zero-without-qualifier
+  for FT-2000, plus a `getIFFilter` regression that parses the
+  7-char FTDX-101 response format.
+
+Test count 640 → 647. Zero regressions.
+
 ## [1.2.1] - 2026-07-29
 
 ### Fixed
@@ -694,11 +756,10 @@ qualifier.** Prior code emitted `SH%02d;`. Per Hamlib
 (`SH00%02d;` for FTX-1/FT-DX10/FT-710, `SH0%02d;` for FT-2000
 family, `SH%c%d%02d;` for FT-DX101 with narrow-flag). This fix
 emits `SH0%02d;` — the common single-VFO-qualifier form that
-works on the broadest set of modern newcat radios. **Follow-up
-for a future patch release**: add a `Quirks.filterCommandStyle`
-enum for the per-family variants that need `SH00` or the narrow-
-flag byte. (Not addressed in v1.2.1, which was a targeted Yaesu
-binary-CAT framing fix.)
+works on the broadest set of modern newcat radios. **Shipped in
+v1.2.2** as `Quirks.SHCommandStyle` / `filterCommandStyle`,
+routing FTDX-10/FT-710/FTX-1 → `SH00`, FTDX-101D/MP/FT-891 →
+narrow-flag form, FT-2000/FTDX-3000 → zero-without-qualifier.
 
 **Fix 6: Yaesu newcat RU/RD (RIT/XIT clarifier) format.** Prior
 code emitted `RU%+05d;` (signed 5-digit with `+` sign character).
@@ -736,16 +797,17 @@ coverage — which is why they persisted through the earlier v1.1.2
 safety audit.
 
 **Deferred to a future patch release** (medium / low severity;
-non-blocking — rolled forward past v1.2.1, which shipped as a
-targeted Yaesu binary-CAT framing fix and did not sweep this
-backlog):
+non-blocking — rolled forward past v1.2.1 (Yaesu binary-CAT
+framing fix) and v1.2.2 (Yaesu newcat SH per-family dispatch):
 
 - Yaesu newcat MD command missing VFO qualifier on
   `RIG_TARGETABLE_MODE` radios (FT-DX101D/MP, FT-9000).
-- Yaesu newcat SH per-family variants (FTX-1/FT-DX10/FT-710 want
-  `SH00%02d;`; FT-DX101/FT-891 add narrow-flag byte).
-- Kenwood AF gain format variants — TS-450S/TS-690S need `AG;`
-  bare instead of the current `AG0`.
+- Yaesu newcat SH per-family variants — **shipped in v1.2.2.**
+- Kenwood AF gain format variants — TS-450S/TS-690S do not
+  expose AF gain via CAT at all per Hamlib (`RIG_LEVEL_AF` not
+  in `LEVEL_ALL`). Real fix is a level-capability audit across
+  the catalog rather than a wire-format change; deferred to
+  v1.3.0 alongside per-level capability flags.
 - Kenwood squelch VFO-aware — TS-890S dual-RX needs `SQ1nnn;`
   for sub-receiver.
 - TH-D72 power-level API contract (integer watts vs normalized

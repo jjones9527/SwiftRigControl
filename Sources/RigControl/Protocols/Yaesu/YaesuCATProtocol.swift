@@ -121,13 +121,51 @@ public actor YaesuCATProtocol:
         /// persist — they act as a transient memory-tune overlay").
         public let requiresMemoryModeEscape: Bool
 
+        /// Per-family `SH` (IF filter / bandwidth) wire format. Yaesu
+        /// newcat has four incompatible SH variants across the family
+        /// per Hamlib `rigs/yaesu/newcat.c:9202-9220`. Defaults to
+        /// ``SHCommandStyle/qualifierOnly`` — the form used by
+        /// FT-950 / FT-991 / FT-991A / FTDX-5000 / FTDX-1200 /
+        /// FTDX-9000 / FT-450(D).
+        public let filterCommandStyle: SHCommandStyle
+
+        /// `SH` command wire format.
+        ///
+        /// Every value cites the Hamlib line where the format is
+        /// emitted in `rigs/yaesu/newcat.c::newcat_set_rx_bandwidth`.
+        /// Get-side format is inferred from the same file's
+        /// `newcat_get_rx_bandwidth` (lines 9477-9486).
+        public enum SHCommandStyle: Sendable, Equatable {
+            /// `SH%c%02d;` set / `SH%c;` get, where `%c` is `0`
+            /// (main) or `1` (sub). The default form — matches
+            /// FT-950 / FT-991 / FT-991A / FTDX-5000 / FTDX-1200 /
+            /// FTDX-9000 / FT-450(D). Hamlib `newcat.c:9218`.
+            case qualifierOnly
+            /// `SH0%02d;` set / `SH0;` get. VFO qualifier is always
+            /// `0`, no separate `%c` byte. FT-2000 / FTDX-3000.
+            /// Hamlib `newcat.c:9210` and `newcat.c:9481`.
+            case zeroWithoutQualifier
+            /// `SH00%02d;` set / `SH0;` get. Literal double-zero
+            /// prefix. FTDX-10 / FT-710 / FTX-1. Hamlib
+            /// `newcat.c:9214` (set) and `newcat.c:9481` (get; note
+            /// FTX-1 falls through to the qualifier get form — see
+            /// implementation note in ``setIFFilter``).
+            case doubleZero
+            /// `SH%c%d%02d;` set / `SH%c;` get, where the second
+            /// digit is the "bandwidth on" flag. FT-DX101D/MP send
+            /// the actual on-state; FT-891 always sends `1`.
+            /// Hamlib `newcat.c:9205-9207`.
+            case vfoAndNarrow(narrowAlwaysOn: Bool)
+        }
+
         public init(
             supportsSTSplit: Bool = false,
             usesFT23ForVFOSelection: Bool = false,
             supportsFTVFOSelection: Bool = true,
             frequencyDigits: Int = 9,
             modeCodeTable: [Mode: Character]? = nil,
-            requiresMemoryModeEscape: Bool = false
+            requiresMemoryModeEscape: Bool = false,
+            filterCommandStyle: SHCommandStyle = .qualifierOnly
         ) {
             self.supportsSTSplit = supportsSTSplit
             self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
@@ -135,6 +173,7 @@ public actor YaesuCATProtocol:
             self.frequencyDigits = frequencyDigits
             self.modeCodeTable = modeCodeTable
             self.requiresMemoryModeEscape = requiresMemoryModeEscape
+            self.filterCommandStyle = filterCommandStyle
         }
 
         /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
@@ -144,50 +183,102 @@ public actor YaesuCATProtocol:
         /// classic (non-newcat) semantics.
         public static let classic = Quirks()
 
-        /// FT-950, FT-2000, FT-DX3000/5000/1200, FT-991, FT-991A —
-        /// no `ST` command, `FT` uses 2/3 for VFO A/B. Split is not
-        /// a first-class state on these radios; operators drive
-        /// split by explicitly selecting TX VFO.
+        /// FT-950, FT-DX5000/1200, FT-991, FT-991A, FTDX-9000 —
+        /// no `ST` command, `FT` uses 2/3 for VFO A/B, `SH%c%02d;`
+        /// filter format. Split is not a first-class state on these
+        /// radios; operators drive split by explicitly selecting TX
+        /// VFO.
+        ///
+        /// FT-2000 and FTDX-3000 belong to a different SH family
+        /// (`SH0%02d;`) — use ``ft2000Family`` for those.
         public static let newcatNoST = Quirks(
             supportsSTSplit: false,
             usesFT23ForVFOSelection: true,
-            supportsFTVFOSelection: true
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .qualifierOnly
         )
 
-        /// FT-DX10, FT-DX101D, FT-DX101MP, FT-710 — full `ST`
-        /// support. `FT` still uses 2/3 for VFO selection on
-        /// FT-DX10/101(D/MP) per `newcat.c:8216-8218`; FT-710 uses
-        /// classic 0/1.
+        /// FT-2000 / FTDX-3000 — same `ST` / `FT` behavior as
+        /// ``newcatNoST`` but the SH (IF filter / bandwidth) command
+        /// uses the `SH0%02d;` form (no VFO byte, just a fixed
+        /// zero). Hamlib `newcat.c:9210`, `newcat.c:9481`.
+        public static let ft2000Family = Quirks(
+            supportsSTSplit: false,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .zeroWithoutQualifier
+        )
+
+        /// FT-DX10, FT-DX101D, FT-DX101MP — full `ST` support and
+        /// `FT` uses 2/3 for VFO selection. Prefer the family-
+        /// specific presets ``ftdx10Family`` and ``ftdx101Family``
+        /// where possible: FTDX-10 uses `SH00%02d;` while the
+        /// FTDX-101 pair uses `SH%c%d%02d;` (VFO + narrow flag).
+        /// This preset defaults to the ``SHCommandStyle/qualifierOnly``
+        /// form and is retained for source compatibility.
         public static let newcatWithSTDX = Quirks(
             supportsSTSplit: true,
             usesFT23ForVFOSelection: true,
             supportsFTVFOSelection: true
         )
 
-        /// FT-710 — supports `ST` split and uses classic `FT0;`/
-        /// `FT1;` for VFO A/B selection.
+        /// FT-DX10 — ST-DX split, `FT` 2/3 VFO, and the double-zero
+        /// SH form (`SH00%02d;`). Hamlib `newcat.c:9214`.
+        public static let ftdx10Family = Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .doubleZero
+        )
+
+        /// FT-DX101D / FT-DX101MP — ST-DX split, `FT` 2/3 VFO, and
+        /// the VFO-plus-narrow SH form (`SH%c%d%02d;`). The narrow
+        /// flag reflects the actual bandwidth-on state on these
+        /// radios (unlike the FT-891 which always sends `1`).
+        /// Hamlib `newcat.c:9205-9207`.
+        ///
+        /// **Implementation note:** SwiftRigControl's `IFFilter` API
+        /// has three symbolic slots and no separate "bandwidth off"
+        /// state, so this preset always emits the flag as `1`. That
+        /// matches how flrig and WSJT-X drive DX101 in practice.
+        public static let ftdx101Family = Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: false)
+        )
+
+        /// FT-710 — supports `ST` split, uses classic `FT0;`/`FT1;`
+        /// for VFO A/B selection, and the double-zero SH form
+        /// (`SH00%02d;`). Hamlib `newcat.c:9214`.
         public static let ft710 = Quirks(
             supportsSTSplit: true,
             usesFT23ForVFOSelection: false,
-            supportsFTVFOSelection: true
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .doubleZero
         )
 
         /// FT-450 / FT-450D — `ST` means Step, not Split, on this
         /// radio. Hamlib explicitly disables split via `ST`
         /// (`newcat.c:8327`). Fall back to `FT` for VFO selection.
+        /// SH uses the default `qualifierOnly` form.
         public static let ft450 = Quirks(
             supportsSTSplit: false,
             usesFT23ForVFOSelection: false,
-            supportsFTVFOSelection: true
+            supportsFTVFOSelection: true,
+            filterCommandStyle: .qualifierOnly
         )
 
         /// FT-891 — no `FT` command per `newcat.c:516`. Split via
         /// newcat is not available on this radio; both split and
-        /// TX VFO selection must throw `unsupportedOperation`.
+        /// TX VFO selection must throw `unsupportedOperation`. SH
+        /// uses `SH%c%d%02d;` with the narrow flag always `1`
+        /// per Hamlib `newcat.c:9207`.
         public static let ft891 = Quirks(
             supportsSTSplit: false,
             usesFT23ForVFOSelection: false,
-            supportsFTVFOSelection: false
+            supportsFTVFOSelection: false,
+            filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: true)
         )
 
         /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO
@@ -230,7 +321,8 @@ public actor YaesuCATProtocol:
                 .fmN:      "B",
                 .dataUSB:  "C",
             ],
-            requiresMemoryModeEscape: true
+            requiresMemoryModeEscape: true,
+            filterCommandStyle: .doubleZero   // Hamlib newcat.c:9214
         )
     }
 

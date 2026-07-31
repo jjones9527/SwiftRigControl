@@ -374,34 +374,29 @@ extension YaesuCATProtocol {
 
     /// Sets the IF filter (DSP passband width).
     ///
-    /// Per Hamlib `rigs/yaesu/newcat.c` lines 9205-9218, the exact
-    /// `SH` command format varies per radio:
+    /// The exact `SH` wire format is dispatched via
+    /// ``YaesuCATProtocol/Quirks/filterCommandStyle`` per Hamlib
+    /// `rigs/yaesu/newcat.c:9202-9220`. Four variants exist:
     ///
-    /// - FTX-1 / FT-DX10 / FT-710: `SH00%02d;`
-    /// - FT-2000 / FT-DX3000: `SH0%02d;`
-    /// - FT-DX101D/MP / FT-891: `SH%c%d%02d;` (VFO + narrow flag)
-    /// - Others: `SH%c%02d;` (VFO qualifier)
+    /// | Style | Wire format | Radios |
+    /// | --- | --- | --- |
+    /// | `.qualifierOnly` | `SH%c%02d;` | FT-950, FT-991(A), FTDX-5000/1200/9000, FT-450(D) |
+    /// | `.zeroWithoutQualifier` | `SH0%02d;` | FT-2000, FTDX-3000 |
+    /// | `.doubleZero` | `SH00%02d;` | FTDX-10, FT-710, FTX-1 |
+    /// | `.vfoAndNarrow` | `SH%c%d%02d;` | FTDX-101D/MP (real flag), FT-891 (flag always `1`) |
     ///
-    /// This implementation emits `SH0%02d;` — the common VFO-0 form
-    /// that works on the largest set of modern newcat radios
-    /// (FT-2000, FT-DX3000, FT-DX5000, FT-950, FT-991/A, and every
-    /// radio that accepts the qualifier). Prior to the v1.2.0 audit
-    /// fix Swift emitted `SH%02d;` without the qualifier — real
-    /// newcat radios reject the unqualified form.
+    /// Prior to the v1.2.2 quirks refactor every radio emitted
+    /// `SH0%02d;` — correct for the FT-2000 family but rejected by
+    /// FTDX-10/101/710/FTX-1/891.
     ///
-    /// **Known limitations, tracked for v1.2.1:**
-    /// - FTX-1 / FT-DX10 / FT-710 want `SH00%02d;` (two-zero prefix).
-    ///   The single-zero form above works on the FTX-1 per informal
-    ///   reports but the correct wire is documented as double-zero.
-    ///   A `Quirks.filterCommandStyle` enum will be added in a
-    ///   follow-up to route each family to its exact Hamlib format.
-    /// - FT-DX101 / FT-891 add a narrow-flag byte that this impl
-    ///   doesn't send. Same follow-up.
+    /// This implementation always addresses VFO `0` (main) — the
+    /// Swift `IFFilter` API has no sub-VFO parameter.
     ///
-    /// Filter slot mapping:
-    /// - `.filter1` → high-cut 7 (wide)
-    /// - `.filter2` → high-cut 5 (medium)
-    /// - `.filter3` → high-cut 2 (narrow)
+    /// Filter slot mapping (high-cut code, per Hamlib bandwidth
+    /// tables in `rigs/yaesu/newcat.c` — SSB defaults):
+    /// - `.filter1` → 7 (wide, ~3000 Hz)
+    /// - `.filter2` → 5 (medium, ~2400 Hz)
+    /// - `.filter3` → 2 (narrow, ~1500 Hz)
     ///
     /// - Parameter filter: The desired IF filter slot
     /// - Throws: `RigError` if the command fails
@@ -412,30 +407,60 @@ extension YaesuCATProtocol {
         case .filter2: highCut = 5   // medium
         case .filter3: highCut = 2   // narrow
         }
-        let command = String(format: "SH0%02d", highCut)
+        let command: String
+        switch quirks.filterCommandStyle {
+        case .qualifierOnly:
+            command = String(format: "SH0%02d", highCut)
+        case .zeroWithoutQualifier:
+            command = String(format: "SH0%02d", highCut)
+        case .doubleZero:
+            command = String(format: "SH00%02d", highCut)
+        case .vfoAndNarrow:
+            // Both FTDX-101 (real on/off flag) and FT-891 (always
+            // on) code paths send `1` here — the Swift IFFilter API
+            // has no "bandwidth off" state to communicate.
+            command = String(format: "SH01%02d", highCut)
+        }
         try await sendCommand(command)
         _ = try await receiveResponse()
     }
 
     /// Gets the current IF filter by reading the DSP high-cut setting.
     ///
-    /// Command: `SH0;` — Response: `SH0nn;` (VFO qualifier + 2-digit
-    /// high-cut code). See ``setIFFilter(_:)`` for the format
-    /// variants across radio families.
+    /// Per Hamlib `newcat.c:9477-9486` the get form is `SH0;` for
+    /// `.zeroWithoutQualifier` and `.doubleZero` radios (FT-2000,
+    /// FTDX-3000, FTDX-10, FT-710) and `SH%c;` for everything else.
+    /// The FTX-1 falls into the `SH%c;` bucket on the get side even
+    /// though it uses `SH00%02d;` on the set side — matches Hamlib.
+    ///
+    /// Response is `SH<qualifier><2-digit high-cut>;` for
+    /// non-narrow-flag radios or `SH<qualifier><flag><2-digit>;` for
+    /// FTDX-101 / FT-891. This implementation reads the last two
+    /// digits before the terminator so both response widths decode.
     ///
     /// - Returns: The closest matching filter slot
     /// - Throws: `RigError` if the command fails
     public func getIFFilter() async throws -> IFFilter {
-        try await sendCommand("SH0")
+        let query: String
+        switch quirks.filterCommandStyle {
+        case .zeroWithoutQualifier, .doubleZero:
+            query = "SH0"
+        case .qualifierOnly, .vfoAndNarrow:
+            query = "SH0"
+        }
+        try await sendCommand(query)
         let response = try await receiveResponse()
-        // Response: SH0nn (prefix + VFO byte + 2-digit high-cut).
         guard response.hasPrefix("SH"), response.count >= 5 else {
             throw RigError.invalidResponse
         }
-        let start = response.index(response.startIndex, offsetBy: 3)
-        let end = response.index(start, offsetBy: 2)
-        guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        // Map SH code back to filter slot
+        // The last two ASCII digits before the semicolon (or end of
+        // response) encode the high-cut. This handles both the 6-char
+        // (`SHXnn`) and 7-char (`SHXYnn`) response widths.
+        let trimmed = response.hasSuffix(";")
+            ? String(response.dropLast())
+            : response
+        let tail = trimmed.suffix(2)
+        guard let code = Int(tail) else { throw RigError.invalidResponse }
         switch code {
         case 0...3: return .filter3   // narrow
         case 4...6: return .filter2   // medium

@@ -1,6 +1,16 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.1 (cut 2026-07-29 — targeted safety
+**Current version:** v1.2.2 (cut 2026-07-30 — Yaesu newcat SH
+(IF filter / bandwidth) per-family wire-format dispatch. Prior
+releases shipped one universal `SH0%02d;` form; per Hamlib
+`newcat.c:9202-9220` there are four incompatible variants
+across the family. FTDX-10, FT-710, FTX-1 (double-zero
+`SH00%02d;`), FTDX-101D/MP, FT-891 (VFO + narrow flag), and
+FT-2000/FTDX-3000 (zero without qualifier) silently rejected
+the old form. Fixed via a new `Quirks.SHCommandStyle` enum and
+three named presets (`.ftdx10Family`, `.ftdx101Family`,
+`.ft2000Family`). Test count 640 → 647, zero regressions.)
+Previous release **v1.2.1** (cut 2026-07-29 — targeted safety
 patch. Fixes low-baud-rate serial framing in `YaesuPortableCAT`
 and `YaesuFT847CAT` that surfaced as "Received invalid response
 from radio" on FT-857 at 4800 baud (MacWinlink beta30 field
@@ -10,8 +20,8 @@ with a source-compatible default extension and an
 `IOKitSerialPort` `Darwin.read` override that inherits the
 remaining time budget. Every Yaesu binary status/ACK path now
 accumulates across multiple OS reads instead of rejecting
-partial frames. Test count 635 → 640, zero regressions.)
-Previous release **v1.2.0** (cut 2026-07-25 — largest release
+partial frames. Test count 635 → 640.)
+Also **v1.2.0** (cut 2026-07-25 — largest release
 in SwiftRigControl history. Catalog grew 103 → 126 radios (23
 additions across Icom, Yaesu, Kenwood, Flex, Ten-Tec), 5 new
 protocol adapters (`YaesuPortableCAT`, `YaesuFT847CAT`,
