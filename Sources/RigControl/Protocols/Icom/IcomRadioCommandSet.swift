@@ -46,10 +46,17 @@ extension IcomRadioCommandSet {
     /// Default VFO selection implementation based on VFO operation model.
     ///
     /// Automatically handles the different VFO architectures:
-    /// - **Targetable/CurrentOnly**: Uses standard VFO A/B codes (0x00/0x01)
-    /// - **MainSub**: Uses Main/Sub codes (0xD0/0xD1), returns nil for VFO A/B
-    /// - **MainSubDualVFO**: Accepts BOTH Main/Sub (0xD0/0xD1) AND VFO A/B (0x00/0x01)
-    /// - **None**: Returns nil (VFO selection not supported)
+    /// - **Targetable / CurrentOnly**: Uses standard VFO A/B codes
+    ///   (`0x00` / `0x01`). Only `.a` and `.b` are meaningful.
+    /// - **MainSub**: Uses Main/Sub codes (`0xD0` / `0xD1`) for
+    ///   `.main` / `.sub`. `.a` / `.b` are silently mapped to Main / Sub
+    ///   respectively so that callers using the generic VFO A/B API
+    ///   still get a valid selection on dual-receiver radios. See
+    ///   `Documentation/VFO_MODEL_AUDIT.md` for the semantics discussion.
+    /// - **MainSubDualVFO**: Accepts BOTH Main/Sub (`0xD0` / `0xD1`) AND
+    ///   VFO A/B (`0x00` / `0x01`), with A/B addressing the current
+    ///   receiver rather than falling back to Main/Sub.
+    /// - **None**: Returns `nil` (VFO selection not supported).
     public func selectVFOCommand(_ vfo: VFO) -> (command: [UInt8], data: [UInt8])? {
         switch vfoModel {
         case .targetable, .currentOnly:
@@ -106,12 +113,19 @@ extension IcomRadioCommandSet {
 
     // MARK: - Mode Commands
 
-    /// Whether this radio supports VFO-targeted mode commands via 0x26.
+    /// Whether this radio supports VFO-targeted mode commands via `0x26`.
     ///
-    /// Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800, IC-7851) use
-    /// `C_SEND_SEL_MODE (0x26)` which carries a 3-byte payload:
+    /// Returns `true` iff `vfoModel == .targetable`. Radios in that class
+    /// use `C_SEND_SEL_MODE (0x26)` with a 3-byte payload:
     /// `[mode_byte, data_flag (0x01=DATA / 0x00=normal), filter_byte]`.
-    /// This is the Hamlib-preferred path for DATA mode on modern radios.
+    ///
+    /// Shipped as of v1.2.5, the `.targetable`
+    /// `StandardIcomCommandSet` variants are: IC-7300, IC-7700, IC-7000,
+    /// IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD, IC-F8101, ID-1. The
+    /// IC-7610 / IC-7800 / IC-7851 flagships that Hamlib flags as
+    /// per-VFO targetable are currently shipped as `.mainSub` and
+    /// therefore take the legacy `0x1A 0x06` DATA-mode path — see
+    /// `Documentation/VFO_MODEL_AUDIT.md`.
     public var supportsTargetableMode: Bool {
         vfoModel == .targetable
     }
@@ -131,27 +145,33 @@ extension IcomRadioCommandSet {
 
     /// Mode set command for DATA modes.
     ///
-    /// Three different wire shapes depending on the radio:
+    /// Three different wire shapes depending on the radio's
+    /// `vfoModel` and `requiresModeFilter`:
     ///
-    /// - **Targetable** (IC-7300, IC-7610, IC-7700, IC-7800,
-    ///   IC-7851): single frame `0x26 [mode, data_flag=0x01,
-    ///   filter=FIL1]` that carries the DATA flag in the same
-    ///   command. No follow-up needed.
-    /// - **`requiresDataModeSubCommand` radios** (IC-7600,
-    ///   IC-9100, IC-9700, IC-7100, IC-705, …): send the base
-    ///   mode first via the normal `setModeCommand` path, then
+    /// - **`.targetable` radios** (as of v1.2.5: IC-7300, IC-7700,
+    ///   IC-7000, IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD,
+    ///   IC-F8101, ID-1) — single frame `0x26 [mode,
+    ///   data_flag=0x01, filter=FIL1]` that carries the DATA
+    ///   flag in the same command. No follow-up needed.
+    /// - **`requiresDataModeSubCommand` radios** (as of v1.2.5:
+    ///   everything shipped as `.mainSub`, `.currentOnly`, or
+    ///   `.mainSubDualVFO` — IC-7100, IC-705, IC-7200, IC-7410,
+    ///   IC-7600, IC-7610, IC-7800, IC-7851, IC-9100, IC-9700,
+    ///   IC-910H, ID-5100, ID-52, …) — send the base mode first
+    ///   via the normal `setModeCommand` path, then
     ///   `IcomCIVProtocol.setMode` follows up with `0x1A 0x06
     ///   [0x01, filter]` to flip the DATA sub-mode bit. The
     ///   value returned here is the base-mode frame; the
     ///   protocol takes care of the second frame.
-    /// - **Legacy** radios without `data_mode_supported` (older
-    ///   IC-7200 etc.): fall back to the original `0x06 [mode,
-    ///   filter=0x00]` shorthand, kept for compatibility.
+    /// - **Legacy** radios without `data_mode_supported` and
+    ///   without `requiresDataModeSubCommand` — fall back to the
+    ///   original `0x06 [mode, filter=0x00]` shorthand for
+    ///   compatibility.
     ///
     /// Matches Hamlib `icom_set_mode` for each family
-    /// (rigs/icom/icom.c:2494). Cross-checked against
-    /// `icom_set_mode_x26`, `S_MEM_DATA_MODE`, and
-    /// `data_mode_supported` per-radio.
+    /// (`rigs/icom/icom.c` around line 2494; the specific
+    /// runtime dispatch is documented in
+    /// `Documentation/VFO_MODEL_AUDIT.md`).
     public func setDataModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
         if supportsTargetableMode {
             // Targetable: 0x26 [mode, data_flag=0x01, filter=FIL1]

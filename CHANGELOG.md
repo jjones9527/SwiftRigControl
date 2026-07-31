@@ -21,6 +21,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **VFO-model doc reconciliation.** Following the v1.2.5
+  catalog-drift buildout, the VFO / `VFOOperationModel`
+  docstrings were audited against the shipped catalog and
+  found to contain multiple contradictions with the actual
+  code behavior — e.g. `VFO.a` docstring claimed IC-7600 was
+  single-receiver but the code ships IC-7600 as `.mainSub`;
+  `.targetable` example list included IC-7610 and IC-7800
+  which actually ship as `.mainSub`; `supportsTargetableMode`
+  comment claimed IC-7610/7800/7851 use the `0x26` opcode when
+  they take the legacy `0x1A 0x06` path.
+- Rewrote the affected docstrings (`VFO`, `VFOOperationModel`,
+  `IcomRadioCommandSet.selectVFOCommand` /
+  `supportsTargetableMode` / `setDataModeCommand`) to describe
+  what the code does today, honestly, with per-radio example
+  lists that match the shipped catalog.
+- Added `Documentation/VFO_MODEL_AUDIT.md` capturing the
+  Hamlib cross-reference table for every named
+  `StandardIcomCommandSet` variant, the categorized mismatches,
+  and the deferred architecture questions (IC-7000 wrong-
+  direction concern, IC-7610 / IC-7600 / IC-7800 / IC-7851
+  targetable-vs-mainSub review). Doc-only; no behavior
+  changes.
+
+Test count 674 (unchanged). Zero regressions.
+
 ## [1.2.5] - 2026-07-31
 
 ### Added
