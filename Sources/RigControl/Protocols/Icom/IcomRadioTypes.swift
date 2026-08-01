@@ -25,15 +25,22 @@ public enum VFOOperationModel: Sendable {
     ///   payload carrying the DATA flag inline (no separate `0x1A 0x06`
     ///   follow-up).
     ///
-    /// Shipped as of v1.2.5 for: IC-7300, IC-7700, IC-7000, IC-R8600,
-    /// IC-R75, IC-R9500, IC-R20, IC-92AD, IC-F8101, ID-1. Also used by the
+    /// Shipped as of v1.2.6 for: IC-7300, IC-7700, IC-R8600, IC-R75,
+    /// IC-R9500, IC-R20, IC-92AD, IC-F8101, ID-1. Also used by the
     /// dedicated `IC706CommandSet` and `IC746CommandSet` types.
     ///
-    /// Note: some entries in that list (IC-7000, IC-R8600, IC-R75,
-    /// IC-R9500, IC-R20, IC-92AD, ID-1) do not have `RIG_TARGETABLE_MODE`
-    /// in their Hamlib backend, meaning their firmware may not accept the
-    /// `0x26` DATA-mode opcode. IC-7000 is the highest-severity case; see
+    /// Note: some entries in that list (IC-R8600, IC-R75, IC-R9500,
+    /// IC-R20, IC-92AD, ID-1) do not have `RIG_TARGETABLE_MODE` in their
+    /// Hamlib backend, meaning their firmware may not accept the `0x26`
+    /// DATA-mode opcode. These are receivers or legacy handhelds where
+    /// TX / DATA modes are rarely exercised; see
     /// `Documentation/VFO_MODEL_AUDIT.md`.
+    ///
+    /// **v1.2.6 change:** IC-7000 previously shipped as `.targetable`;
+    /// audit surfaced that Hamlib treats it as non-targetable (and
+    /// forbids the mode filter byte and DATA-mode dispatch), so it was
+    /// re-classified as `.currentOnly` with `requiresModeFilter: false`
+    /// and `supportsDataMode: false`.
     case targetable
 
     /// Radio operates only on the "current" VFO — must explicitly switch
@@ -46,9 +53,9 @@ public enum VFOOperationModel: Sendable {
     /// - `setDataModeCommand` emits the legacy 2-frame form: `0x06`
     ///   base mode + `0x1A 0x06` sub-command to flip the DATA bit.
     ///
-    /// Shipped as of v1.2.5 for: IC-7200, IC-718, IC-703, IC-7410, ID-31,
-    /// IC-R6, IC-R7100, IC-RX7. Also used by the dedicated
-    /// `IC7100CommandSet` (which drives IC-7100 and IC-705).
+    /// Shipped as of v1.2.6 for: IC-7000, IC-7200, IC-718, IC-703,
+    /// IC-7410, ID-31, IC-R6, IC-R7100, IC-RX7. Also used by the
+    /// dedicated `IC7100CommandSet` (which drives IC-7100 and IC-705).
     case currentOnly
 
     /// Radio uses Main/Sub receiver architecture. Main / Sub receivers can

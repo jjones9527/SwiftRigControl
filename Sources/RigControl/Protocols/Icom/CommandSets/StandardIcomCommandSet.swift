@@ -49,6 +49,7 @@ public struct StandardIcomCommandSet: IcomRadioCommandSet {
     public let requiresModeFilter: Bool
     public let echoesCommands: Bool
     public let powerUnits: PowerUnits
+    public let supportsDataMode: Bool
 
     /// Initialize a standard Icom command set.
     /// - Parameters:
@@ -56,17 +57,23 @@ public struct StandardIcomCommandSet: IcomRadioCommandSet {
     ///   - vfoModel: VFO operation model (default: .targetable)
     ///   - requiresModeFilter: Whether mode commands need filter byte (default: true)
     ///   - echoesCommands: Whether radio echoes commands (default: false)
+    ///   - supportsDataMode: Whether the radio implements DATA sub-modes
+    ///     via the `0x1A 0x06` follow-up (default: true; set `false` for
+    ///     the IC-7000 and any other Hamlib
+    ///     `data_mode_supported = 0` radio).
     public init(
         civAddress: UInt8,
         vfoModel: VFOOperationModel = .targetable,
         requiresModeFilter: Bool = true,
-        echoesCommands: Bool = false
+        echoesCommands: Bool = false,
+        supportsDataMode: Bool = true
     ) {
         self.civAddress = civAddress
         self.vfoModel = vfoModel
         self.requiresModeFilter = requiresModeFilter
         self.echoesCommands = echoesCommands
         self.powerUnits = .percentage  // All Icom radios use percentage
+        self.supportsDataMode = supportsDataMode
     }
 
     // All command methods inherited from IcomRadioCommandSet protocol extension!
@@ -162,10 +169,41 @@ extension StandardIcomCommandSet {
     }
 
     /// IC-7000 HF/VHF/UHF mobile transceiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, 100W HF/50W VHF/35W UHF, requires mode filter
+    ///
+    /// **Wire quirks (all cross-referenced against Hamlib
+    /// `rigs/icom/ic7000.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0` at
+    ///   `ic7000.c:264`. The IC-7000 does not accept the newer
+    ///   `0x25` / `0x26` per-VFO opcodes; callers must select VFO
+    ///   A/B via `0x07 [0x00|0x01]` and then operate on the
+    ///   currently-selected VFO.
+    /// - **`requiresModeFilter = false`** — Hamlib
+    ///   `icom.c:2199` explicitly lists the IC-7000 as a radio
+    ///   whose set-mode command must NOT carry a passband /
+    ///   filter byte. Emitting `0x06 [mode, 0x01]` would be
+    ///   rejected; the correct wire is `0x06 [mode]`.
+    /// - **`supportsDataMode = false`** — Hamlib does not set
+    ///   `.data_mode_supported` on IC-7000, so it takes the
+    ///   `icom_set_mode_without_data` path at `icom.c:2434-2452`
+    ///   and skips the `0x1A 0x06 [data_flag, filter]` follow-up
+    ///   entirely.
+    /// - 19200 baud, 100W HF/50W VHF/35W UHF.
+    ///
+    /// **v1.2.6 fix:** prior releases shipped this variant as
+    /// `.targetable` with the default `requiresModeFilter: true`,
+    /// which broke every `setMode` call on the IC-7000 —
+    /// `setMode(.usb, ...)` emitted `0x06 [0x01, 0x01]` (bad
+    /// filter byte) and `setMode(.dataUSB, ...)` emitted the
+    /// `0x26` targetable-mode opcode (not supported by IC-7000).
+    /// See `Documentation/VFO_MODEL_AUDIT.md` for the full
+    /// audit context.
     public static var ic7000: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x70, vfoModel: .targetable)
+        StandardIcomCommandSet(
+            civAddress: 0x70,
+            vfoModel: .currentOnly,
+            requiresModeFilter: false,
+            supportsDataMode: false
+        )
     }
 
     /// IC-910H VHF/UHF satellite transceiver

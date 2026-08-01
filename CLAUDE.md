@@ -51,9 +51,37 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.5** (git tag, 2026-07-31), a
-test-coverage buildout. Two new drift-test suites plug gaps
-that would otherwise let silent regressions ship:
+The shipped version is **v1.2.6** (git tag, 2026-08-01), an
+IC-7000 wire-format triple fix surfaced by the audit doc
+that landed on `main` yesterday.
+
+Byte-level Hamlib audit of `rigs/icom/ic7000.c` and
+`rigs/icom/icom.c:2199` surfaced three separate wire-format
+issues, all of which broke every `setMode` call on the IC-7000:
+
+- Wrong VFO model (`.targetable` → `.currentOnly`).
+- Mode filter byte forbidden (`requiresModeFilter: true → false`)
+  per `icom.c:2199` explicit exclusion.
+- DATA-mode dispatch entirely skipped per
+  `.data_mode_supported = 0`; introduced new
+  `IcomRadioCommandSet.supportsDataMode` field (default `true`)
+  to model this.
+
+IC-7000 users can now `setMode` (voice and DATA) for the first
+time. Four new unit tests in `CIVCommandSetTests` lock the
+correct behavior.
+
+Also bundles the doc reconciliation from yesterday:
+`Documentation/VFO_MODEL_AUDIT.md` and rewrites of the `VFO` /
+`VFOOperationModel` / `IcomRadioCommandSet` docstrings so they
+match the shipped catalog honestly.
+
+Test count 674 → 678. Zero regressions.
+
+The previously-shipped version was **v1.2.5** (git tag,
+2026-07-31), a test-coverage buildout. Two new drift-test
+suites plug gaps that would otherwise let silent regressions
+ship:
 
 - `StandardIcomCommandSetVariantsTests` locks every `civAddress`
   and `echoesCommands` flag on the 30 named

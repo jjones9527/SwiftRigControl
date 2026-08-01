@@ -36,8 +36,34 @@ public protocol IcomRadioCommandSet: CIVCommandSet {
     /// Whether mode commands require filter byte (0x00 = default filter)
     ///
     /// - **true**: Modern radios with DSP filters (IC-7300, IC-7610, IC-9700, IC-9100, IC-7600, IC-7200, IC-7410)
-    /// - **false**: IC-7100 family (IC-7100, IC-705) - these radios NAK if filter byte is sent
+    /// - **false**: IC-7100 family (IC-7100, IC-705) and IC-7000 — these radios NAK if filter byte is sent
     var requiresModeFilter: Bool { get }
+
+    /// Whether the radio has DSP DATA sub-modes and accepts the
+    /// `0x1A 0x06 [data_flag, filter]` follow-up frame that flips
+    /// the DATA bit after a base mode is set.
+    ///
+    /// Corresponds to Hamlib's `.data_mode_supported` per-radio
+    /// flag (`rigs/icom/*.c` in each `icom_priv_caps` block).
+    /// Defaults to `true` because that matches the vast majority
+    /// of shipped radios — override to `false` for a specific
+    /// model whose firmware does not implement the DATA sub-mode
+    /// dispatch (Hamlib skips the follow-up entirely for those
+    /// via the `!priv_caps->data_mode_supported` branch at
+    /// `icom.c:2434`).
+    ///
+    /// As of v1.2.6 the only shipped `.false` override is the
+    /// IC-7000; every other `StandardIcomCommandSet` variant
+    /// inherits the default `true`.
+    var supportsDataMode: Bool { get }
+}
+
+extension IcomRadioCommandSet {
+    /// Default: assume the radio supports DATA sub-modes via the
+    /// `0x1A 0x06` follow-up. Overriding this to `false` on a
+    /// specific radio makes `requiresDataModeSubCommand` return
+    /// `false`, so `IcomCIVProtocol.setMode` skips the follow-up.
+    public var supportsDataMode: Bool { true }
 }
 
 // MARK: - Default Implementations
@@ -119,13 +145,16 @@ extension IcomRadioCommandSet {
     /// use `C_SEND_SEL_MODE (0x26)` with a 3-byte payload:
     /// `[mode_byte, data_flag (0x01=DATA / 0x00=normal), filter_byte]`.
     ///
-    /// Shipped as of v1.2.5, the `.targetable`
-    /// `StandardIcomCommandSet` variants are: IC-7300, IC-7700, IC-7000,
+    /// Shipped as of v1.2.6, the `.targetable`
+    /// `StandardIcomCommandSet` variants are: IC-7300, IC-7700,
     /// IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD, IC-F8101, ID-1. The
     /// IC-7610 / IC-7800 / IC-7851 flagships that Hamlib flags as
     /// per-VFO targetable are currently shipped as `.mainSub` and
     /// therefore take the legacy `0x1A 0x06` DATA-mode path — see
-    /// `Documentation/VFO_MODEL_AUDIT.md`.
+    /// `Documentation/VFO_MODEL_AUDIT.md`. IC-7000 was reclassified
+    /// from `.targetable` to `.currentOnly` + `supportsDataMode: false`
+    /// in v1.2.6 after a Hamlib audit revealed it does not accept
+    /// either the `0x26` opcode or the mode filter byte.
     public var supportsTargetableMode: Bool {
         vfoModel == .targetable
     }
@@ -199,18 +228,18 @@ extension IcomRadioCommandSet {
     /// [data_flag, filter]` follow-up to enter/exit a DATA
     /// sub-mode after the base mode has been set.
     ///
-    /// Defaults to `true` for non-targetable radios — that's the
-    /// path Hamlib's `icom_set_mode` takes for every radio with
-    /// `data_mode_supported = 1` that doesn't claim the
-    /// targetable-mode capability bit. Targetable radios return
-    /// `false` because the `0x26` command already carries the
-    /// data flag in its payload.
-    ///
-    /// Override on a per-radio command set if a specific model
-    /// genuinely doesn't accept the follow-up (none in our
-    /// current catalog do).
+    /// Returns `true` when the radio is non-targetable **and**
+    /// supports DATA sub-modes at all (`supportsDataMode`).
+    /// - Targetable radios skip the follow-up because the `0x26`
+    ///   command above already carried the data flag in its
+    ///   payload.
+    /// - Radios with `supportsDataMode = false` (as of v1.2.6:
+    ///   IC-7000) skip the follow-up because their firmware
+    ///   doesn't implement DATA sub-mode dispatch. Hamlib gates
+    ///   the same code path on `!priv_caps->data_mode_supported`
+    ///   at `rigs/icom/icom.c:2434`.
     public var requiresDataModeSubCommand: Bool {
-        !supportsTargetableMode
+        !supportsTargetableMode && supportsDataMode
     }
 
     public func readModeCommand() -> [UInt8] {

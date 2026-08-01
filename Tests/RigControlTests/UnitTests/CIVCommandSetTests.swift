@@ -286,4 +286,71 @@ import Testing
             try commandSet.parseFrequencyResponse(shortFrame)
         }
     }
+
+    // MARK: - IC-7000 (v1.2.6 wire-format audit)
+
+    @Test func ic7000Properties() {
+        // Per Hamlib rigs/icom/ic7000.c:
+        //   - .targetable_vfo = 0            (currentOnly, not targetable)
+        //   - .data_mode_supported not set   (supportsDataMode = false)
+        //   - .mode_with_filter not set,
+        //     icom.c:2199 forces icmode_ext = -1 (requiresModeFilter = false)
+        //   - default CI-V address 0x70
+        //   - no command echo
+        let cs = StandardIcomCommandSet.ic7000
+        #expect(cs.civAddress == 0x70)
+        #expect(cs.echoesCommands == false)
+        #expect(cs.requiresModeFilter == false)
+        #expect(cs.supportsDataMode == false)
+        #expect(cs.supportsTargetableMode == false,
+                "IC-7000 must not use the 0x26 opcode — Hamlib .targetable_vfo = 0")
+        #expect(cs.requiresDataModeSubCommand == false,
+                "IC-7000 must not send the 0x1A 0x06 follow-up — Hamlib .data_mode_supported = 0 forces the icom_set_mode_without_data path")
+    }
+
+    @Test func ic7000SetModeCommandEmitsNoFilterByte() {
+        // Per Hamlib icom.c:2199 the IC-7000 rejects a passband /
+        // filter byte on the mode set command. Correct wire is
+        // 0x06 [mode] — one byte of data, no FIL1.
+        // Prior to v1.2.6 the IC-7000 factory used the default
+        // requiresModeFilter = true, which emitted 0x06 [mode, 0x01]
+        // and produced a NAK on every setMode call.
+        let cs = StandardIcomCommandSet.ic7000
+        let (cmd, data) = cs.setModeCommand(mode: 0x01) // USB
+        #expect(cmd == [0x06])
+        #expect(data == [0x01],
+                "IC-7000 setMode must not include the filter byte")
+        #expect(data.count == 1,
+                "IC-7000 setMode data must be one byte only")
+    }
+
+    @Test func ic7000SetDataModeCommandFallsBackToBaseModeFrame() {
+        // With supportsTargetableMode = false and
+        // supportsDataMode = false, setDataModeCommand takes the
+        // final legacy-fallback branch and returns the plain
+        // setModeCommand frame — matching Hamlib's
+        // icom_set_mode_without_data path for IC-7000.
+        //
+        // The IcomCIVProtocol layer will not send the 0x1A 0x06
+        // follow-up because requiresDataModeSubCommand is false.
+        let cs = StandardIcomCommandSet.ic7000
+        let (cmd, data) = cs.setDataModeCommand(mode: 0x01) // USB base for DATA-USB
+        #expect(cmd == [0x06])
+        #expect(data == [0x01],
+                "IC-7000 DATA mode must emit the base mode frame with no filter byte and no 0x1A 0x06 follow-up")
+    }
+
+    @Test func ic7000VFOCommand() {
+        // .currentOnly emits standard VFO A/B codes 0x00/0x01
+        // (same wire as .targetable for the select-VFO opcode).
+        // The IC-7000 accepts these; it just requires a select-
+        // then-set flow rather than per-VFO addressing.
+        let cs = StandardIcomCommandSet.ic7000
+        let cmdA = cs.selectVFOCommand(.a)
+        #expect(cmdA?.command == [0x07])
+        #expect(cmdA?.data == [0x00])
+        let cmdB = cs.selectVFOCommand(.b)
+        #expect(cmdB?.command == [0x07])
+        #expect(cmdB?.data == [0x01])
+    }
 }

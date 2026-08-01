@@ -1,9 +1,12 @@
-# Icom VFO Model Audit (v1.2.5)
+# Icom VFO Model Audit (v1.2.5, updated v1.2.6)
 
-**Status:** open — architecture decision pending
-**Date audited:** 2026-07-31 (against Hamlib upstream on that date)
-**Reference:** Hamlib `rigs/icom/*.c` — `.targetable_vfo` field and
-`.x25x26_always` flag; SwiftRigControl
+**Status:** partially closed — IC-7000 resolved in v1.2.6;
+IC-7610 / IC-7600 / IC-7800 / IC-7851 architecture question
+still open.
+**Date audited:** 2026-07-31 (initial), 2026-08-01 (IC-7000 fix)
+**Reference:** Hamlib `rigs/icom/*.c` — `.targetable_vfo` field,
+`.x25x26_always` flag, `.data_mode_supported` flag, and shared
+`icom.c` special-case branches; SwiftRigControl
 `StandardIcomCommandSet` static factory variants.
 
 This document captures the audit of the `VFOOperationModel`
@@ -82,7 +85,7 @@ Columns:
 | IC-7700 | `.targetable` | `FREQ\|MODE` | 0 | A: matches |
 | IC-7800 | `.mainSub` | `FREQ\|MODE` | 0 | B: architecture mismatch |
 | IC-7851 | `.mainSub` | `FREQ\|MODE\|SPECTRUM` | 1 | B: architecture mismatch |
-| IC-7000 | `.targetable` | `0` | ? | **D: wrong-direction (highest risk)** |
+| IC-7000 | `.currentOnly`¹ | `0` | ? | ~~D: wrong-direction~~ **fixed v1.2.6** |
 | IC-910H | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | IC-2730 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | ID-5100 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
@@ -132,18 +135,32 @@ Columns:
   - `setDataModeCommand` emits the `0x26` opcode. If the radio
     firmware doesn't accept `0x26`, the DATA-mode set fails
     silently (the two-frame legacy form was skipped).
-  - **IC-7000 is the highest concern** — it is a shipped HF/VHF
-    mobile with active users, and Hamlib treats it as
-    non-targetable. If IC-7000 firmware rejects `0x26`, DATA
-    modes (RTTY, PSK, FT8 via digital-mode audio) are broken
-    for every SwiftRigControl-driven session. Requires
-    verification against the IC-7000 CI-V manual or a hardware
-    validator run before making a determination.
+  - **IC-7000 was the highest concern — fixed in v1.2.6.**
+    Hamlib audit confirmed three separate wire-format issues
+    beyond just the `0x26` opcode:
+    - `.targetable_vfo = 0` — should be `.currentOnly`.
+    - `icom.c:2199` explicitly forbids the mode filter byte on
+      IC-7000 (`icmode_ext = -1`) — Hamlib groups it with
+      IC-375, IC-731, IC-726, IC-735, IC-910, and the
+      IC-746/756 family as "don't support passband data" —
+      so `requiresModeFilter` must be `false`.
+    - `.data_mode_supported = 0` — Hamlib takes the
+      `icom_set_mode_without_data` path at `icom.c:2434` and
+      skips the `0x1A 0x06` follow-up entirely; introduced
+      `supportsDataMode` on `IcomRadioCommandSet` (default
+      `true`) to model this.
+
+    All three fixed at once. IC-7000 users can now `setMode`
+    (voice and DATA) for the first time.
   - Receivers (IC-R8600, IC-R75, IC-R9500, IC-R20) don't
     transmit, so the DATA-mode divergence is moot; the
     wrong-direction is cosmetic.
   - IC-92AD, ID-1 are legacy D-STAR handhelds with limited
     real-world CAT use; low priority.
+
+¹ IC-7000 shipped as `.targetable` in v1.2.5 and earlier;
+corrected to `.currentOnly` + `requiresModeFilter: false` +
+`supportsDataMode: false` in v1.2.6.
 
 ### Public API contract cross-check
 
@@ -184,27 +201,30 @@ And in `IcomRadioCommandSet.swift`:
   them and they take the legacy `0x1A 0x06` path instead.
   Stale comment.
 
-## Recommended sequence (not a plan yet)
+## Sequence status
 
-1. **Doc reconciliation** (this document + inline doc edits) —
-   describe what the code does today, honestly, without
-   locking in an architecture call. **Safe, zero code risk.**
-2. **IC-7000 investigation** — highest-severity item on the
-   audit. Requires either an IC-7000 CI-V manual review or a
-   hardware validator run to determine whether `0x26` is
-   accepted. If not, flip to `.currentOnly` (matches Hamlib).
+1. ✅ **Doc reconciliation** — shipped as an [Unreleased] entry
+   in `main`, doc-only, zero code risk. Rewrote `VFO`,
+   `VFOOperationModel`, and the affected `IcomRadioCommandSet`
+   docstrings so they describe the shipped catalog honestly.
+2. ✅ **IC-7000 investigation** — **shipped in v1.2.6.** Hamlib
+   audit revealed a triple wire-format issue (VFO model,
+   filter byte, DATA-mode dispatch); all three fixed with one
+   new protocol field (`supportsDataMode`) and the IC-7000
+   factory rewritten. Four Hamlib-cited unit tests added to
+   `CIVCommandSetTests` locking the new correct behavior.
 3. **IC-7610 / IC-7600 / IC-7800 / IC-7851 architecture
-   decision** — needs a "what does a WSJT-X-style caller
-   expect from `vfo: .b`?" discussion. If the answer is
-   "proper VFO A/B addressing on the current receiver," flip
-   to `.targetable`. If the answer is "target the Sub
+   decision** — still open. Needs a "what does a WSJT-X-style
+   caller expect from `vfo: .b`?" discussion. If the answer
+   is "proper VFO A/B addressing on the current receiver,"
+   flip to `.targetable`. If the answer is "target the Sub
    receiver on a dual-receiver radio," keep `.mainSub` and
    fix the public docs to say so.
-4. **Category D receiver cleanup** — IC-R8600 / IC-R75 /
-   IC-R9500 / IC-R20 to `.none` or `.currentOnly` to match
-   Hamlib. Cosmetic.
-5. **`VFOOperationModel` example lists** — update once (2)–(4)
-   are settled.
+4. **Category D receiver cleanup** — still open. IC-R8600 /
+   IC-R75 / IC-R9500 / IC-R20 to `.none` or `.currentOnly` to
+   match Hamlib. Cosmetic.
+5. **`VFOOperationModel` example lists** — partially updated
+   for IC-7000 in v1.2.6; remainder waits on (3) and (4).
 
 ## Sourcing
 

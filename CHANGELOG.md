@@ -21,7 +21,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-08-01
+
+### Fixed
+
+- **IC-7000 wire-format triple fix.** Prior releases shipped the
+  `StandardIcomCommandSet.ic7000` factory as `.targetable` with
+  the default `requiresModeFilter: true`. A byte-level Hamlib
+  audit of `rigs/icom/ic7000.c` and `rigs/icom/icom.c:2199`
+  surfaced three separate wire-format issues, all of which broke
+  every `setMode` call on the IC-7000:
+  - **Wrong VFO model.** Hamlib sets `.targetable_vfo = 0`; the
+    IC-7000 does not implement the `0x25` / `0x26` per-VFO
+    opcodes. Should be `.currentOnly`.
+  - **Mode filter byte forbidden.** Hamlib `icom.c:2199-2201`
+    explicitly forces `icmode_ext = -1` for the IC-7000,
+    grouping it with the IC-375 / IC-731 / IC-726 / IC-735 /
+    IC-910 / IC-746 / IC-756 family as "don't support passband
+    data." Setting `requiresModeFilter: false` emits the
+    correct `0x06 [mode]` wire (one byte of data) instead of
+    the rejected `0x06 [mode, 0x01]`.
+  - **DATA-mode dispatch entirely skipped.** Hamlib does not
+    set `.data_mode_supported = 1` on the IC-7000, so it takes
+    the `icom_set_mode_without_data` path at `icom.c:2434-2452`
+    and skips the `0x1A 0x06 [data_flag, filter]` follow-up.
+    Our code previously emitted the `0x26` opcode for DATA
+    modes (via `supportsTargetableMode`); the fix routes
+    through a new `supportsDataMode` flag so IC-7000 emits the
+    base mode frame alone.
+
+  All three fixed at once. IC-7000 users can now `setMode`
+  (voice and DATA) for the first time.
+
+### Added
+
+- **`IcomRadioCommandSet.supportsDataMode: Bool`** — new
+  protocol requirement (default `true` via extension) modelling
+  Hamlib's per-radio `.data_mode_supported` flag. When `false`,
+  `requiresDataModeSubCommand` returns `false` and
+  `IcomCIVProtocol.setMode` skips the `0x1A 0x06` follow-up.
+  Source-compatible: every existing conformer inherits the
+  default.
+- **`StandardIcomCommandSet.init` gains a `supportsDataMode`
+  parameter** (default `true`) so factory variants can opt out.
+  Only the IC-7000 factory currently sets `false`.
+
+### Changed
+
+- `StandardIcomCommandSet.ic7000` rewritten:
+  `vfoModel: .currentOnly`, `requiresModeFilter: false`,
+  `supportsDataMode: false`. Every Hamlib citation captured
+  inline on the factory.
+- `VFOOperationModel.targetable` and `.currentOnly` docstring
+  radio lists updated to reflect the reclassification.
+- `IcomRadioCommandSet.supportsTargetableMode` and
+  `requiresDataModeSubCommand` docstrings updated to describe
+  the new `supportsDataMode` gate.
+- `Documentation/VFO_MODEL_AUDIT.md` — IC-7000 item marked
+  fixed; sequence status updated.
+
+### Tests
+
+- Four new IC-7000 unit tests in `CIVCommandSetTests`:
+  - `ic7000Properties` — locks address, echo flag,
+    `requiresModeFilter`, `supportsDataMode`,
+    `supportsTargetableMode`, `requiresDataModeSubCommand`.
+  - `ic7000SetModeCommandEmitsNoFilterByte` — asserts wire is
+    `0x06 [mode]` with no `0x01` filter byte.
+  - `ic7000SetDataModeCommandFallsBackToBaseModeFrame` —
+    asserts DATA-mode dispatch returns the plain base-mode
+    frame.
+  - `ic7000VFOCommand` — locks the standard `0x07 [0x00|0x01]`
+    VFO A/B wire.
+
 ### Documentation
+
+Bundled from the [Unreleased] entry that landed on `main` on
+2026-07-31 before the v1.2.6 fix work:
 
 - **VFO-model doc reconciliation.** Following the v1.2.5
   catalog-drift buildout, the VFO / `VFOOperationModel`
@@ -41,12 +117,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Documentation/VFO_MODEL_AUDIT.md` capturing the
   Hamlib cross-reference table for every named
   `StandardIcomCommandSet` variant, the categorized mismatches,
-  and the deferred architecture questions (IC-7000 wrong-
-  direction concern, IC-7610 / IC-7600 / IC-7800 / IC-7851
-  targetable-vs-mainSub review). Doc-only; no behavior
-  changes.
+  and the deferred architecture questions. The audit doc
+  itself surfaced the IC-7000 investigation that produced
+  this release's wire-format fix.
 
-Test count 674 (unchanged). Zero regressions.
+Test count 674 → 678. Zero regressions.
 
 ## [1.2.5] - 2026-07-31
 

@@ -1,6 +1,21 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.5 (cut 2026-07-31 — Catalog-drift
+**Current version:** v1.2.6 (cut 2026-08-01 — IC-7000
+wire-format triple fix surfaced by the
+`Documentation/VFO_MODEL_AUDIT.md` investigation. Prior
+releases shipped `StandardIcomCommandSet.ic7000` as
+`.targetable` with the default `requiresModeFilter: true`,
+which broke every `setMode` call on the IC-7000 — Hamlib
+audit revealed three separate issues: wrong VFO model (should
+be `.currentOnly` per `.targetable_vfo = 0`), forbidden mode
+filter byte (`icom.c:2199` explicitly excludes IC-7000 from
+passband-data support), and missing `.data_mode_supported`
+gate on the `0x1A 0x06` DATA-mode follow-up. Introduces a new
+`supportsDataMode` protocol field (default `true`) modelling
+Hamlib's per-radio flag. Also bundles the doc reconciliation
+that surfaced the audit. Test count 674 → 678, zero
+regressions.) Previous release **v1.2.5** (cut 2026-07-31 —
+Catalog-drift
 test coverage buildout. Two new suites: a 7-test
 `StandardIcomCommandSetVariantsTests` locking every CI-V
 address and echo-flag on all 30 named Icom factory variants
