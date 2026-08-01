@@ -1,6 +1,20 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.7 (cut 2026-08-01 — Category D
+**Current version:** v1.2.8 (cut 2026-08-01 — Yaesu portable
+CAT `.dataFM` mode-selector fix. `modeSelector(for:)` in
+`YaesuPortableCAT` previously covered `.dataUSB` and
+`.dataLSB` but not `.dataFM`, which fell into the switch
+default and threw `unsupportedOperation`. Broke VARA-FM
+gateway connects on FT-857 (MacWinlink beta31 field report,
+jjones9527/macwinlink-releases#27). Per Hamlib
+`ft817.c:1624-1625`, `RIG_MODE_PKTFM` shares the same PKT
+selector byte (`0x0C`) as `PKTUSB`/`PKTLSB` — the FT-817
+family's CAT has a single PKT selector; band + data-jack
+routing determines the sub-mode. Fix extends the existing
+switch case. Scope covers FT-817/818/857/857D/897/897D/100/
+920/mcHF QRP uniformly. Test count 681 → 683, zero
+regressions.) Previous release **v1.2.7** (cut 2026-08-01 —
+Category D
 audit cleanup: six `StandardIcomCommandSet` variants
 (IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD, ID-1)
 reclassified from `.targetable` to `.currentOnly` for Hamlib

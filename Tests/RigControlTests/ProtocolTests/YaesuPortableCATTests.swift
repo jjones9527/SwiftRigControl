@@ -181,6 +181,35 @@ import Testing
         #expect(writes[0] == Data([0x0C, 0x00, 0x00, 0x00, 0x07]))
     }
 
+    @Test func modeSelectorMapsDataFMToPKT() throws {
+        // Per Hamlib rigs/yaesu/ft817.c:1624-1625, RIG_MODE_PKTFM
+        // routes through FT817_NATIVE_CAT_SET_MODE_PKT — the same
+        // selector byte (0x0C) as PKTUSB / PKTLSB. Prior to the
+        // v1.2.8 fix the `.dataFM` case fell into the switch's
+        // default branch and threw unsupportedOperation, which broke
+        // VARA-FM gateway connects on FT-857 hardware
+        // (MacWinlink beta31 field report, jjones9527/
+        // macwinlink-releases#27).
+        let selector = try YaesuPortableCAT.modeSelector(for: .dataFM)
+        #expect(selector == 0x0C)
+    }
+
+    @Test func modeSelectorMapsAllThreeDataModesToPKT() throws {
+        // Regression net for the whole DATA family: parameterised
+        // across `.dataUSB`, `.dataLSB`, `.dataFM` so a future
+        // accidental split-out of any one mode fails the test.
+        // Per Hamlib ft817.c the FT-817 family's CAT protocol has
+        // exactly one PKT mode selector; per-band data-jack routing
+        // (front-panel menu) determines the sub-mode.
+        for mode in [Mode.dataUSB, Mode.dataLSB, Mode.dataFM] {
+            let selector = try YaesuPortableCAT.modeSelector(for: mode)
+            #expect(
+                selector == 0x0C,
+                "\(mode.rawValue) must map to the PKT selector 0x0C per ft817.c:1547-1548 (PKTUSB/PKTLSB) and ft817.c:1624-1625 (PKTFM); got 0x\(String(format: "%02X", selector))"
+            )
+        }
+    }
+
     @Test func getModeReturnsUSBForSelectorOne() async throws {
         // The 5-byte status response encodes mode in byte 4 (low 7
         // bits). Selector 0x01 = USB per ft817.c:184.

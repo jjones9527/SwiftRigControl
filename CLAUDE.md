@@ -51,8 +51,28 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.7** (git tag, 2026-08-01), the
-final cleanup of the VFO-model audit surfaced back in v1.2.5.
+The shipped version is **v1.2.8** (git tag, 2026-08-01), a
+targeted Yaesu portable CAT bug fix from a MacWinlink beta31
+field report (jjones9527/macwinlink-releases#27).
+
+`YaesuPortableCAT.modeSelector(for:)` previously covered
+`.dataUSB` and `.dataLSB` but not `.dataFM`. FT-857 users
+attempting to connect to VARA-FM gateways got
+`RigError.unsupportedOperation` on the tuning path. Per
+Hamlib `ft817.c:1624-1625`, `RIG_MODE_PKTFM` shares the PKT
+selector byte (`0x0C`) with `PKTUSB` / `PKTLSB` — the FT-817
+family's CAT protocol has exactly one PKT selector; the
+radio's current RF band + data-jack routing determines whether
+PKT means data-over-USB, data-over-LSB, or data-over-FM. Fix
+extends the existing switch case to `.dataUSB, .dataLSB,
+.dataFM`.
+
+Scope covers FT-817/818/857/857D/897/897D/100/920 and mcHF QRP
+uniformly. Test count 681 → 683.
+
+The previously-shipped version was **v1.2.7** (git tag,
+2026-08-01), the final cleanup of the VFO-model audit
+surfaced back in v1.2.5.
 Two audit items closed in one release:
 
 - **Category D reclassification** — IC-R8600, IC-R75,

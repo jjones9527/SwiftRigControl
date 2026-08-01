@@ -21,6 +21,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-08-01
+
+### Fixed
+
+- **`YaesuPortableCAT` mode-selector: DATA-FM now maps to the
+  PKT selector.** Prior to this release `modeSelector(for:)` in
+  `Sources/RigControl/Protocols/Yaesu/YaesuPortableCAT.swift`
+  extended only `.dataUSB` and `.dataLSB` to selector `0x0C`
+  (PKT); `.dataFM` fell into the switch's `default` branch and
+  threw `RigError.unsupportedOperation`. Reported from a
+  MacWinlink beta31 field trial on an FT-857 attempting to
+  connect to a VARA-FM gateway
+  (jjones9527/macwinlink-releases#27): the gateway-connect
+  path failed with "Radio tuning failed: Command failed:
+  Operation 'Mode DATA-FM not supported by FT-817-family
+  CAT' is not supported by this radio."
+
+  Per Hamlib `rigs/yaesu/ft817.c:1624-1625`, `RIG_MODE_PKTFM`
+  routes through `FT817_NATIVE_CAT_SET_MODE_PKT` — the same
+  selector byte (`0x0C`) as `PKTUSB` / `PKTLSB` at
+  `ft817.c:1547-1548`. The FT-817 family's CAT protocol has
+  exactly one PKT selector; the radio's current RF band +
+  data-jack routing (front-panel menu) determines whether PKT
+  means data-over-USB, data-over-LSB, or data-over-FM. Fix:
+  extend the existing `.dataUSB, .dataLSB` case to
+  `.dataUSB, .dataLSB, .dataFM`.
+
+  Scope: `YaesuPortableCAT` drives the FT-817, FT-818, FT-857,
+  FT-857D, FT-897, FT-897D, FT-100, FT-920, and mcHF QRP. All
+  of these ship with the same one-byte PKT selector semantics
+  per Hamlib; the fix applies uniformly across the family. The
+  inverse `mode(fromSelector:narrow:)` still collapses `0x0C`
+  back to `.dataUSB` — the round-trip is lossy in that
+  direction, a pre-existing property intentionally not
+  changed in this release; the docstring now flags it.
+
+### Tests
+
+- `modeSelectorMapsDataFMToPKT` — asserts
+  `modeSelector(for: .dataFM)` returns `0x0C`.
+- `modeSelectorMapsAllThreeDataModesToPKT` — parameterised over
+  `.dataUSB`, `.dataLSB`, `.dataFM`; asserts all three return
+  `0x0C`. Regression net against any future accidental split-
+  out of one mode.
+
+Test count 681 → 683. Zero regressions.
+
 ## [1.2.7] - 2026-08-01
 
 ### Changed

@@ -242,6 +242,16 @@ public actor YaesuPortableCAT:
     /// byte. Cross-checked against Hamlib `rigs/yaesu/ft817.c` command
     /// table entries `mode set main LSB` through `mode set main PKT`
     /// (lines 183-192).
+    ///
+    /// **Note on the DATA family:** the FT-817 family's CAT protocol
+    /// has exactly one "PKT" mode selector (`0x0C`). The radio's
+    /// current RF band + data-jack routing (front-panel menu) is what
+    /// determines whether PKT means data-over-USB, data-over-LSB, or
+    /// data-over-FM. Hamlib collapses all three
+    /// (`RIG_MODE_PKTUSB`, `RIG_MODE_PKTLSB`, `RIG_MODE_PKTFM`) to
+    /// this same selector — see `rigs/yaesu/ft817.c:1547-1548,
+    /// 1624-1625`. The inverse ``mode(fromSelector:narrow:)`` is
+    /// consequently lossy: `0x0C` collapses back to `.dataUSB`.
     internal static func modeSelector(for mode: Mode) throws -> UInt8 {
         switch mode {
         case .lsb:      return 0x00
@@ -251,10 +261,14 @@ public actor YaesuPortableCAT:
         case .am:       return 0x04
         case .fm:       return 0x08
         case .fmN:      return 0x88
-        case .dataUSB, .dataLSB:
-            // Hamlib maps both PKT-USB and PKT-LSB (DATA-USB/LSB) to
-            // the same PKT selector (0x0C) — the FT-817 doesn't
-            // distinguish upper vs lower on the PKT/DIG channel.
+        case .dataUSB, .dataLSB, .dataFM:
+            // Hamlib maps PKT-USB, PKT-LSB, and PKT-FM to the same
+            // PKT selector (0x0C) — the FT-817 family's CAT protocol
+            // has one PKT mode; the radio's current RF band +
+            // data-jack routing (front-panel menu) determines whether
+            // PKT means data-over-USB, data-over-LSB, or data-over-FM.
+            // See rigs/yaesu/ft817.c:1547-1548 (PKTUSB/PKTLSB) and
+            // ft817.c:1624-1625 (PKTFM) for the canonical precedent.
             return 0x0C
         default:
             throw RigError.unsupportedOperation(
