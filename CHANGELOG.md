@@ -21,6 +21,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **VFO audit — IC-7610 / IC-7600 / IC-7800 / IC-7851 item
+  closed.** Deep-dive against the IC-7600 CI-V manual and
+  Hamlib `icom.c:10034` / `icom.c:3078-3097` established that
+  the initial audit's "Category B mismatch" label for these
+  four flagships was a misdiagnosis. The IC-7600 CI-V command
+  `07` (Select VFO mode) has no `07 00` / `07 01` payload —
+  these radios do not have "VFO A" / "VFO B" as a wire concept;
+  the VFO domain per Hamlib is Main/Sub only. Our shipped
+  `.mainSub` model is wire-correct, and its `.a` → Main /
+  `.b` → Sub fallback matches exactly what Hamlib's own
+  `icom_set_vfo` sends. Contest apps (WSJT-X, N1MM, DXLog)
+  driving these radios via rigctld already rely on this
+  convention. `Documentation/VFO_MODEL_AUDIT.md` updated
+  with the manual + Hamlib source evidence; category legend
+  and per-radio table rows re-categorized as Category A.
+  **No code change required.**
+- A future `0x25`/`0x26` targetable-frequency optimization is
+  worth pursuing for these four radios but is a **feature**,
+  not a fix. It needs a hardware validator run against a real
+  IC-7610 or IC-7600 before shipping because Hamlib itself
+  special-cases IC-7800 for firmware inconsistency
+  (`icom.c:2667`). Tracked as a v1.3.0-or-later item.
+
 ## [1.2.6] - 2026-08-01
 
 ### Fixed

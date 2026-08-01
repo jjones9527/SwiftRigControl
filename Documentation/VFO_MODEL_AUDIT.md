@@ -75,16 +75,16 @@ Columns:
 | Radio | Ships | Hamlib `.targetable_vfo` | `.x25x26_always` | Category |
 | --- | --- | --- | --- | --- |
 | IC-7300 | `.targetable` | `FREQ\|MODE` | 1 | A: matches |
-| IC-7610 | `.mainSub` | `FREQ\|MODE\|SPECTRUM` | 1 | B: architecture mismatch |
-| IC-7600 | `.mainSub` | `FREQ\|MODE` | 0 | B: architecture mismatch (see E) |
+| IC-7610 | `.mainSub` | `FREQ\|MODE\|SPECTRUM` | 1 | ~~B~~ A²: wire-correct (see below) |
+| IC-7600 | `.mainSub` | `FREQ\|MODE` | 0 | ~~B~~ A²: wire-correct (see below) |
 | IC-9100 | `.mainSub` | `0` | 0 | C: dual-receiver over currentOnly-ish |
 | IC-7200 | `.currentOnly` | `0` | 0 | A: matches |
 | IC-718 | `.currentOnly` | `0` | ? | A: matches |
 | IC-703 | `.currentOnly` | `0` | ? | A: matches |
 | IC-7410 | `.currentOnly` | `0` | ? | A: matches |
 | IC-7700 | `.targetable` | `FREQ\|MODE` | 0 | A: matches |
-| IC-7800 | `.mainSub` | `FREQ\|MODE` | 0 | B: architecture mismatch |
-| IC-7851 | `.mainSub` | `FREQ\|MODE\|SPECTRUM` | 1 | B: architecture mismatch |
+| IC-7800 | `.mainSub` | `FREQ\|MODE` | 0 | ~~B~~ A²: wire-correct (see below) |
+| IC-7851 | `.mainSub` | `FREQ\|MODE\|SPECTRUM` | 1 | ~~B~~ A²: wire-correct (see below) |
 | IC-7000 | `.currentOnly`¹ | `0` | ? | ~~D: wrong-direction~~ **fixed v1.2.6** |
 | IC-910H | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | IC-2730 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
@@ -109,14 +109,17 @@ Columns:
 
 - **A — Matches Hamlib.** Our choice aligns with Hamlib's
   targetability flag. No action needed.
-- **B — Architecture mismatch.** Hamlib flags per-VFO capability
-  (`.targetable_vfo != 0`) but we ship `.mainSub`. The catalog
-  choice is architecturally defensible (these are dual-receiver
-  radios), but produces a specific behavior: `.a` → Main and
-  `.b` → Sub instead of proper VFO A/B addressing on the current
-  receiver. A caller doing `setFrequency(hz, vfo: .b)` for a
-  WSJT-X-style split ends up on the Sub receiver, not on VFO B
-  of the currently-selected receiver.
+- **B — Architecture mismatch.** ~~Hamlib flags per-VFO
+  capability (`.targetable_vfo != 0`) but we ship `.mainSub`.~~
+  **Investigated 2026-08-01; this category was misdiagnosed.**
+  Hamlib's `.targetable_vfo` is a capability flag about the
+  newer `0x25`/`0x26` opcodes, not a VFO-domain flag. On the
+  IC-7600 / IC-7610 / IC-7800 / IC-7851 the VFO domain per
+  Hamlib `icom.c:10034` is **Main/Sub only** — VFO A/B is not
+  a wire concept on these radios. `.mainSub` is wire-correct;
+  see the "IC-7610 / IC-7600 / IC-7800 / IC-7851 architecture
+  decision" section below the table for the full analysis. All
+  four entries are effectively Category A².
 - **C — Dual-receiver over Hamlib-non-targetable.** Hamlib
   treats the radio as non-targetable (`.targetable_vfo = 0`),
   meaning it requires the select-then-set flow. We ship
@@ -161,6 +164,15 @@ Columns:
 ¹ IC-7000 shipped as `.targetable` in v1.2.5 and earlier;
 corrected to `.currentOnly` + `requiresModeFilter: false` +
 `supportsDataMode: false` in v1.2.6.
+
+² IC-7600 / IC-7610 / IC-7800 / IC-7851 investigated 2026-08-01.
+The initial audit labelled these "Category B: architecture
+mismatch" because Hamlib flags them as targetable. Deep-dive
+against the IC-7600 CI-V manual and Hamlib `icom.c:10034`
+established that the VFO domain on these radios is Main/Sub
+only — VFO A/B is not a wire concept — and that our `.mainSub`
+model is wire-correct. Re-categorized as Category A. No fix
+required.
 
 ### Public API contract cross-check
 
@@ -214,12 +226,70 @@ And in `IcomRadioCommandSet.swift`:
    factory rewritten. Four Hamlib-cited unit tests added to
    `CIVCommandSetTests` locking the new correct behavior.
 3. **IC-7610 / IC-7600 / IC-7800 / IC-7851 architecture
-   decision** — still open. Needs a "what does a WSJT-X-style
-   caller expect from `vfo: .b`?" discussion. If the answer
-   is "proper VFO A/B addressing on the current receiver,"
-   flip to `.targetable`. If the answer is "target the Sub
-   receiver on a dual-receiver radio," keep `.mainSub` and
-   fix the public docs to say so.
+   decision** — **investigated 2026-08-01; no wire-format
+   bug.**
+
+   Deep-dive against the IC-7600 CI-V manual (`Icom CI-V
+   Manuals/IC-7600 CI-V.pdf`) and Hamlib `icom.c:10034` /
+   `icom.c:3078-3097` established the following:
+
+   - The IC-7600 CI-V command `07` (Select VFO mode) has
+     **no `07 00` or `07 01` sub-command payload** for
+     "VFO A" / "VFO B". Its only VFO/band-selection payloads
+     are `07 D0` (Select main band) and `07 D1` (Select sub
+     band) — plus `B0`/`B1` (exchange/equalize) and `C0`/`C1`
+     (dualwatch on/off).
+   - Hamlib groups IC-7600, IC-7610, IC-7800, IC-785x as
+     **"Rigs with *only* Main/Sub VFOs"** at `icom.c:10034`.
+     For the `0x25`/`0x26` targetable opcodes on these four
+     radios, the VFO byte is `0x00 = Main`, `0x01 = Sub` —
+     NOT VFO A/B. Hamlib's own `icom_set_vfo` maps a caller
+     passing `RIG_VFO_B` on these radios to `RIG_VFO_SUB` and
+     sends `0x07 [0xD1]`, matching what SwiftRigControl's
+     `.mainSub` fallback already does.
+   - WSJT-X talking to rigctld against a raw IC-7610 gets the
+     same wire (`.b` → Sub) that a SwiftRigControl caller
+     already gets. No behavioral difference visible to end
+     users. Contest apps using rigctld are already relying on
+     the "VFO B = Sub receiver" mapping.
+   - Hamlib flags `.targetable_vfo = RIG_TARGETABLE_FREQ |
+     RIG_TARGETABLE_MODE` as a **capability** for the newer
+     `0x25`/`0x26` opcodes (atomic set-vfo-and-set-freq).
+     These are optimizations — the legacy `0x07` + `0x05`
+     select-then-set flow SwiftRigControl uses today works
+     on all four radios, and Hamlib itself falls back to it
+     when `0x25` reports `.x26cmdfails`. Even Hamlib
+     special-cases IC-7800 (`icom.c:2667`) because its
+     firmware accepts `0x26` for set but not get.
+
+   **Conclusion:** the shipped `.mainSub` model for
+   IC-7600 / IC-7610 / IC-7800 / IC-7851 is **wire-correct**.
+   No bug fix required. What was previously described as a
+   "Category B mismatch" was a misreading of the Hamlib
+   `.targetable_vfo` flag — that flag advertises a
+   capability, not a requirement, and the VFO domain on these
+   flagships is Main/Sub, not A/B.
+
+   The current SwiftRigControl behavior for a WSJT-X-style
+   caller doing `setFrequency(hz, vfo: .b)` on an IC-7610 is:
+   `07 D1` (select Sub) followed by `0x05 [BCD-freq]`
+   (set frequency on current). Matches Hamlib's fallback
+   path.
+
+   **A future optimization**, tracked separately, would add
+   `0x25`/`0x26` targetable-frequency support on these four
+   radios so a contest app polling both Main and Sub
+   simultaneously wouldn't need to toggle the front-panel VFO
+   selection. That is a **feature**, not a fix — and it needs
+   a hardware validator run against a real IC-7610 or IC-7600
+   because of the IC-7800 firmware inconsistency. Tracked as
+   an item for v1.3.0 or later.
+
+   The public docstrings on `VFO.a`, `VFOOperationModel.mainSub`,
+   and `IcomRadioCommandSet.selectVFOCommand` correctly
+   describe the current behavior after the doc reconciliation
+   in v1.2.6. **No further code or doc change required for
+   this item.**
 4. **Category D receiver cleanup** — still open. IC-R8600 /
    IC-R75 / IC-R9500 / IC-R20 to `.none` or `.currentOnly` to
    match Hamlib. Cosmetic.
