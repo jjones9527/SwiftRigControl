@@ -90,19 +90,19 @@ Columns:
 | IC-2730 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | ID-5100 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | ID-4100 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
-| IC-R8600 | `.targetable` | `0` | ? | D: wrong-direction (receiver) |
-| IC-R75 | `.targetable` | `0` | ? | D: wrong-direction (receiver) |
-| IC-R9500 | `.targetable` | `0` | ? | D: wrong-direction (receiver) |
+| IC-R8600 | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
+| IC-R75 | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
+| IC-R9500 | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
 | IC-R30 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | ID-31 | `.currentOnly` | `0` | ? | A: matches |
 | ID-51 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
 | ID-52 | `.mainSub` | `0` | ? | C: dual-receiver over currentOnly-ish |
-| IC-92AD | `.targetable` | `0` | ? | D: wrong-direction (handheld) |
+| IC-92AD | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
 | IC-R6 | `.currentOnly` | `0` | ? | A: matches |
-| IC-R20 | `.targetable` | `0` | ? | D: wrong-direction (receiver) |
+| IC-R20 | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
 | IC-R7100 | `.currentOnly` | `0` | ? | A: matches |
 | IC-F8101 | `.targetable` | `FREQ` (no MODE) | ? | B-adjacent: partial-target |
-| ID-1 | `.targetable` | `0` | ? | D: wrong-direction |
+| ID-1 | `.currentOnly`³ | `0` | ? | ~~D~~ **fixed v1.2.7** |
 | IC-RX7 | `.currentOnly` | `0` | ? | A: matches |
 
 ### Category legend
@@ -173,6 +173,17 @@ established that the VFO domain on these radios is Main/Sub
 only — VFO A/B is not a wire concept — and that our `.mainSub`
 model is wire-correct. Re-categorized as Category A. No fix
 required.
+
+³ IC-R8600 / IC-R75 / IC-R9500 / IC-R20 / IC-92AD / ID-1
+reclassified from `.targetable` to `.currentOnly` in v1.2.7
+after a Hamlib parity audit. Change was cosmetic — the code
+paths that actually diverge between `.targetable` and
+`.currentOnly` (the `0x26` DATA-mode opcode) are unreachable
+on these radios because none of them supports the `PKTUSB` /
+`PKTLSB` (SwiftRigControl `.dataUSB` / `.dataLSB`) modes. VFO-
+select wire bytes remain identical; the reclassification
+brings `supportsTargetableMode` and `requiresDataModeSubCommand`
+in line with Hamlib truth for these variants.
 
 ### Public API contract cross-check
 
@@ -290,9 +301,30 @@ And in `IcomRadioCommandSet.swift`:
    describe the current behavior after the doc reconciliation
    in v1.2.6. **No further code or doc change required for
    this item.**
-4. **Category D receiver cleanup** — still open. IC-R8600 /
-   IC-R75 / IC-R9500 / IC-R20 to `.none` or `.currentOnly` to
-   match Hamlib. Cosmetic.
+4. ✅ **Category D receiver / handheld cleanup** — **shipped
+   in v1.2.7.** All six affected variants (IC-R8600, IC-R75,
+   IC-R9500, IC-R20, IC-92AD, ID-1) reclassified from
+   `.targetable` to `.currentOnly` to match Hamlib's
+   `.targetable_vfo = 0` on each. Investigation confirmed the
+   change is Hamlib-parity hygiene, not a user-visible bug
+   fix — the code paths that actually diverge (`0x26`
+   DATA-mode opcode) were unreachable because none of the six
+   supports SSB-DATA modes (checked against each backend's
+   supported-modes list). VFO-select bytes on the wire are
+   identical between `.targetable` and `.currentOnly` for the
+   modes these radios actually use. Three new drift tests in
+   `StandardIcomCommandSetVariantsTests` lock the new
+   classification against Hamlib for the six affected
+   variants:
+   - `categoryDVariantsShipAsCurrentOnly`
+   - `categoryDVariantsDoNotClaimTargetableMode`
+   - `categoryDVariantsStillEmitStandardVFOSelect`
+
+   Chose `.currentOnly` over `.none` for all six because
+   `.none` returns nil from `selectVFOCommand`, which would
+   short-circuit VFO-select dispatch and risk breaking memory-
+   recall flows we haven't inventoried. The `.currentOnly`
+   path emits the same wire bytes with less risk.
 5. **`VFOOperationModel` example lists** — partially updated
    for IC-7000 in v1.2.6; remainder waits on (3) and (4).
 

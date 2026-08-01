@@ -238,24 +238,56 @@ extension StandardIcomCommandSet {
     }
 
     /// IC-R8600 wideband communications receiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 115200 baud (high speed!), receiver only (no PTT/power control)
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/icr8600.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   The IC-R8600 does not implement the `0x25` / `0x26`
+    ///   per-VFO opcodes and has a single VFO + memory
+    ///   architecture (`RIG_VFO_VFO | RIG_VFO_MEM` in Hamlib).
+    /// - Receiver only — no PTT, no TX power control
+    ///   (`RIG_PTT_NONE`, `RIG_TYPE_RECEIVER`).
+    /// - 115200 baud (high speed).
+    ///
+    /// **v1.2.7 change:** shipped as `.targetable` in v1.2.6 and
+    /// earlier. The mistake was cosmetic — none of the wire
+    /// paths that actually get exercised diverge between
+    /// `.targetable` and `.currentOnly` on this receiver
+    /// (identical `0x07 [0x00|0x01]` VFO select bytes; no
+    /// DATA-mode paths reachable because IC-R8600 doesn't
+    /// support `PKTUSB` / `PKTLSB`). Corrected to
+    /// `.currentOnly` for Hamlib parity. See
+    /// `Documentation/VFO_MODEL_AUDIT.md`.
     public static var icR8600: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x96, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x96, vfoModel: .currentOnly)
     }
 
     /// IC-R75 HF communications receiver
-    /// - VFO Model: Targetable (can target VFO A/B directly)
-    /// - 19200 baud, receiver only (no PTT/power control)
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/icr75.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   Single VFO + memory architecture.
+    /// - Receiver only — no PTT, no TX power control.
+    /// - 19200 baud.
+    ///
+    /// **v1.2.7 change:** was `.targetable`; corrected to
+    /// `.currentOnly` for Hamlib parity (see IC-R8600 note for
+    /// the wire-impact analysis).
     public static var icR75: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x5A, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x5A, vfoModel: .currentOnly)
     }
 
     /// IC-R9500 professional wideband communications receiver
-    /// - VFO Model: Targetable (VFO A + Memory)
-    /// - 1200 baud (very slow!), receiver only (no PTT/power control)
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/icr9500.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   VFO A + memory architecture (`RIG_VFO_A | RIG_VFO_MEM`).
+    /// - Receiver only — no PTT, no TX power control.
+    /// - 1200 baud (very slow — older serial hardware).
+    ///
+    /// **v1.2.7 change:** was `.targetable`; corrected to
+    /// `.currentOnly` for Hamlib parity.
     public static var icR9500: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x72, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x72, vfoModel: .currentOnly)
     }
 
     // MARK: - D-STAR Handhelds (v1.1 parity additions)
@@ -293,12 +325,23 @@ extension StandardIcomCommandSet {
     }
 
     /// IC-92AD / IC-E92D dual-band D-STAR handheld (2008)
-    /// - VFO Model: Targetable (A = broadband RX, B = 2m/70cm)
-    /// - 9600 baud, 5W. Predecessor to the ID-51 family.
-    /// - Per Hamlib `ic92d.c`, uses 0x01 default address (unusual)
-    ///   and full-duplex serial.
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/ic92d.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   Has VFO A (broadband RX), VFO B (2m/70cm), and memory
+    ///   — `RIG_VFO_A | RIG_VFO_B | RIG_VFO_MEM` — but Hamlib
+    ///   treats VFO switching as select-then-set, not
+    ///   per-command targeting.
+    /// - No PTT (`RIG_PTT_NONE`, `RIG_TYPE_HANDHELD`).
+    /// - 9600 baud, 5 W. Predecessor to the ID-51 family.
+    /// - Uses 0x01 default address (unusual — shared with ID-1;
+    ///   set a custom address if both are on one CI-V bus) and
+    ///   full-duplex serial.
+    ///
+    /// **v1.2.7 change:** was `.targetable`; corrected to
+    /// `.currentOnly` for Hamlib parity.
     public static var ic92d: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .currentOnly)
     }
 
     // MARK: - v1.2.0 Group D — receivers + specialty
@@ -312,11 +355,21 @@ extension StandardIcomCommandSet {
     }
 
     /// IC-R20 dual-VFO handheld wideband receiver (2004)
-    /// - VFO Model: Targetable (A/B with simultaneous audio)
-    /// - 19200 baud, receiver only
-    /// - Per Hamlib `icr20.c`, default CI-V address 0x6C.
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/icr20.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   Marketed as "dual-VFO with simultaneous audio," but the
+    ///   Hamlib backend enumerates only `RIG_VFO_A`; the second
+    ///   audio channel is not addressable as a separate VFO
+    ///   over CI-V.
+    /// - Receiver only — no PTT, no TX power control
+    ///   (`RIG_PTT_NONE`, `RIG_TYPE_RECEIVER | RIG_FLAG_HANDHELD`).
+    /// - 19200 baud. Default CI-V address 0x6C.
+    ///
+    /// **v1.2.7 change:** was `.targetable`; corrected to
+    /// `.currentOnly` for Hamlib parity.
     public static var icR20: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x6C, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x6C, vfoModel: .currentOnly)
     }
 
     /// IC-R7100 VHF/UHF communications receiver (1993)
@@ -336,12 +389,22 @@ extension StandardIcomCommandSet {
     }
 
     /// ID-1 first-generation 1.2 GHz D-STAR mobile (2004)
-    /// - VFO Model: Targetable
-    /// - 19200 baud, 10 W TX
-    /// - Per Hamlib `id1.c`, default CI-V address 0x01 (shared
-    ///   with IC-92AD — set a custom address if both on one bus).
+    ///
+    /// **Wire quirks (per Hamlib `rigs/icom/id1.c`):**
+    /// - VFO Model: `.currentOnly` per `.targetable_vfo = 0`.
+    ///   `RIG_VFO_A | RIG_VFO_MEM` — single VFO + memory
+    ///   architecture.
+    /// - Has PTT (`RIG_PTT_RIG`, `RIG_TYPE_MOBILE`), 10 W TX.
+    ///   Modes: FM, DIGDATA (D-STAR data), DIGVOICE (D-STAR
+    ///   voice) — no SSB-DATA path, so the `PKTUSB` / `PKTLSB`
+    ///   dispatch is not exercised.
+    /// - 19200 baud. Default CI-V address 0x01 (shared with
+    ///   IC-92AD; set a custom address if both on one bus).
+    ///
+    /// **v1.2.7 change:** was `.targetable`; corrected to
+    /// `.currentOnly` for Hamlib parity.
     public static var id1: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .targetable)
+        StandardIcomCommandSet(civAddress: 0x01, vfoModel: .currentOnly)
     }
 
     /// IC-RX7 compact handheld wideband receiver (2007)

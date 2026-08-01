@@ -236,4 +236,72 @@ import Testing
         // variants shipped. Bump this if you add a new one.
         #expect(Self.allVariants.count == 30)
     }
+
+    // MARK: - Category D — Hamlib non-targetable receivers/handhelds (v1.2.7)
+
+    /// The six variants that were reclassified from `.targetable`
+    /// to `.currentOnly` in v1.2.7 following the audit closure of
+    /// `Documentation/VFO_MODEL_AUDIT.md` "Category D." Each entry
+    /// cites the Hamlib backend where `.targetable_vfo = 0`.
+    ///
+    /// The audit surfaced no user-visible wire bug — the
+    /// diverging code paths (`0x26` DATA-mode opcode) are
+    /// unreachable on these radios because none of them supports
+    /// SSB-DATA modes. The `.currentOnly` reclassification is
+    /// Hamlib-parity hygiene: `supportsTargetableMode` and
+    /// `requiresDataModeSubCommand` computed properties now
+    /// reflect the truth for these six variants.
+    static let categoryDVariants: [(name: String, make: @Sendable () -> StandardIcomCommandSet, hamlibReference: String)] = [
+        (name: "icR8600", make: { .icR8600 }, hamlibReference: "icr8600.c"),
+        (name: "icR75",   make: { .icR75 },   hamlibReference: "icr75.c"),
+        (name: "icR9500", make: { .icR9500 }, hamlibReference: "icr9500.c"),
+        (name: "icR20",   make: { .icR20 },   hamlibReference: "icr20.c"),
+        (name: "ic92d",   make: { .ic92d },   hamlibReference: "ic92d.c"),
+        (name: "id1",     make: { .id1 },     hamlibReference: "id1.c"),
+    ]
+
+    @Test func categoryDVariantsShipAsCurrentOnly() {
+        for spec in Self.categoryDVariants {
+            let cs = spec.make()
+            #expect(
+                cs.vfoModel == .currentOnly,
+                "\(spec.name).vfoModel must be `.currentOnly` per Hamlib \(spec.hamlibReference) `.targetable_vfo = 0`"
+            )
+        }
+    }
+
+    @Test func categoryDVariantsDoNotClaimTargetableMode() {
+        // Direct consequence of `.currentOnly`: neither
+        // `supportsTargetableMode` (which gates the `0x26`
+        // opcode) nor `requiresDataModeSubCommand` should return
+        // `true` for these radios. IC-7000 uses a separate
+        // `supportsDataMode: false` override for the DATA sub-
+        // command; the Category D radios rely on the default
+        // `true` because their non-targetable classification is
+        // enough to skip the `0x26` path.
+        for spec in Self.categoryDVariants {
+            let cs = spec.make()
+            #expect(
+                cs.supportsTargetableMode == false,
+                "\(spec.name).supportsTargetableMode must be false — Hamlib \(spec.hamlibReference) `.targetable_vfo = 0` means no 0x26 opcode support"
+            )
+        }
+    }
+
+    @Test func categoryDVariantsStillEmitStandardVFOSelect() {
+        // The whole point of the audit closure: `.currentOnly`
+        // emits the same `0x07 [0x00|0x01]` VFO-select wire as
+        // `.targetable` did before. No user-visible behavior
+        // change on the code paths that actually get exercised.
+        for spec in Self.categoryDVariants {
+            let cs = spec.make()
+            let cmdA = cs.selectVFOCommand(.a)
+            #expect(cmdA?.command == [0x07])
+            #expect(cmdA?.data == [0x00], "\(spec.name) select VFO A")
+
+            let cmdB = cs.selectVFOCommand(.b)
+            #expect(cmdB?.command == [0x07])
+            #expect(cmdB?.data == [0x01], "\(spec.name) select VFO B")
+        }
+    }
 }

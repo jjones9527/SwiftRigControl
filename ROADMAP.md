@@ -1,6 +1,20 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.6 (cut 2026-08-01 — IC-7000
+**Current version:** v1.2.7 (cut 2026-08-01 — Category D
+audit cleanup: six `StandardIcomCommandSet` variants
+(IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD, ID-1)
+reclassified from `.targetable` to `.currentOnly` for Hamlib
+parity. This is hygiene, not a user-visible bug fix — the
+diverging code paths (0x26 DATA-mode opcode) are unreachable
+on these radios because none supports the PKTUSB/PKTLSB modes
+SwiftRigControl models as `.dataUSB`/`.dataLSB`. VFO-select
+wire bytes remain identical. Also closes the audit item for
+IC-7610/IC-7600/IC-7800/IC-7851 — deep-dive against the
+IC-7600 CI-V manual and Hamlib icom.c:10034 established that
+`.mainSub` is wire-correct on these flagships and the
+initial "Category B mismatch" label was a misdiagnosis. Test
+count 678 → 681, zero regressions.) Previous release
+**v1.2.6** (cut 2026-08-01 — IC-7000
 wire-format triple fix surfaced by the
 `Documentation/VFO_MODEL_AUDIT.md` investigation. Prior
 releases shipped `StandardIcomCommandSet.ic7000` as

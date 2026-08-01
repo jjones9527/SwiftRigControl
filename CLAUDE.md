@@ -51,9 +51,27 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.6** (git tag, 2026-08-01), an
-IC-7000 wire-format triple fix surfaced by the audit doc
-that landed on `main` yesterday.
+The shipped version is **v1.2.7** (git tag, 2026-08-01), the
+final cleanup of the VFO-model audit surfaced back in v1.2.5.
+Two audit items closed in one release:
+
+- **Category D reclassification** — IC-R8600, IC-R75,
+  IC-R9500, IC-R20, IC-92AD, ID-1 moved from `.targetable`
+  to `.currentOnly` for Hamlib parity. Cosmetic, not a
+  user-visible bug fix (the diverging code paths are
+  unreachable on these radios). Three new drift tests lock
+  the classification.
+- **Flagship investigation closed** — deep-dive against the
+  IC-7600 CI-V manual and Hamlib established that IC-7610 /
+  IC-7600 / IC-7800 / IC-7851 shipped as `.mainSub` is
+  wire-correct; the "Category B mismatch" label was a
+  misdiagnosis. No code change; audit doc updated.
+
+Test count 678 → 681. Zero regressions.
+
+The previously-shipped version was **v1.2.6** (git tag,
+2026-08-01), an IC-7000 wire-format triple fix surfaced by
+the audit doc that landed on `main` just before v1.2.6.
 
 Byte-level Hamlib audit of `rigs/icom/ic7000.c` and
 `rigs/icom/icom.c:2199` surfaced three separate wire-format

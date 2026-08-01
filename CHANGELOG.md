@@ -21,6 +21,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-08-01
+
+### Changed
+
+- **Category D `.targetable` → `.currentOnly` reclassification.**
+  Six `StandardIcomCommandSet` variants (IC-R8600, IC-R75,
+  IC-R9500, IC-R20, IC-92AD, ID-1) were shipped as
+  `.targetable` in v1.2.6 and earlier but are non-targetable
+  in Hamlib (`.targetable_vfo = 0` on each backend). Corrected
+  to `.currentOnly` in this release. **This is Hamlib-parity
+  hygiene, not a user-visible bug fix** — the code paths that
+  actually diverge between `.targetable` and `.currentOnly`
+  (`supportsTargetableMode` → `0x26` DATA-mode opcode) are
+  unreachable on these radios because none of them supports
+  the `PKTUSB` / `PKTLSB` modes SwiftRigControl models as
+  `.dataUSB` / `.dataLSB`. VFO-select wire bytes remain
+  identical.
+
+  Real benefit of the change: `supportsTargetableMode` and
+  `requiresDataModeSubCommand` computed properties now
+  correctly return `false` for these six variants — matching
+  Hamlib and eliminating a stale claim that these radios
+  understood the `0x26` opcode.
+
 ### Documentation
 
 - **VFO audit — IC-7610 / IC-7600 / IC-7800 / IC-7851 item
@@ -45,6 +69,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   IC-7610 or IC-7600 before shipping because Hamlib itself
   special-cases IC-7800 for firmware inconsistency
   (`icom.c:2667`). Tracked as a v1.3.0-or-later item.
+- **VFO audit — Category D item closed.** All six affected
+  variants (IC-R8600, IC-R75, IC-R9500, IC-R20, IC-92AD,
+  ID-1) reclassified in this release. Audit doc footnote ³
+  captures the Hamlib-parity rationale and the "cosmetic, not
+  bug" honesty about impact. Every affected factory now carries
+  a Hamlib citation inline citing the `.targetable_vfo = 0`
+  field in the corresponding backend.
+
+### Tests
+
+- Three new drift tests in `StandardIcomCommandSetVariantsTests`
+  locking the Category D reclassification against Hamlib:
+  - `categoryDVariantsShipAsCurrentOnly` — asserts the six
+    variants all ship `.currentOnly`.
+  - `categoryDVariantsDoNotClaimTargetableMode` — asserts
+    `supportsTargetableMode == false` on each; catches any
+    future accidental flip back to `.targetable`.
+  - `categoryDVariantsStillEmitStandardVFOSelect` — asserts
+    the VFO-select wire (`0x07 [0x00|0x01]`) is unchanged
+    from the pre-fix behavior, documenting the "cosmetic, no
+    user-visible impact" claim.
+
+Test count 678 → 681. Zero regressions.
 
 ## [1.2.6] - 2026-08-01
 
