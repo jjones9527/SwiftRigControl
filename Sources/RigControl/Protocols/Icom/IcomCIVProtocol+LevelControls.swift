@@ -481,18 +481,24 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Returns `true` if the radio is powered on by probing with a frequency read.
+    /// Returns `true` if the radio is powered on by probing with a
+    /// frequency read on VFO A.
     ///
-    /// A successful response means on; a timeout means off or in standby.
+    /// Matches Hamlib `icom_get_powerstat` (`icom.c:8271`) which
+    /// invokes `rig_get_freq(rig, RIG_VFO_A, &freq)` for the
+    /// IC-9700 / IC-7300 / IC-705 / IC-7100 / IC-7600 / IC-7610 /
+    /// IC-7700 / IC-7800 / IC-785X / IC-905 / IC-2730 family: a
+    /// successful frequency read means power is ON, a timeout means
+    /// OFF.  Going through the full ``getFrequency(vfo:)`` path
+    /// (rather than sending a bare `0x03` frame) ensures the
+    /// per-radio VFO-selection dance runs for models that need it
+    /// (`requiresVFOSelection` = true), matching Hamlib's behaviour
+    /// exactly.
+    ///
+    /// - Returns: `true` if the radio responds, `false` on timeout.
     public func getPowerState() async throws -> Bool {
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [CIVFrame.Command.readFrequency],
-            data: []
-        )
         do {
-            try await sendFrame(frame)
-            _ = try await receiveFrame()
+            _ = try await getFrequency(vfo: .a)
             return true
         } catch RigError.timeout {
             return false

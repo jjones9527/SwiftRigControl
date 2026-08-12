@@ -51,9 +51,50 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.8** (git tag, 2026-08-01), a
-targeted Yaesu portable CAT bug fix from a MacWinlink beta31
-field report (jjones9527/macwinlink-releases#27).
+The shipped version is **v1.2.10** (git tag, 2026-08-12), an
+Icom power-state probe fix for MacWinlink beta35-rc1
+(jjones9527/SwiftRigControl#14).
+
+`IcomCIVProtocol.getPowerState()` previously sent a bare
+`0x03 0xFD` frame directly, bypassing the per-radio
+VFO-selection dance that every other read goes through.  On
+`.currentOnly` / `.mainSub*` radios that set
+`requiresVFOSelection: true` (IC-9700, IC-7600, IC-7610,
+IC-7100, IC-705, IC-7300), the probe could silently mis-fire
+before the radio was in the expected VFO state — a real
+IC-9700 wired via `RigctldCommandHandler.\get_powerstat`
+returned `RPRT -1` during MacWinlink beta35-rc1 Air testing.
+Fix routes the probe through the full `getFrequency(vfo: .a)`
+code path so the same VFO logic that governs every other read
+also governs the power-state check.  Matches Hamlib
+`icom_get_powerstat` (`icom.c:8271`) which invokes
+`rig_get_freq(rig, RIG_VFO_A, &freq)` for the same radio
+family.  Six new tests in `RigctldPowerStatTests` lock the
+end-to-end `\get_powerstat` / `\set_powerstat` wire matrix
+through the rigctld bridge.  Test count 689 → 695.
+
+The previously-shipped version was **v1.2.9** (git tag,
+2026-08-12), a rigctld wire-format fix from MacWinlink
+beta35-rc4 (jjones9527/SwiftRigControl#15).
+
+`RigctldResponse.formatDefault()` previously omitted the
+`RPRT <n>\n` trailer for successful (`ok`) responses.  Real
+Hamlib `rigctld` always terminates default-protocol responses
+with `RPRT <n>\n`; the missing trailer caused Hamlib's
+client-side `netrigctl` parser to report `-5 Communication
+timed out` when Direwolf 1.8.1's `PTT RIG 2` mode issued `T 0`
+/ `T 1` PTT commands.  The radio still keyed correctly
+(SwiftRigControl executes `setPTT` before formatting the
+response), but every PTT event added ~1 s of stall and
+cluttered Direwolf's log with false failures.  Fix: always
+append `RPRT <n>\n` after any data lines.  10 new tests in
+`RigctldResponseRPRTTests` lock the wire matrix.  Test count
+679 → 689.
+
+The previously-shipped version was **v1.2.8** (git tag,
+2026-08-01), a targeted Yaesu portable CAT bug fix from a
+MacWinlink beta31 field report
+(jjones9527/macwinlink-releases#27).
 
 `YaesuPortableCAT.modeSelector(for:)` previously covered
 `.dataUSB` and `.dataLSB` but not `.dataFM`. FT-857 users

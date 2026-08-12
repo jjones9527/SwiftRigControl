@@ -21,6 +21,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.10] - 2026-08-12
+
+### Fixed
+
+- **`IcomCIVProtocol.getPowerState()` now dispatches through
+  `getFrequency(vfo: .a)` rather than sending a bare `0x03 0xFD`
+  frame.** Previously the power-state probe skipped the
+  per-radio VFO-selection dance, which meant that on
+  `.currentOnly` and `.mainSub*` radios that set
+  `requiresVFOSelection: true` (IC-9700, IC-7600, IC-7610,
+  IC-7100, IC-705, IC-7300) the probe could silently mis-fire
+  before the radio was in the expected VFO state.  Fix routes
+  the probe through the full `getFrequency` code path so the
+  same VFO-selection logic that governs every other read
+  applies to the power-state check as well — matching Hamlib
+  `icom_get_powerstat` (`icom.c:8271`) which invokes
+  `rig_get_freq(rig, RIG_VFO_A, &freq)`.  Reported from
+  MacWinlink beta35-rc1 Air testing where `\get_powerstat`
+  against an IC-9700 was returning `RPRT -1`
+  (jjones9527/SwiftRigControl#14).
+
+### Tests
+
+- Six new tests in
+  `Tests/RigControlTests/ProtocolTests/RigctldPowerStatTests.swift`
+  lock the `\get_powerstat` / `\set_powerstat` end-to-end
+  dispatch through `RigctldCommandHandler` on an IC-9700 built
+  against `MockSerialTransport`.  Covers: successful
+  frequency-probe response returning `"1\nRPRT 0\n"`, timeout
+  returning `"0\nRPRT 0\n"`, `\set_powerstat 0` /
+  `\set_powerstat 1` emitting the correct CI-V `0x18 0x00` /
+  `0x18 0x01` frame, and parser routing for the
+  backslash-prefixed long forms.
+
+Test count 689 → 695.  Zero regressions.
+
+## [1.2.9] - 2026-08-12
+
+### Fixed
+
+- **`RigctldResponse.formatDefault()` now always emits the
+  `RPRT <n>\n` trailer.**  Previously the default protocol
+  omitted the trailer for successful responses, returning just
+  the data (or a bare `\n` for `set_*` commands with no data
+  payload).  Real Hamlib `rigctld` always terminates
+  default-protocol responses with `RPRT <n>\n`; the missing
+  trailer caused Hamlib's client-side `netrigctl` parser to
+  report `-5 Communication timed out` after Direwolf 1.8.1's
+  `PTT RIG 2` mode issued `T 0` / `T 1` PTT commands
+  (jjones9527/SwiftRigControl#15). The radio still keyed
+  correctly (SwiftRigControl executes `setPTT` before
+  formatting the response), but every PTT event added ~1 s of
+  stall and cluttered Direwolf's log with false failures.
+  Fixed wire matrix: `T 0 → RPRT 0\n`, `T 1 → RPRT 0\n`,
+  `F <hz> → RPRT 0\n`, `M USB 2400 → RPRT 0\n`,
+  `f → <hz>\nRPRT 0\n`, `m → USB\n2400\nRPRT 0\n`,
+  `t → 0\nRPRT 0\n`.  Discovered during MacWinlink beta35-rc4
+  Air testing (Part G RF baseline).
+
+### Tests
+
+- 10 new tests in
+  `Tests/RigControlTests/ProtocolTests/RigctldResponseRPRTTests.swift`
+  lock the wire format for the full default-protocol response
+  matrix.  One existing test in `RigctldHandlerTests` updated
+  for the added trailer token count on the `get_antenna`
+  default-format check.
+
+Test count 679 → 689.  Zero regressions.
+
 ## [1.2.8] - 2026-08-01
 
 ### Fixed
