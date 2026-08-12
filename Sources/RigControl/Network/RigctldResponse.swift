@@ -72,12 +72,30 @@ public struct RigctldResponse: Sendable {
     ///
     /// - Returns: Formatted response string
     public func formatDefault() -> String {
-        if returnCode != .ok {
-            // For errors in default protocol, return empty or error code
-            return returnCode.description + Self.separator
+        // Real Hamlib rigctld always terminates a default-protocol
+        // response with `RPRT <n>\n`, whether the response includes
+        // data or not.  Data (if present) goes on its own line(s),
+        // followed by the RPRT trailer.
+        //
+        // Historically we omitted the RPRT trailer for successful
+        // responses ("just the data, one value per line") — that
+        // works for read-side commands like `f` because the value
+        // itself terminates the response, but breaks Hamlib's
+        // client-side parser for write-side commands (`T 0`, `F <hz>`,
+        // `M USB 2400`) where an empty data set produced a bare `\n`.
+        // Hamlib's `netrigctl` treats the bare newline as an invalid
+        // response and returns `-5 Communication timed out`, which
+        // Direwolf logs as a "Hamlib Error: rig_set_ptt command"
+        // (jjones9527/SwiftRigControl#15).
+        //
+        // Fix: always emit `RPRT <n>\n` after the data.  Matches
+        // real Hamlib rigctld's wire format precisely.
+        var output = ""
+        if !data.isEmpty {
+            output += data.joined(separator: Self.separator) + Self.separator
         }
-
-        return data.joined(separator: Self.separator) + Self.separator
+        output += returnCode.description + Self.separator
+        return output
     }
 
     /// Format response for extended protocol

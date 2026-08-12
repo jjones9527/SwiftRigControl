@@ -185,9 +185,13 @@ import Testing
         // First line is AntCurr.
         let firstLine = formatted.split(separator: "\n").first ?? ""
         #expect(firstLine == "1")
-        // Total: four whitespace-separated tokens after formatting.
+        // Four antenna-info tokens on the data line + two more from
+        // the RPRT trailer (`RPRT 0`) that formatDefault now always
+        // emits per issue #15.  Total: 6.
         let tokens = formatted.split(whereSeparator: { $0.isWhitespace })
-        #expect(tokens.count == 4)
+        #expect(tokens.count == 6)
+        // Confirm the RPRT trailer is present.
+        #expect(formatted.hasSuffix("RPRT 0\n"))
     }
 
     @Test func setAntOnSingleAntennaRadioErrors() async throws {
