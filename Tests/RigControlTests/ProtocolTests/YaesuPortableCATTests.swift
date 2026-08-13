@@ -328,6 +328,96 @@ import Testing
         #expect(writes == [Data([0x00, 0x00, 0x00, 0x00, 0x03])])
     }
 
+    // MARK: - Serial buffer flush before every command (v1.2.11)
+
+    /// Regression for releases#49 on macwinlink-releases — FT-857
+    /// intermittently reported "Command Failed: Received invalid
+    /// response from radio" despite working correctly via rigctld
+    /// with the same hardware.
+    ///
+    /// Root cause: the FT-817-family CAT protocol has no framing,
+    /// no checksum, and no way to distinguish a delayed byte from
+    /// a valid response.  If a previous set-command ACK arrived
+    /// after our `responseTimeout` (say the OS scheduler stalled),
+    /// the late ACK byte stayed queued in the OS serial input
+    /// buffer.  The next `readExact` on the following command then
+    /// read that stale byte first, producing a decoded response
+    /// that was off by one — the BCD decoder saw high nibbles > 9
+    /// and threw `.invalidResponse`.
+    ///
+    /// Hamlib solves this the same way: `rig_flush(rp)` is called
+    /// before every command write in `rigs/yaesu/ft817.c` (lines
+    /// 793, 1422).  These tests lock the behaviour down — every
+    /// wire operation must be preceded by a flush.
+    @Test func setFrequencyFlushesInputBufferBeforeWrite() async throws {
+        let (transport, proto) = try await makeProtocol()
+
+        try await proto.setFrequency(14_230_000, vfo: .a)
+
+        let ops = await transport.recordedOperations
+        #expect(ops.first == .flush,
+                "First operation of setFrequency must be flush; got \(ops)")
+    }
+
+    @Test func setModeFlushesInputBufferBeforeWrite() async throws {
+        let (transport, proto) = try await makeProtocol()
+
+        try await proto.setMode(.usb, vfo: .a)
+
+        let ops = await transport.recordedOperations
+        #expect(ops.first == .flush,
+                "First operation of setMode must be flush; got \(ops)")
+    }
+
+    @Test func setPTTFlushesInputBufferBeforeWrite() async throws {
+        let (transport, proto) = try await makeProtocol()
+
+        try await proto.setPTT(true)
+
+        let ops = await transport.recordedOperations
+        #expect(ops.first == .flush,
+                "First operation of setPTT must be flush; got \(ops)")
+    }
+
+    @Test func getFrequencyFlushesInputBufferBeforeWrite() async throws {
+        let (transport, proto) = try await makeProtocol()
+
+        await transport.setChunkedResponse([
+            Data([0x01, 0x42, 0x30, 0x00, 0x01])
+        ])
+
+        _ = try await proto.getFrequency(vfo: .a)
+
+        let ops = await transport.recordedOperations
+        #expect(ops.first == .flush,
+                "First operation of getFrequency (status) must be flush; got \(ops)")
+    }
+
+    @Test func consecutiveCommandsEachFlushBeforeWriting() async throws {
+        // The load-bearing case: two set-commands in a row, each
+        // must flush.  Reproduces the "worked once, never again"
+        // pattern from the field report.
+        let (transport, proto) = try await makeProtocol()
+
+        try await proto.setFrequency(14_230_000, vfo: .a)
+        try await proto.setMode(.usb, vfo: .a)
+
+        let ops = await transport.recordedOperations
+        // Expected wire sequence per command:
+        //   .flush, .write(<5-byte frame>)
+        // So two commands should produce four operations in this
+        // exact order.
+        #expect(ops.count == 4, "Expected 4 wire operations, got \(ops.count): \(ops)")
+        #expect(ops[0] == .flush, "First command's flush missing")
+        if case .write = ops[1] {} else {
+            Issue.record("Position 1 should be a write, got \(ops[1])")
+        }
+        #expect(ops[2] == .flush, "Second command's flush missing — the releases#49 regression")
+        if case .write = ops[3] {} else {
+            Issue.record("Position 3 should be a write, got \(ops[3])")
+        }
+    }
+
     // MARK: - Unsupported modes
 
     @Test func setModeThrowsForRTTY() async throws {

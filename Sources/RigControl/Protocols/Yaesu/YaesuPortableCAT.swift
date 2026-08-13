@@ -129,7 +129,7 @@ public actor YaesuPortableCAT:
         let tenHzUnits = hz / 10
         let bcd = YaesuBinaryFrame.encodeBCDBigEndian8(tenHzUnits)
         let frame = Data([bcd[0], bcd[1], bcd[2], bcd[3], 0x01])
-        try await transport.write(frame)
+        try await writeCommandFrame(frame)
         _ = try await readAckByte()
     }
 
@@ -146,7 +146,7 @@ public actor YaesuPortableCAT:
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         let selector = try Self.modeSelector(for: mode)
         let frame = Data([selector, 0x00, 0x00, 0x00, 0x07])
-        try await transport.write(frame)
+        try await writeCommandFrame(frame)
         _ = try await readAckByte()
     }
 
@@ -163,7 +163,7 @@ public actor YaesuPortableCAT:
     public func setPTT(_ enabled: Bool) async throws {
         let opcode: UInt8 = enabled ? 0x08 : 0x88
         let frame = Data([0x00, 0x00, 0x00, 0x00, opcode])
-        try await transport.write(frame)
+        try await writeCommandFrame(frame)
         _ = try await readAckByte()
     }
 
@@ -203,6 +203,30 @@ public actor YaesuPortableCAT:
 
     // MARK: - Wire helpers
 
+    /// Writes a 5-byte command frame after flushing any pending input.
+    ///
+    /// **Why flush before every write:** the FT-817 family's CAT
+    /// protocol has no framing, no checksum, and no way to distinguish
+    /// a delayed byte from a valid response.  If a previous set-command
+    /// ACK arrived after our `responseTimeout` (say the OS scheduler
+    /// stalled ~1.1s and we gave up at 1.0s), the late ACK byte stays
+    /// queued in the OS serial input buffer.  The next `readExact` on
+    /// the following command then reads that stale byte first — turning
+    /// e.g. a valid `[0x14, 0x50, 0x00, 0x00, 0x08]` freq+mode reply
+    /// into `[ACK, 0x14, 0x50, 0x00, 0x00]` where BCD decode sees `0x14`
+    /// as digits 1,4 (fine) but the whole frame is off by one and the
+    /// mode byte reads as pure junk.  Downstream this throws
+    /// `RigError.invalidResponse` — the "Command Failed: Received
+    /// invalid response from radio" the user sees in the picker.
+    ///
+    /// Hamlib solves this the same way: `rig_flush(rp)` is called
+    /// before every command write in `rigs/yaesu/ft817.c` (lines 793,
+    /// 1422).  releases#49 on macwinlink-releases.
+    private func writeCommandFrame(_ frame: Data) async throws {
+        try await transport.flush()
+        try await transport.write(frame)
+    }
+
     /// Sends a 5-byte status query and reads the expected fixed-length
     /// response. Used for get-freq/mode (5-byte response, opcode 0x03),
     /// get-TX-status (1-byte, opcode 0xF7), and get-RX-status (1-byte,
@@ -218,7 +242,7 @@ public actor YaesuPortableCAT:
     private func sendStatusCommand(opcode: UInt8,
                                     expectedLength: Int) async throws -> Data {
         let frame = Data([0x00, 0x00, 0x00, 0x00, opcode])
-        try await transport.write(frame)
+        try await writeCommandFrame(frame)
         return try await transport.readExact(count: expectedLength,
                                              timeout: responseTimeout)
     }

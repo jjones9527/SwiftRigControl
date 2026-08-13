@@ -21,6 +21,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.11] - 2026-08-13
+
+### Fixed
+
+- **`YaesuPortableCAT` now flushes the serial input buffer before
+  every command write** (`setFrequency`, `setMode`, `setPTT`,
+  `sendStatusCommand`).  The FT-817-family binary CAT has no
+  framing, no checksum, and no way to distinguish a delayed byte
+  from a valid response.  If a previous set-command's `ACK` byte
+  arrived after our `responseTimeout` (say the OS scheduler stalled
+  ~1.1s and we gave up at 1.0s), the late byte stayed queued in the
+  OS serial input buffer.  The next `readExact` on the following
+  command read that stale byte first, off-by-one-decoded the
+  response, and threw `.invalidResponse` — the *"Command Failed:
+  Received invalid response from radio"* symptom that surfaced as
+  [macwinlink-releases#49](https://github.com/jjones9527/macwinlink-releases/issues/49)
+  (FT-857 on beta32/33 with same hardware working reliably via
+  rigctld).  Matches Hamlib's `rig_flush(rp)` pattern in
+  `rigs/yaesu/ft817.c` lines 793 and 1422.  Affects all radios
+  routed through `YaesuPortableCAT`: FT-817 / FT-818 / FT-857 /
+  FT-857D / FT-897 / FT-897D / FT-100 / FT-920.  Regression tests
+  in `YaesuPortableCATTests` lock the flush-before-every-write
+  invariant per operation, plus a consecutive-command test that
+  guards against future refactors reverting the fix.
+  `MockTransport` gains a `recordedOperations` log so tests can
+  assert wire-level ordering (`.flush` vs `.write(data)`).
+
 ## [1.2.10] - 2026-08-12
 
 ### Fixed

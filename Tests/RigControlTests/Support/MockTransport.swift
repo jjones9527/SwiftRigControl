@@ -5,11 +5,23 @@ import Foundation
 actor MockTransport: SerialTransport {
     var mockResponses: [Data: Data] = [:]
     var recordedWrites: [Data] = []
+    /// Interleaved history of flush() and write() calls so tests can
+    /// assert ordering (e.g. "flush called before every write" as
+    /// required by protocols with no framing/checksum, per
+    /// SwiftRigControl releases#49).  Each element is either
+    /// `.flush` or `.write(data)`.
+    var recordedOperations: [Operation] = []
     var shouldThrowOnWrite: Bool = false
     var shouldThrowOnRead: Bool = false
     /// Chunks delivered one-per-read to simulate low-baud arrival.
     var chunkedResponse: [Data] = []
     private var _isOpen: Bool = false
+
+    /// Wire-level operation for `recordedOperations`.
+    enum Operation: Equatable {
+        case flush
+        case write(Data)
+    }
 
     var isOpen: Bool {
         _isOpen
@@ -33,6 +45,7 @@ actor MockTransport: SerialTransport {
         }
 
         recordedWrites.append(data)
+        recordedOperations.append(.write(data))
     }
 
     func read(timeout: TimeInterval) async throws -> Data {
@@ -73,7 +86,7 @@ actor MockTransport: SerialTransport {
         guard _isOpen else {
             throw RigError.notConnected
         }
-        // No-op for mock
+        recordedOperations.append(.flush)
     }
 
     func setDTR(_ enabled: Bool) async throws {
@@ -90,6 +103,7 @@ actor MockTransport: SerialTransport {
 
     func reset() {
         recordedWrites.removeAll()
+        recordedOperations.removeAll()
         mockResponses.removeAll()
         chunkedResponse.removeAll()
         shouldThrowOnWrite = false
