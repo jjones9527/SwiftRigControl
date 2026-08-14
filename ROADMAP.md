@@ -1,6 +1,19 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.12 (cut 2026-08-14 — canonical
+**Current version:** v1.2.13 (cut 2026-08-14 — netrigctl
+`vfo_opt=1` extended command syntax. Follow-on from v1.2.12:
+after the `\dump_state` handshake succeeded, Direwolf sent
+`T VFOA 1` (the extended "set PTT on this VFO" form netrigctl
+uses when the server advertises >1 VFO) and our parser tried
+`Int("VFOA")` → `RPRT -1` → Direwolf gave up on PTT
+(macwinlink-releases#54 followup). Fix adds `stripLeadingVFO(_:)`
+keyed on Hamlib `src/misc.c:616` canonical VFO table, wired
+into every parser case whose Hamlib entry is not `ARG_NOVFO`
+(F/f, M/m, I/i, X/x, S/s, L/l, U/u, T/t, Y/y + their `\set_*`
+/ `\get_*` forms). Stripped VFO is discarded — `RigController`
+is single-VFO — but the wire syntax is accepted. 27 new tests.
+Test count 713 → 740, zero regressions.) Previous release
+**v1.2.12** (cut 2026-08-14 — canonical
 Hamlib `\dump_state` netrigctl handshake. Previous 6-line
 payload bailed netrigctl's positional `num_sscanf` parser with
 `-8 Protocol error`; MacWinlink beta37 shipped a Direwolf

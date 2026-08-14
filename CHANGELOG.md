@@ -21,6 +21,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.13] - 2026-08-14
+
+### Fixed
+
+- **`RigctldCommandParser` now accepts the extended
+  `<cmd> <vfo> <args...>` syntax** that netrigctl clients emit
+  when `vfo_opt=1`.  Hamlib's netrigctl backend auto-enables
+  `vfo_opt` when the server's `\dump_state` payload advertises
+  more than one VFO — which v1.2.12 does for every
+  `hasVFOB: true` radio, so any dual-VFO radio (IC-7100, IC-7300,
+  IC-7610, IC-9700, etc.) tripped over this on the very next
+  command after the handshake.  Direwolf's `PTT RIG 2` path (added
+  by MacWinlink 1.0.0-beta37 for ARSFI#343) was the specific
+  caller flagged: it sent `T VFOA 1\n`, our parser tried
+  `Int("VFOA")` at the PTT arg position, threw `.invalidParameter`
+  → `RPRT -1`, and Direwolf logged
+  `rig_set_ptt returning(-1) Invalid parameter` and gave up on
+  PTT for the session (macwinlink-releases#54 followup).
+
+  Fix adds a `stripLeadingVFO(_:)` helper keyed on Hamlib's
+  canonical VFO name table (`src/misc.c:616`) — `VFOA`, `VFOB`,
+  `VFOC`, `currVFO`, `VFO`, `MEM`, `Main`/`MainA`/`MainB`/`MainC`,
+  `Sub`/`SubA`/`SubB`/`SubC`, `TX`, `RX`, `None`, `otherVFO`,
+  `AllVFOs`, case-sensitive.  Called at the top of every parser
+  case whose Hamlib command-table entry does not carry
+  `ARG_NOVFO` (F/f, M/m, I/i, X/x, S/s, L/l, U/u, T/t, Y/y and
+  their `\set_*`/`\get_*` long forms).  `V`/`v` (`set_vfo`,
+  `get_vfo`) are exempt — VFO is the semantic argument there.
+  `G` (`vfo_op`), `g` (`scan`), `b` (`send_morse`), and the
+  dump/probe families are `ARG_NOVFO` and unchanged.
+
+  Deliberately excludes the `"1"` gpredict alias from Hamlib's
+  vfo_str table.  That alias exists only for `set_vfo 1` (a `V`
+  command, exempt from stripping); including it here would
+  mis-classify the `1` in bare `T 1` / `S 1` as a VFO prefix and
+  break every non-vfo-opt client.  Real Hamlib rigctld filters
+  non-alpha VFO tokens out earlier
+  (`tests/rigctl_parse.c:1442`), so declining `"1"` here matches
+  real rigctld's effective behavior on the affected commands.
+
+  The stripped VFO is discarded — SwiftRigControl's `RigController`
+  operates on a single active VFO — but the wire syntax is now
+  accepted.  A future v1.3 could plumb the VFO through as an
+  optional field on the affected `RigctldCommand` cases.
+
+### Tests
+
+- 27 new tests in
+  `Tests/RigControlTests/UnitTests/RigctldParserVFOPrefixTests.swift`
+  lock the extended syntax matrix: bare + VFO-prefixed forms of
+  `T`, `F`, `M`, `S`, `L`, `U`, `f`, `t`, plus the long-form
+  `\set_ptt VFOA 1` / `\set_freq VFOB 7100000` /
+  `\set_mode VFOA USB 2400` variants.  Regression coverage for
+  `G VFOA` (must reach `.vfoOp` — `vfo_op` is `ARG_NOVFO`) and
+  `V VFOA` (must reach `.setVFO` — the VFO *is* the argument).
+  Case-sensitivity guarded by `T Main 1` (accepted, mixed case
+  per Hamlib) and `T main 1` (rejected — lowercase not in
+  canonical table).  Test count 713 → 740, zero regressions.
+
 ## [1.2.12] - 2026-08-14
 
 ### Fixed

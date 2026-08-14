@@ -65,6 +65,82 @@ public struct RigctldCommandParser {
     /// Creates a new parser. Stateless — one shared instance is fine.
     public init() {}
 
+    /// Canonical VFO name strings a client may prepend to any
+    /// command that isn't `ARG_NOVFO`, exactly as Hamlib's
+    /// `rig_parse_vfo` (`src/misc.c:616`) accepts them.
+    /// Case-sensitive per Hamlib: `VFOA` uppercase but `Main` /
+    /// `Sub` mixed-case, `currVFO` mixed.
+    ///
+    /// Deliberately excludes the `"1"` gpredict alias listed at
+    /// `misc.c:635`. That alias exists only for `set_vfo 1` (a `V`
+    /// command, which takes VFO as its semantic arg and is exempt
+    /// from stripping). Including it here would mis-classify the
+    /// `1` in bare `T 1` / `S 1` as a VFO prefix, breaking every
+    /// non-vfo-opt client. Hamlib itself filters non-alpha VFO
+    /// tokens out earlier in `rigctl_parse.c:1442`, so declining
+    /// `"1"` here matches real rigctld's effective behavior on the
+    /// commands we strip on.
+    ///
+    /// netrigctl clients send the alpha VFO names when `vfo_opt=1`,
+    /// which they enable automatically when the server's
+    /// `\dump_state` payload advertises more than one VFO (v1.2.12
+    /// does, for any radio with `hasVFOB: true`). Direwolf's
+    /// `PTT RIG 2` path is the specific caller flagged by
+    /// macwinlink-releases#54.
+    private static let vfoNames: Set<String> = [
+        "VFOA", "VFOB", "VFOC",
+        "currVFO", "VFO",
+        "MEM",
+        "Main", "MainA", "MainB", "MainC",
+        "Sub", "SubA", "SubB", "SubC",
+        "TX", "RX",
+        "None", "otherVFO", "AllVFOs",
+    ]
+
+    /// Short-form command letters whose Hamlib command-table entry
+    /// does *not* carry `ARG_NOVFO` — i.e. the ones that accept a
+    /// leading canonical VFO argument under `vfo_opt=1`.
+    /// Cross-checked against `tests/rigctl_parse.c` lines ~287-352:
+    /// F/f, M/m, I/i, X/x, S/s, L/l, U/u, T/t, Y/y. `V`/`v` take
+    /// the VFO as their own semantic arg. `b`/`g`/`G` and the
+    /// dump/power/probe families are `ARG_NOVFO`.
+    private static let shortFormsAcceptingLeadingVFO: Set<Character> = [
+        "F", "f", "M", "m", "I", "i", "X", "x", "S", "s",
+        "L", "l", "U", "u", "T", "t", "Y", "y",
+    ]
+
+    /// Long-form command names whose Hamlib command-table entry
+    /// does *not* carry `ARG_NOVFO`. Same rules as the short-form
+    /// set, expressed as the `\set_*` / `\get_*` names netrigctl
+    /// actually sends over the wire.
+    private static let longFormsAcceptingLeadingVFO: Set<String> = [
+        "set_freq", "get_freq",
+        "set_mode", "get_mode",
+        "set_split_freq", "get_split_freq",
+        "set_split_mode", "get_split_mode",
+        "set_split_vfo", "get_split_vfo",
+        "set_level", "get_level",
+        "set_func", "get_func",
+        "set_ptt", "get_ptt",
+        "set_ant", "get_ant",
+    ]
+
+    /// If `args.first` matches a canonical Hamlib VFO name, pop it
+    /// off and return the token; otherwise leave `args` untouched
+    /// and return nil.
+    ///
+    /// SwiftRigControl's `RigController` operates on a single active
+    /// VFO at a time, so the returned token is discarded by callers
+    /// — the point of the strip is wire compatibility with clients
+    /// that honor the `vfo_opt=1` handshake, not per-VFO routing
+    /// inside the library. A future v1.3 could plumb the VFO through
+    /// as an optional field on the affected `RigctldCommand` cases.
+    private static func stripLeadingVFO(_ args: inout [String]) -> String? {
+        guard let first = args.first, vfoNames.contains(first) else { return nil }
+        args.removeFirst()
+        return first
+    }
+
     /// Parse a command string into a RigctldCommand
     ///
     /// - Parameter input: Command string (e.g., "F 14230000" or "\set_freq 14230000")
@@ -96,7 +172,25 @@ public struct RigctldCommandParser {
         guard let char = commandChar.first else {
             throw ParseError.unknownCommand(input)
         }
-        let args = parts.dropFirst().map(String.init)
+        var args = parts.dropFirst().map(String.init)
+
+        // Strip a leading canonical VFO name for every command whose
+        // Hamlib table entry does NOT set `ARG_NOVFO`
+        // (`tests/rigctl_parse.c` command table, lines ~287-352).
+        // Clients running `vfo_opt=1` prefix these; netrigctl auto-
+        // enables `vfo_opt` when the server's `\dump_state`
+        // advertises multiple VFOs, which SwiftRigControl does for
+        // any `hasVFOB: true` radio. Not stripping here throws
+        // `-1 Invalid parameter` back at the client
+        // (macwinlink-releases#54).
+        //
+        // Excluded (ARG_NOVFO in Hamlib):
+        //   V/v (VFO is the semantic arg), b (send_morse), g (scan),
+        //   G (vfo_op), and no short forms exist for the
+        //   dump_*/set_powerstat/power2mW/mW2power family.
+        if Self.shortFormsAcceptingLeadingVFO.contains(char) {
+            _ = Self.stripLeadingVFO(&args)
+        }
 
         switch char {
         // Frequency control
@@ -292,7 +386,14 @@ public struct RigctldCommandParser {
             throw ParseError.malformedCommand("Missing command name")
         }
 
-        let args = parts.dropFirst().map(String.init)
+        var args = parts.dropFirst().map(String.init)
+
+        // Same VFO-strip logic as the short-form parser — real
+        // Hamlib rigctld accepts `\set_ptt VFOA 1` etc. under
+        // `vfo_opt=1`.
+        if Self.longFormsAcceptingLeadingVFO.contains(String(commandName)) {
+            _ = Self.stripLeadingVFO(&args)
+        }
 
         switch commandName {
         // Frequency control
