@@ -30,6 +30,16 @@ public struct RigctldResponse: Sendable {
     /// Return code (for extended protocol)
     public let returnCode: RigctldProtocol.ReturnCode
 
+    /// Whether to omit the trailing `RPRT <n>\n` in default-protocol
+    /// output. Real Hamlib rigctld omits the RPRT trailer for
+    /// commands declared with `ARG_OUT` that carry their own
+    /// protocol-defined terminators inside the payload — notably
+    /// `\dump_state` and `\dump_caps`. netrigctl reads a fixed
+    /// number of fields off the wire for these; a stray `RPRT 0\n`
+    /// afterwards stays in the socket buffer and corrupts the very
+    /// next command's response.
+    public let suppressRPRTTrailer: Bool
+
     /// Response separator character
     private static let separator = "\n"
 
@@ -38,10 +48,14 @@ public struct RigctldResponse: Sendable {
     /// - Parameters:
     ///   - data: Response data lines
     ///   - command: Command that was executed (optional, for extended protocol)
-    public init(data: [String], command: RigctldCommand? = nil) {
+    ///   - suppressRPRTTrailer: Omit the trailing `RPRT` line in
+    ///     default protocol mode. Only correct for `\dump_state`
+    ///     and `\dump_caps`.
+    public init(data: [String], command: RigctldCommand? = nil, suppressRPRTTrailer: Bool = false) {
         self.data = data
         self.command = command
         self.returnCode = .ok
+        self.suppressRPRTTrailer = suppressRPRTTrailer
     }
 
     /// Create a successful response with single value
@@ -53,6 +67,7 @@ public struct RigctldResponse: Sendable {
         self.data = [value]
         self.command = command
         self.returnCode = .ok
+        self.suppressRPRTTrailer = false
     }
 
     /// Create an error response
@@ -64,6 +79,7 @@ public struct RigctldResponse: Sendable {
         self.data = []
         self.command = command
         self.returnCode = returnCode
+        self.suppressRPRTTrailer = false
     }
 
     /// Format response for default protocol
@@ -94,7 +110,13 @@ public struct RigctldResponse: Sendable {
         if !data.isEmpty {
             output += data.joined(separator: Self.separator) + Self.separator
         }
-        output += returnCode.description + Self.separator
+        // `\dump_state` / `\dump_caps` mirror Hamlib's `ARG_OUT`
+        // path — netrigctl reads exactly the fields inside the
+        // payload and stops. An RPRT trailer after that gets
+        // orphaned in the socket buffer.
+        if !suppressRPRTTrailer {
+            output += returnCode.description + Self.separator
+        }
         return output
     }
 

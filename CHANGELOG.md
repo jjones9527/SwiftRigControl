@@ -21,6 +21,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.12] - 2026-08-14
+
+### Fixed
+
+- **`RigctldCommandHandler.dumpState()` now emits the full canonical
+  Hamlib `\dump_state` payload** so third-party clients using
+  Hamlib's netrigctl backend (`-m 2`) can complete
+  `netrigctl_open()` without a `-8 Protocol error`.  Direwolf's
+  `PTT RIG 2` path (added by MacWinlink 1.0.0-beta37 for ARSFI#343)
+  points netrigctl at MacWinlink's embedded `RigControlServer`
+  instead of the Helper's separately-spawned `rigctld` process;
+  our previous 6-line output (protocol version, model, ITU region,
+  one frequency range, one 7-zero terminator, VFO list) bailed
+  netrigctl's positional `num_sscanf` parser on the very next
+  read.  Fix expands the payload to the full sequence Hamlib
+  `tests/rigctl_parse.c:4685` emits: RX ranges + terminator, TX
+  ranges + terminator (respecting `DetailedFrequencyRange.canTransmit`
+  when set, falling through to RX ranges otherwise), tuning-step
+  list + terminator, filter-width list + terminator, four scalar
+  limits (`max_rit` / `max_xit` / `max_ifshift` / `announces`),
+  preamp + attenuator lists, the six `has_get/set_func/level/parm`
+  bitmask lines, and the protocol-1 `setting=value` extension
+  block closed by a `done\n` line.  Where our capability model
+  doesn't carry the per-radio detail Hamlib's `rig_state` struct
+  does (per-mode filters, per-mode tuning steps, RIT/XIT lever
+  limits), the payload emits conservative all-modes defaults that
+  netrigctl accepts without asserting capabilities we don't have.
+  Reported from MacWinlink beta37 field testing
+  ([jjones9527/macwinlink-releases#54](https://github.com/jjones9527/macwinlink-releases/issues/54)).
+- **`RigctldResponse.formatDefault()` gains a `suppressRPRTTrailer`
+  path** so `\dump_state` (and `\dump_caps`) can omit the trailing
+  `RPRT 0\n` line without regressing the v1.2.9 fix for every other
+  command.  Real Hamlib rigctld gates the RPRT trailer on
+  `!(cmd_entry->flags & ARG_OUT)` (`rigctl_parse.c:1921`); both
+  `dump_state` (0x8f) and `dump_caps` ('1') carry `ARG_OUT`, so
+  real rigctld does not emit RPRT after either.  Emitting RPRT
+  after `\dump_state` orphans a line in the socket buffer that
+  becomes the response to the very next command — subtly worse
+  than the `-8` failure that first surfaced the bug.
+
+### Tests
+
+- Thirteen new tests in
+  `Tests/RigControlTests/ProtocolTests/RigctldDumpStateTests.swift`
+  lock the netrigctl-parseable wire format: preamble ordering,
+  presence of both range terminators, TS/filter terminators,
+  seven-field range lines, two-field TS/filter lines, six
+  bitmask lines, `done` sentinel, and a full round-trip that
+  drives our output through the same field-by-field consumption
+  loop netrigctl_open uses.  Also verifies
+  `DetailedFrequencyRange.canTransmit=false` bands are filtered
+  out of TX ranges (RX-above-30-MHz HF radios) and that the
+  formatted wire bytes start with `1\n2\n0\n` and end with
+  `done\n` — no leftover `RPRT 0\n` trailer.  Test count 700 →
+  713.
+
 ## [1.2.11] - 2026-08-13
 
 ### Fixed

@@ -1,6 +1,25 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.8 (cut 2026-08-01 — Yaesu portable
+**Current version:** v1.2.12 (cut 2026-08-14 — canonical
+Hamlib `\dump_state` netrigctl handshake. Previous 6-line
+payload bailed netrigctl's positional `num_sscanf` parser with
+`-8 Protocol error`; MacWinlink beta37 shipped a Direwolf
+`PTT RIG 2` path that targets our embedded `RigControlServer`
+and surfaced the gap (jjones9527/macwinlink-releases#54). Fix
+emits the full sequence from Hamlib `rigctl_parse.c:4685`: RX
+and TX range slots + terminators, tuning-step + filter lists +
+terminators, four scalar limits, preamp/attenuator lists, six
+`has_get/set_func/level/parm` bitmasks, and a protocol-1
+`setting=value` extension block closed by `done`.
+`RigctldResponse.formatDefault()` gains a `suppressRPRTTrailer`
+path so `\dump_state` and `\dump_caps` can omit the RPRT
+trailer (matching Hamlib's `ARG_OUT` gating at
+`rigctl_parse.c:1921`) without regressing v1.2.9's RPRT fix
+for every other command. Thirteen new tests lock the wire
+format including a full round-trip through the same parsing
+loop `netrigctl_open` uses. Test count 700 → 713, zero
+regressions.) Previous release **v1.2.11** (cut 2026-08-13 —
+Yaesu portable
 CAT `.dataFM` mode-selector fix. `modeSelector(for:)` in
 `YaesuPortableCAT` previously covered `.dataUSB` and
 `.dataLSB` but not `.dataFM`, which fell into the switch
