@@ -1,6 +1,22 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.13 (cut 2026-08-14 — netrigctl
+**Current version:** v1.2.14 (cut 2026-08-14 —
+`ClientSession.receiveLine()` no longer drops bytes across
+TCP receive boundaries. Second followup to
+macwinlink-releases#54: after v1.2.12 (dump_state handshake)
+and v1.2.13 (vfo_opt parser) unblocked Direwolf PTT through
+IC-7100 on MBA, every PTT toggle logged a Hamlib warning
+(`-9 Command rejected` on unkey, `-10 arg truncated` on key)
+even though the radio keyed correctly. Root cause: two
+latent bugs in the receive-loop that Direwolf's rapid PTT
+pattern exercised — TCP coalescing (`T VFOA 1\nT VFOA 0\n`
+in one recv) had the tail discarded, and TCP fragmentation
+(`T VFOA` then ` 1\n`) had the first chunk dropped entirely.
+Fix introduces `LineBuffer` value type that holds unconsumed
+bytes across `receive()` calls. Zero API change. 19 new
+tests (9 LineBuffer + 10 setPTT wire byte-exact). Test
+count 740 → 759, zero regressions.) Previous release
+**v1.2.13** (cut 2026-08-14 — netrigctl
 `vfo_opt=1` extended command syntax. Follow-on from v1.2.12:
 after the `\dump_state` handshake succeeded, Direwolf sent
 `T VFOA 1` (the extended "set PTT on this VFO" form netrigctl

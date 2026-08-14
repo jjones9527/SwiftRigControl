@@ -21,6 +21,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.14] - 2026-08-14
+
+### Fixed
+
+- **`ClientSession.receiveLine()` no longer drops bytes across
+  TCP receive boundaries.**  The prior implementation had two
+  latent bugs the v1.2.12/1.2.13 fixes brought within reach of
+  Direwolf's rapid PTT-toggle pattern during MacWinlink Packet
+  sessions (macwinlink-releases#54 second followup, MBA beta38
+  Air testing).  Complete Winlink Packet sessions succeeded on
+  IC-7100 (SABM → UA → I-frames → RR → DISC through both
+  VE3AVP-10 and VE3SMF-10, full B2F login to CMS), but every
+  single PTT toggle logged a Hamlib error:
+
+      *1:rig_set_ptt returning(-9) Command rejected by the rig     (T VFOA 0)
+      *1:rig_set_ptt returning(-10) Command performed, but arg truncated  (T VFOA 1)
+
+  The radio keyed correctly every time and Hamlib's `-9` /
+  `-10` are warnings, so sessions functioned — but the log
+  noise was distracting and any strict Hamlib client would
+  abort.
+
+  Root cause: `receiveLine()` handled two TCP realities wrong:
+
+  1. **Coalescing**: when TCP delivered `T VFOA 1\nT VFOA 0\n`
+     (18 bytes) in a single `NWConnection.receive()`, the code
+     extracted the first line and *discarded* everything after
+     the newline.  The next `receive()` returned bytes from a
+     completely different command from the client, but our
+     state machine thought they were part of the first
+     unfinished-line hole it had opened.
+  2. **Fragmentation**: when TCP delivered `T VFOA` in one
+     chunk and ` 1\n` in the next, the first chunk was
+     dropped entirely (`receiveLine` returned `""` and threw
+     away the 6 partial bytes).  The second chunk was then
+     parsed alone as ` 1` → parser rejection → `RPRT -1\n`
+     (8 bytes) on the wire, which is exactly what Direwolf's
+     Hamlib mapped to `-9 Command rejected`.  The `T VFOA 1`
+     case produced the `-10 arg truncated` variant through a
+     symmetric fragmentation timing.
+
+  Fix introduces a `LineBuffer` value type that holds
+  unconsumed bytes across `receive()` calls.  `receiveLine()`
+  now: (1) checks the buffer for a complete `\n`-terminated
+  line first, returning immediately if found; (2) if not,
+  reads one chunk off the socket, appends to the buffer,
+  loops.  Pipelined commands are consumed in order without
+  loss; fragmented commands reassemble across arbitrarily many
+  chunks (worst case: one byte at a time still works).
+
+  Zero API change — `LineBuffer` is module-internal, exposed
+  only for test visibility.  `receiveLine()`'s public shape
+  (an `async throws` returning `String`) is identical to
+  v1.2.13.
+
+### Tests
+
+- 9 new tests in
+  `Tests/RigControlTests/UnitTests/LineBufferTests.swift` lock
+  the buffer invariants: coalesced input emits lines in order,
+  trailing partial lines stay buffered, fragmented lines
+  reassemble across two-many-appends including a worst-case
+  one-byte-at-a-time reassembly, empty inputs are no-ops, and
+  a "Direwolf PTT storm" combined case exercises three
+  toggles coalesced into one chunk followed by two toggles
+  each fragmented mid-VFO and mid-argument.
+- 10 new tests in
+  `Tests/RigControlTests/ProtocolTests/RigctldSetPTTWireBytesTests.swift`
+  independently confirm the handler + formatter pipeline
+  produces exactly `RPRT 0\n` (7 bytes) for `T 0`, `T 1`,
+  `T VFOA 0`, `T VFOA 1`, `F ...`, `F VFOA ...`, `M ...`,
+  `M VFOA ...`, `S ...`, `S VFOA ...` — pinning the handler
+  side so any future regression is unambiguously the transport
+  layer, not the response formatter.
+
+Test count 740 → 759, zero regressions.
+
 ## [1.2.13] - 2026-08-14
 
 ### Fixed

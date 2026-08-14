@@ -181,6 +181,66 @@ public actor RigControlServer {
     }
 }
 
+// MARK: - Line buffer
+
+/// Line-buffered feed of bytes off a TCP socket. Handles the
+/// three inconvenient realities of TCP:
+///
+/// 1. **Fragmentation.** A single logical command may arrive in
+///    two or more `recv()` chunks (e.g. `T VFOA` then ` 1\n`).
+/// 2. **Coalescing.** Multiple logical commands may arrive in a
+///    single `recv()` chunk (e.g. `T VFOA 1\nT VFOA 0\n` in one
+///    read — Direwolf's rapid PTT toggles under load, or client
+///    Nagle aggregation).
+/// 3. **Bytes without newlines are still bytes.** They must be
+///    buffered, not dropped, or the next chunk's meaning is
+///    scrambled.
+///
+/// Prior to v1.2.14, `ClientSession.receiveLine()` handled case 2
+/// wrong (took the first line and discarded everything after) and
+/// case 1 catastrophically wrong (returned an empty line and
+/// dropped the partial bytes on the floor). Under Direwolf's PTT
+/// storm during a MacWinlink Packet session, this manifested as
+/// `T VFOA 0` seeing an 8-byte reply and `T VFOA 1` seeing a
+/// 9-byte reply, both mapped by Hamlib to warning codes -9 and
+/// -10 (macwinlink-releases#54 second followup).
+///
+/// This buffer is internal to the module for test visibility.
+struct LineBuffer {
+    private var data: Data = Data()
+
+    /// Append `chunk` to the buffer.
+    mutating func append(_ chunk: Data) {
+        data.append(chunk)
+    }
+
+    /// Pop the next `\n`-terminated line from the buffer, if any.
+    /// Returns the line WITHOUT its trailing `\n`. Returns `nil`
+    /// if the buffer doesn't yet contain a complete line — the
+    /// caller must read more bytes and try again.
+    ///
+    /// The buffer retains any bytes after the consumed `\n` so
+    /// subsequent calls see them, which is how case 2 (coalesced
+    /// commands) is handled.
+    mutating func nextLine() -> String? {
+        guard let newlineIdx = data.firstIndex(of: 0x0A) else {
+            return nil
+        }
+        let lineBytes = data[data.startIndex..<newlineIdx]
+        let line = String(data: lineBytes, encoding: .utf8) ?? ""
+        // Drop the line + its trailing `\n` from the buffer.
+        data.removeSubrange(data.startIndex...newlineIdx)
+        return line
+    }
+
+    /// True if the buffer holds no unconsumed bytes.
+    var isEmpty: Bool { data.isEmpty }
+
+    /// Byte count of unconsumed data. Test-visible for
+    /// invariant checks.
+    var count: Int { data.count }
+}
+
 // MARK: - Client Session
 
 /// Represents a single client connection to the rigctld server
@@ -199,6 +259,11 @@ private actor ClientSession {
 
     /// Whether the session is active
     private var isActive = false
+
+    /// Byte buffer holding data read from the socket but not yet
+    /// dispatched as a complete command line. See `LineBuffer`
+    /// for the fragmentation/coalescing rationale.
+    private var lineBuffer = LineBuffer()
 
     init(connection: NWConnection, rigController: RigController) {
         self.connection = connection
@@ -275,29 +340,41 @@ private actor ClientSession {
     // MARK: - I/O
 
     private func receiveLine() async throws -> String {
+        // If the buffer already holds a complete line from a
+        // previous coalesced read, return it immediately without
+        // touching the socket. This is what makes pipelined sends
+        // (case 2 in LineBuffer's doc) work.
+        while true {
+            if let line = lineBuffer.nextLine() {
+                return line
+            }
+            // No complete line yet — pull the next chunk off the
+            // wire and append. Loop back to try again.
+            let chunk = try await receiveChunk()
+            lineBuffer.append(chunk)
+        }
+    }
+
+    /// Read one chunk of bytes off the socket. Throws
+    /// `.connectionClosed` when the peer closes with no more data.
+    private func receiveChunk() async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             connection.receive(minimumIncompleteLength: 1, maximumLength: 1024) { data, _, isComplete, error in
                 if let error = error {
                     continuation.resume(throwing: error)
                     return
                 }
-
                 if let data = data, !data.isEmpty {
-                    let string = String(data: data, encoding: .utf8) ?? ""
-                    // Find first newline
-                    if let newlineIndex = string.firstIndex(of: "\n") {
-                        let line = String(string[..<newlineIndex])
-                        continuation.resume(returning: line)
-                    } else if isComplete {
-                        continuation.resume(returning: string)
-                    } else {
-                        // Need more data
-                        continuation.resume(returning: "")
-                    }
+                    continuation.resume(returning: data)
                 } else if isComplete {
                     continuation.resume(throwing: RigControlServerError.connectionClosed)
                 } else {
-                    continuation.resume(returning: "")
+                    // NWConnection can call the completion with no
+                    // data and no isComplete when a receive was
+                    // satisfied by an empty flush (rare). Return
+                    // an empty chunk so the caller loops and tries
+                    // again.
+                    continuation.resume(returning: Data())
                 }
             }
         }
