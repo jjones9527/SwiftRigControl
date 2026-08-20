@@ -69,8 +69,10 @@ import Testing
     @Test func errorResponsesEmitRPRTWithNonZeroCode() {
         let response = RigctldResponse.error(.notSupported)
         let formatted = response.formatDefault()
-        // notSupported = -12 per RigctldProtocol.ReturnCode
-        #expect(formatted == "RPRT -12\n")
+        // notSupported = -11 (Hamlib RIG_ENAVAIL) — see
+        // RigctldProtocol.ReturnCode.  Aligned with canonical
+        // Hamlib rig_errcode_e in v1.2.15.
+        #expect(formatted == "RPRT -11\n")
     }
 
     // MARK: - Round-trip against Hamlib's expectations

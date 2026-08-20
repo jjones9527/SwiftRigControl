@@ -1,6 +1,24 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.14 (cut 2026-08-14 —
+**Current version:** v1.2.15 (cut 2026-08-20 —
+`RigctldProtocol.ReturnCode` raw values aligned with Hamlib
+canonical `rig_errcode_e` (rig.h). Third followup to
+macwinlink-releases#54, addressing macwinlink-releases#66
+(MacWinlink beta38 candidate field report). After v1.2.14
+eliminated the transport-layer causes of setPTT throwing,
+any residual `.rejected` path still emitted the wrong wire
+code — the enum had a SwiftRigControl-invented
+`.communicationError = -5` wedged between `.notImplemented =
+-4` and `.timeout`, shifting every subsequent value by one.
+Our `.rejected = -10` was being decoded by Hamlib as
+`RIG_ETRUNC` "arg truncated" (the exact wording in
+Direwolf's log), not `RIG_ERJCTED` "rejected". Fix
+re-numbers seven cases to their Hamlib symbols, removes
+`.communicationError` (callers → `.ioError`), and adds
+`.argTruncated`, `.busError`, `.busBusy` for wire-code
+coverage. 20 new tests lock every value to its Hamlib
+counterpart. Test count 759 → 779, zero regressions.)
+Previous release **v1.2.14** (cut 2026-08-14 —
 `ClientSession.receiveLine()` no longer drops bytes across
 TCP receive boundaries. Second followup to
 macwinlink-releases#54: after v1.2.12 (dump_state handshake)

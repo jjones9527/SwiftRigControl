@@ -42,52 +42,79 @@ public enum RigctldProtocol {
         case extended
     }
 
-    /// Return codes for extended protocol responses
+    /// Return codes for `RPRT <n>` responses.
+    ///
+    /// **Raw values are canonical Hamlib `rig_errcode_e` codes**,
+    /// negated (Hamlib returns errors as `-errcode`; the wire
+    /// format writes them as-is).  See `hamlib/include/hamlib/rig.h`
+    /// `enum rig_errcode_e`.  Aligning with Hamlib is not
+    /// cosmetic — Hamlib's client-side `netrigctl` decodes the
+    /// integer positionally against its own error-code table.  A
+    /// mismatched value here shows up in the client as the wrong
+    /// error string (e.g. sending `-10` when we meant "rejected"
+    /// makes Hamlib log "Command performed, but arg truncated" —
+    /// which is `RIG_ETRUNC`, not `RIG_ERJCTED`).
+    ///
+    /// macwinlink-releases#66 (v1.2.14 field report): every PTT
+    /// toggle showed `rig_set_ptt returning(-10) Command performed,
+    /// but arg truncated` in Direwolf's log because our `.rejected`
+    /// was pre-v1.2.15 defined as -10.  The prior enum grew
+    /// organically and inserted a SwiftRigControl-invented
+    /// `.communicationError = -5` between `.notImplemented` and
+    /// `.timeout`, shifting every subsequent value by one relative
+    /// to Hamlib.  v1.2.15 aligns the raw values with Hamlib.
     public enum ReturnCode: Int, Sendable {
-        /// Command succeeded
+        /// `RIG_OK` — command succeeded.
         case ok = 0
 
-        /// Invalid parameter
+        /// `RIG_EINVAL` — invalid parameter.
         case invalidParam = -1
 
-        /// Invalid configuration
+        /// `RIG_ECONF` — invalid configuration.
         case invalidConfig = -2
 
-        /// Out of memory
+        /// `RIG_ENOMEM` — memory shortage.
         case outOfMemory = -3
 
-        /// Feature not implemented
+        /// `RIG_ENIMPL` — function not implemented, but will be.
         case notImplemented = -4
 
-        /// Communication error
-        case communicationError = -5
+        /// `RIG_ETIMEOUT` — communication timed out.
+        case timeout = -5
 
-        /// Timeout
-        case timeout = -6
+        /// `RIG_EIO` — I/O error, including open failed.  Also
+        /// covers "socket / serial port unreachable" cases that
+        /// previously used the SwiftRigControl-invented
+        /// `.communicationError = -5`; that value collided with
+        /// Hamlib's `ETIMEOUT` and has been removed.
+        case ioError = -6
 
-        /// I/O error
-        case ioError = -7
+        /// `RIG_EINTERNAL` — internal Hamlib / library error.
+        case internalError = -7
 
-        /// Internal error
-        case internalError = -8
+        /// `RIG_EPROTO` — protocol error.
+        case protocolError = -8
 
-        /// Protocol error
-        case protocolError = -9
+        /// `RIG_ERJCTED` — command rejected by the rig.
+        case rejected = -9
 
-        /// Command rejected
-        case rejected = -10
+        /// `RIG_ETRUNC` — command performed, but arg truncated,
+        /// result not guaranteed.  SwiftRigControl does not
+        /// intentionally emit this; the case exists so external
+        /// callers can decode it when parsing rigctld responses.
+        case argTruncated = -10
 
-        /// Argument error
-        case argumentError = -11
+        /// `RIG_ENAVAIL` — function not available on this radio.
+        case notSupported = -11
 
-        /// Not supported
-        case notSupported = -12
+        /// `RIG_ENTARGET` — VFO not targetable.
+        case vfoNotTargetable = -12
 
-        /// VFO not targetable
-        case vfoNotTargetable = -13
+        /// `RIG_BUSERROR` — error talking on the bus.
+        case busError = -13
 
-        /// Error getting/setting
-        case error = -14
+        /// `RIG_BUSBUSY` — collision on the bus.
+        case busBusy = -14
 
         var description: String {
             "RPRT \(rawValue)"

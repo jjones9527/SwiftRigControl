@@ -51,7 +51,48 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.10** (git tag, 2026-08-12), an
+The shipped version is **v1.2.15** (git tag, 2026-08-20), a
+Hamlib return-code parity fix for MacWinlink beta38 field
+report macwinlink-releases#66.
+
+`RigctldProtocol.ReturnCode` raw values were off by one
+relative to Hamlib's canonical `rig_errcode_e`
+(`hamlib/include/hamlib/rig.h`): a SwiftRigControl-invented
+`.communicationError = -5` had been wedged between
+`.notImplemented = -4` and `.timeout`, shifting every
+subsequent value.  Our `.rejected = -10` was being decoded
+by Hamlib's client-side `netrigctl_transaction` as
+`RIG_ETRUNC` "Command performed, but arg truncated" — the
+exact wording every PTT toggle produced in Direwolf's log
+during Winlink Packet sessions on Jeremy's IC-7100 — instead
+of the intended `RIG_ERJCTED` "Command rejected by the rig"
+(`-9`).
+
+The v1.2.14 `LineBuffer` fix eliminated the transport-layer
+reasons `setPTT` was throwing (fragmented / coalesced TCP
+reads), but any residual `.rejected` path still emitted the
+wrong wire code because the enum value itself was mismatched.
+Fix re-aligns seven case raw values with Hamlib symbols
+(`.timeout` -6→-5, `.ioError` -7→-6, `.internalError` -8→-7,
+`.protocolError` -9→-8, `.rejected` -10→-9, `.notSupported`
+-12→-11, `.vfoNotTargetable` -13→-12), removes
+`.communicationError` (callers → `.ioError` = `RIG_EIO`), and
+adds `.argTruncated`, `.busError`, `.busBusy` cases for wire
+decoding coverage.  20 new tests in
+`RigctldReturnCodeHamlibParityTests` lock every value to its
+Hamlib counterpart.  Test count 759 → 779.
+
+The previously-shipped version was **v1.2.14** (git tag,
+2026-08-14), the second followup to macwinlink-releases#54.
+`ClientSession.receiveLine()` no longer drops bytes across
+TCP receive boundaries.  Introduced `LineBuffer` value type
+that holds unconsumed bytes across `receive()` calls to fix
+TCP coalescing (`T VFOA 1\nT VFOA 0\n` in one recv, tail
+discarded) and fragmentation (`T VFOA` then ` 1\n`, first
+chunk dropped) under Direwolf's rapid PTT toggle pattern.
+Test count 740 → 759.
+
+The previously-shipped version was **v1.2.10** (git tag, 2026-08-12), an
 Icom power-state probe fix for MacWinlink beta35-rc1
 (jjones9527/SwiftRigControl#14).
 

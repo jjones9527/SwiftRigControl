@@ -437,27 +437,30 @@ public actor RigctldCommandHandler {
     private func mapRigError(_ error: RigError, command: RigctldCommand) -> RigctldResponse {
         let code: RigctldProtocol.ReturnCode
 
+        // Mapping targets are canonical Hamlib codes.  See
+        // `RigctldProtocol.ReturnCode` for the Hamlib symbols each
+        // case corresponds to.
         switch error {
         case .notConnected:
-            code = .communicationError
+            code = .ioError                  // RIG_EIO
         case .timeout:
-            code = .timeout
+            code = .timeout                  // RIG_ETIMEOUT
         case .invalidParameter:
-            code = .invalidParam
+            code = .invalidParam             // RIG_EINVAL
         case .commandFailed:
-            code = .rejected
+            code = .rejected                 // RIG_ERJCTED
         case .unsupportedOperation:
-            code = .notSupported
+            code = .notSupported             // RIG_ENAVAIL
         case .invalidResponse:
-            code = .protocolError
+            code = .protocolError            // RIG_EPROTO
         case .frequencyOutOfRange, .transmitNotAllowed, .modeNotSupported:
-            code = .invalidParam
+            code = .invalidParam             // RIG_EINVAL
         case .unsupportedRadio:
-            code = .notSupported
+            code = .notSupported             // RIG_ENAVAIL
         case .serialPortError:
-            code = .communicationError
+            code = .ioError                  // RIG_EIO
         case .busy:
-            code = .rejected
+            code = .rejected                 // RIG_ERJCTED
         }
 
         return .error(code, command: command)

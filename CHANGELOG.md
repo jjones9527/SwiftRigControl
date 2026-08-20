@@ -21,6 +21,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.15] - 2026-08-20
+
+### Fixed
+
+- **`RigctldProtocol.ReturnCode` raw values now match Hamlib's
+  canonical `rig_errcode_e` numbering
+  (`hamlib/include/hamlib/rig.h`).**  macwinlink-releases#66
+  (v1.2.14 field report, MacWinlink beta38 candidate on IC-7100
+  via Direwolf 1.8.1): every PTT toggle logged
+
+      *1:rig.c(3679):rig_set_ptt returning(-10)
+      Command performed, but arg truncated, result not guaranteed
+
+  in Direwolf's log even though the radio keyed and unkeyed
+  correctly and Winlink Packet sessions completed cleanly.
+
+  Root cause: our `ReturnCode` enum had a
+  SwiftRigControl-invented `.communicationError = -5` wedged
+  between `.notImplemented = -4` and `.timeout`, shifting every
+  subsequent raw value by one relative to Hamlib.  Our
+  `.rejected = -10` was therefore being decoded by Hamlib's
+  client-side `netrigctl_transaction` as `RIG_ETRUNC`
+  ("Command performed, but arg truncated") — hence the exact
+  wording in Direwolf's log — instead of `RIG_ERJCTED`
+  ("Command rejected by the rig"), which is `RIG_ETRUNC - 1 = 9`.
+
+  The v1.2.14 `LineBuffer` fix eliminated the *transport-layer*
+  reasons `setPTT` was throwing (fragmented / coalesced TCP
+  reads), but any code path that legitimately maps to
+  `.rejected` was still emitting the wrong wire code because
+  the enum value itself was off by one.
+
+  Fix: realign every `ReturnCode` raw value with Hamlib's
+  `rig_errcode_e`.  Concretely:
+
+  | Case                | Was  | Now  | Hamlib symbol    |
+  |---------------------|------|------|------------------|
+  | `.timeout`          | `-6` | `-5` | `RIG_ETIMEOUT`   |
+  | `.ioError`          | `-7` | `-6` | `RIG_EIO`        |
+  | `.internalError`    | `-8` | `-7` | `RIG_EINTERNAL`  |
+  | `.protocolError`    | `-9` | `-8` | `RIG_EPROTO`     |
+  | `.rejected`         | `-10`| `-9` | `RIG_ERJCTED`    |
+  | `.notSupported`     | `-12`| `-11`| `RIG_ENAVAIL`    |
+  | `.vfoNotTargetable` | `-13`| `-12`| `RIG_ENTARGET`   |
+
+  `.communicationError = -5` (SwiftRigControl-invented, collided
+  with `RIG_ETIMEOUT`) is removed; its two callers
+  (`RigError.notConnected`, `RigError.serialPortError`) map to
+  `.ioError` now, which is the closest Hamlib equivalent.
+
+  Two new cases surface Hamlib codes we didn't previously name:
+  `.argTruncated = -10` (`RIG_ETRUNC`) and `.busError = -13`
+  (`RIG_BUSERROR`) / `.busBusy = -14` (`RIG_BUSBUSY`).
+  SwiftRigControl does not intentionally emit `.argTruncated`;
+  the case exists so external decoders classify a `-10` wire
+  code correctly.  This also documents the collision the
+  pre-v1.2.15 `.rejected = -10` was hitting.
+
+  Cross-checked against `hamlib/include/hamlib/rig.h`
+  `enum rig_errcode_e` (upstream watermark 7bbde194b4c8).
+
+### Tests
+
+- 20 new tests in
+  `Tests/RigControlTests/ProtocolTests/RigctldReturnCodeHamlibParityTests.swift`
+  lock every `ReturnCode` raw value against its Hamlib
+  `rig_errcode_e` counterpart, plus explicit wire-format
+  assertions for the exact bug from the field
+  (`.rejected` must format as `RPRT -9\n`, `.timeout` as
+  `RPRT -5\n`, etc.).  Any future edit that re-shifts a value
+  or reintroduces `.communicationError = -5` fails the suite.
+- `RigctldResponseRPRTTests.errorResponsesEmitRPRTWithNonZeroCode`
+  updated: `.notSupported` now `RPRT -11\n`, not `RPRT -12\n`.
+
+Test count 759 → 779, zero regressions.
+
 ## [1.2.14] - 2026-08-14
 
 ### Fixed
