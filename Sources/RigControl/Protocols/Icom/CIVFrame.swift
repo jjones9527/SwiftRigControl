@@ -26,6 +26,12 @@ public struct CIVFrame {
     /// Default controller (PC) address
     public static let controllerAddress: UInt8 = 0xE0
 
+    /// Broadcast destination address (Hamlib `BCASTID = 0x00`).
+    /// The Icom radio addresses unsolicited "transceive" frames
+    /// (frequency change, mode change, spectrum scope data) to
+    /// `0x00` so every listener on the CI-V bus sees them.
+    public static let broadcastAddress: UInt8 = 0x00
+
     /// ACK response byte (0xFB)
     public static let ack: UInt8 = 0xFB
 
@@ -144,5 +150,78 @@ public struct CIVFrame {
     /// address (0xE0) and are directed at the radio's CI-V address.
     public var isEcho: Bool {
         from == CIVFrame.controllerAddress && to != CIVFrame.controllerAddress
+    }
+
+    /// True when this frame is an unsolicited "async" broadcast
+    /// from the radio, not a reply to a command we sent.
+    ///
+    /// The IC-7100 (and other Icoms with transceive mode enabled)
+    /// send unsolicited notifications on the same CI-V port used
+    /// for CAT control: frequency changes, mode changes, PTT
+    /// state, and — on radios with spectrum scope — real-time
+    /// scope data.  These frames are addressed to
+    /// `broadcastAddress` (0x00), NOT to the controller (0xE0).
+    ///
+    /// When our `receiveFrame` loop is waiting for the reply to a
+    /// command we just sent, an async broadcast frame that
+    /// arrives first must be **skipped** — not returned to the
+    /// caller as if it were the reply.  Returning it makes
+    /// `setPTT` (and any other set-then-ACK operation) see
+    /// `isAck == false` and throw `.commandFailed` even though
+    /// the CAT write itself succeeded.
+    ///
+    /// Matches Hamlib's `icom_is_async_frame`
+    /// (`rigs/icom/icom.c:9253`): returns true when the
+    /// destination address is `BCASTID` (0x00).  Hamlib's async
+    /// check also covers spectrum-scope data destined for the
+    /// controller (`CTRLID` + `C_CTL_SCP` + `S_SCP_DAT`) — see
+    /// `isSpectrumScopeData`.
+    ///
+    /// macwinlink-releases#66 (IC-7100 field report) traced back
+    /// to this: transceive broadcasts arriving between our
+    /// `sendFrame` and the ACK read were being returned instead
+    /// of the ACK, causing every PTT toggle to log a spurious
+    /// `-9 Command rejected` in Direwolf even though the radio
+    /// keyed correctly.
+    public var isAsyncBroadcast: Bool {
+        to == CIVFrame.broadcastAddress
+    }
+
+    /// True when this frame is unsolicited spectrum-scope data
+    /// from a radio like the IC-7300, IC-7610, IC-9700, or
+    /// IC-705.  Hamlib treats these the same as broadcast async
+    /// frames for the purposes of the receive loop (skip and
+    /// keep reading).
+    ///
+    /// Hamlib check (`icom.c:9263-9265`):
+    ///     `frame[2] == CTRLID && frame[4] == C_CTL_SCP && frame[5] == S_SCP_DAT`
+    /// i.e. destination = controller (0xE0), command = 0x27
+    /// (`C_CTL_SCP`), subcommand = 0x00 (`S_SCP_DAT`).
+    ///
+    /// Our parser (`CIVFrame.parse`) only splits sub-commands
+    /// out into `command[1]` for the 0x14 / 0x15 / 0x1C command
+    /// families (which always carry a sub-command byte); 0x27
+    /// isn't in that set, so the S_SCP_DAT sub-command byte
+    /// (`0x00`) lands in `data[0]` instead.  Check both places
+    /// so the classification is correct regardless.
+    public var isSpectrumScopeData: Bool {
+        guard to == CIVFrame.controllerAddress,
+              !command.isEmpty,
+              command[0] == 0x27
+        else { return false }
+        if command.count >= 2 {
+            return command[1] == 0x00
+        }
+        return !data.isEmpty && data[0] == 0x00
+    }
+
+    /// True when this frame should be skipped by the transaction
+    /// receive loop because it's an unsolicited broadcast, not
+    /// a reply to the command in flight.
+    ///
+    /// Union of `isAsyncBroadcast` and `isSpectrumScopeData`,
+    /// mirroring Hamlib's `icom_is_async_frame`.
+    public var isUnsolicitedAsync: Bool {
+        isAsyncBroadcast || isSpectrumScopeData
     }
 }

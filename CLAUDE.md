@@ -51,7 +51,63 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.15** (git tag, 2026-08-20), a
+The shipped version is **v1.2.16** (git tag, 2026-08-21), the
+final piece of the macwinlink-releases#66 fix arc.
+
+v1.2.15 realigned the RPRT wire encoding (`.rejected` now maps
+to Hamlib canonical `-9 RIG_ERJCTED`), but field-test on
+IC-7100 with MacWinlink beta40 rc1 confirmed the underlying
+`.rejected` throw itself was untouched.  Root cause: the
+IC-7100 (and any Icom with transceive mode enabled) sends
+unsolicited async broadcasts on the same CI-V bus used for
+CAT command replies — frequency change, mode change,
+spectrum-scope data.  When one of those frames arrived
+between our `sendFrame` and the ACK read,
+`IcomCIVProtocol.receiveFrame` returned it to the caller;
+`setPTT` saw `isAck == false` and threw
+`RigError.commandFailed` even though the CAT write itself
+succeeded and the radio keyed correctly.
+
+Hamlib solves this exact bug two ways, both cited in the fix:
+
+1. **IC-7100-specific pre-transaction flush**
+   (`rigs/icom/frame.c:158-165`) — Hamlib flushes the input
+   buffer before every command on the IC-7100 with a comment
+   noting "The IC7100 cannot separate the CI-V port from the
+   USB CI-V".  v1.2.16 adds `requiresPreTransactionFlush` on
+   `CIVCommandSet` (defaults `false`; IC7100CommandSet — used
+   by both IC-7100 and IC-705 — sets `true`).
+   `IcomCIVProtocol.sendFrame` honors the flag before every
+   write.
+2. **General async-frame skip in the receive loop**
+   (`rigs/icom/frame.c:216-236`) — Hamlib checks
+   `icom_is_async_frame` (`icom.c:9253-9265`) and does
+   `goto again1` — read another frame.
+   `IcomCIVProtocol.receiveFrame` now loops (bounded by
+   `asyncFrameSkipBudget = 8`), skipping any frame that is an
+   echo of our own command OR a broadcast (`to = 0x00`) OR
+   spectrum-scope data (`to = 0xE0` + `cmd = 0x27` +
+   `sub = 0x00`).
+
+Silently fixes the same class of race for `setMode`,
+`setFrequency`, `selectVFO`, `setPower`, and every other
+set-then-ACK CAT dispatch — they share the same
+`receiveFrame` code path.  Applies Icom-family-wide (the
+async-skip is universal; the flush is IC-7100-specific per
+Hamlib's own scoping).
+
+Pre-release testing surfaced a Swift protocol-dispatch bug:
+a pure protocol-extension default on `CIVCommandSet` does
+not dispatch dynamically through the `any CIVCommandSet`
+existential — the extension default's value is baked in at
+compile time.  Fixed by declaring
+`requiresPreTransactionFlush` as an explicit protocol
+requirement on both `CIVCommandSet` and its
+`IcomRadioCommandSet` sub-protocol so the concrete's stored
+`true` on `IC7100CommandSet` actually reaches
+`IcomCIVProtocol.sendFrame`.  Test count 782 → 793.
+
+The previously-shipped version was **v1.2.15** (git tag, 2026-08-20), a
 two-topic patch release: Hamlib return-code parity + Icom
 catalog correctness (IC-7300 mk2 + IC-7760).
 

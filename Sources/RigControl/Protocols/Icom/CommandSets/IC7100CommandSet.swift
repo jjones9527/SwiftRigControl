@@ -36,6 +36,23 @@ public struct IC7100CommandSet: IcomRadioCommandSet {
     public let echoesCommands = true
     public let powerUnits: PowerUnits = .percentage
 
+    /// The IC-7100 shares its USB serial endpoint between async
+    /// transceive notifications and CAT command replies.  Without
+    /// flushing the input buffer before every command, stale
+    /// broadcast bytes queued from the previous transaction get
+    /// consumed by the next `receiveFrame` and mis-align the
+    /// reply stream — set-then-ACK operations (setPTT, setMode,
+    /// setFreq) then see a non-ACK "reply" and throw
+    /// `.commandFailed` even though the CAT write succeeded.
+    ///
+    /// Hamlib documents this exact quirk with an IC-7100-specific
+    /// pre-transaction flush at `rigs/icom/frame.c:158-165`.
+    ///
+    /// This flag also applies to the IC-705 (which shares this
+    /// command set): the IC-705 uses the same combined-USB-port
+    /// architecture and exhibits the same class of race.
+    public let requiresPreTransactionFlush = true
+
     /// Initialize IC-7100 command set
     /// - Parameter civAddress: CI-V address (0x88 for IC-7100, 0xA4 for IC-705)
     public init(civAddress: UInt8 = 0x88) {

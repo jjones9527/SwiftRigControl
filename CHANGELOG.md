@@ -21,6 +21,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.16] - 2026-08-21
+
+### Fixed
+
+- **`IcomCIVProtocol.receiveFrame` now skips unsolicited async
+  broadcasts.**  macwinlink-releases#66 (v1.2.15 field-test
+  followup, MacWinlink beta40 rc1 on IC-7100 via Direwolf 1.8.1):
+  every PTT toggle still logged a Hamlib error even though
+  v1.2.15 corrected the RPRT wire encoding:
+
+      *1:rig.c(3679):rig_set_ptt returning(-9)
+      Command rejected by the rig
+
+  The v1.2.15 fix realigned `.rejected` from `-10` to `-9` (its
+  canonical `RIG_ERJCTED` value), so the "arg truncated" wording
+  is gone — but the underlying `.rejected` throw itself was
+  unchanged.  Root cause: **the IC-7100 (and any Icom in
+  transceive mode) sends unsolicited async broadcasts on the
+  same CI-V bus used for CAT command replies** — frequency
+  change, mode change, spectrum-scope data.  When one of those
+  frames arrived between our `sendFrame` and the ACK read,
+  `receiveFrame` returned it to the caller.  `setPTT` then saw
+  `isAck == false` and threw `RigError.commandFailed` even
+  though the CAT write itself succeeded and the radio keyed.
+
+  Hamlib solved this exact bug two ways, both cited in the fix:
+
+  1. **IC-7100-specific pre-transaction flush.**  Hamlib
+     `rigs/icom/frame.c:158-165` flushes the input buffer
+     before every command on the IC-7100 with a comment noting
+     "The IC7100 cannot separate the CI-V port from the USB
+     CI-V".  We add a `requiresPreTransactionFlush` opt-in flag
+     on `CIVCommandSet`, defaulted `false`, overridden `true`
+     on `IC7100CommandSet` (which is shared with the IC-705).
+     `IcomCIVProtocol.sendFrame` honors the flag before every
+     write.
+  2. **General async-frame skip in the receive loop.**  Hamlib
+     `rigs/icom/frame.c:216-236` checks `icom_is_async_frame`
+     and does `goto again1` — read another frame.
+     `IcomCIVProtocol.receiveFrame` now loops (bounded by
+     `asyncFrameSkipBudget = 8`), skipping any frame that is an
+     echo of our own command OR a broadcast (`to = 0x00`) OR
+     spectrum-scope data (`to = 0xE0` + `cmd = 0x27` +
+     `sub = 0x00`) — matching Hamlib's classification at
+     `rigs/icom/icom.c:9253-9265`.
+
+  Silently fixes the same class of race for `setMode`,
+  `setFrequency`, `selectVFO`, `setPower`, and every other
+  set-then-ACK CAT dispatch — they share the same
+  `receiveFrame` code path.  Applies Icom-family-wide (the
+  async-skip is universal; the flush is IC-7100-specific per
+  Hamlib's own scoping).
+
+  New public API surface on `CIVFrame`: `broadcastAddress`
+  const, `isAsyncBroadcast`, `isSpectrumScopeData`,
+  `isUnsolicitedAsync` computed properties.  These make the
+  Hamlib async classification part of the CI-V frame's own
+  vocabulary so future callers can classify without
+  reimplementing the check.
+
+  Also promotes `CIVCommandSet.requiresPreTransactionFlush`
+  from a protocol-extension default to a full protocol
+  requirement — a pre-release test caught that a pure
+  extension default doesn't dispatch dynamically through the
+  `any CIVCommandSet` existential, silently defeating the
+  IC-7100 override.  The `IcomRadioCommandSet` sub-protocol
+  also declares it explicitly so both authorities agree.
+
+### Tests
+
+- 7 new tests in
+  `Tests/RigControlTests/ProtocolTests/IcomAsyncFrameSkipTests.swift`
+  lock the receive-loop async skip against every scenario
+  Hamlib guards: transceive frequency broadcast, transceive
+  mode broadcast, spectrum-scope data broadcast, stacks of
+  multiple async frames in a row, and PTT-off (which shows the
+  same symptom pre-fix).  Each asserts that `setPTT`
+  completes without throwing when a scripted transport
+  delivers `[echo, async-frame(s), ACK]` on an IC-7100.  The
+  baseline "no async frames" happy path is also covered so a
+  future refactor that breaks the simple case is caught.
+- 4 new tests in `IC7100PreTransactionFlushTests` lock the
+  `requiresPreTransactionFlush` behavior matrix: IC-7100 opts
+  in, IC-705 (same command set) opts in, IC-7300 / IC-7610 /
+  IC-7600 / IC-9700 all opt OUT (Hamlib scopes the flush to
+  IC-7100 only — enabling it globally would break async
+  transceive support for the rest of the family).
+- 1 new test locks the operation ordering on the IC-7100:
+  `setPTT` produces `[.flush, .write(pttFrame)]` on the
+  transport, in that order.  Any future edit that bypasses
+  the flush or reorders it fails here.
+
+Test count 782 → 793, zero regressions.
+
 ## [1.2.15] - 2026-08-20
 
 ### Fixed

@@ -1,6 +1,29 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.15 (cut 2026-08-20 — two-topic
+**Current version:** v1.2.16 (cut 2026-08-21 — final piece
+of the macwinlink-releases#66 fix arc.  v1.2.15 realigned the
+RPRT wire encoding, but field-test on IC-7100 with beta40 rc1
+confirmed the underlying `.rejected` throw itself was
+untouched.  Root cause: the IC-7100 (and any Icom in
+transceive mode) sends unsolicited async broadcasts —
+frequency change, mode change, spectrum-scope data — on the
+same CI-V bus used for CAT command replies.  When one arrived
+between our `sendFrame` and the ACK read, `receiveFrame`
+returned it, `setPTT` saw `isAck == false` and threw
+`.commandFailed` even though the CAT write itself succeeded
+and the radio keyed correctly.  Hamlib solves this at
+`rigs/icom/frame.c:158-165` (IC-7100 pre-transaction flush)
+and `rigs/icom/frame.c:216-236` (async-frame skip in the
+receive loop, calling `icom_is_async_frame` at
+`icom.c:9253-9265`).  v1.2.16 mirrors both: adds a
+`requiresPreTransactionFlush` opt-in on `CIVCommandSet`
+(IC-7100 / IC-705 opt in), and loops `receiveFrame` past
+echo + broadcast + spectrum-scope frames.  Silently fixes
+the same class of race for setMode / setFreq / selectVFO
+etc. — everything that shares the set-then-ACK CAT path.
+12 new tests lock the async-skip and flush behaviors.  Test
+count 782 → 793, zero regressions.)  Previous release
+**v1.2.15** (cut 2026-08-20 — two-topic
 patch release: (1) `RigctldProtocol.ReturnCode` raw values
 aligned with Hamlib canonical `rig_errcode_e` (rig.h) —
 third followup to macwinlink-releases#54, addressing

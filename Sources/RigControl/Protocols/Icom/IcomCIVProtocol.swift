@@ -429,33 +429,97 @@ public actor IcomCIVProtocol:
     // MARK: - Private Methods
 
     /// Sends a CI-V frame to the radio.
+    ///
+    /// Flushes the transport's input buffer first when the
+    /// command set opts in via
+    /// ``CIVCommandSet/requiresPreTransactionFlush``.  This is
+    /// required on radios (currently IC-7100 / IC-705) that
+    /// share their USB endpoint between async transceive
+    /// notifications and CAT command replies — see the
+    /// property's docstring for the Hamlib citation
+    /// (`frame.c:158-165`) and macwinlink-releases#66 field
+    /// report.  On radios that don't need it, the flush is
+    /// skipped so async transceive notifications are still
+    /// available for anyone building a polling-free UI.
     internal func sendFrame(_ frame: CIVFrame) async throws {
+        if commandSet.requiresPreTransactionFlush {
+            try await transport.flush()
+        }
         let data = Data(frame.bytes())
         try await transport.write(data)
     }
 
-    /// Receives a CI-V frame from the radio.
-    /// Automatically skips echo frames for radios that echo commands (determined by command set).
+    /// Receives a CI-V frame from the radio, skipping echoes
+    /// and unsolicited async broadcasts.
+    ///
+    /// Icom radios in transceive mode emit unsolicited "async"
+    /// frames (frequency change, mode change, spectrum-scope
+    /// data) on the same CI-V bus used for CAT command replies.
+    /// If we return one of those to the caller, set-then-ACK
+    /// operations like `setPTT` see `isAck == false` and throw
+    /// `.commandFailed` even though the CAT write succeeded —
+    /// macwinlink-releases#66 (IC-7100 field report) was
+    /// exactly this bug in the wild.
+    ///
+    /// Matches Hamlib `rigs/icom/frame.c:216-236` (skip
+    /// `icom_is_async_frame` and re-read).  The retry budget is
+    /// capped at ``asyncFrameSkipBudget`` per receive so a
+    /// mis-behaving bus can't stall the transaction; each
+    /// individual read still honors ``responseTimeout``.
     internal func receiveFrame() async throws -> CIVFrame {
-        // Read until terminator (0xFD)
-        let data = try await transport.readUntil(
-            terminator: CIVFrame.terminator,
-            timeout: responseTimeout
-        )
-
-        let frame = try CIVFrame.parse(data)
-
-        // If this radio echoes commands and this is an echo frame, read the next frame (actual response)
-        if commandSet.echoesCommands && frame.isEcho {
-            let nextData = try await transport.readUntil(
+        var skipsRemaining = Self.asyncFrameSkipBudget
+        while true {
+            let data = try await transport.readUntil(
                 terminator: CIVFrame.terminator,
                 timeout: responseTimeout
             )
-            return try CIVFrame.parse(nextData)
-        }
+            let frame = try CIVFrame.parse(data)
 
-        return frame
+            // Skip our own command echo (radios like IC-7100
+            // echo every command on the bus before their reply).
+            if commandSet.echoesCommands && frame.isEcho {
+                if skipsRemaining > 0 {
+                    skipsRemaining -= 1
+                    continue
+                } else {
+                    // Ran out of skip budget — return whatever we
+                    // just read so the caller's isAck check runs
+                    // (and produces a proper error) instead of
+                    // hanging forever.
+                    return frame
+                }
+            }
+
+            // Skip unsolicited async broadcasts (transceive,
+            // spectrum scope). Hamlib's icom_process_async_frame
+            // updates its cache with these; SwiftRigControl
+            // doesn't currently expose async notifications
+            // through its public API, so we drop them silently.
+            if frame.isUnsolicitedAsync {
+                if skipsRemaining > 0 {
+                    skipsRemaining -= 1
+                    continue
+                } else {
+                    return frame
+                }
+            }
+
+            return frame
+        }
     }
+
+    /// Maximum number of echo/async frames `receiveFrame` will
+    /// skip before returning whatever it just read (letting the
+    /// caller's isAck check surface the error).  Hamlib does not
+    /// bound this explicitly — each read is bounded by the port
+    /// timeout instead.  We use an explicit cap so a mis-behaving
+    /// bus can't stall a transaction indefinitely at the actor
+    /// level.
+    ///
+    /// Chosen conservatively: one command-echo (some radios) +
+    /// several async broadcasts in flight (freq change + mode
+    /// change + spectrum scope tick) fits comfortably within 8.
+    private static let asyncFrameSkipBudget = 8
 
     /// Converts a Mode enum to an Icom mode code byte (CI-V command 0x06 first data byte).
     ///

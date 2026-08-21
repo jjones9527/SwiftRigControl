@@ -62,6 +62,24 @@ public protocol CIVCommandSet: Sendable {
     /// already carries the data flag inline.
     var requiresDataModeSubCommand: Bool { get }
 
+    /// Whether `IcomCIVProtocol.sendFrame` must flush the
+    /// transport's input buffer before writing each frame.
+    ///
+    /// Required on radios (currently IC-7100 / IC-705) that
+    /// share their USB endpoint between async transceive
+    /// notifications and CAT command replies. See
+    /// ``IcomRadioCommandSet/requiresPreTransactionFlush`` for
+    /// the Hamlib citation and full rationale.
+    ///
+    /// Declared here at the base-protocol level so
+    /// `IcomCIVProtocol`'s existential (`any CIVCommandSet`)
+    /// dispatches dynamically to the concrete conformance.  A
+    /// pure protocol-extension default would resolve to the
+    /// base's `false` at compile time and defeat the IC-7100
+    /// override — v1.2.16 pre-release testing surfaced exactly
+    /// this bug before shipping.
+    var requiresPreTransactionFlush: Bool { get }
+
     /// Format a mode read command.
     /// - Returns: Command bytes
     func readModeCommand() -> [UInt8]
@@ -137,4 +155,12 @@ extension CIVCommandSet {
     /// Real Icom command sets override this — see
     /// ``IcomRadioCommandSet/requiresDataModeSubCommand``.
     public var requiresDataModeSubCommand: Bool { false }
+
+    /// Default: no pre-transaction flush.  Overridden on radios
+    /// (currently IC-7100 / IC-705) that share a single USB
+    /// endpoint between async transceive notifications and CAT
+    /// command replies.  See
+    /// ``IcomRadioCommandSet/requiresPreTransactionFlush`` for
+    /// the Hamlib citation and full rationale.
+    public var requiresPreTransactionFlush: Bool { false }
 }

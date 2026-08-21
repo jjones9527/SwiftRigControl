@@ -56,6 +56,40 @@ public protocol IcomRadioCommandSet: CIVCommandSet {
     /// IC-7000; every other `StandardIcomCommandSet` variant
     /// inherits the default `true`.
     var supportsDataMode: Bool { get }
+
+    /// Whether `IcomCIVProtocol.sendFrame` should flush the
+    /// transport's input buffer before writing every command
+    /// frame.
+    ///
+    /// Set `true` for radios that share a single physical CI-V
+    /// port between async transceive notifications and CAT
+    /// command replies, such that stale async bytes may sit in
+    /// the OS serial buffer between transactions.  When those
+    /// stale bytes are consumed by the next `receiveFrame`, they
+    /// mis-align the reply stream and set-then-ACK operations
+    /// (setPTT / setMode / setFreq) throw `.commandFailed` even
+    /// though the CAT write succeeded.
+    ///
+    /// The **IC-7100** is the canonical case, called out by name
+    /// in Hamlib `rigs/icom/frame.c:158-165`:
+    ///
+    ///     // The IC7100 cannot separate the CI-V port from the USB CI-V
+    ///     // We see async packets coming in so we'll try and do the flush
+    ///     if (rig->caps->rig_model == RIG_MODEL_IC7100)
+    ///     { rig_flush(rp); }
+    ///
+    /// Hamlib's comment notes the tradeoff: flushing before each
+    /// transaction means the IC-7100 effectively cannot support
+    /// operator-driven async notifications through this
+    /// controller (they get flushed away). SwiftRigControl does
+    /// not expose async transceive notifications through its
+    /// public API today, so the tradeoff is invisible to library
+    /// consumers.
+    ///
+    /// Defaults to `false`; every non-IC-7100 command set
+    /// inherits the default and skips the flush (Hamlib does the
+    /// same — the flush is IC-7100-only).
+    var requiresPreTransactionFlush: Bool { get }
 }
 
 extension IcomRadioCommandSet {
@@ -64,6 +98,11 @@ extension IcomRadioCommandSet {
     /// specific radio makes `requiresDataModeSubCommand` return
     /// `false`, so `IcomCIVProtocol.setMode` skips the follow-up.
     public var supportsDataMode: Bool { true }
+
+    /// Default: no pre-transaction flush. Only the IC-7100 needs
+    /// this in practice (see the property docstring for the
+    /// Hamlib citation).
+    public var requiresPreTransactionFlush: Bool { false }
 }
 
 // MARK: - Default Implementations
