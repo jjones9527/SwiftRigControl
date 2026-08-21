@@ -34,7 +34,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// IC-7300 HF/6m 100W SDR transceiver with spectrum scope
     case ic7300 = "IC-7300"
 
-    /// IC-7300MK2 HF/6m 100W SDR transceiver — successor to IC-7300 (2025)
+    /// IC-7300MK2 HF/6m/4m 100W SDR transceiver — successor to
+    /// IC-7300 (2025). Ships with CI-V default address **0xB6**
+    /// (Hamlib `icom.c:585`), NOT 0x94 (which is the IC-7300).
     case ic7300mk2 = "IC-7300MK2"
 
     /// IC-7851 HF/6m 200W flagship transceiver (2015–2024
@@ -229,10 +231,10 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         switch self {
         // HF Transceivers
         case .ic7600:    return 0x7A
-        case .ic7760:    return 0xB0
+        case .ic7760:    return 0xB2  // Hamlib icom.c:588 and ic7760.c:126 — 0xB2, NOT 0xB0. Pre-v1.2.15 was 0xB0.
         case .ic7610:    return 0x98
         case .ic7300:    return 0x94
-        case .ic7300mk2: return 0x94  // Same default as IC-7300; set a custom address if both are on the same bus
+        case .ic7300mk2: return 0xB6  // Hamlib icom.c:585 — Icom shipped the IC-7300MK2 with a NEW default address (0xB6), not 0x94. Do not assume shared IC-7300 address.
         case .ic7851: return 0x8E
         case .ic7850: return 0x8E
         case .ic7800: return 0x6A

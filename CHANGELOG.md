@@ -82,6 +82,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Cross-checked against `hamlib/include/hamlib/rig.h`
   `enum rig_errcode_e` (upstream watermark 7bbde194b4c8).
 
+- **IC-7300 mk2 CI-V default address corrected from `0x94` to
+  `0xB6`.**  Icom shipped the IC-7300 mk2 with a *new* CI-V
+  default (Hamlib `icom.c:585`) specifically so a mk2 and an
+  IC-7300 can coexist on the same CI-V bus without collision.
+  SwiftRigControl v1.1.3–v1.2.14 assumed the mk2 shared the
+  IC-7300's `0x94` — on a factory-default mk2 those releases
+  addressed nothing and enumeration silently failed (frames go
+  out, no response ever comes back, user assumes broken cable
+  or wrong port).  This is a bug class historically painful in
+  other amateur-radio rig-control apps due to the IC-7300 →
+  mk2 CI-V divergence.
+
+- **IC-7300 mk2 frequency coverage extended from 30 kHz–54 MHz
+  to 30 kHz–74.8 MHz, and 4m TX band (70–70.5 MHz) added.**
+  Matches Hamlib `ic7300.c:1309-1322` (`rx_range_list1` /
+  `tx_range_list1` on the mk2, byte-identical to the base
+  IC-7300 caps).  Pre-v1.2.15 caps were cloned from IC-7760
+  (an HF+6m-only flagship), which is why 4m and upper-VHF RX
+  were missing.  4m TX is ITU-Region-1-only in practice; the
+  radio's own band-select UI gates real TX per region — the
+  library models the wire-level range because Hamlib does.
+
+- **IC-7760 CI-V default address corrected from `0xB0` to
+  `0xB2`.**  Surfaced by the new Icom address drift test
+  (below).  Hamlib `icom.c:588` and `ic7760.c:126` both say
+  `0xB2`; SwiftRigControl had `0xB0`.  Same enumeration-fails-
+  silently symptom on a factory-default IC-7760 as the mk2 bug
+  above.
+
 ### Tests
 
 - 20 new tests in
@@ -94,8 +123,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or reintroduces `.communicationError = -5` fails the suite.
 - `RigctldResponseRPRTTests.errorResponsesEmitRPRTWithNonZeroCode`
   updated: `.notSupported` now `RPRT -11\n`, not `RPRT -12\n`.
+- **58 new tests** in
+  `Tests/RigControlTests/UnitTests/IcomCIVAddressHamlibParityTests.swift`
+  lock every `IcomRadioModel` case's `defaultCIVAddress`
+  against Hamlib's authoritative source: 43 against the
+  `icom_addr_list[]` table (`icom.c:518-595`), 14 against the
+  per-model `priv_caps` defaults in each `<model>.c` file, and
+  1 completeness check that fails if a new `IcomRadioModel`
+  case is added without a corresponding parity entry.  Catches
+  the class of bug that produced the IC-7300 mk2 and IC-7760
+  address mismatches.  Cross-checked against Hamlib watermark
+  7bbde194b4c8.
 
-Test count 759 → 779, zero regressions.
+Test count 759 → 782, zero regressions.
 
 ## [1.2.14] - 2026-08-14
 

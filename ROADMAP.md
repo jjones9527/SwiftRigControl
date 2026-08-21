@@ -1,23 +1,29 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.15 (cut 2026-08-20 —
-`RigctldProtocol.ReturnCode` raw values aligned with Hamlib
-canonical `rig_errcode_e` (rig.h). Third followup to
-macwinlink-releases#54, addressing macwinlink-releases#66
-(MacWinlink beta38 candidate field report). After v1.2.14
-eliminated the transport-layer causes of setPTT throwing,
-any residual `.rejected` path still emitted the wrong wire
-code — the enum had a SwiftRigControl-invented
+**Current version:** v1.2.15 (cut 2026-08-20 — two-topic
+patch release: (1) `RigctldProtocol.ReturnCode` raw values
+aligned with Hamlib canonical `rig_errcode_e` (rig.h) —
+third followup to macwinlink-releases#54, addressing
+macwinlink-releases#66 (MacWinlink beta38 candidate field
+report). Our pre-v1.2.15 enum had a SwiftRigControl-invented
 `.communicationError = -5` wedged between `.notImplemented =
--4` and `.timeout`, shifting every subsequent value by one.
-Our `.rejected = -10` was being decoded by Hamlib as
+-4` and `.timeout`, shifting every subsequent value by one;
+our `.rejected = -10` was being decoded by Hamlib as
 `RIG_ETRUNC` "arg truncated" (the exact wording in
 Direwolf's log), not `RIG_ERJCTED` "rejected". Fix
 re-numbers seven cases to their Hamlib symbols, removes
-`.communicationError` (callers → `.ioError`), and adds
-`.argTruncated`, `.busError`, `.busBusy` for wire-code
-coverage. 20 new tests lock every value to its Hamlib
-counterpart. Test count 759 → 779, zero regressions.)
+`.communicationError`, adds `.argTruncated`, `.busError`,
+`.busBusy` for wire-code coverage. (2) IC-7300 mk2 catalog
+correctness — Icom shipped the mk2 with CI-V default
+address `0xB6` (Hamlib `icom.c:585`), not `0x94` as
+SwiftRigControl v1.1.3–v1.2.14 assumed. Enumeration would
+silently fail on a factory-default mk2. Same-class bug found
+in IC-7760 (SwiftRigControl `0xB0` vs Hamlib `0xB2` /
+`ic7760.c:126`), both fixed. IC-7300 mk2 frequency coverage
+also corrected from 30 kHz–54 MHz to 30 kHz–74.8 MHz with
+4m TX band added (matches Hamlib `ic7300.c:1309-1322`).
+20 return-code parity tests + 58 Icom CI-V address drift
+tests locked. Test count 759 → 782, zero regressions.)
 Previous release **v1.2.14** (cut 2026-08-14 —
 `ClientSession.receiveLine()` no longer drops bytes across
 TCP receive boundaries. Second followup to

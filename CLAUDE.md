@@ -52,9 +52,11 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 ## Current release
 
 The shipped version is **v1.2.15** (git tag, 2026-08-20), a
-Hamlib return-code parity fix for MacWinlink beta38 field
-report macwinlink-releases#66.
+two-topic patch release: Hamlib return-code parity + Icom
+catalog correctness (IC-7300 mk2 + IC-7760).
 
+**Topic 1 — rigctld return codes** (fixes macwinlink-releases#66,
+MacWinlink beta38 candidate field report).
 `RigctldProtocol.ReturnCode` raw values were off by one
 relative to Hamlib's canonical `rig_errcode_e`
 (`hamlib/include/hamlib/rig.h`): a SwiftRigControl-invented
@@ -66,12 +68,9 @@ by Hamlib's client-side `netrigctl_transaction` as
 exact wording every PTT toggle produced in Direwolf's log
 during Winlink Packet sessions on Jeremy's IC-7100 — instead
 of the intended `RIG_ERJCTED` "Command rejected by the rig"
-(`-9`).
-
-The v1.2.14 `LineBuffer` fix eliminated the transport-layer
-reasons `setPTT` was throwing (fragmented / coalesced TCP
-reads), but any residual `.rejected` path still emitted the
-wrong wire code because the enum value itself was mismatched.
+(`-9`).  The v1.2.14 `LineBuffer` fix eliminated the
+transport-layer reasons `setPTT` was throwing, but any
+residual `.rejected` path still emitted the wrong wire code.
 Fix re-aligns seven case raw values with Hamlib symbols
 (`.timeout` -6→-5, `.ioError` -7→-6, `.internalError` -8→-7,
 `.protocolError` -9→-8, `.rejected` -10→-9, `.notSupported`
@@ -80,7 +79,32 @@ Fix re-aligns seven case raw values with Hamlib symbols
 adds `.argTruncated`, `.busError`, `.busBusy` cases for wire
 decoding coverage.  20 new tests in
 `RigctldReturnCodeHamlibParityTests` lock every value to its
-Hamlib counterpart.  Test count 759 → 779.
+Hamlib counterpart.
+
+**Topic 2 — IC-7300 mk2 catalog correctness.**  Icom shipped
+the IC-7300 mk2 with a NEW CI-V default address `0xB6`
+(Hamlib `icom.c:585`), not `0x94` as SwiftRigControl
+v1.1.3–v1.2.14 assumed.  On a factory-default mk2 those
+releases addressed nothing and enumeration silently failed —
+this is the class of bug historically painful in other
+amateur-radio rig-control apps due to the IC-7300 → mk2 CI-V
+divergence.  Frequency coverage also corrected from
+30 kHz–54 MHz to 30 kHz–74.8 MHz with 4m TX band (70–70.5 MHz)
+added, matching Hamlib `ic7300.c:1309-1322` (byte-identical to
+the base IC-7300 caps; pre-v1.2.15 mk2 caps had been cloned
+from the IC-7760 flagship, which is HF+6m only).  Writing the
+new drift test also surfaced an IC-7760 address mismatch —
+Hamlib `icom.c:588` / `ic7760.c:126` say `0xB2`,
+SwiftRigControl had `0xB0`, same enumeration-fails-silently
+symptom on a factory-default IC-7760.  Fixed.  58 new tests
+in `IcomCIVAddressHamlibParityTests` lock every Icom model's
+default CI-V address against Hamlib's canonical
+`icom_addr_list[]` table + per-model `priv_caps` defaults,
+plus a completeness check that fails if a new
+`IcomRadioModel` case is added without a corresponding parity
+entry.
+
+Test count 759 → 782, zero regressions.
 
 The previously-shipped version was **v1.2.14** (git tag,
 2026-08-14), the second followup to macwinlink-releases#54.

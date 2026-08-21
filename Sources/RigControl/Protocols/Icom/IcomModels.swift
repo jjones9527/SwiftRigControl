@@ -60,12 +60,25 @@ extension RadioDefinition.Icom {
         )
     }
 
-    /// Icom IC-7300MK2 HF/6m SDR transceiver — successor to the IC-7300 (2025)
+    /// Icom IC-7300MK2 HF/6m/4m SDR transceiver — successor to the IC-7300 (2025).
     ///
-    /// Shares the default CI-V address 0x94 with the IC-7300. If both radios are on the
-    /// same CI-V bus, set a custom address on one of them.
+    /// Ships with CI-V default address **0xB6** (cross-checked against
+    /// Hamlib `icom.c:585`).  Icom deliberately chose a new default
+    /// so an IC-7300MK2 can coexist on the same CI-V bus as an
+    /// IC-7300 (0x94) without collision.  Earlier SwiftRigControl
+    /// releases (v1.1.3 – v1.2.14) mistakenly used 0x94 here; on a
+    /// factory-default mk2 those releases would have failed to
+    /// enumerate the radio.
     ///
-    /// - Parameter civAddress: CI-V bus address (default: 0x94)
+    /// At the wire-protocol level, the IC-7300MK2 uses the same
+    /// command set as the IC-7300 (Hamlib's `ic7300mk2_caps`
+    /// dispatches to `icom_set_freq` / `icom_set_mode` /
+    /// `icom_set_ptt` etc., identical to the IC-7300).  The mk2's
+    /// divergences from the mk1 live entirely in ext-parameter byte
+    /// tuples (backlight, screensaver, clock, VOX-delay-persisted,
+    /// keyer-type) that SwiftRigControl does not currently surface.
+    ///
+    /// - Parameter civAddress: CI-V bus address (default: **0xB6**)
     /// - Returns: RadioDefinition for IC-7300MK2
     public static func ic7300MK2(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(
@@ -111,12 +124,15 @@ extension RadioDefinition.Icom {
         )
     }
 
-    /// Icom IC-7760 HF/6m 200W flagship SDR transceiver (2024)
+    /// Icom IC-7760 HF/6m 200W flagship SDR transceiver (2024).
     ///
-    /// The IC-7760 is Icom's 2024 dual-receiver SDR flagship with a default CI-V
-    /// address of 0xB0. It uses the same command set as the IC-7610.
+    /// The IC-7760 is Icom's 2024 dual-receiver SDR flagship. Ships with
+    /// CI-V default address **0xB2** (Hamlib `icom.c:588` /
+    /// `ic7760.c:126`); uses the IC-7610 command set on the wire.
+    /// Pre-v1.2.15 SwiftRigControl declared 0xB0 here — on a
+    /// factory-default IC-7760 that address addresses nothing.
     ///
-    /// - Parameter civAddress: CI-V bus address (default: 0xB0)
+    /// - Parameter civAddress: CI-V bus address (default: **0xB2**)
     /// - Returns: RadioDefinition for IC-7760
     public static func ic7760(civAddress: UInt8? = nil) -> RadioDefinition {
         RadioDefinition(

@@ -12,7 +12,10 @@ extension RadioCapabilitiesDatabase.Icom {
     /// Icom IC-7760 HF/6m 200W flagship SDR transceiver (2024).
     ///
     /// The IC-7760 is Icom's 2024 successor to the IC-7610 line. It features
-    /// dual independent receivers, a large touch display, and CI-V address 0xB0.
+    /// dual independent receivers, a large touch display, and CI-V default
+    /// address **0xB2** (Hamlib `icom.c:588` / `ic7760.c:126`). Pre-v1.2.15
+    /// SwiftRigControl mistakenly declared 0xB0 in `IcomRadioModel`; on a
+    /// factory-default IC-7760 those releases failed to enumerate the radio.
     public static let ic7760 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
@@ -56,9 +59,24 @@ extension RadioCapabilitiesDatabase.Icom {
 
     // MARK: - Icom IC-7300MK2
 
-    /// Icom IC-7300MK2 HF/6m SDR transceiver — successor to the IC-7300 (2025).
+    /// Icom IC-7300MK2 HF/6m/4m SDR transceiver — successor to the
+    /// IC-7300 (2025).
     ///
-    /// Shares CI-V address 0x94 with the IC-7300; distinguish by model configuration.
+    /// Frequency coverage mirrors Hamlib `ic7300mk2_caps`
+    /// (`rigs/icom/ic7300.c:1309-1322`, byte-identical to the base
+    /// IC-7300 caps at `ic7300.c:1058-1071`):
+    ///
+    /// - **RX**: 30 kHz – 74.8 MHz continuous.
+    /// - **TX HF (160m–10m + 60m)**: 2–100 W SSB/CW/FM/RTTY/data;
+    ///   1–25 W AM class.
+    /// - **TX 6m** (50–54 MHz): 2–100 W / 1–25 W AM.
+    /// - **TX 4m** (70–70.5 MHz, ITU Region 1 only): 2–50 W /
+    ///   1–12.5 W AM.  Region 2 / 3 users won't see 4m TX enabled
+    ///   in the radio's own band-select UI even though the CI-V
+    ///   protocol accepts frequency writes there — we still model
+    ///   the range because Hamlib does, matching the wire-level
+    ///   truth.  Pre-v1.2.15 this catalog entry stopped at 54 MHz
+    ///   (cloned from the IC-7760 flagship, which is HF+6m only).
     public static let ic7300MK2 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
@@ -66,28 +84,60 @@ extension RadioCapabilitiesDatabase.Icom {
         maxPower: 100,
         supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN,
                          .dataLSB, .dataUSB, .dataFM],
-        frequencyRange: FrequencyRange(min: 30_000, max: 54_000_000),
+        frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [
-            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 1_800_000, max: 1_999_999, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "160m"),
-            DetailedFrequencyRange(min: 2_000_000, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 3_500_000, max: 3_999_999, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "80m"),
-            DetailedFrequencyRange(min: 4_000_000, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .rtty, .dataLSB], canTransmit: true, bandName: "40m"),
-            DetailedFrequencyRange(min: 7_300_001, max: 9_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .rtty, .dataUSB], canTransmit: true, bandName: "30m"),
-            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "20m"),
-            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "17m"),
-            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "15m"),
-            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .rtty, .dataUSB], canTransmit: true, bandName: "12m"),
-            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 28_000_000, max: 29_699_999, modes: [.usb, .cw, .fm, .am, .rtty, .dataUSB], canTransmit: true, bandName: "10m"),
-            DetailedFrequencyRange(min: 29_700_000, max: 49_999_999, modes: [.usb, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm, .rtty, .dataUSB, .dataFM], canTransmit: true, bandName: "6m"),
+            // MW/LW receive only
+            DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            // 160m band
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "160m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            // 80m band
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "80m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 4_000_001, max: 5_330_499, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            // 60m band
+            DetailedFrequencyRange(min: 5_330_500, max: 5_405_000, modes: [.usb, .cw, .cwR, .dataUSB], canTransmit: true, bandName: "60m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 5_405_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
+            // 40m band
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .cwR, .rtty, .rttyR, .dataLSB], canTransmit: true, bandName: "40m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 30m band
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .cwR, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 20m band
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "20m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 17m band
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "17m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 15m band
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "15m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 12m band
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .dataUSB], canTransmit: true, bandName: "12m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .cwR, .am], canTransmit: false),
+            // 10m band
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "10m"),
+            // General coverage receive
+            DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .cw, .cwR, .am, .fm], canTransmit: false),
+            // 6m band
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "6m"),
+            // 4m band (ITU Region 1 only — Hamlib mk2 caps include
+            // `FRQ_RNG_4m` at 2–50W). Modeled at wire level; the
+            // radio's own band-select UI gates actual TX per region.
+            DetailedFrequencyRange(min: 70_000_000, max: 70_500_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "4m"),
+            // Upper VHF general coverage receive (54–70 MHz gap +
+            // above 4m up to the radio's 74.8 MHz ceiling)
+            DetailedFrequencyRange(min: 54_000_001, max: 69_999_999, modes: [.usb, .fm, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 70_500_001, max: 74_800_000, modes: [.usb, .fm, .am], canTransmit: false),
         ],
         hasDualReceiver: false,
         hasATU: true,
@@ -95,7 +145,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
-        // VFO ops — IC-7300MK2 inherits the IC-7300 family set.
+        // VFO ops — IC-7300MK2 inherits the IC-7300 family set
+        // (Hamlib `IC7300_VFO_OPS` is shared between both models).
         supportedVFOOperations: .icomStandard,
         supportedFunctions: .icomIC7300Funcs
     )
