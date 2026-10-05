@@ -264,7 +264,10 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic703: return 0x68
 
         // Xiegu (CI-V compatible)
-        case .xieguG90, .xieguX6100, .xieguX6200: return 0xA4
+        // G90: Hamlib xiegu.c g90_priv_caps (upstream 5ac54e5b) — stock
+        // firmware defaults to 0x88; some units also answer 0x70 / 0xA4.
+        case .xieguG90: return 0x88
+        case .xieguX6100, .xieguX6200: return 0xA4
 
         // VHF/UHF
         case .ic970: return 0x2E

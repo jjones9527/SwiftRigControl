@@ -6,7 +6,8 @@ import Foundation
 /// IcomCIVProtocol and StandardIcomCommandSet infrastructure.
 ///
 /// ## Xiegu CI-V Protocol
-/// - All Xiegu radios use CI-V address **0xA4**
+/// - Default CI-V address: **0x88** on the G90, **0xA4** on the X6100 /
+///   X6200 (Hamlib `rigs/icom/xiegu.c` `g90_priv_caps` / `x6100_priv_caps`)
 /// - Fixed baud rate: **19200**
 /// - Standard Icom command set with minor quirks
 /// - VFO model: currentOnly (operates on current VFO)
@@ -26,7 +27,11 @@ extension RadioDefinition.Xiegu {
     /// - SDR architecture with spectrum display
     ///
     /// **CI-V Details:**
-    /// - Address: 0xA4 (shared with X6100/X6200)
+    /// - Address: 0x88. Hamlib moved the G90 default from 0xA4 to
+    ///   0x88 in upstream `5ac54e5b` ("stock G90 … default CI-V
+    ///   0x88", `rigs/icom/xiegu.c` `g90_priv_caps`), noting some
+    ///   units also answer 0x70 / 0xA4. Use
+    ///   ``RadioDefinition/withCivAddress(_:)`` if yours differs.
     /// - Baud: 19200
     /// - Protocol: Standard Icom CI-V
     ///
@@ -36,14 +41,14 @@ extension RadioDefinition.Xiegu {
         model: "G90",
         defaultBaudRate: 19200,
         capabilities: RadioCapabilitiesDatabase.Xiegu.g90,
-        civAddress: 0xA4,  // Xiegu standard CI-V address
+        civAddress: 0x88,  // Hamlib xiegu.c g90_priv_caps (upstream 5ac54e5b)
         protocolFactory: { transport in
             IcomCIVProtocol(
                 transport: transport,
-                civAddress: 0xA4,
+                civAddress: 0x88,
                 radioModel: .xieguG90,  // Will add to IcomRadioModel
                 commandSet: StandardIcomCommandSet(
-                    civAddress: 0xA4,
+                    civAddress: 0x88,
                     vfoModel: .currentOnly,
                     requiresModeFilter: true,
                     echoesCommands: false

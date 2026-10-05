@@ -427,6 +427,11 @@ all shipped under the `v1.0.6` tag. The top-of-file note in
 Going forward: **`CHANGELOG.md` heading versions must match the git
 tag they ship under.** No more aspirational labels.
 
+**In flight (unreleased, targeted v1.2.17):** Hamlib upstream
+review 2026-10 — rigctld decimal parsing, FT-817 DIG selector,
+Icom AGC wire bytes, G90 CI-V `0x88`. Triage and prioritized
+plan: `Documentation/HAMLIB_TRIAGE_2026-10.md`; ROADMAP Phase 5.9.
+
 ### Versioning policy
 
 Patch releases (`v1.1.x`) are for bug fixes and safety fixes with

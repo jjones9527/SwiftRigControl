@@ -21,6 +21,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Targeted for **v1.2.17** — outcome of the Hamlib upstream review
+covering watermark `0839c031` → `7a556db` (2026-08-17 → 2026-10-03,
+digests jjones9527/SwiftRigControl#18, #20–#25). Triage and the
+prioritized follow-up plan live in
+`Documentation/HAMLIB_TRIAGE_2026-10.md`.
+
+### Fixed
+
+- **rigctld bridge rejected every frequency sent by Hamlib's own
+  NET rigctl client.**  netrigctl formats frequencies with
+  `"%"FREQFMT` = `"%lf"` (`include/hamlib/rig.h:505-514`,
+  `rigs/dummy/netrigctl.c:1091-1095`), so WSJT-X / fldigi / JS8Call
+  configured as "Hamlib NET rigctl" send `F 14074000.000000`.  Our
+  parser used `UInt64(token)` and answered `RPRT -1`.  New
+  `RigctldDecimal` mirrors Hamlib's canonical decimal grammar
+  (`src/rigctl_protocol.c:25-90`, tightened upstream in `14f24827`):
+  `F` / `I` / `\set_freq` / `\set_split_freq` / `2` / `\power2mW`
+  accept integer or decimal hertz (rounded to the nearest Hz), and
+  level values accept a decimal comma (`0,5`) like Hamlib's
+  `RIGCTL_DECIMAL_DOT_OR_COMMA` policy.
+- **A malformed rigctld client could crash the host app.**
+  `L AF nan`, `L RF 1e300`, `\set_level MICGAIN inf`, or
+  `2 1e300 14074000 USB` reached `Int(Double)` with a non-finite or
+  out-of-range value, which traps in Swift.  Non-finite tokens are
+  now rejected with `RPRT -1` (Hamlib: "require complete finite
+  numeric tokens"), level values are clamped to 0.0…1.0 before
+  scaling, and `power2mW` rejects power outside 0.0…1.0 exactly as
+  Hamlib `rig_power2mW` does.
+- **FT-817 / FT-818 / FT-857(D) / FT-897(D) / mcHF: DATA-USB and
+  DATA-LSB selected FM packet.**  `YaesuPortableCAT` sent the PKT
+  selector `0x0C` for `.dataUSB` / `.dataLSB`; on these radios PKT
+  is FM packet.  Hamlib routes `RIG_MODE_PKTUSB` / `PKTLSB` to the
+  DIG selector `0x0A` (`rigs/yaesu/ft817.c:1547-1598`,
+  `ft857.c:1205-1250`) and only `PKTFM` to `0x0C`.  Fixed; readback
+  now reports `0x0C` as `.dataFM` (`ft817.c:981-983`).  The USB/LSB
+  sideband of DIG follows the radio's DIG MODE menu — Hamlib's
+  EEPROM write to force it (upstream `65ce74ca`) is not ported yet.
+- **Icom `setAGC` / `getAGC` used the wrong wire bytes and threw on
+  most radios.**  The unified AGC path sent Hamlib's `RIG_AGC_*`
+  enum values (`FAST=2`, `MEDIUM=5`) instead of each radio's CI-V
+  byte (`FAST=1`, `MID=2`, `SLOW=3` on most models), so `.fast`
+  selected MID and `.medium` was NAKed; a radio in FAST could not be
+  read back.  IC-7300 / IC-7610 / IC-7851 / IC-7800 / IC-7700 /
+  IC-705 were routed into IC-7600- or IC-7100-only helpers and threw
+  `unsupportedOperation`.  Now table-driven from each model's Hamlib
+  `agc_levels` (`ic7600.c:161`, `ic7300.c:454/563/670/726`,
+  `ic7200.c:106`, `ic7410.c:102` — reversed order, `ic785x.c:156`,
+  etc.), adding IC-7000 / IC-7200 / IC-7410 / IC-7300MK2 / IC-7760 /
+  Xiegu G90.
+- **Xiegu G90 default CI-V address `0xA4` → `0x88`.**  Hamlib
+  upstream `5ac54e5b` moved `g90_priv_caps` to `0x88` ("stock G90
+  … default CI-V 0x88", some units also answer `0x70` / `0xA4`).
+  Same enumeration-fails-silently class as the v1.2.15 IC-7300MK2
+  fix.  Users whose G90 is set to `0xA4` can keep it with
+  `RadioDefinition.Xiegu.g90.withCivAddress(0xA4)`.
+
+### Tests
+
+- `RigctldDecimalParsingTests` — grammar, rounding, non-finite
+  rejection, parser wiring for `F` / `I` / `\set_freq` / `2`, and
+  handler no-trap cases.
+- `IcomAGCWireTests` — wire bytes for IC-9700 / IC-7300, IC-7600
+  OFF rejection, readback, reversed IC-7410 table, and a guard that
+  no table emits `RIG_AGC_*` enum values.
+- `YaesuPortableCATTests` — DIG vs PKT selector and readback.
+- `IcomCIVAddressHamlibParityTests` — G90 expectation moved to `0x88`.
+
 ## [1.2.16] - 2026-08-21
 
 ### Fixed
