@@ -203,10 +203,12 @@ public actor TCPSerialTransport: SerialTransport {
     // is a data-plane concern (T 1 / T 0 for rigctld, ZZTX / ZZRX for
     // Flex). These are documented no-ops so callers can hold a single
     // `SerialTransport` reference regardless of transport type.
+    /// No-op: TCP has no DTR line. Throws only if the transport is closed.
     public func setDTR(_ enabled: Bool) async throws {
         try checkOpen()
     }
 
+    /// No-op: TCP has no RTS line. Throws only if the transport is closed.
     public func setRTS(_ enabled: Bool) async throws {
         try checkOpen()
     }

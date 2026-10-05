@@ -154,6 +154,7 @@ public actor MockSerialTransport: SerialTransport {
         // No buffered data; flush is a no-op.
     }
 
+    /// Records the requested DTR state in `recordedDTR` for test assertions.
     public func setDTR(_ enabled: Bool) async throws {
         guard _isOpen else {
             throw RigError.notConnected
@@ -161,6 +162,7 @@ public actor MockSerialTransport: SerialTransport {
         recordedDTR.append(enabled)
     }
 
+    /// Records the requested RTS state in `recordedRTS` for test assertions.
     public func setRTS(_ enabled: Bool) async throws {
         guard _isOpen else {
             throw RigError.notConnected
@@ -186,7 +188,7 @@ public actor MockSerialTransport: SerialTransport {
     /// Serves the next series of reads as `chunks`, one chunk per
     /// `read(timeout:)` call. Use this to reproduce the low-baud-rate
     /// scenario where a fixed-length frame arrives spread across
-    /// multiple OS reads — the case that ``SerialTransport/readExact``
+    /// multiple OS reads — the case that ``SerialTransport/readExact(count:timeout:)``
     /// exists to handle.
     ///
     /// - Parameters:

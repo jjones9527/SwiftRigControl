@@ -323,10 +323,12 @@ public actor IOKitSerialPort: SerialTransport {
         tcflush(fileDescriptor, TCIOFLUSH)
     }
 
+    /// Asserts or clears the DTR modem line (used for DTR-keyed PTT).
     public func setDTR(_ enabled: Bool) async throws {
         try setModemLine(TIOCM_DTR, enabled: enabled)
     }
 
+    /// Asserts or clears the RTS modem line (used for RTS-keyed PTT).
     public func setRTS(_ enabled: Bool) async throws {
         try setModemLine(TIOCM_RTS, enabled: enabled)
     }
@@ -382,6 +384,7 @@ public actor IOKitSerialPort: SerialTransport {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
 
+    /// Non-macOS stub — always throws `RigError.serialPortError`.
     public func readExact(count: Int, timeout: TimeInterval) async throws -> Data {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
@@ -390,10 +393,12 @@ public actor IOKitSerialPort: SerialTransport {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
 
+    /// Non-macOS stub — always throws `RigError.serialPortError`.
     public func setDTR(_ enabled: Bool) async throws {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }
 
+    /// Non-macOS stub — always throws `RigError.serialPortError`.
     public func setRTS(_ enabled: Bool) async throws {
         throw RigError.serialPortError("IOKitSerialPort is only available on macOS")
     }

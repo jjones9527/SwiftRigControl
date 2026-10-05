@@ -59,6 +59,7 @@ public actor THFamilyCAT:
     /// CR terminator (EOM_TH in Hamlib).
     private static let terminator: UInt8 = 0x0D
 
+    /// Creates a TH-family protocol instance over the given transport.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities

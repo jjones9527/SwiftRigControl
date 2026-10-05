@@ -16,7 +16,7 @@ import Foundation
 /// 1. **Little-endian BCD** frequency encoding
 ///    (Hamlib `to_bcd(data, freq/10, 8)` — no `_be` suffix), where
 ///    the FT-817 family uses big-endian. See
-///    ``YaesuBinaryFrame/encodeBCDLittleEndian8(_:)``.
+///    `YaesuBinaryFrame.encodeBCDLittleEndian8(_:)`.
 /// 2. **Mode selector lives in byte 3** (P4), and the high bit of
 ///    P4 tags VFO A (0x00-0x0B) vs VFO B (0x80-0x8B). The FT-817
 ///    family puts the mode in byte 0 with no VFO tag.
@@ -73,6 +73,7 @@ public actor YaesuFT1000MPCAT: CATProtocol {
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 
+    /// Creates an FT-1000MP protocol instance over the given transport.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities

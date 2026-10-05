@@ -123,7 +123,7 @@ extension YaesuCATProtocol {
             /// prefix. FTDX-10 / FT-710 / FTX-1. Hamlib
             /// `newcat.c:9214` (set) and `newcat.c:9481` (get; note
             /// FTX-1 falls through to the qualifier get form — see
-            /// implementation note in ``setIFFilter``).
+            /// implementation note in ``YaesuCATProtocol/setIFFilter(_:)``).
             case doubleZero
             /// `SH%c%d%02d;` set / `SH%c;` get, where the second
             /// digit is the "bandwidth on" flag. FT-DX101D/MP send
@@ -132,6 +132,7 @@ extension YaesuCATProtocol {
             case vfoAndNarrow(narrowAlwaysOn: Bool)
         }
 
+        /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
             usesFT23ForVFOSelection: Bool = false,

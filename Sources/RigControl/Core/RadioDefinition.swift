@@ -221,6 +221,7 @@ public struct RadioDefinition: Sendable {
         /// currently-supported radio needs this.
         public let softwareFlowControl: Bool
 
+        /// Creates serial framing defaults (default: 1 stop bit, no parity, no flow control).
         public init(
             stopBits: Int = 1,
             parity: SerialConfiguration.Parity = .none,

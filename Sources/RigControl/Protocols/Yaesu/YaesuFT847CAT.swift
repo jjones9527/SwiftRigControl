@@ -77,6 +77,7 @@ public actor YaesuFT847CAT: CATProtocol {
     /// a moment to settle on some units — 1 second is comfortable.
     private let responseTimeout: TimeInterval = 1.0
 
+    /// Creates an FT-847 protocol instance over the given transport. Set `isUnidirectional` for write-only CAT links (all getters then throw).
     public init(
         transport: any SerialTransport,
         capabilities: RigCapabilities,
