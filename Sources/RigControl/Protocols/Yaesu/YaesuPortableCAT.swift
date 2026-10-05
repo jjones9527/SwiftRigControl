@@ -268,14 +268,22 @@ public actor YaesuPortableCAT:
     /// (lines 183-192).
     ///
     /// **Note on the DATA family:** the FT-817 family's CAT protocol
-    /// has exactly one "PKT" mode selector (`0x0C`). The radio's
-    /// current RF band + data-jack routing (front-panel menu) is what
-    /// determines whether PKT means data-over-USB, data-over-LSB, or
-    /// data-over-FM. Hamlib collapses all three
-    /// (`RIG_MODE_PKTUSB`, `RIG_MODE_PKTLSB`, `RIG_MODE_PKTFM`) to
-    /// this same selector — see `rigs/yaesu/ft817.c:1547-1548,
-    /// 1624-1625`. The inverse ``mode(fromSelector:narrow:)`` is
-    /// consequently lossy: `0x0C` collapses back to `.dataUSB`.
+    /// has two data selectors. `0x0A` is **DIG** — the SSB-based
+    /// digital mode whose sideband comes from the radio's DIG MODE
+    /// menu (USER-U / USER-L / RTTY / PSK). `0x0C` is **PKT** — FM
+    /// packet (1200/9600 bps). Hamlib routes `RIG_MODE_PKTUSB` and
+    /// `RIG_MODE_PKTLSB` to DIG (`rigs/yaesu/ft817.c:1547-1598`,
+    /// `ft857.c:1205-1250`) and only `RIG_MODE_PKTFM` to PKT
+    /// (`ft817.c:1624-1626`); readback mirrors that (`ft817.c:962-983`,
+    /// `ft857.c:790-809`).
+    ///
+    /// Hamlib additionally writes the DIG MODE EEPROM byte (FT-817
+    /// `0x65`, FT-857 `0x78`, upstream `65ce74ca`) so USB vs LSB is
+    /// deterministic. We deliberately do not write EEPROM yet: the
+    /// sideband follows the operator's DIG MODE menu setting (USER-U
+    /// is the usual choice for VARA HF / FT8). The inverse
+    /// ``mode(fromSelector:narrow:)`` therefore reports `0x0A` as
+    /// `.dataUSB`.
     internal static func modeSelector(for mode: Mode) throws -> UInt8 {
         switch mode {
         case .lsb:      return 0x00
@@ -285,14 +293,13 @@ public actor YaesuPortableCAT:
         case .am:       return 0x04
         case .fm:       return 0x08
         case .fmN:      return 0x88
-        case .dataUSB, .dataLSB, .dataFM:
-            // Hamlib maps PKT-USB, PKT-LSB, and PKT-FM to the same
-            // PKT selector (0x0C) — the FT-817 family's CAT protocol
-            // has one PKT mode; the radio's current RF band +
-            // data-jack routing (front-panel menu) determines whether
-            // PKT means data-over-USB, data-over-LSB, or data-over-FM.
-            // See rigs/yaesu/ft817.c:1547-1548 (PKTUSB/PKTLSB) and
-            // ft817.c:1624-1625 (PKTFM) for the canonical precedent.
+        case .dataUSB, .dataLSB:
+            // DIG (0x0A), not PKT. Pre-v1.2.17 these sent 0x0C, which
+            // puts the radio in FM packet — wrong for VARA HF / FT8.
+            // Matches ft817.c:1547-1598 and ft857.c:1205-1250.
+            return 0x0A
+        case .dataFM:
+            // PKT (0x0C) — FM packet, per ft817.c:1624-1626.
             return 0x0C
         default:
             throw RigError.unsupportedOperation(
@@ -317,7 +324,7 @@ public actor YaesuPortableCAT:
         case 0x04: return .am
         case 0x08: return narrow ? .fmN : .fm
         case 0x0A: return .dataUSB   // DIG — collapsed to DATA-USB
-        case 0x0C: return .dataUSB   // PKT — collapsed to DATA-USB
+        case 0x0C: return .dataFM    // PKT — FM packet (ft817.c:981-983)
         default:
             throw RigError.invalidResponse
         }

@@ -230,7 +230,7 @@ table above — are field-tested; all others are definition-only.
 ### Xiegu (CI-V Compatible) — 3 models
 
 **Budget HF:**
-- **G90** - HF 20W SDR transceiver (19200 baud, CI-V: 0xA4)
+- **G90** - HF 20W SDR transceiver (19200 baud, CI-V: 0x88)
 - **X6100** - HF/6m 10W portable SDR (19200 baud, CI-V: 0xA4)
 - **X6200** - HF/6m 8W portable SDR (19200 baud, CI-V: 0xA4)
 

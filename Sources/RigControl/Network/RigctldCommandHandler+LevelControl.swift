@@ -21,7 +21,7 @@ extension RigctldCommandHandler {
         switch normalized {
         case "AF":
             // AF gain: Hamlib uses 0.0-1.0 float, we use 0-255
-            guard let floatVal = Double(value) else {
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid AF value: \(value)")
             }
             let level = Int(floatVal * 255.0)
@@ -30,7 +30,7 @@ extension RigctldCommandHandler {
 
         case "RF":
             // RF gain: Hamlib uses 0.0-1.0 float, we use 0-255
-            guard let floatVal = Double(value) else {
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid RF value: \(value)")
             }
             let level = Int(floatVal * 255.0)
@@ -39,7 +39,7 @@ extension RigctldCommandHandler {
 
         case "SQL":
             // Squelch: Hamlib uses 0.0-1.0 float, we use 0-255
-            guard let floatVal = Double(value) else {
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid SQL value: \(value)")
             }
             let level = Int(floatVal * 255.0)
@@ -64,7 +64,7 @@ extension RigctldCommandHandler {
 
         case "RFPOWER":
             // RF output power: Hamlib uses 0.0-1.0 normalized float, minimum 0.05
-            guard let floatVal = Double(value) else {
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid RFPOWER value: \(value)")
             }
             let caps = await rigController.capabilities
@@ -356,7 +356,7 @@ extension RigctldCommandHandler {
     /// Hamlib level values arrive as floats in [0.0, 1.0]. Our
     /// secondary-level API uses Int in [0, 100]. Map and clamp.
     func parseFloatLevel(_ raw: String, name: String) throws -> Int {
-        guard let v = Double(raw) else {
+        guard let v = RigctldDecimal.parseUnitInterval(raw) else {
             throw RigError.invalidParameter("Invalid \(name) value: \(raw)")
         }
         return min(max(Int((v * 100.0).rounded()), 0), 100)

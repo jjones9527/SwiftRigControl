@@ -1324,6 +1324,46 @@ not touched a real radio yet.
 
 ---
 
+## Phase 5.9 — Hamlib upstream review 2026-10 (v1.2.17 → v1.2.18)
+
+Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
+`0839c031` → `7a556db`).
+
+### 5.9.1 Landed on `claude/eloquent-bohr-iolhns` (pending macOS CI)
+
+- [x] rigctld canonical decimal parsing — netrigctl's
+      `F 14074000.000000` accepted; non-finite values can't trap.
+- [x] FT-817 family DATA-USB/LSB → DIG `0x0A` (was FM packet `0x0C`).
+- [x] Icom unified AGC uses per-model Hamlib `agc_levels` bytes.
+- [x] Xiegu G90 default CI-V `0x88` (Hamlib `5ac54e5b`).
+
+### 5.9.2 P0 — Kenwood DATA-mode wire fix
+
+- [ ] `KenwoodProtocol.setMode(.dataUSB/.dataLSB)` sends `MD13;` /
+      `MD12;`, which no Kenwood accepts. Per-model: `MD`+`DA1` on
+      TS-590S/SG (`kenwood.c:2537-2556`), `OM0<hex>` on the operating
+      band for TS-990S (`kenwood.c:2574-2653`, upstream `bfea1769`),
+      `unsupportedOperation` elsewhere. `DA;` readback.
+
+### 5.9.3 P1
+
+- [ ] FT-100 / FT-920 wired to `YaesuPortableCAT`; Hamlib `ft100.c` /
+      `ft920.c` use the legacy `[0,0,0,P1,op]` layout. Audit and move
+      or mark unsupported.
+- [ ] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`).
+- [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700.
+
+### 5.9.4 P2 / P3
+
+- [ ] Icom `0x25`/`0x26` NAK fallback on targetable radios (`5ec5e6d2`).
+- [ ] Newcat `AC` reject drain (`635d11fe`).
+- [ ] FT-817/857 DIG sideband EEPROM write, opt-in (`65ce74ca`).
+- [ ] K4 `FR`/`FT`/`TQ` reply validation (`ffe227a3`).
+- [ ] G90 RFPOWER malformed-BCD clamp (`b61dd14d`).
+- [ ] TH-D75 dedicated-backend diff (`07d6a7ff`).
+
+---
+
 ## Phase 6 — Beyond-Hamlib differentiators
 
 **Goal:** features Hamlib does not have or does poorly.

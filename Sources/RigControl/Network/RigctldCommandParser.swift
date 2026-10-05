@@ -198,7 +198,7 @@ public struct RigctldCommandParser {
             guard let freqStr = args.first else {
                 throw ParseError.missingParameter("frequency")
             }
-            guard let freq = UInt64(freqStr) else {
+            guard let freq = RigctldDecimal.parseFrequency(freqStr) else {
                 throw ParseError.invalidParameter("frequency", value: freqStr)
             }
             return .setFrequency(hz: freq)
@@ -258,7 +258,7 @@ public struct RigctldCommandParser {
             guard let freqStr = args.first else {
                 throw ParseError.missingParameter("frequency")
             }
-            guard let freq = UInt64(freqStr) else {
+            guard let freq = RigctldDecimal.parseFrequency(freqStr) else {
                 throw ParseError.invalidParameter("frequency", value: freqStr)
             }
             return .setSplitFrequency(hz: freq)
@@ -281,10 +281,13 @@ public struct RigctldCommandParser {
             guard args.count >= 3 else {
                 throw ParseError.missingParameter("power, frequency, mode")
             }
-            guard let power = Double(args[0]) else {
+            // Hamlib `rig_power2mW` (src/rig.c) rejects power outside
+            // 0.0...1.0 with -RIG_EINVAL; mirror that rather than clamp.
+            guard let power = RigctldDecimal.parseDouble(args[0]),
+                  (0.0...1.0).contains(power) else {
                 throw ParseError.invalidParameter("power", value: args[0])
             }
-            guard let freq = UInt64(args[1]) else {
+            guard let freq = RigctldDecimal.parseFrequency(args[1]) else {
                 throw ParseError.invalidParameter("frequency", value: args[1])
             }
             return .power2mW(power: power, frequency: freq, mode: args[2])
@@ -296,7 +299,7 @@ public struct RigctldCommandParser {
             guard let powerMW = Int(args[0]) else {
                 throw ParseError.invalidParameter("power", value: args[0])
             }
-            guard let freq = UInt64(args[1]) else {
+            guard let freq = RigctldDecimal.parseFrequency(args[1]) else {
                 throw ParseError.invalidParameter("frequency", value: args[1])
             }
             return .mW2power(powerMW: powerMW, frequency: freq, mode: args[2])
@@ -401,7 +404,7 @@ public struct RigctldCommandParser {
             guard let freqStr = args.first else {
                 throw ParseError.missingParameter("frequency")
             }
-            guard let freq = UInt64(freqStr) else {
+            guard let freq = RigctldDecimal.parseFrequency(freqStr) else {
                 throw ParseError.invalidParameter("frequency", value: freqStr)
             }
             return .setFrequency(hz: freq)
@@ -461,7 +464,7 @@ public struct RigctldCommandParser {
             guard let freqStr = args.first else {
                 throw ParseError.missingParameter("frequency")
             }
-            guard let freq = UInt64(freqStr) else {
+            guard let freq = RigctldDecimal.parseFrequency(freqStr) else {
                 throw ParseError.invalidParameter("frequency", value: freqStr)
             }
             return .setSplitFrequency(hz: freq)
@@ -484,10 +487,13 @@ public struct RigctldCommandParser {
             guard args.count >= 3 else {
                 throw ParseError.missingParameter("power, frequency, mode")
             }
-            guard let power = Double(args[0]) else {
+            // Hamlib `rig_power2mW` (src/rig.c) rejects power outside
+            // 0.0...1.0 with -RIG_EINVAL; mirror that rather than clamp.
+            guard let power = RigctldDecimal.parseDouble(args[0]),
+                  (0.0...1.0).contains(power) else {
                 throw ParseError.invalidParameter("power", value: args[0])
             }
-            guard let freq = UInt64(args[1]) else {
+            guard let freq = RigctldDecimal.parseFrequency(args[1]) else {
                 throw ParseError.invalidParameter("frequency", value: args[1])
             }
             return .power2mW(power: power, frequency: freq, mode: args[2])
@@ -499,7 +505,7 @@ public struct RigctldCommandParser {
             guard let powerMW = Int(args[0]) else {
                 throw ParseError.invalidParameter("power", value: args[0])
             }
-            guard let freq = UInt64(args[1]) else {
+            guard let freq = RigctldDecimal.parseFrequency(args[1]) else {
                 throw ParseError.invalidParameter("frequency", value: args[1])
             }
             return .mW2power(powerMW: powerMW, frequency: freq, mode: args[2])

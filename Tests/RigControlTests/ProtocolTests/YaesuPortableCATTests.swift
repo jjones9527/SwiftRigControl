@@ -171,43 +171,44 @@ import Testing
         #expect(writes[0] == Data([0x88, 0x00, 0x00, 0x00, 0x07]))
     }
 
-    @Test func setModeDataUSBEmitsPKTFrame() async throws {
-        // Both DATA-USB and DATA-LSB map to the FT-817's PKT
-        // selector (0x0C) — the radio doesn't distinguish upper
-        // vs lower on the PKT channel.
+    @Test func setModeDataUSBEmitsDIGFrame() async throws {
+        // DATA-USB maps to the DIG selector (0x0A), not PKT (0x0C).
+        // Per Hamlib ft817.c:1547-1598 RIG_MODE_PKTUSB/PKTLSB route
+        // through FT817_NATIVE_CAT_SET_MODE_DIG. Pre-v1.2.17 we sent
+        // 0x0C, which selects FM packet and breaks VARA HF / FT8.
         let (transport, proto) = try await makeProtocol()
         try await proto.setMode(.dataUSB, vfo: .a)
         let writes = await transport.recordedWrites
-        #expect(writes[0] == Data([0x0C, 0x00, 0x00, 0x00, 0x07]))
+        #expect(writes[0] == Data([0x0A, 0x00, 0x00, 0x00, 0x07]))
     }
 
     @Test func modeSelectorMapsDataFMToPKT() throws {
-        // Per Hamlib rigs/yaesu/ft817.c:1624-1625, RIG_MODE_PKTFM
-        // routes through FT817_NATIVE_CAT_SET_MODE_PKT — the same
-        // selector byte (0x0C) as PKTUSB / PKTLSB. Prior to the
-        // v1.2.8 fix the `.dataFM` case fell into the switch's
-        // default branch and threw unsupportedOperation, which broke
-        // VARA-FM gateway connects on FT-857 hardware
-        // (MacWinlink beta31 field report, jjones9527/
-        // macwinlink-releases#27).
+        // Per Hamlib rigs/yaesu/ft817.c:1624-1626, RIG_MODE_PKTFM
+        // routes through FT817_NATIVE_CAT_SET_MODE_PKT (0x0C). Prior
+        // to the v1.2.8 fix the `.dataFM` case threw
+        // unsupportedOperation, which broke VARA-FM gateway connects
+        // on FT-857 hardware (jjones9527/macwinlink-releases#27).
         let selector = try YaesuPortableCAT.modeSelector(for: .dataFM)
         #expect(selector == 0x0C)
     }
 
-    @Test func modeSelectorMapsAllThreeDataModesToPKT() throws {
-        // Regression net for the whole DATA family: parameterised
-        // across `.dataUSB`, `.dataLSB`, `.dataFM` so a future
-        // accidental split-out of any one mode fails the test.
-        // Per Hamlib ft817.c the FT-817 family's CAT protocol has
-        // exactly one PKT mode selector; per-band data-jack routing
-        // (front-panel menu) determines the sub-mode.
-        for mode in [Mode.dataUSB, Mode.dataLSB, Mode.dataFM] {
+    @Test func modeSelectorMapsSSBDataModesToDIG() throws {
+        // Both SSB data modes share the DIG selector; the sideband
+        // comes from the radio's DIG MODE menu (USER-U / USER-L).
+        for mode in [Mode.dataUSB, Mode.dataLSB] {
             let selector = try YaesuPortableCAT.modeSelector(for: mode)
             #expect(
-                selector == 0x0C,
-                "\(mode.rawValue) must map to the PKT selector 0x0C per ft817.c:1547-1548 (PKTUSB/PKTLSB) and ft817.c:1624-1625 (PKTFM); got 0x\(String(format: "%02X", selector))"
+                selector == 0x0A,
+                "\(mode.rawValue) must map to the DIG selector 0x0A per ft817.c:1547-1598; got 0x\(String(format: "%02X", selector))"
             )
         }
+    }
+
+    @Test func modeFromSelectorDistinguishesDIGAndPKT() throws {
+        // Readback per ft817.c:962-983: 0x0A = DIG (SSB data),
+        // 0x0C = PKT (FM packet).
+        #expect(try YaesuPortableCAT.mode(fromSelector: 0x0A, narrow: false) == .dataUSB)
+        #expect(try YaesuPortableCAT.mode(fromSelector: 0x0C, narrow: false) == .dataFM)
     }
 
     @Test func getModeReturnsUSBForSelectorOne() async throws {

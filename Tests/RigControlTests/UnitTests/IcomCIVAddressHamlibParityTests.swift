@@ -161,8 +161,9 @@ import Testing
         (.icf8101, 0x8A, "icf8101.c priv_caps"),
 
         // Xiegu CI-V-compatible clones — Hamlib treats these as
-        // Icom-family with a shared default 0xA4 (same as IC-705).
-        (.xieguG90, 0xA4, "x108g.c / x6100.c — Xiegu family shares 0xA4"),
+        // Icom-family. The G90 moved to 0x88 in upstream 5ac54e5b;
+        // X6100/X6200 stay on 0xA4.
+        (.xieguG90, 0x88, "xiegu.c g90_priv_caps (0x88 since Hamlib 5ac54e5b)"),
         (.xieguX6100, 0xA4, "x6100.c priv_caps"),
         (.xieguX6200, 0xA4, "x6100.c priv_caps (X6200 shares X6100 default)"),
 
