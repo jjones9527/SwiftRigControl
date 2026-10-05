@@ -21,7 +21,7 @@ extension IcomCIVProtocol {
     /// Sets the AGC speed for Icom radios.
     ///
     /// The speed is translated to the radio's own CI-V byte using the
-    /// per-model table from Hamlib (see ``agcTable(for:)``).
+    /// per-model `agc_levels` table from Hamlib.
     ///
     /// ```swift
     /// try await proto.setAGC(.fast)
