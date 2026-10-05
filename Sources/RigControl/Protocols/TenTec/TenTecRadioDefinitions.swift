@@ -87,7 +87,7 @@ extension RadioDefinition.TenTec {
     /// Uses ``TenTecLegacyProtocol`` (simple ASCII `M`/`N`/`W`
     /// commands, CR-terminated). Frequency is transmitted as
     /// three 16-bit binary tuning factors via the `N` command —
-    /// see ``TenTecLegacyProtocol/tuningFactors(freqHz:mode:widthHz:pbtHz:cwBFOHz:)``.
+    /// see `TenTecLegacyProtocol.tuningFactors(freqHz:mode:widthHz:pbtHz:cwBFOHz:)`.
     ///
     /// Serial: 57600 baud, 8-N-1, RTS/CTS handshake per Hamlib
     /// `rigs/tentec/jupiter.c:139-143`.
