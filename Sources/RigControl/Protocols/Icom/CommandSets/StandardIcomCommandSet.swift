@@ -49,6 +49,7 @@ public struct StandardIcomCommandSet: IcomRadioCommandSet {
     public let requiresModeFilter: Bool
     public let echoesCommands: Bool
     public let powerUnits: PowerUnits
+    /// Whether the radio supports DATA modes (`false` on IC-7000, per Hamlib `.data_mode_supported = 0`).
     public let supportsDataMode: Bool
 
     /// Initialize a standard Icom command set.

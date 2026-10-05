@@ -154,6 +154,7 @@ public actor MockSerialTransport: SerialTransport {
         // No buffered data; flush is a no-op.
     }
 
+    /// Records the requested DTR state in `recordedDTR` for test assertions.
     public func setDTR(_ enabled: Bool) async throws {
         guard _isOpen else {
             throw RigError.notConnected
@@ -161,6 +162,7 @@ public actor MockSerialTransport: SerialTransport {
         recordedDTR.append(enabled)
     }
 
+    /// Records the requested RTS state in `recordedRTS` for test assertions.
     public func setRTS(_ enabled: Bool) async throws {
         guard _isOpen else {
             throw RigError.notConnected

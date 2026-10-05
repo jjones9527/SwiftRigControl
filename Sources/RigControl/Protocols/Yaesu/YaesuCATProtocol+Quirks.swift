@@ -132,6 +132,7 @@ extension YaesuCATProtocol {
             case vfoAndNarrow(narrowAlwaysOn: Bool)
         }
 
+        /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
             usesFT23ForVFOSelection: Bool = false,

@@ -73,6 +73,7 @@ public actor YaesuFT1000MPCAT: CATProtocol {
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 
+    /// Creates an FT-1000MP protocol instance over the given transport.
     public init(transport: any SerialTransport, capabilities: RigCapabilities) {
         self.transport = transport
         self.capabilities = capabilities
