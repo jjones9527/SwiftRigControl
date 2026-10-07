@@ -51,8 +51,33 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.16** (git tag, 2026-08-21), the
-final piece of the macwinlink-releases#66 fix arc.
+The shipped version is **v1.2.17** (git tag, 2026-10-07), the
+outcome of the Hamlib upstream review covering `0839c031` →
+`7a556db` (jjones9527/SwiftRigControl#27, #28). Four fixes:
+
+- **rigctld decimal parsing.** Hamlib's netrigctl client formats
+  frequencies as `%lf` (`rig.h:505-514`, `netrigctl.c:1091-1095`),
+  so `F 14074000.000000` used to get `RPRT -1`. `RigctldDecimal`
+  mirrors `rigctl_protocol.c:25-90` (dot or comma, finite only) and
+  stops `nan` / `inf` level values from trapping `Int(Double)`.
+- **FT-817 family DATA-USB/LSB → DIG `0x0A`** (was PKT `0x0C`, FM
+  packet), per `ft817.c:1547-1598` / `ft857.c:1205-1250`.
+- **Icom AGC wire bytes** come from each model's Hamlib
+  `agc_levels` table, not the `RIG_AGC_*` enum.
+- **Xiegu G90 default CI-V `0x88`** (Hamlib `5ac54e5b`).
+
+Also unblocked `main` CI: `Scripts/check-public-docs.py` had been
+failing on every `main` push since v1.2.0 (2026-07-25) on 16
+undocumented public symbols, so build, DocC and tests never ran in
+CI for v1.2.0–v1.2.16; four pre-existing broken
+DocC links surfaced and were fixed. **Mock-tested only** — no
+hardware was available; shipped to gather field feedback. Triage
+and the prioritized plan (Kenwood DATA-mode wire bug is P0):
+`Documentation/HAMLIB_TRIAGE_2026-10.md`, ROADMAP Phase 5.9.
+Test count 793 → 817.
+
+The previously-shipped version was **v1.2.16** (git tag,
+2026-08-21), the final piece of the macwinlink-releases#66 fix arc.
 
 v1.2.15 realigned the RPRT wire encoding (`.rejected` now maps
 to Hamlib canonical `-9 RIG_ERJCTED`), but field-test on
@@ -426,11 +451,6 @@ all shipped under the `v1.0.6` tag. The top-of-file note in
 
 Going forward: **`CHANGELOG.md` heading versions must match the git
 tag they ship under.** No more aspirational labels.
-
-**In flight (unreleased, targeted v1.2.17):** Hamlib upstream
-review 2026-10 — rigctld decimal parsing, FT-817 DIG selector,
-Icom AGC wire bytes, G90 CI-V `0x88`. Triage and prioritized
-plan: `Documentation/HAMLIB_TRIAGE_2026-10.md`; ROADMAP Phase 5.9.
 
 ### Versioning policy
 

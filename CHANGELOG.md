@@ -21,11 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Targeted for **v1.2.17** — outcome of the Hamlib upstream review
-covering watermark `0839c031` → `7a556db` (2026-08-17 → 2026-10-03,
-digests jjones9527/SwiftRigControl#18, #20–#25). Triage and the
-prioritized follow-up plan live in
-`Documentation/HAMLIB_TRIAGE_2026-10.md`.
+## [1.2.17] - 2026-10-07
+
+Outcome of the Hamlib upstream review covering watermark
+`0839c031` → `7a556db` (2026-08-17 → 2026-10-03, digests
+jjones9527/SwiftRigControl#18, #20–#25). Triage and the prioritized
+follow-up plan live in `Documentation/HAMLIB_TRIAGE_2026-10.md`.
+Shipped in jjones9527/SwiftRigControl#27 and #28.
+
+**Verification status:** mock-tested only. None of these fixes has
+been exercised on real hardware (AGC on IC-7100 / IC-7600 / IC-9700
+and DATA-USB on FT-817 / FT-857 are the open checks). Field reports
+welcome.
 
 ### Fixed
 
@@ -87,6 +94,26 @@ prioritized follow-up plan live in
   no table emits `RIG_AGC_*` enum values.
 - `YaesuPortableCATTests` — DIG vs PKT selector and readback.
 - `IcomCIVAddressHamlibParityTests` — G90 expectation moved to `0x88`.
+
+Test count 793 → 817, zero regressions.
+
+### CI / Documentation
+
+- **`main` CI unblocked.** `Scripts/check-public-docs.py` had been
+  failing on 16 undocumented public symbols (transport
+  `setDTR` / `setRTS` / `readExact`, `RadioDefinition.SerialDefaults`
+  init, `StandardIcomCommandSet.supportsDataMode`, and the
+  `THFamilyCAT` / `TMFamilyCAT` / `YaesuCATProtocol.Quirks` /
+  `YaesuFT1000MPCAT` / `YaesuFT847CAT` inits). Because that step runs
+  first, nothing after it — build, DocC, tests — had run on any
+  `main` push since v1.2.0 (2026-07-25); v1.2.0 through v1.2.16
+  shipped without CI test coverage. All 817 tests pass now.
+  All 16 now carry DocC comments.
+- **Four broken DocC symbol links fixed** (pre-existing, previously
+  masked): two pointed at internal symbols
+  (`TenTecLegacyProtocol.tuningFactors`,
+  `YaesuBinaryFrame.encodeBCDLittleEndian8`) and two were
+  under-qualified (`setIFFilter`, `SerialTransport/readExact`).
 
 ## [1.2.16] - 2026-08-21
 
