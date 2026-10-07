@@ -147,7 +147,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
@@ -183,7 +183,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN],
         frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
         detailedFrequencyRanges: [
             // HF bands
@@ -306,7 +306,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,  // 200W version
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),

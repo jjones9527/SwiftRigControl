@@ -29,8 +29,7 @@ extension KenwoodProtocol {
     public func setAFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "AG0%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AF gain.
@@ -63,8 +62,7 @@ extension KenwoodProtocol {
     public func setRFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "RG%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current RF gain.
@@ -97,8 +95,7 @@ extension KenwoodProtocol {
     public func setSquelch(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "SQ0%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current squelch level.
@@ -140,8 +137,7 @@ extension KenwoodProtocol {
         // Kenwood PA command: 0=off, 1=on (no multi-stage on most models)
         let code = level > 0 ? 1 : 0
         let command = "PA\(code)"
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current preamplifier state.
@@ -186,8 +182,7 @@ extension KenwoodProtocol {
         default: throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB (valid: 0, 6, 12, 18)")
         }
         let command = String(format: "RA%02d", code)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current attenuator level in dB.
@@ -237,8 +232,7 @@ extension KenwoodProtocol {
         case .auto:   code = 2  // Map auto → mid as closest equivalent
         }
         let command = String(format: "GT%03d", code)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AGC speed.
@@ -276,11 +270,10 @@ extension KenwoodProtocol {
     public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
         switch config {
         case .off:
-            try await sendCommand("NB0")
+            try await sendSetCommand("NB0")
         case .enabled:
-            try await sendCommand("NB1")
+            try await sendSetCommand("NB1")
         }
-        _ = try await receiveResponse()
     }
 
     /// Gets the current noise blanker state.
@@ -312,12 +305,10 @@ extension KenwoodProtocol {
     public func setNoiseReduction(_ config: NoiseReduction) async throws {
         switch config {
         case .off:
-            try await sendCommand("NR0")
-            _ = try await receiveResponse()
+            try await sendSetCommand("NR0")
         case .enabled(let level):
             let code = level > 5 ? 2 : 1
-            try await sendCommand("NR\(code)")
-            _ = try await receiveResponse()
+            try await sendSetCommand("NR\(code)")
         }
     }
 
@@ -363,8 +354,7 @@ extension KenwoodProtocol {
         case .filter3: highCut = 2
         }
         let command = String(format: "SH%02d", highCut)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current IF filter by reading the DSP high-cut setting.
@@ -435,8 +425,7 @@ extension KenwoodProtocol {
             throw RigError.invalidParameter("Memory channel must be 1–999")
         }
         let command = String(format: "MC%03d", channel.number)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Reads the currently recalled memory channel.

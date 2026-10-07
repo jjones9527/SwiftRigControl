@@ -193,7 +193,7 @@ extension RadioCapabilitiesDatabase.Flex {
         hasSplit: false,
         powerControl: false,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .am, .fm, .dataLSB, .dataUSB],
+        supportedModes: [.lsb, .usb, .cw, .am, .fm],
         frequencyRange: FrequencyRange(min: 30_000, max: 165_000_000),
         detailedFrequencyRanges: flexFrequencyRanges,
         hasATU: false,

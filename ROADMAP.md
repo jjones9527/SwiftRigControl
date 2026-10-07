@@ -1349,13 +1349,19 @@ Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
 - [x] Icom unified AGC uses per-model Hamlib `agc_levels` bytes.
 - [x] Xiegu G90 default CI-V `0x88` (Hamlib `5ac54e5b`).
 
-### 5.9.2 P0 — Kenwood DATA-mode wire fix
+### 5.9.2 P0 — Kenwood DATA-mode wire fix (done on branch, targeted v1.2.18)
 
-- [ ] `KenwoodProtocol.setMode(.dataUSB/.dataLSB)` sends `MD13;` /
+- [x] Set-command verification: every Kenwood set is followed by
+      `ID;` and its reply checked, per Hamlib `kenwood.c:427-443`.
+      Previously most sets waited for a reply real radios never send.
+- [x] `KenwoodProtocol.setMode(.dataUSB/.dataLSB)` sent `MD13;` /
       `MD12;`, which no Kenwood accepts. Per-model: `MD`+`DA1` on
       TS-590S/SG (`kenwood.c:2537-2556`), `OM0<hex>` on the operating
       band for TS-990S (`kenwood.c:2574-2653`, upstream `bfea1769`),
-      `unsupportedOperation` elsewhere. `DA;` readback.
+      `unsupportedOperation` elsewhere. `DA;` readback. Also Flex
+      (`MD6` / `MD9`) and PowerSDR / Thetis (`ZZMD07` / `ZZMD09`).
+- [ ] Field reports from any Kenwood / Flex user — none of this has
+      run on hardware.
 
 ### 5.9.3 P1
 

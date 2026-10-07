@@ -27,7 +27,8 @@ extension RadioDefinition.Flex {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Flex.flex6000
+                capabilities: RadioCapabilitiesDatabase.Flex.flex6000,
+                modeStyle: .flexDigital
             )
         }
     )
@@ -64,7 +65,8 @@ extension RadioDefinition.Flex {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Flex.powerSDR
+                capabilities: RadioCapabilitiesDatabase.Flex.powerSDR,
+                modeStyle: .powerSDR
             )
         },
         hostRequirement: .windowsCompanion(app: "PowerSDR")
@@ -100,7 +102,8 @@ extension RadioDefinition.Flex {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Flex.thetis
+                capabilities: RadioCapabilitiesDatabase.Flex.thetis,
+                modeStyle: .powerSDR
             )
         },
         hostRequirement: .windowsCompanion(app: "Thetis")

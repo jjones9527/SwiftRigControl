@@ -49,14 +49,31 @@ public actor KenwoodProtocol:
     /// Command terminator (semicolon)
     private static let terminator: UInt8 = 0x3B  // ';'
 
+    /// How this radio selects modes, including DATA modes. See
+    /// ``KenwoodModeCommandStyle``.
+    public let modeStyle: KenwoodModeCommandStyle
+
+    /// Maximum number of unrelated replies (for example unsolicited
+    /// `FA` / `FB` auto-information) skipped while waiting for the
+    /// `ID;` verification reply after a set command.
+    static let verifyReplySkipBudget = 4
+
     /// Initializes a new Kenwood protocol instance.
     ///
     /// - Parameters:
     ///   - transport: The serial transport to use
     ///   - capabilities: The capabilities of this radio model
-    public init(transport: any SerialTransport, capabilities: RigCapabilities) {
+    ///   - modeStyle: How the radio selects modes, especially DATA
+    ///     modes. Defaults to ``KenwoodModeCommandStyle/standard``,
+    ///     which rejects DATA modes.
+    public init(
+        transport: any SerialTransport,
+        capabilities: RigCapabilities,
+        modeStyle: KenwoodModeCommandStyle = .standard
+    ) {
         self.transport = transport
         self.capabilities = capabilities
+        self.modeStyle = modeStyle
     }
 
     // MARK: - Connection
@@ -84,10 +101,7 @@ public actor KenwoodProtocol:
             command = String(format: "FB%011llu", hz)
         }
 
-        try await sendCommand(command)
-
-        // Kenwood radios echo the command back
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
@@ -117,36 +131,6 @@ public actor KenwoodProtocol:
         }
 
         return freq
-    }
-
-    // MARK: - Mode Control
-
-    public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        let modeCode = try modeToKenwoodCode(mode)
-        let command = "MD\(modeCode)"
-
-        try await sendCommand(command)
-        _ = try await receiveResponse()
-    }
-
-    public func getMode(vfo: VFO) async throws -> Mode {
-        try await sendCommand("MD")
-        let response = try await receiveResponse()
-
-        // Response format: MDx; where x is mode code
-        guard response.hasPrefix("MD"),
-              response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
-        let codeChar = response[codeIndex]
-
-        guard let modeCode = Int(String(codeChar)) else {
-            throw RigError.invalidResponse
-        }
-
-        return try kenwoodCodeToMode(modeCode)
     }
 
     // MARK: - PTT Control
@@ -202,8 +186,7 @@ public actor KenwoodProtocol:
             command = "FR1"  // Select VFO B for receive
         }
 
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     // MARK: - Power Control
@@ -218,8 +201,7 @@ public actor KenwoodProtocol:
         let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
         let command = String(format: "PC%03d", percentage)
 
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     public func getPower() async throws -> Int {
@@ -277,167 +259,6 @@ public actor KenwoodProtocol:
         return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
     }
 
-    // MARK: - RIT/XIT Control
-
-    /// Sets the RIT (Receiver Incremental Tuning) state.
-    ///
-    /// Kenwood radios use:
-    /// - `RT1;` to enable RIT
-    /// - `RT0;` to disable RIT
-    /// - `RU+nnnn;` or `RD+nnnn;` to set offset (in Hz, -9999 to +9999)
-    ///
-    /// - Parameter state: The desired RIT state (enabled/disabled and offset)
-    /// - Throws: `RigError` if operation fails
-    public func setRIT(_ state: RITXITState) async throws {
-        // Validate offset range
-        guard abs(state.offset) <= 9999 else {
-            throw RigError.invalidParameter("RIT offset must be between -9999 and +9999 Hz")
-        }
-
-        // Set RIT offset using RU (up) or RD (down) command
-        // Format: RU+nnnn; or RD-nnnn;
-        let command: String
-        if state.offset >= 0 {
-            command = String(format: "RU%+05d", state.offset)
-        } else {
-            command = String(format: "RD%+05d", state.offset)
-        }
-
-        try await sendCommand(command)
-        _ = try await receiveResponse()
-
-        // Set RIT ON/OFF
-        let enableCommand = state.enabled ? "RT1" : "RT0"
-        try await sendCommand(enableCommand)
-        _ = try await receiveResponse()
-    }
-
-    /// Gets the current RIT state.
-    ///
-    /// Queries both RIT ON/OFF status and frequency offset.
-    ///
-    /// - Returns: Current RIT state including enabled status and offset
-    /// - Throws: `RigError` if operation fails
-    public func getRIT() async throws -> RITXITState {
-        // Read RIT ON/OFF status
-        try await sendCommand("RT")
-        let enableResponse = try await receiveResponse()
-
-        // Response format: RTx; where x is 0 or 1
-        guard enableResponse.hasPrefix("RT"),
-              enableResponse.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let enableIndex = enableResponse.index(enableResponse.startIndex, offsetBy: 2)
-        let enableChar = enableResponse[enableIndex]
-        let enabled = enableChar == "1"
-
-        // Read RIT offset using RC (Read Clarifier) command
-        var offset = 0
-        do {
-            try await sendCommand("RC")
-            let offsetResponse = try await receiveResponse()
-
-            // Response format: RC+nnnnn; or RC-nnnnn;
-            guard offsetResponse.hasPrefix("RC"),
-                  offsetResponse.count >= 8 else {
-                throw RigError.invalidResponse
-            }
-
-            let startIndex = offsetResponse.index(offsetResponse.startIndex, offsetBy: 2)
-            let endIndex = offsetResponse.index(startIndex, offsetBy: 6)
-            let offsetString = String(offsetResponse[startIndex..<endIndex])
-
-            offset = Int(offsetString) ?? 0
-        } catch {
-            // If RC command not supported, default to 0 offset
-            offset = 0
-        }
-
-        return RITXITState(enabled: enabled, offset: offset)
-    }
-
-    /// Sets the XIT (Transmitter Incremental Tuning) state.
-    ///
-    /// Kenwood radios use:
-    /// - `XT1;` to enable XIT
-    /// - `XT0;` to disable XIT
-    /// - Offset is typically controlled by the same RU/RD commands as RIT
-    ///
-    /// - Parameter state: The desired XIT state (enabled/disabled and offset)
-    /// - Throws: `RigError` if operation fails
-    public func setXIT(_ state: RITXITState) async throws {
-        // Validate offset range
-        guard abs(state.offset) <= 9999 else {
-            throw RigError.invalidParameter("XIT offset must be between -9999 and +9999 Hz")
-        }
-
-        // Set XIT offset (shares with RIT on most Kenwood radios)
-        let command: String
-        if state.offset >= 0 {
-            command = String(format: "RU%+05d", state.offset)
-        } else {
-            command = String(format: "RD%+05d", state.offset)
-        }
-
-        try await sendCommand(command)
-        _ = try await receiveResponse()
-
-        // Set XIT ON/OFF
-        let enableCommand = state.enabled ? "XT1" : "XT0"
-        try await sendCommand(enableCommand)
-        _ = try await receiveResponse()
-    }
-
-    /// Gets the current XIT state.
-    ///
-    /// Queries both XIT ON/OFF status and frequency offset.
-    ///
-    /// **Note:** On most Kenwood radios, RIT and XIT share the same offset value.
-    ///
-    /// - Returns: Current XIT state including enabled status and offset
-    /// - Throws: `RigError` if operation fails
-    public func getXIT() async throws -> RITXITState {
-        // Read XIT ON/OFF status
-        try await sendCommand("XT")
-        let enableResponse = try await receiveResponse()
-
-        // Response format: XTx; where x is 0 or 1
-        guard enableResponse.hasPrefix("XT"),
-              enableResponse.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let enableIndex = enableResponse.index(enableResponse.startIndex, offsetBy: 2)
-        let enableChar = enableResponse[enableIndex]
-        let enabled = enableChar == "1"
-
-        // Read offset using RC command (shared with RIT)
-        var offset = 0
-        do {
-            try await sendCommand("RC")
-            let offsetResponse = try await receiveResponse()
-
-            // Response format: RC+nnnnn; or RC-nnnnn;
-            guard offsetResponse.hasPrefix("RC"),
-                  offsetResponse.count >= 8 else {
-                throw RigError.invalidResponse
-            }
-
-            let startIndex = offsetResponse.index(offsetResponse.startIndex, offsetBy: 2)
-            let endIndex = offsetResponse.index(startIndex, offsetBy: 6)
-            let offsetString = String(offsetResponse[startIndex..<endIndex])
-
-            offset = Int(offsetString) ?? 0
-        } catch {
-            // If RC command not supported, default to 0 offset
-            offset = 0
-        }
-
-        return RITXITState(enabled: enabled, offset: offset)
-    }
-
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {
@@ -447,8 +268,7 @@ public actor KenwoodProtocol:
 
         // Kenwood uses FT1 for split on, FT0 for split off
         let command = enabled ? "FT1" : "FT0"
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     public func getSplit() async throws -> Bool {
@@ -499,65 +319,57 @@ public actor KenwoodProtocol:
         return response
     }
 
-    /// Converts a Mode enum to a Kenwood mode code.
+    /// Sends a set command and confirms the radio accepted it.
     ///
-    /// Kenwood mode table (matches Hamlib `rigs/kenwood/ts990s.c:92`
-    /// and `rigs/kenwood/kenwood.c`):
+    /// Kenwood set commands produce no reply, so waiting for one only
+    /// times out. Like Hamlib `kenwood_transaction`
+    /// (`kenwood.c:427-443`), each set is followed by `ID;`, which
+    /// always answers. If the radio rejects the set command, its `?;`,
+    /// `N;`, `E;` or `O;` arrives before the `ID` reply
+    /// (`kenwood.c:518-600`). Unsolicited replies such as `FA` / `FB`
+    /// auto-information are skipped, as Hamlib does at
+    /// `kenwood.c:691-696`.
     ///
-    /// | Code | Mode      |
-    /// | ---- | --------- |
-    /// | 1    | LSB       |
-    /// | 2    | USB       |
-    /// | 3    | CW        |
-    /// | 4    | FM        |
-    /// | 5    | AM        |
-    /// | 6    | FSK (RTTY)|
-    /// | 7    | CW-R      |
-    /// | 8    | (reserved — TUNE on some radios, PKTUSB on SDRuno) |
-    /// | 9    | FSK-R (RTTY-R) |
-    /// | 12   | PKT-LSB (DATA-LSB) |
-    /// | 13   | PKT-USB (DATA-USB) |
-    ///
-    /// Sourced from Hamlib `rigs/kenwood/kenwood.c` `kenwood_mode_table`
-    /// (lines 141-167). Prior to v1.2.0 SwiftRigControl had `.rttyR`
-    /// mapped to 8 and `.dataLSB` mapped to 9, both wrong per the
-    /// Hamlib table. On real TS-series radios, `MD8;` triggers TUNE
-    /// mode (`RIG_MODE_NONE`) and `MD12;` / `MD13;` are the correct
-    /// PKT-LSB / PKT-USB selectors.
-    private func modeToKenwoodCode(_ mode: Mode) throws -> Int {
-        switch mode {
-        case .lsb: return 1
-        case .usb: return 2
-        case .cw: return 3
-        case .fm: return 4
-        case .am: return 5
-        case .rtty: return 6
-        case .cwR: return 7
-        case .rttyR: return 9
-        case .dataLSB: return 12
-        case .dataUSB: return 13
-        default:
-            throw RigError.unsupportedOperation("Mode \(mode) not supported by Kenwood protocol")
-        }
-    }
+    /// - Parameter command: The set command, without the `;`
+    ///   terminator.
+    /// - Throws: `RigError.commandFailed` for `?;`,
+    ///   `RigError.unsupportedOperation` for `N;`,
+    ///   `RigError.serialPortError` for `E;`,
+    ///   `RigError.invalidResponse` for `O;` or when no `ID` reply
+    ///   arrives within ``verifyReplySkipBudget`` replies, and
+    ///   `RigError.timeout` if the radio does not answer at all.
+    func sendSetCommand(_ command: String) async throws {
+        try await sendCommand(command)
+        try await sendCommand("ID")
 
-    /// Converts a Kenwood mode code to a Mode enum.
-    private func kenwoodCodeToMode(_ code: Int) throws -> Mode {
-        switch code {
-        case 1: return .lsb
-        case 2: return .usb
-        case 3: return .cw
-        case 4: return .fm
-        case 5: return .am
-        case 6: return .rtty
-        case 7: return .cwR
-        // 8 = TUNE (no direct Mode equivalent); throw so callers see
-        // the mismatch rather than silently mapping to something wrong.
-        case 9: return .rttyR
-        case 12: return .dataLSB
-        case 13: return .dataUSB
-        default:
-            throw RigError.invalidResponse
+        for _ in 0..<Self.verifyReplySkipBudget {
+            let reply = try await receiveResponse()
+            if reply.hasPrefix("ID") {
+                return
+            }
+
+            let failure: RigError
+            switch reply {
+            case "?":
+                failure = .commandFailed("Radio rejected \(command);")
+            case "N":
+                failure = .unsupportedOperation("Radio does not support \(command);")
+            case "E":
+                failure = .serialPortError("Radio reported a communication error for \(command);")
+            case "O":
+                failure = .invalidResponse
+            default:
+                // Unsolicited auto-information; keep reading.
+                continue
+            }
+
+            // The radio still answers the ID; that followed the
+            // rejected command. Consume it so the next transaction
+            // starts clean.
+            _ = try? await receiveResponse()
+            throw failure
         }
+
+        throw RigError.invalidResponse
     }
 }
