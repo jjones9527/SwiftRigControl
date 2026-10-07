@@ -1,6 +1,18 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.16 (cut 2026-08-21 — final piece
+**Current version:** v1.2.17 (cut 2026-10-07 — Hamlib upstream
+review `0839c031` → `7a556db`.  Four fixes: the rigctld bridge now
+accepts the decimal frequencies Hamlib's own netrigctl client sends
+(`F 14074000.000000`, previously `RPRT -1`) and can no longer be
+crashed by `nan` / `inf` level values; FT-817 family DATA-USB/LSB
+selects DIG `0x0A` instead of FM packet `0x0C`; Icom `setAGC` /
+`getAGC` use each model's Hamlib `agc_levels` byte instead of
+`RIG_AGC_*` enum values; Xiegu G90 default CI-V `0x88`.  Also
+unblocked `main` CI, which had been red on every push since
+v1.2.0 (2026-07-25) — the doc-coverage check failed first, so the
+test suite never ran in CI for v1.2.0–v1.2.16.  Mock-tested only — no hardware verification;
+shipped to gather field feedback.  Test count 793 → 817.)
+Previous release **v1.2.16** (cut 2026-08-21 — final piece
 of the macwinlink-releases#66 fix arc.  v1.2.15 realigned the
 RPRT wire encoding, but field-test on IC-7100 with beta40 rc1
 confirmed the underlying `.rejected` throw itself was
@@ -1329,7 +1341,7 @@ not touched a real radio yet.
 Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
 `0839c031` → `7a556db`).
 
-### 5.9.1 Landed on `claude/eloquent-bohr-iolhns` (pending macOS CI)
+### 5.9.1 Shipped in v1.2.17 (mock-tested; no hardware verification)
 
 - [x] rigctld canonical decimal parsing — netrigctl's
       `F 14074000.000000` accepted; non-finite values can't trap.
@@ -1351,7 +1363,9 @@ Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
       `ft920.c` use the legacy `[0,0,0,P1,op]` layout. Audit and move
       or mark unsupported.
 - [ ] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`).
-- [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700.
+- [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700, and
+      DATA-USB on FT-817 / FT-857. No hardware on hand — waiting on
+      user field reports against v1.2.17.
 
 ### 5.9.4 P2 / P3
 
