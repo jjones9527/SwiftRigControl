@@ -45,9 +45,8 @@ extension KenwoodProtocol {
             )
         }
 
-        try await sendCommand(command)
-        // Kenwood set commands don't echo; trust the wire write
-        // and move on, matching how setPower / setSplit work in
-        // this protocol.
+        // Kenwood set commands don't reply; sendSetCommand confirms
+        // with ID; as Hamlib does.
+        try await sendSetCommand(command)
     }
 }

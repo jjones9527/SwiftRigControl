@@ -16,7 +16,7 @@ extension RadioCapabilitiesDatabase.Lab599 {
         hasSplit: true,
         powerControl: true,
         maxPower: 10,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .rttyR, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .rtty, .rttyR],
         frequencyRange: FrequencyRange(min: 300_000, max: 30_000_000),
         detailedFrequencyRanges: [
             // General coverage receive 300 kHz–1.8 MHz

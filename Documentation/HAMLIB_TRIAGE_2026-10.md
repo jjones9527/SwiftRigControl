@@ -42,7 +42,10 @@ commit's neighborhood, not in the commit itself.
 
 ## Pre-existing issues found during this review (not upstream-driven)
 
-1. **Kenwood DATA modes send an invalid command (P0).**
+1. **Kenwood DATA modes send an invalid command (P0) — fixed for
+   v1.2.18**, together with a related bug found while fixing it:
+   most Kenwood set commands waited for a reply real radios never
+   send. See CHANGELOG `[Unreleased]`.
    `KenwoodProtocol.setMode(.dataUSB)` sends `MD13;` (two decimal
    digits). Hamlib never sends that: TS-590S/SG and TS-950 use
    `MD2;` + `DA1;` (`kenwood.c:2537-2556`, `2670-2727`), TS-990S
@@ -68,14 +71,15 @@ commit's neighborhood, not in the commit itself.
 
 ## Prioritized plan
 
-**P0 — next patch (v1.2.17)**
-- Ship the four fixes in this change once CI is green on macOS.
-- Kenwood DATA-mode wire fix (item 1 above): per-model strategy on
-  `KenwoodProtocol` (`MD`+`DA` for TS-590S/SG; `OM0<hex>` for TS-990S;
-  throw `unsupportedOperation` where Hamlib has no data mode), plus
-  `DA;` readback. MockTransport tests per family.
+**P0**
+- [x] Ship the four fixes in this change — shipped in v1.2.17
+  (mock-tested only).
+- [x] Kenwood DATA-mode wire fix (item 1 above), plus set-command
+  `ID;` verification — done for v1.2.18. Per-radio styles: `MD`+`DA`
+  (TS-590S/SG), `OM0<hex>` (TS-990S), `SF` (TS-890S), `MD6`/`MD9`
+  (Flex), `ZZMD` (PowerSDR / Thetis); `unsupportedOperation` elsewhere.
 
-**P1 — v1.2.18**
+**P1 — v1.2.18 or later**
 - FT-100 / FT-920 adapter audit (item 2). Either move to
   `YaesuLegacyCAT` with byte-level tests or mark unsupported.
 - `TIOCEXCL` exclusive serial open (`4b39d3cd`).

@@ -14,6 +14,19 @@ import Testing
         )
     }
 
+    /// Kenwood set commands produce no reply; KenwoodProtocol confirms
+    /// each one with `ID;` (Hamlib `kenwood.c:427-443`). Answer it the
+    /// way a TS-2000 does. Call after `mockTransport.reset()`, which
+    /// clears stubbed responses.
+    private func stubIDReply() async {
+        await mockTransport.setResponse(for: "ID;".data(using: .ascii)!,
+                                        response: "ID019;".data(using: .ascii)!)
+    }
+
+    private func sentCommands() async -> [String] {
+        await mockTransport.recordedWrites.map { String(data: $0, encoding: .ascii) ?? "" }
+    }
+
     // MARK: - Connection Tests
 
     @Test func connect() async throws {
@@ -36,19 +49,12 @@ import Testing
     @Test func setFrequency() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
+        await stubIDReply()
         // Expected command: FA00014230000; (14.230 MHz)
-        let expectedCommand = "FA00014230000;".data(using: .ascii)!
-        let response = "FA00014230000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await kenwoodProtocol.setFrequency(14_230_000, vfo: .a)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FA00014230000;")
+        #expect(await sentCommands() == ["FA00014230000;", "ID;"])
     }
 
     @Test func getFrequency() async throws {
@@ -67,37 +73,22 @@ import Testing
     @Test func setFrequencyVFOB() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        let expectedCommand = "FB00007100000;".data(using: .ascii)!
-        let response = "FB00007100000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        await stubIDReply()
+    // MARK: - Mode Tests
 
         try await kenwoodProtocol.setFrequency(7_100_000, vfo: .b)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FB00007100000;")
+        #expect(await sentCommands() == ["FB00007100000;", "ID;"])
     }
-
-    // MARK: - Mode Tests
 
     @Test func setMode() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        let expectedCommand = "MD2;".data(using: .ascii)!
-        let response = "MD2;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        await stubIDReply()
 
         try await kenwoodProtocol.setMode(.usb, vfo: .a)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "MD2;")
+        #expect(await sentCommands() == ["MD2;", "ID;"])
     }
 
     @Test func getMode() async throws {
@@ -114,11 +105,9 @@ import Testing
     }
 
     @Test func modeMappings() async throws {
-        // Cross-checked against Hamlib `rigs/kenwood/kenwood.c`
-        // `kenwood_mode_table` (lines 141-167). Prior to v1.2.0,
-        // Swift emitted `MD8;` for `.rttyR` (which is TUNE mode on
-        // real hardware) and `MD9;` for `.dataLSB` (which is
-        // RIG_MODE_RTTYR). Fixed in the v1.2.0 audit-fix batch.
+        // Shared Kenwood table, Hamlib `rigs/kenwood/kenwood.c`
+        // `kenwood_mode_table` (lines 142-168). `.standard` style
+        // radios have no DATA modes (see KenwoodModeStyleTests).
         try await kenwoodProtocol.connect()
 
         let modeMappings: [(Mode, String)] = [
@@ -131,25 +120,15 @@ import Testing
             (.cwR, "MD7;"),
             // 8 = RIG_MODE_NONE (TUNE) — no direct Mode equivalent.
             (.rttyR, "MD9;"),
-            // 10 = PSK, 11 = PSK-R — not exposed on Swift Mode.
-            (.dataLSB, "MD12;"),
-            (.dataUSB, "MD13;"),
         ]
 
         for (mode, expectedCmd) in modeMappings {
             await mockTransport.reset()
-
-            let expectedCommand = expectedCmd.data(using: .ascii)!
-            let response = expectedCmd.data(using: .ascii)!
-            await mockTransport.setResponse(for: expectedCommand, response: response)
+            await stubIDReply()
 
             try await kenwoodProtocol.setMode(mode, vfo: .a)
 
-            let writes = await mockTransport.recordedWrites
-            #expect(writes.count == 1, "Mode \(mode) failed")
-
-            let command = String(data: writes[0], encoding: .ascii)
-            #expect(command == expectedCmd, "Mode \(mode) command mismatch")
+            #expect(await sentCommands() == [expectedCmd, "ID;"], "Mode \(mode) command mismatch")
         }
     }
 
@@ -219,56 +198,34 @@ import Testing
     @Test func selectVFO() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
+        await stubIDReply()
         // Select VFO A (FR0) - Kenwood uses FR instead of FT for VFO selection
-        let expectedCommand = "FR0;".data(using: .ascii)!
-        let response = "FR0;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await kenwoodProtocol.selectVFO(.a)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FR0;")
+        #expect(await sentCommands() == ["FR0;", "ID;"])
     }
 
     @Test func selectVFOB() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
+        await stubIDReply()
         // Select VFO B (FR1) - Different from Yaesu/Elecraft which use FT
-        let expectedCommand = "FR1;".data(using: .ascii)!
-        let response = "FR1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+    // MARK: - Power Control Tests
 
         try await kenwoodProtocol.selectVFO(.b)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FR1;")
+        #expect(await sentCommands() == ["FR1;", "ID;"])
     }
-
-    // MARK: - Power Control Tests
 
     @Test func setPower() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        let expectedCommand = "PC050;".data(using: .ascii)!
-        let response = "PC050;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        await stubIDReply()
 
         try await kenwoodProtocol.setPower(50)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "PC050;")
+        #expect(await sentCommands() == ["PC050;", "ID;"])
     }
 
     @Test func getPower() async throws {
@@ -304,9 +261,7 @@ import Testing
         )
 
         // Set 100W on 200W radio = 50%
-        let expectedCommand = "PC050;".data(using: .ascii)!
-        let response = "PC050;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        await stubIDReply()
 
         try await protocol200W.setPower(100)
 
@@ -320,36 +275,22 @@ import Testing
     @Test func setSplitOn() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
+        await stubIDReply()
         // Kenwood uses FT1 for split on
-        let expectedCommand = "FT1;".data(using: .ascii)!
-        let response = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
 
         try await kenwoodProtocol.setSplit(true)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FT1;")
+        #expect(await sentCommands() == ["FT1;", "ID;"])
     }
 
     @Test func setSplitOff() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
-
-        let expectedCommand = "FT0;".data(using: .ascii)!
-        let response = "FT0;".data(using: .ascii)!
-        await mockTransport.setResponse(for: expectedCommand, response: response)
+        await stubIDReply()
 
         try await kenwoodProtocol.setSplit(false)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-
-        let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "FT0;")
+        #expect(await sentCommands() == ["FT0;", "ID;"])
     }
 
     @Test func getSplit() async throws {
@@ -370,70 +311,38 @@ import Testing
     @Test func completeWorkflow() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
 
-        // 1. Set frequency
-        let freqCmd = "FA00014230000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: freqCmd, response: freqCmd)
         try await kenwoodProtocol.setFrequency(14_230_000, vfo: .a)
-
-        // 2. Set mode to USB
-        let modeCmd = "MD2;".data(using: .ascii)!
-        await mockTransport.setResponse(for: modeCmd, response: modeCmd)
         try await kenwoodProtocol.setMode(.usb, vfo: .a)
-
-        // 3. Enable PTT — bare `TX;` per Hamlib canonical form.
-        let pttCmd = "TX;".data(using: .ascii)!
-        await mockTransport.setResponse(for: pttCmd, response: Data())
+        // PTT is bare `TX;` per Hamlib canonical form, without ID;
+        // verification (unchanged; see setPTT).
         try await kenwoodProtocol.setPTT(true)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 3)
-
-        let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
-        let cmd3 = String(data: writes[2], encoding: .ascii)
-
-        #expect(cmd1 == "FA00014230000;")
-        #expect(cmd2 == "MD2;")
-        #expect(cmd3 == "TX;")
+        #expect(await sentCommands() == [
+            "FA00014230000;", "ID;",
+            "MD2;", "ID;",
+            "TX;",
+        ])
     }
 
     @Test func splitOperationWorkflow() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
 
-        // 1. Enable split
-        let splitOnCmd = "FT1;".data(using: .ascii)!
-        await mockTransport.setResponse(for: splitOnCmd, response: splitOnCmd)
         try await kenwoodProtocol.setSplit(true)
-
-        // 2. Set VFO A frequency (RX on 14.230 MHz)
-        let vfoACmd = "FA00014230000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: vfoACmd, response: vfoACmd)
         try await kenwoodProtocol.setFrequency(14_230_000, vfo: .a)
-
-        // 3. Set VFO B frequency (TX on 14.235 MHz)
-        let vfoBCmd = "FB00014235000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: vfoBCmd, response: vfoBCmd)
         try await kenwoodProtocol.setFrequency(14_235_000, vfo: .b)
-
-        // 4. Select VFO A for receive (Kenwood uses FR0)
-        let selectCmd = "FR0;".data(using: .ascii)!
-        await mockTransport.setResponse(for: selectCmd, response: selectCmd)
+        // Kenwood uses FR0 to select VFO A for receive.
         try await kenwoodProtocol.selectVFO(.a)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 4)
-
-        let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
-        let cmd3 = String(data: writes[2], encoding: .ascii)
-        let cmd4 = String(data: writes[3], encoding: .ascii)
-
-        #expect(cmd1 == "FT1;")           // Split on
-        #expect(cmd2 == "FA00014230000;") // RX freq
-        #expect(cmd3 == "FB00014235000;") // TX freq
-        #expect(cmd4 == "FR0;")           // Select VFO A
+        #expect(await sentCommands() == [
+            "FT1;", "ID;",            // Split on
+            "FA00014230000;", "ID;",  // RX freq
+            "FB00014235000;", "ID;",  // TX freq
+            "FR0;", "ID;",            // Select VFO A
+        ])
     }
 
     @Test func dualReceiverRadio() async throws {
@@ -454,25 +363,16 @@ import Testing
 
         try await dualRxProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
 
-        // Set main receiver (VFO A) to 14.230 MHz
-        let mainCmd = "FA00014230000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: mainCmd, response: mainCmd)
+        // Main receiver (VFO A) to 14.230 MHz, sub (VFO B) to 7.100 MHz.
         try await dualRxProtocol.setFrequency(14_230_000, vfo: .a)
-
-        // Set sub receiver (VFO B) to 7.100 MHz
-        let subCmd = "FB00007100000;".data(using: .ascii)!
-        await mockTransport.setResponse(for: subCmd, response: subCmd)
         try await dualRxProtocol.setFrequency(7_100_000, vfo: .b)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 2)
-
-        let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
-
-        #expect(cmd1 == "FA00014230000;")
-        #expect(cmd2 == "FB00007100000;")
+        #expect(await sentCommands() == [
+            "FA00014230000;", "ID;",
+            "FB00007100000;", "ID;",
+        ])
     }
 
     // MARK: - VFO operations (v1.1 parity)
@@ -480,16 +380,16 @@ import Testing
     @Test func vfoOpStepUp() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.performVFOOperation(.stepUp)
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
-        #expect(String(data: writes[0], encoding: .ascii) == "UP;")
+        #expect(await sentCommands() == ["UP;", "ID;"])
     }
 
     @Test func vfoOpBandDown() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.performVFOOperation(.bandDown)
 
         let writes = await mockTransport.recordedWrites
@@ -499,6 +399,7 @@ import Testing
     @Test func vfoOpMemoryToVFO() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.performVFOOperation(.memoryToVFO)
 
         let writes = await mockTransport.recordedWrites
@@ -508,6 +409,7 @@ import Testing
     @Test func vfoOpTune() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.performVFOOperation(.tune)
 
         let writes = await mockTransport.recordedWrites
@@ -527,6 +429,7 @@ import Testing
     @Test func setFunctionCompressorOn() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.setFunction(.compressor, enabled: true)
 
         #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "PR1;")
@@ -535,6 +438,7 @@ import Testing
     @Test func setFunctionTunerOff() async throws {
         try await kenwoodProtocol.connect()
         await mockTransport.reset()
+        await stubIDReply()
         try await kenwoodProtocol.setFunction(.tuner, enabled: false)
 
         #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "AC110;")

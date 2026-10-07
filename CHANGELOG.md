@@ -21,6 +21,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Targeted for **v1.2.18**. P0 item from
+`Documentation/HAMLIB_TRIAGE_2026-10.md`. Mock-tested only; no
+Kenwood, Flex or Lab599 hardware is available.
+
+### Fixed
+
+- **Every Kenwood-protocol set command waited for a reply the radio
+  never sends.**  Real Kenwood radios answer set commands (`FA`, `MD`,
+  `PC`, `FT`, `FR`, `RT`, `GT`, `AG`, …) with nothing, but
+  `KenwoodProtocol` read a reply after most of them, so on hardware
+  each one should have timed out after 1 s and thrown even though the
+  radio applied it.  Others (`setFunction`, VFO operations, `IS`, the
+  secondary levels) didn't read at all and so never noticed a
+  rejection.  All set commands now go through one helper that
+  follows the command with `ID;` and reads that reply, exactly as
+  Hamlib `kenwood_transaction` does (`kenwood.c:427-443`).  A `?;`,
+  `N;`, `E;` or `O;` before the ID reply now throws
+  (`kenwood.c:518-600`); unsolicited `FA` / `FB` replies are skipped
+  (`kenwood.c:691-696`).  PTT (`TX;` / `RX;`) and power-off (`PS0;`)
+  are unchanged.  Affects all 22 radios that use `KenwoodProtocol`:
+  Kenwood HF, FlexRadio family and Lab599 TX-500.
+- **Kenwood DATA modes sent an invalid command.**  `setMode(.dataUSB)`
+  sent `MD13;` and `.dataLSB` sent `MD12;`.  No Kenwood accepts a
+  two-digit `MD`, and readback only parsed one character.  DATA
+  handling now follows Hamlib per radio, through a new public
+  `KenwoodModeCommandStyle` (additive `modeStyle:` init parameter,
+  default `.standard`):
+  - TS-590S / TS-590SG: `MD<n>;` then `DA1;` / `DA0;`, read back with
+    `DA;` (`kenwood.c:2537-2556`, `2670-2727`, `2989-3020`).
+  - TS-990S: `OM0<hex>;` for every mode, `C` / `D` / `E` = LSB / USB /
+    FM DATA (`ts990s.c:94-120`, `kenwood.c:2631-2653`).
+  - TS-890S: `SF<v>;` read-modify-write, mode character at offset 14
+    (`kenwood.c:2602-2630`, `2899-2912`).
+  - Flex 6000 (SmartSDR): `MD6;` = DIGL, `MD9;` = DIGU, and no RTTY or
+    CW-R, per `flex_mode_table` (`flex6xxx.c:58-70`).
+  - PowerSDR / Thetis: `ZZMD07;` = DIGU, `ZZMD09;` = DIGL, with the
+    whole mode table on `ZZMD` (`powersdr_mode_table`).
+  - Everything else (TS-2000, TS-480SAT/HX, TS-870S, TS-850S, TS-570,
+    TS-450S, TS-690S, TS-940S, TS-950S/SDX, TX-500, SDR-Console,
+    PiHPSDR): DATA modes now throw `RigError.unsupportedOperation`.
+    None of these lists `RIG_MODE_PKT*` in its Hamlib caps.
+- **Five radios advertised DATA modes they can't select.** Removed
+  `.dataUSB` / `.dataLSB` from `supportedModes` on TS-480SAT,
+  TS-480HX, TS-2000, SDR-Console and TX-500, so the rigctld
+  `\dump_state` mode list and app pickers match what works.
+
+### Tests
+
+- `KenwoodModeStyleTests` — `ID;` verification (accept, `?;`, `N;`,
+  skipped auto-info), each mode style's wire bytes and readback, the
+  catalog's style per radio, and a guard that no radio advertises a
+  mode its style can't set.
+- `KenwoodProtocolTests` / `Tier1SafetyFixesTests` — updated for the
+  set-then-`ID;` sequence; `MD12;` / `MD13;` expectations replaced by
+  a test that `.standard` radios reject DATA modes.
+
 ## [1.2.17] - 2026-10-07
 
 Outcome of the Hamlib upstream review covering watermark

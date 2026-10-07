@@ -25,7 +25,7 @@ extension KenwoodProtocol {
     public func setFunction(_ function: RigFunction, enabled: Bool) async throws {
         let prefix = try kenwoodPrefix(for: function)
         let suffix = enabled ? "1" : "0"
-        try await sendCommand(prefix + suffix)
+        try await sendSetCommand(prefix + suffix)
     }
 
     public func getFunction(_ function: RigFunction) async throws -> Bool {

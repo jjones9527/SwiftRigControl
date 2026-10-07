@@ -311,49 +311,31 @@ import Testing
         try await kw.connect()
         await mock.reset()
 
-        let cmd = "MD9;".data(using: .ascii)!
-        await mock.setResponse(for: cmd, response: cmd)
+        // Set commands are confirmed with ID; (Hamlib kenwood.c:427-443).
+        await mock.setResponse(for: "ID;".data(using: .ascii)!,
+                               response: "ID019;".data(using: .ascii)!)
 
         try await kw.setMode(.rttyR, vfo: .a)
 
-        let writes = await mock.recordedWrites
-        #expect(writes.count == 1)
-        #expect(String(data: writes[0], encoding: .ascii) == "MD9;")
+        let writes = await mock.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["MD9;", "ID;"])
     }
 
-    @Test func kenwoodModeDataLSBEmitsMD12() async throws {
-        // v1.2.0 audit fix: DATA-LSB is Kenwood's PKT-LSB, mode 12
-        // per kenwood_mode_table. Prior code emitted MD9;.
+    @Test func kenwoodStandardStyleRejectsDataModes() async throws {
+        // v1.2.18: pre-fix code sent `MD12;` / `MD13;` for DATA-LSB /
+        // DATA-USB. No Kenwood accepts a two-digit MD; Hamlib gives the
+        // radios using the plain MD path no packet modes at all. They
+        // now throw instead of putting garbage on the wire.
         let mock = MockTransport()
         let kw = KenwoodProtocol(transport: mock, capabilities: .full)
         try await kw.connect()
         await mock.reset()
 
-        let cmd = "MD12;".data(using: .ascii)!
-        await mock.setResponse(for: cmd, response: cmd)
-
-        try await kw.setMode(.dataLSB, vfo: .a)
-
-        let writes = await mock.recordedWrites
-        #expect(writes.count == 1)
-        #expect(String(data: writes[0], encoding: .ascii) == "MD12;")
-    }
-
-    @Test func kenwoodModeDataUSBEmitsMD13() async throws {
-        // v1.2.0 audit fix: DATA-USB is Kenwood's PKT-USB, mode 13
-        // per kenwood_mode_table. Not previously supported.
-        let mock = MockTransport()
-        let kw = KenwoodProtocol(transport: mock, capabilities: .full)
-        try await kw.connect()
-        await mock.reset()
-
-        let cmd = "MD13;".data(using: .ascii)!
-        await mock.setResponse(for: cmd, response: cmd)
-
-        try await kw.setMode(.dataUSB, vfo: .a)
-
-        let writes = await mock.recordedWrites
-        #expect(writes.count == 1)
-        #expect(String(data: writes[0], encoding: .ascii) == "MD13;")
+        for mode in [Mode.dataLSB, .dataUSB, .dataFM] {
+            await #expect(throws: RigError.self) {
+                try await kw.setMode(mode, vfo: .a)
+            }
+        }
+        #expect(await mock.recordedWrites.isEmpty)
     }
 }
