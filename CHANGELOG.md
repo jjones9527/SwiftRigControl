@@ -102,8 +102,10 @@ Kenwood, Flex, Lab599, FT-100 or FT-920 hardware is available.
 
 ### Tests
 
-- `IOKitSerialPortExclusiveAccessTests` — a second open of a held pty
-  fails with the "in use" error; the port reopens after close.
+- `IOKitSerialPortExclusiveAccessTests` — on a pty, the kernel accepts
+  `TIOCEXCL` and the port reopens after close.  (A pty does not refuse a
+  second non-root open, so the "in use" path needs a real USB-serial
+  port to observe.)
 - `YaesuFT100FT920Tests` — FT-100 and FT-920 wire bytes, mode tables,
   FT-100 status / flags decoding, no-ACK writes, catalog wiring at
   4800 baud, and that every advertised mode is settable.

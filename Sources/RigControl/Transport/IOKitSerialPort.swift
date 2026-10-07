@@ -14,6 +14,10 @@ public actor IOKitSerialPort: SerialTransport {
     private var fileDescriptor: Int32 = -1
     private var originalTermios: termios?
 
+    /// Whether the kernel accepted the `TIOCEXCL` request made by
+    /// ``open()``. Exposed for tests; `false` while the port is closed.
+    private(set) var hasExclusiveAccess = false
+
     public nonisolated var isOpen: Bool {
         get async {
             await _isOpen
@@ -70,7 +74,7 @@ public actor IOKitSerialPort: SerialTransport {
         // Matches Hamlib serial_open (upstream 4b39d3cd, src/serial.c),
         // which also treats a failure here as non-fatal. Released when
         // the descriptor is closed.
-        _ = ioctl(fileDescriptor, TIOCEXCL)
+        hasExclusiveAccess = ioctl(fileDescriptor, TIOCEXCL) == 0
 
         // Save original termios settings
         var termios = Darwin.termios()
@@ -196,6 +200,7 @@ public actor IOKitSerialPort: SerialTransport {
         Darwin.close(fileDescriptor)
         fileDescriptor = -1
         originalTermios = nil
+        hasExclusiveAccess = false
     }
 
     /// Writes data to the serial port.

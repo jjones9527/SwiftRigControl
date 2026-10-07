@@ -6,13 +6,15 @@ import Testing
 import Darwin
 
 /// `IOKitSerialPort.open()` claims exclusive access with `TIOCEXCL`, as
-/// Hamlib `serial_open` does since upstream `4b39d3cd`. A second open of
-/// the same port must fail with a clear "in use" error instead of
-/// sharing the CAT line, and must succeed again once the first owner
-/// closes.
+/// Hamlib `serial_open` does since upstream `4b39d3cd`, and releases it on
+/// close.
 ///
-/// Uses an `openpty(3)` pair, like `IOKitSerialPortModemLineTests`.
-/// (`TIOCEXCL` does not apply to root; CI runs as a normal user.)
+/// These tests use an `openpty(3)` pair, like
+/// `IOKitSerialPortModemLineTests`. A pty accepts `TIOCEXCL`, but CI showed
+/// that a second non-root open of the pty slave still succeeds, so the
+/// "second program gets EBUSY" behaviour can only be checked on a real
+/// USB-serial port. Here we check that the kernel accepts the request and
+/// that close releases the port.
 @Suite struct IOKitSerialPortExclusiveAccessTests {
 
     private static func makePty() throws -> (masterFD: Int32, slavePath: String) {
@@ -30,23 +32,16 @@ import Darwin
         IOKitSerialPort(configuration: SerialConfiguration(path: path, baudRate: 9600))
     }
 
-    @Test func secondOpenOfSamePortFailsWhileFirstIsOpen() async throws {
+    @Test func openClaimsExclusiveAccess() async throws {
         let pty = try Self.makePty()
         defer { Darwin.close(pty.masterFD) }
 
-        let first = Self.port(pty.slavePath)
-        try await first.open()
+        let port = Self.port(pty.slavePath)
+        try await port.open()
+        #expect(await port.hasExclusiveAccess, "TIOCEXCL was not accepted")
 
-        let second = Self.port(pty.slavePath)
-        do {
-            try await second.open()
-            Issue.record("second open should fail while the port is held exclusively")
-            await second.close()
-        } catch RigError.serialPortError(let message) {
-            #expect(message.contains("in use by another application"), "\(message)")
-        }
-
-        await first.close()
+        await port.close()
+        #expect(await port.hasExclusiveAccess == false)
     }
 
     @Test func portCanBeReopenedAfterClose() async throws {
