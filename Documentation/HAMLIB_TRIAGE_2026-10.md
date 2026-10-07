@@ -54,7 +54,8 @@ commit's neighborhood, not in the commit itself.
    one character, so `MD12`/`MD13` can never be read either.
    Affects every Kenwood/Lab599/Flex definition that routes through
    `KenwoodProtocol` and any app using DATA-USB (VARA HF, FT8).
-2. **FT-100 and FT-920 use the wrong adapter (P1).** Both are wired
+2. **FT-100 and FT-920 use the wrong adapter (P1) — fixed for
+   v1.2.18**; both were also at 38400 baud instead of Hamlib's 4800. Both are wired
    to `YaesuPortableCAT` (FT-817 framing: mode byte first, opcode
    `0x07`; PTT opcodes `0x08`/`0x88`). Hamlib `ft100.c:210-219` (PTT `[0,0,0,1,0x0F]`, mode `[0,0,0,P1,0x0C]`) and
    `ft920.c:361` use the legacy layout (`[0,0,0,P1,0x0C]` mode set,
@@ -80,7 +81,7 @@ commit's neighborhood, not in the commit itself.
   (Flex), `ZZMD` (PowerSDR / Thetis); `unsupportedOperation` elsewhere.
 
 **P1 — v1.2.18 or later**
-- FT-100 / FT-920 adapter audit (item 2). Either move to
+- [x] FT-100 / FT-920 adapter audit (item 2) — done for v1.2.18. Was: either move to
   `YaesuLegacyCAT` with byte-level tests or mark unsupported.
 - `TIOCEXCL` exclusive serial open (`4b39d3cd`).
 - Hardware re-check of AGC on IC-7100 / IC-7600 / IC-9700 (the three

@@ -1365,9 +1365,11 @@ Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
 
 ### 5.9.3 P1
 
-- [ ] FT-100 / FT-920 wired to `YaesuPortableCAT`; Hamlib `ft100.c` /
-      `ft920.c` use the legacy `[0,0,0,P1,op]` layout. Audit and move
-      or mark unsupported.
+- [x] FT-100 / FT-920 wired to `YaesuPortableCAT` at 38400 baud;
+      Hamlib `ft100.c` / `ft920.c` use the legacy `[0,0,0,P1,op]`
+      layout at 4800 baud. FT-100 → new `YaesuFT100CAT` (with status
+      reads); FT-920 → `YaesuFT1000MPCAT(family: .ft920)`. Targeted
+      v1.2.18, mock-tested only.
 - [ ] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`).
 - [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700, and
       DATA-USB on FT-817 / FT-857. No hardware on hand — waiting on

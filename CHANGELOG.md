@@ -21,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Targeted for **v1.2.18**. P0 item from
+Targeted for **v1.2.18**. P0 and P1 items from
 `Documentation/HAMLIB_TRIAGE_2026-10.md`. Mock-tested only; no
-Kenwood, Flex or Lab599 hardware is available.
+Kenwood, Flex, Lab599, FT-100 or FT-920 hardware is available.
 
 ### Fixed
 
@@ -67,8 +67,31 @@ Kenwood, Flex or Lab599 hardware is available.
   TS-480HX, TS-2000, SDR-Console and TX-500, so the rigctld
   `\dump_state` mode list and app pickers match what works.
 
+- **FT-100 and FT-920 were driven with the FT-817 protocol at the
+  wrong baud rate.**  Both were wired to `YaesuPortableCAT` (mode byte
+  first, opcode `0x07`; PTT opcodes `0x08` / `0x88`) at 38400 baud.
+  Hamlib `rigs/yaesu/ft100.c` and `ft920.c` use the legacy layout —
+  parameters in bytes 0-3, opcode in byte 4, little-endian BCD
+  frequency, no ACK — and both radios run at **4800 baud only**, 8-N-2
+  (`ft100.c:325-330`, `ft920.c:419-424`).  No mode, PTT or frequency
+  command could have worked.
+  - FT-100: new `YaesuFT100CAT` — frequency `0x0A`, mode `0x0C` with
+    the FT-100 table (DIG = `0x05`, FM = `0x06`, WFM = `0x07`), PTT
+    `0x0F`, VFO `0x05` (`ft100.c:210-230`).  Also reads frequency and
+    mode from the 32-byte status block (binary × 1.25 Hz,
+    `ft100.c:614-800`) and PTT from the flags block
+    (`ft100.c:953-972`).  DATA-LSB removed from its `supportedModes`;
+    Hamlib maps only PKT-USB to DIG.
+  - FT-920: now `YaesuFT1000MPCAT` with a new `family: .ft920` (public,
+    additive, default `.ft1000mp`) — same opcodes as the FT-1000MP, but
+    DATA-L `0x08`, DATA-U `0x0A`, DATA-F `0x0B` (`ft920.c:109-132`,
+    `975-1009`).
+
 ### Tests
 
+- `YaesuFT100FT920Tests` — FT-100 and FT-920 wire bytes, mode tables,
+  FT-100 status / flags decoding, no-ACK writes, catalog wiring at
+  4800 baud, and that every advertised mode is settable.
 - `KenwoodModeStyleTests` — `ID;` verification (accept, `?;`, `N;`,
   skipped auto-info), each mode style's wire bytes and readback, the
   catalog's style per radio, and a guard that no radio advertises a
