@@ -212,8 +212,12 @@ import Testing
             }
             let style = await proto.modeStyle
             for mode in radio.capabilities.supportedModes {
+                // `.dataSubMode` sets DATA modes as the voice base mode
+                // plus `DA1;`, so check the base mode's code.
+                let probe = style == .dataSubMode
+                    ? KenwoodProtocol.splitDataMode(mode).base : mode
                 #expect(
-                    (try? KenwoodProtocol.modeCode(for: mode, style: style)) != nil
+                    (try? KenwoodProtocol.modeCode(for: probe, style: style)) != nil
                         || mode == .fmN,
                     "\(radio.model) advertises \(mode.rawValue) but \(style) cannot set it"
                 )
