@@ -1,6 +1,16 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.17 (cut 2026-10-07 — Hamlib upstream
+**Current version:** v1.2.18 (cut 2026-10-07 — P0/P1 items from
+the 2026-10 Hamlib review.  Kenwood set commands are now verified with
+`ID;` instead of waiting for a reply real radios never send, and DATA
+modes use each radio's real command (`MD`+`DA` on TS-590S/SG,
+`OM0<hex>` on TS-990S, `SF` on TS-890S, `MD6`/`MD9` on Flex,
+`ZZMD` on PowerSDR / Thetis) instead of the invalid `MD12;`/`MD13;`.
+FT-100 and FT-920 now use the legacy Yaesu CAT layout at 4800 baud
+(they had been driven with the FT-817 protocol at 38400).  Serial
+ports open with `TIOCEXCL`.  Mock-tested only.  Test count
+817 → 851.)
+Previous release **v1.2.17** (cut 2026-10-07 — Hamlib upstream
 review `0839c031` → `7a556db`.  Four fixes: the rigctld bridge now
 accepts the decimal frequencies Hamlib's own netrigctl client sends
 (`F 14074000.000000`, previously `RPRT -1`) and can no longer be
@@ -1323,6 +1333,11 @@ regardless of radio. This isn't a bug (unsupported codes throw
 at the wire level anyway), but a cleaner design would gate
 per-radio in `RigCapabilities.supportedModes`. Low priority.
 
+**Largely done in v1.2.18:** `KenwoodModeCommandStyle` gives each
+radio its own mode table, and `KenwoodModeStyleTests` fails if a radio
+advertises a mode its style can't set. What remains is trimming the
+legacy `.standard` radios' tables per model.
+
 ### 5.8.6 Ten-Tec hardware validators
 
 The Ten-Tec factories (`RadioDefinition.TenTec.orion` /
@@ -1339,7 +1354,8 @@ not touched a real radio yet.
 ## Phase 5.9 — Hamlib upstream review 2026-10 (v1.2.17 → v1.2.18)
 
 Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
-`0839c031` → `7a556db`).
+`0839c031` → `7a556db`). That document's "Remaining work" section is
+the ranked backlog; this section tracks status.
 
 ### 5.9.1 Shipped in v1.2.17 (mock-tested; no hardware verification)
 
@@ -1349,42 +1365,52 @@ Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
 - [x] Icom unified AGC uses per-model Hamlib `agc_levels` bytes.
 - [x] Xiegu G90 default CI-V `0x88` (Hamlib `5ac54e5b`).
 
-### 5.9.2 P0 — Kenwood DATA-mode wire fix (done on branch, targeted v1.2.18)
+### 5.9.2 Shipped in v1.2.18 (mock-tested; no hardware verification)
 
-- [x] Set-command verification: every Kenwood set is followed by
-      `ID;` and its reply checked, per Hamlib `kenwood.c:427-443`.
-      Previously most sets waited for a reply real radios never send.
-- [x] `KenwoodProtocol.setMode(.dataUSB/.dataLSB)` sent `MD13;` /
-      `MD12;`, which no Kenwood accepts. Per-model: `MD`+`DA1` on
-      TS-590S/SG (`kenwood.c:2537-2556`), `OM0<hex>` on the operating
-      band for TS-990S (`kenwood.c:2574-2653`, upstream `bfea1769`),
-      `unsupportedOperation` elsewhere. `DA;` readback. Also Flex
-      (`MD6` / `MD9`) and PowerSDR / Thetis (`ZZMD07` / `ZZMD09`).
-- [ ] Field reports from any Kenwood / Flex user — none of this has
-      run on hardware.
+- [x] Kenwood set-command verification with `ID;`
+      (`kenwood.c:427-443`) and per-radio DATA-mode commands
+      (jjones9527/SwiftRigControl#30).
+- [x] FT-100 → `YaesuFT100CAT`, FT-920 → `YaesuFT1000MPCAT(.ft920)`,
+      both 4800 baud (jjones9527/SwiftRigControl#31).
+- [x] `TIOCEXCL` exclusive serial open, Hamlib `4b39d3cd`
+      (jjones9527/SwiftRigControl#32).
 
-### 5.9.3 P1
+### 5.9.3 Next patch (v1.2.19) — bug-class fixes, mock-testable
 
-- [x] FT-100 / FT-920 wired to `YaesuPortableCAT` at 38400 baud;
-      Hamlib `ft100.c` / `ft920.c` use the legacy `[0,0,0,P1,op]`
-      layout at 4800 baud. FT-100 → new `YaesuFT100CAT` (with status
-      reads); FT-920 → `YaesuFT1000MPCAT(family: .ft920)`. Targeted
-      v1.2.18, mock-tested only.
-- [x] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`) —
-      `IOKitSerialPort.open()`, with a clear "in use" error on EBUSY.
-      Targeted v1.2.18.
-- [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700, and
-      DATA-USB on FT-817 / FT-857. No hardware on hand — waiting on
-      user field reports against v1.2.17.
+In priority order:
 
-### 5.9.4 P2 / P3
+- [ ] **Icom `0x26` NAK fallback** (`5ec5e6d2`). The IC-7300 and the
+      other `.targetable` Icoms send `0x26` for every DATA-mode set;
+      firmware that predates `0x25`/`0x26` NAKs it, so DATA-USB (FT8,
+      VARA) fails. Fall back once to `0x06` + `0x1A 0x06` and remember.
+- [ ] **Yaesu newcat `AC` reject drain** (`635d11fe`). A `?;` before the
+      verification reply desyncs the next transaction on FT-991A /
+      FTDX10 / FTDX101 / FT-710 tuner commands.
+- [ ] **Elecraft reply validation** — K3/K3S `SW`, K4 `TM` / `FR` /
+      `FT` / `TQ` (`900c4d3`, `ffe227a3`; carried over from
+      jjones9527/SwiftRigControl#17).
+- [ ] **G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).
 
-- [ ] Icom `0x25`/`0x26` NAK fallback on targetable radios (`5ec5e6d2`).
-- [ ] Newcat `AC` reject drain (`635d11fe`).
-- [ ] FT-817/857 DIG sideband EEPROM write, opt-in (`65ce74ca`).
-- [ ] K4 `FR`/`FT`/`TQ` reply validation (`ffe227a3`).
-- [ ] G90 RFPOWER malformed-BCD clamp (`b61dd14d`).
+### 5.9.4 Waiting on hardware or field reports
+
+- [ ] AGC on IC-7100 / IC-7600 / IC-9700 (v1.2.17).
+- [ ] DATA-USB on FT-817 / FT-857 (v1.2.17).
+- [ ] Any Kenwood / Flex / Lab599 report against v1.2.18 — set-command
+      verification touches every set on 22 radios.
+- [ ] FT-100 / FT-920 (v1.2.18).
+- [ ] FT-817/857 DIG sideband EEPROM write (`65ce74ca`) — opt-in only,
+      and only with a volunteer who has the radio (EEPROM wear risk).
+
+### 5.9.5 Low-priority audits
+
 - [ ] TH-D75 dedicated-backend diff (`07d6a7ff`).
+- [ ] Icom table-bounds audit (`b9b9723`) and rigctld parser
+      hardening review (`c0adbb2`) — likely immune by construction
+      (Swift collections, bounded parser), carried over from
+      jjones9527/SwiftRigControl#17.
+- [ ] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
+      no current bug because we send no `1A 05` settings, but the
+      first `1A 05` feature must be per-model, with a guard test.
 
 ---
 

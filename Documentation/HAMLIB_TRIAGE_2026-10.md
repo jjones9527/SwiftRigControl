@@ -70,42 +70,83 @@ commit's neighborhood, not in the commit itself.
    future `1A 05` feature must be per-model. Add a guard test when
    the first one lands.
 
-## Prioritized plan
+## Status (2026-10-07)
 
-**P0**
-- [x] Ship the four fixes in this change — shipped in v1.2.17
-  (mock-tested only).
-- [x] Kenwood DATA-mode wire fix (item 1 above), plus set-command
-  `ID;` verification — done for v1.2.18. Per-radio styles: `MD`+`DA`
-  (TS-590S/SG), `OM0<hex>` (TS-990S), `SF` (TS-890S), `MD6`/`MD9`
-  (Flex), `ZZMD` (PowerSDR / Thetis); `unsupportedOperation` elsewhere.
+- **v1.2.17** shipped the four fixes in "Ported in this change".
+- **v1.2.18** shipped the P0 Kenwood fix (item 1), the FT-100 / FT-920
+  fix (item 2) and `TIOCEXCL` (jjones9527/SwiftRigControl#30, #31, #32).
+- Digests jjones9527/SwiftRigControl#16, #18 and #20–#26 and the
+  earlier triage issue #17 are closed; their open items are folded
+  into the list below. #19 (IC-7300MK2 `1A 05`) is item C3.
 
-**P1 — v1.2.18 or later**
-- [x] FT-100 / FT-920 adapter audit (item 2) — done for v1.2.18. Was: either move to
-  `YaesuLegacyCAT` with byte-level tests or mark unsupported.
-- [x] `TIOCEXCL` exclusive serial open (`4b39d3cd`) — done for v1.2.18.
-- Hardware re-check of AGC on IC-7100 / IC-7600 / IC-9700 (the three
-  verified Icoms) and DATA-USB on any available FT-817/857.
+Everything is mock-tested only. No item above has run on hardware.
 
-**P2 — v1.2.x as time allows**
-- `0x25`/`0x26` reject fallback on targetable Icoms (`5ec5e6d2`).
-- Newcat `AC` reject drain (`635d11fe`).
-- FT-817/857 DIG sideband EEPROM write (`65ce74ca`), behind an
-  explicit opt-in.
+## Remaining work — prioritized
 
-**P3 — opportunistic**
-- K4 `FR`/`FT`/`TQ` and Elecraft SWR reply validation (`ffe227a3`,
-  `900c4d3`).
-- G90 RFPOWER BCD clamp (`b61dd14d`).
-- TH-D75 backend diff (`07d6a7ff`).
-- Existing ROADMAP items: 5.7 TM-D710 protocol, 5.8.1 K2 8-N-2
-  re-verify, 5.8.3 baud-rate range API, Phase 6 spectrum scope.
+Ranked by how many operators each item could affect and whether we can
+test it without hardware. ROADMAP Phase 5.9 tracks the checkboxes.
+
+**A — next patch (v1.2.19): bug-class fixes we can mock-test**
+
+1. **Icom `0x26` NAK fallback** (`5ec5e6d2`). Every `.targetable`
+   Icom (IC-7300, IC-7700, IC-R8600, …) sets DATA modes with `0x26`
+   (`IcomRadioCommandSet.setDataModeCommand`). Firmware older than
+   the `0x25`/`0x26` addition NAKs it, and we throw, so FT8 / VARA
+   DATA-USB fails on the most popular HF radio in the catalog. Hamlib
+   probes once, records the NAK in `x26cmdfails`, and uses the legacy
+   commands from then on (`icom.c`, `5ec5e6d2`). Port: on NAK, send
+   `0x06` + `0x1A 0x06` and cache the result per connection. We don't
+   send `0x25` today, so only `0x26` needs the fallback.
+2. **Yaesu newcat `AC` reject drain** (`635d11fe`). A rejected tuner
+   command answers `?;` ahead of the verification reply and desyncs
+   the next transaction (FT-991A, FTDX10, FTDX101, FT-710).
+3. **Elecraft reply validation**: K3/K3S `SW`, K4 `TM` / `FR` / `FT` /
+   `TQ` (`900c4d3`, `ffe227a3`). Reject malformed replies rather than
+   parsing prefixes only.
+4. **G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).
+
+**B — waiting on hardware or field reports** (nothing to code until a
+report arrives)
+
+1. Kenwood / Flex / Lab599 against v1.2.18. Set-command verification
+   changed every set on 22 radios; this is the highest-risk change
+   in either release.
+2. AGC on IC-7100 / IC-7600 / IC-9700; DATA-USB on FT-817 / FT-857
+   (v1.2.17).
+3. FT-100 / FT-920 (v1.2.18).
+4. ROADMAP 5.8.1 K2 re-verify at 8-N-2, and 4.5 side-by-side
+   `rigctl -m 2` check.
+5. FT-817/857 DIG sideband EEPROM write (`65ce74ca`, `6836abe1`):
+   opt-in only, and only with a volunteer who owns the radio, because
+   of EEPROM wear risk.
+
+**C — low-priority audits** (do when touching the code)
+
+1. TH-D75 dedicated-backend diff (`07d6a7ff`).
+2. Icom table-bounds (`b9b9723`) and rigctld parser hardening
+   (`c0adbb2`). Swift collections and our bounded parser are likely
+   immune; confirm with a test or two.
+3. IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
+   the first `1A 05` feature must be per-model, with a guard test.
+
+**D — next minor (v1.3.0): features, not fixes**
+
+ROADMAP 5.7 TM-D710 protocol, 5.8.3 baud-rate range API, 5.8.4 Kenwood
+mic/data PTT source, 5.8.2 K2 `K22;` extended power.
+
+**E — pull-based** (only on a concrete app request)
+
+Phase 6 (spectrum scope, satellite Doppler, memory import/export),
+Phase 5.1 capability traits (v2.0), TCI 2.0 backend, Guohetec adapter,
+IC-7610 / IC-7760 SYNC (`3840e1e`).
+
+**Not applicable:** Hamlib advisories GHSA-gpcq-c37x-pr46 (`send_raw`)
+and GHSA-f72v-7gmh-m9mj (`read_string_generic`, rigctld auth) — our
+bridge implements neither `send_raw` nor password auth, and our parser
+has no fixed-size buffers.
 
 **Process**
 - The weekly workflow advances `.hamlib-watermark` whether or not
   anyone triaged the digest, so the watermark is not a "reviewed up
-  to" marker. Digests #16, #18, #20–#25 are covered by #17 and this
-  document and can be closed. Consider recording a separate
-  `.hamlib-reviewed` SHA (this review: `7a556db`).
-- No Swift toolchain was available for this review; the fixes are
-  unverified until the macOS CI job runs.
+  to" marker. This review covers through `7a556db`; the next human
+  review starts from there.
