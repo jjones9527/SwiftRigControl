@@ -5,7 +5,9 @@ import Foundation
 ///
 /// This is the "5-byte fixed frame" CAT that Yaesu shipped with the
 /// FT-817 (2000) and reused for the FT-818, FT-857, FT-857D, FT-897,
-/// FT-897D, FT-100, and FT-920. It has **nothing in common** with the
+/// FT-897D and mcHF. (The FT-100 and FT-920 use the same 5-byte frame
+/// but the legacy parameter layout; see ``YaesuFT100CAT`` and
+/// ``YaesuFT1000MPCAT``.) It has **nothing in common** with the
 /// semicolon-terminated `newcat` CAT used by the FT-950 / FT-991 /
 /// FTdx / FT-710 line — those live in ``YaesuCATProtocol``. Trying
 /// to drive an FT-817-family radio with newcat commands returns

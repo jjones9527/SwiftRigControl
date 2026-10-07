@@ -195,7 +195,7 @@ table above — are field-tested; all others are definition-only.
 - **FT-991** - HF/VHF/UHF all-mode (38400 baud)
 - **FT-991A** - HF/VHF/UHF all-mode (38400 baud)
 - **FT-950** - HF/6m 100W with ATU (38400 baud)
-- **FT-920** - HF/6m 100W with DSP (38400 baud)
+- **FT-920** - HF/6m 100W with DSP (4800 baud)
 - **FT-710** - HF/6m AESS (38400 baud)
 - **FT-891** - HF/6m field transceiver (38400 baud)
 - **FT-450** - HF/6m budget (38400 baud)
@@ -209,7 +209,7 @@ table above — are field-tested; all others are definition-only.
 - **FT-857** - HF/VHF/UHF mobile (38400 baud)
 - **FT-857D** - HF/VHF/UHF mobile with DSP (38400 baud)
 - **FT-847** - HF/VHF/UHF all-band (38400 baud)
-- **FT-100** - HF/VHF/UHF mobile (38400 baud)
+- **FT-100** - HF/VHF/UHF mobile (4800 baud)
 
 **Portable/QRP:**
 - **FT-818** - HF/VHF/UHF portable (38400 baud)

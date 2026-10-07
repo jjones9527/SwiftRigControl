@@ -68,15 +68,45 @@ import Foundation
 /// getMode, and getPTT throw `.unsupportedOperation` for now —
 /// implementing the 16-byte status decode is a follow-up that
 /// deserves its own dedicated review.
+///
+/// ## FT-920
+///
+/// The FT-920 (Hamlib `rigs/yaesu/ft920.c`) uses the same opcodes —
+/// `0x0A` / `0x8A` frequency, `0x0C` mode with the VFO-B high bit,
+/// `0x0F` PTT, `0x05` VFO select (`ft920.c:351-376`) — but its own mode
+/// table, so it runs on this actor with ``Family/ft920``.
 public actor YaesuFT1000MPCAT: CATProtocol {
+
+    /// Which radio family's mode table to use.
+    public enum Family: Sendable, Equatable {
+        /// FT-1000MP, MkV and MkV Field (`ft1000mp.c`).
+        case ft1000mp
+        /// FT-920 (`ft920.c`): DATA-L `0x08`, DATA-U `0x0A`,
+        /// DATA-F `0x0B`, no separate RTTY selector.
+        case ft920
+    }
 
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 
-    /// Creates an FT-1000MP protocol instance over the given transport.
-    public init(transport: any SerialTransport, capabilities: RigCapabilities) {
+    /// The mode-table family this instance encodes for.
+    public let family: Family
+
+    /// Creates an FT-1000MP-family protocol instance over the given
+    /// transport.
+    ///
+    /// - Parameters:
+    ///   - transport: Serial transport.
+    ///   - capabilities: Radio capability set.
+    ///   - family: Mode-table family. Defaults to ``Family/ft1000mp``.
+    public init(
+        transport: any SerialTransport,
+        capabilities: RigCapabilities,
+        family: Family = .ft1000mp
+    ) {
         self.transport = transport
         self.capabilities = capabilities
+        self.family = family
     }
 
     // MARK: - Frequency
@@ -106,7 +136,7 @@ public actor YaesuFT1000MPCAT: CATProtocol {
     // MARK: - Mode
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        let selector = try Self.modeSelector(for: mode, vfo: vfo)
+        let selector = try Self.modeSelector(for: mode, vfo: vfo, family: family)
         // Frame layout: mode selector in byte 3 (P4), opcode 0x0C
         // in byte 4. Bytes 0-2 are zero.
         let frame = Data([0x00, 0x00, 0x00, selector, 0x0C])
@@ -154,8 +184,13 @@ public actor YaesuFT1000MPCAT: CATProtocol {
     ///
     /// Cross-checked against Hamlib `ft1000mp.c` ncmd table entries
     /// 14-37 (VFO-A modes 0x00-0x0B, VFO-B modes 0x80-0x8B).
-    internal static func modeSelector(for mode: Mode, vfo: VFO) throws -> UInt8 {
+    internal static func modeSelector(for mode: Mode, vfo: VFO,
+                                      family: Family = .ft1000mp) throws -> UInt8 {
         let base: UInt8
+        if family == .ft920 {
+            base = try ft920ModeBase(for: mode)
+            return vfo == .b ? (base | 0x80) : base
+        }
         switch mode {
         case .lsb:      base = 0x00
         case .usb:      base = 0x01
@@ -183,5 +218,25 @@ public actor YaesuFT1000MPCAT: CATProtocol {
             )
         }
         return vfo == .b ? (base | 0x80) : base
+    }
+
+    /// FT-920 mode parameter (VFO-A form), per `ft920.c:109-119` and the
+    /// mapping in `ft920_set_mode` (`ft920.c:975-1009`): CW is CW-USB,
+    /// AM / FM are the wide variants, and RTTY / PKT-LSB share DATA-L.
+    internal static func ft920ModeBase(for mode: Mode) throws -> UInt8 {
+        switch mode {
+        case .lsb: return 0x00
+        case .usb: return 0x01
+        case .cw: return 0x02
+        case .am: return 0x04
+        case .fm: return 0x06
+        case .rtty, .dataLSB: return 0x08
+        case .dataUSB: return 0x0A
+        case .dataFM: return 0x0B
+        default:
+            throw RigError.unsupportedOperation(
+                "Mode \(mode.rawValue) not supported by FT-920 CAT"
+            )
+        }
     }
 }

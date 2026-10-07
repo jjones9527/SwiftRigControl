@@ -323,16 +323,18 @@ extension RadioDefinition.Yaesu {
 
     /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
     ///
-    /// Uses ``YaesuPortableCAT`` — the same 5-byte binary CAT as
-    /// the FT-817 family (per Hamlib `rigs/yaesu/ft817.c`).
+    /// Uses ``YaesuFT100CAT`` — the legacy 5-byte layout (parameters in
+    /// bytes 0-3, LE BCD frequency, no ACK) per Hamlib
+    /// `rigs/yaesu/ft100.c`. 4800 baud only, 8-N-2 (`ft100.c:325-330`).
+    /// Pre-v1.2.18 this used ``YaesuPortableCAT`` at 38400 baud.
     public static let ft100 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-100",
-        defaultBaudRate: 38400,
+        defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft100,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
-            YaesuPortableCAT(
+            YaesuFT100CAT(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft100
             )
@@ -422,18 +424,22 @@ extension RadioDefinition.Yaesu {
 
     /// Yaesu FT-920 HF/6m transceiver with DSP
     ///
-    /// Uses ``YaesuPortableCAT`` — the FT-920 uses the same 5-byte
-    /// binary CAT family as the FT-817 line.
+    /// Uses ``YaesuFT1000MPCAT`` with ``YaesuFT1000MPCAT/Family/ft920`` —
+    /// the FT-920 shares the FT-1000MP opcodes but has its own mode
+    /// table (Hamlib `rigs/yaesu/ft920.c`). 4800 baud only, 8-N-2
+    /// (`ft920.c:419-424`). Pre-v1.2.18 this used ``YaesuPortableCAT``
+    /// at 38400 baud.
     public static let ft920 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-920",
-        defaultBaudRate: 38400,
+        defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft920,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
-            YaesuPortableCAT(
+            YaesuFT1000MPCAT(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft920
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft920,
+                family: .ft920
             )
         }
     )

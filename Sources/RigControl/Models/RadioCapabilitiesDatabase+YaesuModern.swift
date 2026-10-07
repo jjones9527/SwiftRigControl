@@ -185,17 +185,17 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,  // 100W on HF/6m, 50W on 2m, 20W on 70cm
-        supportedModes: [.lsb, .usb, .cw, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .dataUSB],
         frequencyRange: FrequencyRange(min: 100_000, max: 961_000_000),
         detailedFrequencyRanges: [
             // General coverage receive (cellular blocked)
             DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
             // HF bands
-            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw], canTransmit: true, bandName: "160m"),
             DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw], canTransmit: true, bandName: "80m"),
             DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw], canTransmit: true, bandName: "40m"),
             DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
             DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
             DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
