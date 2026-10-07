@@ -87,8 +87,23 @@ Kenwood, Flex, Lab599, FT-100 or FT-920 hardware is available.
     DATA-L `0x08`, DATA-U `0x0A`, DATA-F `0x0B` (`ft920.c:109-132`,
     `975-1009`).
 
+### Changed
+
+- **Serial ports are now opened for exclusive access.**
+  `IOKitSerialPort.open()` sets `TIOCEXCL` right after opening, as
+  Hamlib `serial_open` does since upstream `4b39d3cd`
+  (`src/serial.c`). A second program that tries to open the same CAT
+  port now gets a clear "the port is in use by another application"
+  error instead of silently sharing the line and corrupting both
+  programs' traffic.  Failure to set the flag is ignored, as in
+  Hamlib.  The lock is released when the port is closed.  Radio
+  discovery already treated a port it can't open as "no radio", so it
+  now skips ports another app is using rather than probing them.
+
 ### Tests
 
+- `IOKitSerialPortExclusiveAccessTests` — a second open of a held pty
+  fails with the "in use" error; the port reopens after close.
 - `YaesuFT100FT920Tests` — FT-100 and FT-920 wire bytes, mode tables,
   FT-100 status / flags decoding, no-ACK writes, catalog wiring at
   4800 baud, and that every advertised mode is settable.

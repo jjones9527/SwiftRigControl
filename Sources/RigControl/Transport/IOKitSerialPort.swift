@@ -35,11 +35,15 @@ public actor IOKitSerialPort: SerialTransport {
     ///
     /// This method:
     /// 1. Opens the device file
-    /// 2. Saves the original termios settings
-    /// 3. Configures the port for raw mode
-    /// 4. Sets baud rate, data bits, stop bits, and parity
+    /// 2. Claims exclusive access (`TIOCEXCL`), so other programs
+    ///    cannot open the same port until this one is closed
+    /// 3. Saves the original termios settings
+    /// 4. Configures the port for raw mode
+    /// 5. Sets baud rate, data bits, stop bits, and parity
     ///
-    /// - Throws: `RigError.serialPortError` if the port cannot be opened or configured
+    /// - Throws: `RigError.serialPortError` if the port cannot be
+    ///   opened or configured, including when another application
+    ///   already holds it
     public func open() async throws {
         guard fileDescriptor < 0 else {
             // Already open
@@ -49,8 +53,24 @@ public actor IOKitSerialPort: SerialTransport {
         // Open the serial port
         fileDescriptor = Darwin.open(configuration.path, O_RDWR | O_NOCTTY | O_NONBLOCK)
         guard fileDescriptor >= 0 else {
-            throw RigError.serialPortError("Cannot open \(configuration.path): \(String(cString: strerror(errno)))")
+            let openErrno = errno
+            if openErrno == EBUSY {
+                // Another process (or another IOKitSerialPort in this
+                // one) holds the port in exclusive mode — see TIOCEXCL
+                // below.
+                throw RigError.serialPortError(
+                    "Cannot open \(configuration.path): the port is in use by another application"
+                )
+            }
+            throw RigError.serialPortError("Cannot open \(configuration.path): \(String(cString: strerror(openErrno)))")
         }
+
+        // Claim exclusive access so a second program opening the same
+        // CAT port gets EBUSY instead of interleaving bytes with ours.
+        // Matches Hamlib serial_open (upstream 4b39d3cd, src/serial.c),
+        // which also treats a failure here as non-fatal. Released when
+        // the descriptor is closed.
+        _ = ioctl(fileDescriptor, TIOCEXCL)
 
         // Save original termios settings
         var termios = Darwin.termios()

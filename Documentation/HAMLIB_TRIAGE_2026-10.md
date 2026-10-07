@@ -83,7 +83,7 @@ commit's neighborhood, not in the commit itself.
 **P1 — v1.2.18 or later**
 - [x] FT-100 / FT-920 adapter audit (item 2) — done for v1.2.18. Was: either move to
   `YaesuLegacyCAT` with byte-level tests or mark unsupported.
-- `TIOCEXCL` exclusive serial open (`4b39d3cd`).
+- [x] `TIOCEXCL` exclusive serial open (`4b39d3cd`) — done for v1.2.18.
 - Hardware re-check of AGC on IC-7100 / IC-7600 / IC-9700 (the three
   verified Icoms) and DATA-USB on any available FT-817/857.
 

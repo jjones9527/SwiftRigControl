@@ -1370,7 +1370,9 @@ Source: `Documentation/HAMLIB_TRIAGE_2026-10.md` (Hamlib
       layout at 4800 baud. FT-100 → new `YaesuFT100CAT` (with status
       reads); FT-920 → `YaesuFT1000MPCAT(family: .ft920)`. Targeted
       v1.2.18, mock-tested only.
-- [ ] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`).
+- [x] `TIOCEXCL` exclusive serial open (Hamlib `4b39d3cd`) —
+      `IOKitSerialPort.open()`, with a clear "in use" error on EBUSY.
+      Targeted v1.2.18.
 - [ ] Hardware re-check: AGC on IC-7100 / IC-7600 / IC-9700, and
       DATA-USB on FT-817 / FT-857. No hardware on hand — waiting on
       user field reports against v1.2.17.
