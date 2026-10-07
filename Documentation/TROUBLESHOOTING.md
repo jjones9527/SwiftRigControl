@@ -308,10 +308,15 @@ See [XPC Helper Guide](XPC_HELPER_GUIDE.md) for complete setup.
 ### Port Already in Use
 
 **Symptoms:**
+- "the port is in use by another application" error (v1.2.18+)
 - "Resource busy" error
 - Can't open serial port
 
-**Cause:** Another application is using the port.
+**Cause:** Another application is using the port. Since v1.2.18
+SwiftRigControl opens serial ports for exclusive access (`TIOCEXCL`,
+as Hamlib does), so while your app is connected no other program can
+open the same CAT port, and vice versa. Share the radio through the
+rigctld bridge (`RigControlServer`) instead of opening the port twice.
 
 **Solution:**
 
