@@ -21,9 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Targeted for **v1.2.18**. P0 and P1 items from
-`Documentation/HAMLIB_TRIAGE_2026-10.md`. Mock-tested only; no
-Kenwood, Flex, Lab599, FT-100 or FT-920 hardware is available.
+Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
+("Remaining work") and ROADMAP Phase 5.9.
+
+## [1.2.18] - 2026-10-07
+
+The P0 and P1 items from `Documentation/HAMLIB_TRIAGE_2026-10.md`.
+Shipped in jjones9527/SwiftRigControl#30, #31 and #32. Test count
+817 → 851.
+
+**Verification status:** mock-tested only. No Kenwood, Flex, Lab599,
+FT-100 or FT-920 hardware is available; this release ships to gather
+field feedback. Additive public API only (`KenwoodModeCommandStyle`,
+`KenwoodProtocol.modeStyle`, `YaesuFT100CAT`,
+`YaesuFT1000MPCAT.Family`).
 
 ### Fixed
 

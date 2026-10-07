@@ -51,7 +51,28 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.17** (git tag, 2026-10-07), the
+The shipped version is **v1.2.18** (git tag, 2026-10-07), the
+P0/P1 follow-ups from the 2026-10 Hamlib review
+(jjones9527/SwiftRigControl#30, #31, #32):
+
+- **Kenwood set commands** go through `sendSetCommand`, which follows
+  the command with `ID;` and checks for `?;` / `N;` / `E;` / `O;`
+  (`kenwood.c:427-443`, `518-600`). Real Kenwoods don't reply to
+  set commands; most of ours used to wait for a reply and time out.
+- **Kenwood DATA modes** follow a per-radio
+  `KenwoodModeCommandStyle`: `MD`+`DA` (TS-590S/SG), `OM0<hex>`
+  (TS-990S), `SF` (TS-890S), `MD6`/`MD9` (Flex), `ZZMD`
+  (PowerSDR / Thetis). Everything else throws for DATA modes.
+  Pre-fix code sent `MD12;` / `MD13;`, which no Kenwood accepts.
+- **FT-100 / FT-920** use the legacy Yaesu layout (`YaesuFT100CAT`,
+  `YaesuFT1000MPCAT(family: .ft920)`) at 4800 baud.
+- **`IOKitSerialPort.open()` sets `TIOCEXCL`** (Hamlib `4b39d3cd`).
+
+**Mock-tested only.** Test count 817 → 851. Remaining work, ranked:
+`Documentation/HAMLIB_TRIAGE_2026-10.md` "Remaining work" and ROADMAP
+Phase 5.9 (next up: Icom `0x26` NAK fallback for IC-7300 DATA modes).
+
+The previously-shipped version was **v1.2.17** (git tag, 2026-10-07), the
 outcome of the Hamlib upstream review covering `0839c031` →
 `7a556db` (jjones9527/SwiftRigControl#27, #28). Four fixes:
 
