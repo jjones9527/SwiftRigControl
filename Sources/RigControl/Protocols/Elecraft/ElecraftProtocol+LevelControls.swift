@@ -5,9 +5,9 @@ import Foundation
 /// Level controls, DSP settings, power state, and memory operations for Elecraft CAT radios.
 ///
 /// ## K2 vs K3/K4 Differences
-/// The K2 does not echo SET commands — only QUERY commands produce a response.
-/// All set methods here honour the `isK2` flag and add the required 50ms inter-command
-/// delay for the K2 instead of reading an echo.
+/// No Elecraft radio echoes SET commands. All set methods here go through
+/// `sendSetCommand`, which waits the K2's inter-command delay on the K2 and
+/// confirms the set with `ID;` on the K3 / K4 / KX series (v1.2.19).
 ///
 /// ## Command Reference (Elecraft CAT)
 /// - `AGnnn` — Set AF gain (000–255); `AG` — Get
@@ -36,12 +36,7 @@ extension ElecraftProtocol {
     public func setAFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "AG%03d", clamped)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AF gain.
@@ -74,12 +69,7 @@ extension ElecraftProtocol {
     public func setRFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "RG%03d", clamped)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current RF gain.
@@ -114,12 +104,7 @@ extension ElecraftProtocol {
     public func setSquelch(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "SQ%03d", clamped)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current squelch level.
@@ -157,12 +142,7 @@ extension ElecraftProtocol {
             throw RigError.invalidParameter("Preamp level must be 0 (off), 1 (Preamp 1), or 2 (Preamp 2)")
         }
         let command = "PA\(level)"
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current preamplifier state.
@@ -211,12 +191,7 @@ extension ElecraftProtocol {
             throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB")
         }
         let command = String(format: "RA%02d", code)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current attenuator level.
@@ -276,12 +251,7 @@ extension ElecraftProtocol {
             }
         }
         let command = String(format: "GT%03d", code)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AGC speed.
@@ -322,14 +292,9 @@ extension ElecraftProtocol {
     public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
         switch config {
         case .off:
-            try await sendCommand("NB0")
+            try await sendSetCommand("NB0")
         case .enabled:
-            try await sendCommand("NB1")
-        }
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
+            try await sendSetCommand("NB1")
         }
     }
 
@@ -363,14 +328,9 @@ extension ElecraftProtocol {
     public func setNoiseReduction(_ config: NoiseReduction) async throws {
         switch config {
         case .off:
-            try await sendCommand("NR0")
+            try await sendSetCommand("NR0")
         case .enabled:
-            try await sendCommand("NR1")
-        }
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
+            try await sendSetCommand("NR1")
         }
     }
 
@@ -420,8 +380,7 @@ extension ElecraftProtocol {
             // K3/K4 use BW command: BWnnnn in 10 Hz units
             let units = bwHz / 10
             let command = String(format: "BW%04d", units)
-            try await sendCommand(command)
-            _ = try await receiveResponse()
+            try await sendSetCommand(command)
         }
     }
 
@@ -473,13 +432,10 @@ extension ElecraftProtocol {
     /// - Throws: `RigError` if the command fails
     public func setPowerState(_ on: Bool) async throws {
         let command = on ? "PS1" : "PS0"
-        try await sendCommand(command)
-        // Radio may not respond after powering off
-        if isK2 {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        } else {
-            _ = try? await receiveResponse()
-        }
+        // PS is written without the ID; check (kenwood.c:409-410): a
+        // radio going to standby won't answer it. Pre-v1.2.19 the K3 path
+        // waited out the timeout for a reply here.
+        try await sendSetCommand(command)
     }
 
     /// Returns `true` if the radio is powered on and responding.
@@ -512,12 +468,7 @@ extension ElecraftProtocol {
             throw RigError.invalidParameter("Memory channel must be 1–999")
         }
         let command = String(format: "MC%03d", channel.number)
-        try await sendCommand(command)
-        if !isK2 {
-            _ = try await receiveResponse()
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Reads the currently selected memory channel number and populates it with

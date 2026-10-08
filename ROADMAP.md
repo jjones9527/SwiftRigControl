@@ -1394,10 +1394,10 @@ In priority order:
       write-only and the rest are verified with `ID;` (`AI;` on the
       FTDX-9000), as Hamlib `newcat_set_cmd` does; `AC` is drained, not
       resent. Also `getRIT` no longer sends `RC;` (clarifier clear).
-- [ ] **Elecraft K3/K4 set path.** `ElecraftProtocol.setFrequency` reads
-      an echo on non-K2 radios ("K3/K4 and newer radios echo SET
-      commands"). Check against Hamlib `k3.c` / `kenwood.c` — likely
-      the same class of bug.
+- [x] **Elecraft K3/K4/KX set path** (done for v1.2.19). Same class of
+      bug: sets required an echo. Now verified with `ID;` like Hamlib
+      `kenwood_transaction`. K2 path left as hardware-validated
+      (write + 100 ms); moving it to `ID;` waits on 5.8.1.
 - [ ] **Elecraft reply validation** — K3/K3S `SW`, K4 `TM` / `FR` /
       `FT` / `TQ` (`900c4d3`, `ffe227a3`; carried over from
       jjones9527/SwiftRigControl#17).

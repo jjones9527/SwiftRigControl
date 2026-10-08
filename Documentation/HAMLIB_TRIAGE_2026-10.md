@@ -109,9 +109,11 @@ test it without hardware. ROADMAP Phase 5.9 tracks the checkboxes.
    (`AI;` on FTDX-9000), `AC` drained. Also found `getRIT` sending
    `RC;` (clarifier clear); it now reads `IF;`. Next: audit Elecraft
    K3/K4, whose set path also reads an "echo".
-3. **Elecraft reply validation**: K3/K3S `SW`, K4 `TM` / `FR` / `FT` /
-   `TQ` (`900c4d3`, `ffe227a3`). Reject malformed replies rather than
-   parsing prefixes only.
+3. **Elecraft.** Set path **done for v1.2.19**: K3/K4/KX sets required
+   an echo the radio never sends; now verified with `ID;` like Hamlib
+   `kenwood_transaction`. Still open: reply validation for K3/K3S `SW`,
+   K4 `TM` / `FR` / `FT` / `TQ` (`900c4d3`, `ffe227a3`) — reject
+   malformed replies rather than parsing prefixes only.
 4. **G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).
 
 **B — waiting on hardware or field reports** (nothing to code until a

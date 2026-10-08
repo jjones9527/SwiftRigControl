@@ -22,11 +22,7 @@ extension ElecraftProtocol {
 
     public func setFunction(_ function: RigFunction, enabled: Bool) async throws {
         let command = try elecraftCommand(for: function, set: true, enabled: enabled)
-        try await sendCommand(command)
-        if !isK2 {
-            // Drain the echo on K3+ — set commands are echoed.
-            _ = try? await receiveResponse()
-        }
+        try await sendSetCommand(command)
     }
 
     public func getFunction(_ function: RigFunction) async throws -> Bool {

@@ -14,17 +14,7 @@ extension ElecraftProtocol {
     /// - Throws: RigError if operation fails
     public func setRIT(_ state: RITXITState) async throws {
         let command = state.enabled ? "RT1" : "RT0"
-        try await sendCommand(command)
-
-        // K2 does NOT echo SET commands
-        if !isK2 {
-            let response = try await receiveResponse()
-            guard response.hasPrefix(command) else {
-                throw RigError.commandFailed("RIT setting failed")
-            }
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current RIT state including offset.
@@ -60,17 +50,7 @@ extension ElecraftProtocol {
     /// - Throws: RigError if operation fails
     public func setXIT(_ state: RITXITState) async throws {
         let command = state.enabled ? "XT1" : "XT0"
-        try await sendCommand(command)
-
-        // K2 does NOT echo SET commands
-        if !isK2 {
-            let response = try await receiveResponse()
-            guard response.hasPrefix(command) else {
-                throw RigError.commandFailed("XIT setting failed")
-            }
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     /// Gets the current XIT state including offset.
@@ -147,19 +127,7 @@ extension ElecraftProtocol {
     ///
     /// - Throws: RigError if operation fails
     public func clearRITOffset() async throws {
-        try await sendCommand("RC")
-
-        if !isK2 {
-            let response = try await receiveResponse()
-            // K3/K4 echo the command
-            guard response.hasPrefix("RC") else {
-                throw RigError.commandFailed("RIT clear failed")
-            }
-        } else {
-            // K2: May return ?; during transmit, but will still take effect
-            // Don't check response, just add delay
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand("RC")
     }
 
     /// Direction for RIT/XIT offset adjustment
@@ -184,17 +152,7 @@ extension ElecraftProtocol {
     /// - Throws: RigError if operation fails
     public func adjustRITOffset(direction: RITOffsetDirection) async throws {
         let command = direction == .up ? "RU" : "RD"
-        try await sendCommand(command)
-
-        if !isK2 {
-            let response = try await receiveResponse()
-            guard response.hasPrefix(command) else {
-                throw RigError.commandFailed("RIT offset adjustment failed")
-            }
-        } else {
-            // K2 does not echo SET commands
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     // MARK: - Transmit/Receive Status
