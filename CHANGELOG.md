@@ -21,11 +21,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Targeted for **v1.2.19**. Icom DATA-mode wire and readback fixes,
-cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`.
-Mock-tested only; no hardware was available.
+Targeted for **v1.2.19**. Icom DATA-mode wire and readback fixes
+(cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`) and
+Yaesu newcat set-command handling (`rigs/yaesu/newcat.c`). Mock-tested
+only; no hardware was available.
 
 ### Fixed
+
+- **Every Yaesu newcat set command waited for an echo the radio never
+  sends.**  All 16 radios on `YaesuCATProtocol` (FT-991/991A, FT-710,
+  FT-891, FT-450/450D, FT-950, FT-2000, FTDX-10, FTDX-101D/MP,
+  FTDX-1200, FTDX-3000, FTDX-5000, FTDX-9000, FTX-1) read one reply after
+  almost every set (`FA`, `MD`, `PC`, `FT`, `SV`, levels, RIT…) on the
+  belief that "Yaesu radios echo the command back".  They don't, so each
+  set should have waited out the 1 s timeout and thrown even though the
+  radio applied it, and a `?;` rejection was taken as success.  Set
+  commands now follow Hamlib `newcat_set_cmd` (`newcat.c:10911-11095`):
+  `FA` / `FB` / `TX` / `MD` / `ST` are written with no read
+  (`newcat.c:10966-10973`); every other set is followed by `ID;` (`AI;`
+  on the FTDX-9000) and its reply is read; `?;` means busy, so the
+  command is resent once, then `RigError.commandFailed`; `N;` throws
+  `unsupportedOperation`; unsolicited frames are skipped.
+- **Rejected tuner commands desynchronised the next transaction**
+  (Hamlib upstream `635d11fe`).  `AC` (tuner on/off, `AC002;` tune) is
+  now sent once and drained through the `ID;` reply, so a `?;` is
+  reported and never left queued, and an accepted tune is never resent.
+- **Reading RIT cleared it.**  `getRIT` sent `RC;` to read the offset,
+  but `RC` is the clarifier-clear command.  The offset is now read from
+  `IF;` as Hamlib `newcat_get_rit` does (`newcat.c:3011-3070`).
 
 - **IC-7300 / IC-7300MK2 `0x26` frame was missing its VFO byte.**  We
   sent `0x26 [mode, data, filter]`; Hamlib sends
@@ -62,6 +85,8 @@ Mock-tested only; no hardware was available.
 
 ### Added
 
+- `YaesuCATProtocol.Quirks.verifyCommand` (default `"ID"`) and
+  `withVerifyCommand(_:)`; the FTDX-9000 uses `"AI"`.
 - `StandardIcomCommandSet.ic7300MK2` (CI-V `0xB6`), now used by the
   IC-7300MK2 definition so it no longer borrows the IC-7300's set.
 - `IcomRadioCommandSet.acceptsSelectedVFOModeCommand` and
@@ -88,6 +113,11 @@ Mock-tested only; no hardware was available.
 
 ### Tests
 
+- `YaesuSetCommandTests` — write-only `FA`/`MD`/`TX`/`ST`, `ID;`
+  verification (accept, `?;` resend and give-up, `N;`, unsolicited
+  frame, timeout), FTDX-9000 `AI;`, `AC` drain without resend, and
+  `getRIT` reading `IF;`.  `YaesuCATProtocolTests` /
+  `Tier1SafetyFixesTests` updated for the `ID;` round trip.
 - `IcomSelectedVFOModeTests` — `0x26` set and read frames on the
   IC-7300 / MK2, NAK fallback and reset on reconnect, IC-7700 DATA path,
   `0x1A 0x06` readback (including one-byte replies and no query for

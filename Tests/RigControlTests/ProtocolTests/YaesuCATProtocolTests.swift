@@ -3,6 +3,11 @@ import Testing
 
 /// Protocol-level tests for Yaesu CAT communication
 @Suite struct YaesuCATProtocolTests {
+    /// Set commands other than FA/FB/MD/TX/ST are verified with `ID;`
+    /// (v1.2.19, Hamlib `newcat_set_cmd`); this is the FT-991A's reply.
+    static let idQuery = "ID;".data(using: .ascii)!
+    static let idReply = "ID0670;".data(using: .ascii)!
+
     var mockTransport: MockTransport
     var yaesuProtocol: YaesuCATProtocol
 
@@ -36,6 +41,7 @@ import Testing
     @Test func setFrequency() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "FA014230000;".data(using: .ascii)!
         let response = "FA014230000;".data(using: .ascii)!
@@ -53,6 +59,7 @@ import Testing
     @Test func getFrequency() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let queryCommand = "FA;".data(using: .ascii)!
         let response = "FA014230000;".data(using: .ascii)!
@@ -66,6 +73,7 @@ import Testing
     @Test func setFrequencyVFOB() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "FB007100000;".data(using: .ascii)!
         let response = "FB007100000;".data(using: .ascii)!
@@ -89,6 +97,7 @@ import Testing
         // Prior code emitted `MD<char>;` without the qualifier.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "MD02;".data(using: .ascii)!
         let response = "MD02;".data(using: .ascii)!
@@ -110,6 +119,7 @@ import Testing
         // qualifier byte.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let queryCommand = "MD0;".data(using: .ascii)!
         let response = "MD02;".data(using: .ascii)!
@@ -137,6 +147,7 @@ import Testing
 
         for (mode, expectedCmd) in modeMappings {
             await mockTransport.reset()
+            await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
             let expectedCommand = expectedCmd.data(using: .ascii)!
             let response = expectedCmd.data(using: .ascii)!
@@ -157,6 +168,7 @@ import Testing
     @Test func setPTTOn() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Yaesu uses TX1 for PTT on (different from Elecraft's TX)
         let expectedCommand = "TX1;".data(using: .ascii)!
@@ -174,6 +186,7 @@ import Testing
     @Test func setPTTOff() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Yaesu uses TX0 for PTT off (different from Elecraft's RX)
         let expectedCommand = "TX0;".data(using: .ascii)!
@@ -191,6 +204,7 @@ import Testing
     @Test func getPTT() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let queryCommand = "TX;".data(using: .ascii)!
         let response = "TX1;".data(using: .ascii)!
@@ -206,6 +220,7 @@ import Testing
     @Test func selectVFO() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Select VFO A (FT0)
         let expectedCommand = "FT0;".data(using: .ascii)!
@@ -215,7 +230,7 @@ import Testing
         try await yaesuProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID; verification
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "FT0;")
@@ -224,6 +239,7 @@ import Testing
     @Test func selectVFOB() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Select VFO B (FT1)
         let expectedCommand = "FT1;".data(using: .ascii)!
@@ -233,7 +249,7 @@ import Testing
         try await yaesuProtocol.selectVFO(.b)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID; verification
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "FT1;")
@@ -244,6 +260,7 @@ import Testing
     @Test func setPower() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "PC050;".data(using: .ascii)!
         let response = "PC050;".data(using: .ascii)!
@@ -252,7 +269,7 @@ import Testing
         try await yaesuProtocol.setPower(50)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID; verification
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "PC050;")
@@ -261,6 +278,7 @@ import Testing
     @Test func getPower() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let queryCommand = "PC;".data(using: .ascii)!
         let response = "PC050;".data(using: .ascii)!
@@ -283,6 +301,7 @@ import Testing
         )
         try await yaesu.connect()
         await mock.reset()
+        await mock.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "ST1;".data(using: .ascii)!
         let response = "ST1;".data(using: .ascii)!
@@ -304,6 +323,7 @@ import Testing
         )
         try await yaesu.connect()
         await mock.reset()
+        await mock.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "ST0;".data(using: .ascii)!
         let response = "ST0;".data(using: .ascii)!
@@ -325,6 +345,7 @@ import Testing
         )
         try await yaesu.connect()
         await mock.reset()
+        await mock.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let queryCommand = "ST;".data(using: .ascii)!
         let response = "ST1;".data(using: .ascii)!
@@ -340,6 +361,7 @@ import Testing
     @Test func completeWorkflow() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // 1. Set frequency
         let freqCmd = "FA014230000;".data(using: .ascii)!
@@ -376,6 +398,7 @@ import Testing
         )
         try await yaesu.connect()
         await mock.reset()
+        await mock.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // 1. Enable split via ST1 (not FT1 — see fix for #12 audit)
         let splitOnCmd = "ST1;".data(using: .ascii)!
@@ -409,6 +432,7 @@ import Testing
     @Test func vfoOpExchange() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.performVFOOperation(.exchange)
 
         let writes = await mockTransport.recordedWrites
@@ -418,6 +442,7 @@ import Testing
     @Test func vfoOpCopyVFO() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.performVFOOperation(.copyVFO)
 
         let writes = await mockTransport.recordedWrites
@@ -427,6 +452,7 @@ import Testing
     @Test func vfoOpVFOToMemory() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.performVFOOperation(.vfoToMemory)
 
         let writes = await mockTransport.recordedWrites
@@ -436,6 +462,7 @@ import Testing
     @Test func vfoOpTune() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.performVFOOperation(.tune)
 
         let writes = await mockTransport.recordedWrites
@@ -445,6 +472,7 @@ import Testing
     @Test func vfoOpMemoryClearUnsupported() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         await #expect(throws: RigError.self) {
             try await yaesuProtocol.performVFOOperation(.memoryClear)
         }
@@ -455,6 +483,7 @@ import Testing
     @Test func setFunctionCompressorOn() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.setFunction(.compressor, enabled: true)
         #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "PR01;")
     }
@@ -462,6 +491,7 @@ import Testing
     @Test func setFunctionAutoNotch() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         try await yaesuProtocol.setFunction(.autoNotch, enabled: true)
         #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "BC01;")
     }
@@ -469,6 +499,7 @@ import Testing
     @Test func setFunctionAfcUnsupported() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
         await #expect(throws: RigError.self) {
             try await yaesuProtocol.setFunction(.autoFrequencyControl, enabled: true)
         }
@@ -488,6 +519,7 @@ import Testing
     @Test func setFrequencyDefaultsToNineDigitNewcatFormat() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCmd = "FA014230000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCmd, response: expectedCmd)
@@ -501,6 +533,7 @@ import Testing
     @Test func setFrequencyZeroPadsLowFrequencyToNineDigits() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCmd = "FA001800000;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCmd, response: expectedCmd)
@@ -525,6 +558,7 @@ import Testing
         )
         try await ftx1.connect()
         await transport.reset()
+        await transport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let svCmd = "SV0;".data(using: .ascii)!
         let faCmd = "FA014230000;".data(using: .ascii)!
@@ -534,10 +568,11 @@ import Testing
         try await ftx1.setFrequency(14_230_000, vfo: .a)
 
         let writes = await transport.recordedWrites
-        // Two writes expected: SV0; then FA014230000;
-        #expect(writes.count == 2)
+        // SV0; (verified with ID;) then FA014230000; (write-only)
+        #expect(writes.count == 3)
         #expect(String(data: writes[0], encoding: .ascii) == "SV0;")
-        #expect(String(data: writes[1], encoding: .ascii) == "FA014230000;")
+        #expect(String(data: writes[1], encoding: .ascii) == "ID;")
+        #expect(String(data: writes[2], encoding: .ascii) == "FA014230000;")
     }
 
     @Test func ftx1SetModeMapsCWToCode3() async throws {
@@ -552,6 +587,7 @@ import Testing
         )
         try await ftx1.connect()
         await transport.reset()
+        await transport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let svCmd = "SV0;".data(using: .ascii)!
         // FTX-1 has RIG_TARGETABLE_MODE per rigs/yaesu/ftx1/ftx1.c,
@@ -564,10 +600,10 @@ import Testing
         try await ftx1.setMode(.cw, vfo: .a)
 
         let writes = await transport.recordedWrites
-        // SV0; prelude then MD03;
-        #expect(writes.count == 2)
+        // SV0; prelude (verified with ID;) then MD03;
+        #expect(writes.count == 3)
         #expect(String(data: writes[0], encoding: .ascii) == "SV0;")
-        #expect(String(data: writes[1], encoding: .ascii) == "MD03;")
+        #expect(String(data: writes[2], encoding: .ascii) == "MD03;")
     }
 
     @Test func ftx1SetModeMapsCWReverseToCode7() async throws {
@@ -580,6 +616,7 @@ import Testing
         )
         try await ftx1.connect()
         await transport.reset()
+        await transport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let svCmd = "SV0;".data(using: .ascii)!
         let mdCmd = "MD07;".data(using: .ascii)!
@@ -589,7 +626,7 @@ import Testing
         try await ftx1.setMode(.cwR, vfo: .a)
 
         let writes = await transport.recordedWrites
-        #expect(String(data: writes[1], encoding: .ascii) == "MD07;")
+        #expect(String(data: writes[2], encoding: .ascii) == "MD07;")
     }
 
     @Test func ftx1GetFrequencyDecodesNineDigitResponse() async throws {
@@ -601,6 +638,7 @@ import Testing
         )
         try await ftx1.connect()
         await transport.reset()
+        await transport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let query = "FA;".data(using: .ascii)!
         let response = "FA014230000;".data(using: .ascii)!
@@ -624,6 +662,7 @@ import Testing
         // Prior code emitted GT000 (3-digit) with Fast=0 mapping.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expected = "GT01;".data(using: .ascii)!
         await mockTransport.setResponse(for: expected, response: expected)
@@ -637,6 +676,7 @@ import Testing
     @Test func setAGCAutoEmitsGT04() async throws {
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expected = "GT04;".data(using: .ascii)!
         await mockTransport.setResponse(for: expected, response: expected)
@@ -652,6 +692,7 @@ import Testing
         // required. Prior code emitted RG%03d without qualifier.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expected = "RG0128;".data(using: .ascii)!
         await mockTransport.setResponse(for: expected, response: expected)
@@ -670,6 +711,7 @@ import Testing
         // reject that. See Hamlib newcat.c:9218.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expected = "SH007;".data(using: .ascii)!
         await mockTransport.setResponse(for: expected, response: expected)
@@ -695,6 +737,7 @@ import Testing
         )
         try await proto.connect()
         await transport.reset()
+        await transport.setResponse(for: Self.idQuery, response: Self.idReply)
         return (transport, proto)
     }
 
@@ -793,6 +836,7 @@ import Testing
         // selection dictates which VFO changes.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expected = "MD02;".data(using: .ascii)!
         await mockTransport.setResponse(for: expected, response: expected)
@@ -875,6 +919,7 @@ import Testing
         // unsigned 4-digit with RC; prelude.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let rcCmd = "RC;".data(using: .ascii)!
         let ruCmd = "RU0100;".data(using: .ascii)!
@@ -885,17 +930,16 @@ import Testing
 
         try await yaesuProtocol.setRIT(RITXITState(enabled: true, offset: 100))
 
-        let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 3)
-        #expect(String(data: writes[0], encoding: .ascii) == "RC;")
-        #expect(String(data: writes[1], encoding: .ascii) == "RU0100;")
-        #expect(String(data: writes[2], encoding: .ascii) == "RT1;")
+        // Each set is verified with ID; (v1.2.19, Hamlib newcat_set_cmd).
+        let writes = await mockTransport.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["RC;", "ID;", "RU0100;", "ID;", "RT1;", "ID;"])
     }
 
     @Test func setRITEmitsRDForNegativeOffsetUnsigned() async throws {
         // Negative offset uses RD (down) with absolute value.
         try await yaesuProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let rcCmd = "RC;".data(using: .ascii)!
         let rdCmd = "RD0250;".data(using: .ascii)!
@@ -907,6 +951,6 @@ import Testing
         try await yaesuProtocol.setRIT(RITXITState(enabled: true, offset: -250))
 
         let writes = await mockTransport.recordedWrites
-        #expect(String(data: writes[1], encoding: .ascii) == "RD0250;")
+        #expect(String(data: writes[2], encoding: .ascii) == "RD0250;")
     }
 }

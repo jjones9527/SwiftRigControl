@@ -25,7 +25,9 @@ extension YaesuCATProtocol {
 
     public func setFunction(_ function: RigFunction, enabled: Bool) async throws {
         let command = try yaesuCommand(for: function, set: true, enabled: enabled)
-        try await sendCommand(command)
+        // Verified with ID; — or, for the AC tuner command, drained
+        // through it (see YaesuCATProtocol+SetCommand.swift).
+        try await sendSetCommand(command)
     }
 
     public func getFunction(_ function: RigFunction) async throws -> Bool {

@@ -58,7 +58,7 @@ extension YaesuCATProtocol {
         let centred = (level - 50) * 24
         let sign = centred < 0 ? "-" : "+"
         let cmd = "IS0\(sign)\(String(format: "%04d", abs(centred)))"
-        try await sendCommand(cmd)
+        try await sendSetCommand(cmd)
     }
     public func getIFShift() async throws -> Int {
         try await sendCommand("IS0")
@@ -74,7 +74,7 @@ extension YaesuCATProtocol {
     private func setLevel(prefix: String, level: Int, width: Int) async throws {
         let clamped = min(max(level, 0), 100)
         let formatted = String(format: "%0\(width)d", clamped)
-        try await sendCommand("\(prefix)\(formatted)")
+        try await sendSetCommand("\(prefix)\(formatted)")
     }
 
     private func getLevel(prefix: String, width: Int) async throws -> Int {

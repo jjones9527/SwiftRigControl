@@ -51,8 +51,9 @@ extension YaesuCATProtocol {
             )
         }
 
-        try await sendCommand(command)
-        // Yaesu set commands don't echo (rejected commands return
-        // "?;"); trust the wire write.
+        // Yaesu set commands don't echo; a rejection arrives as "?;"
+        // ahead of the verification reply. `AC002;` (tune) goes through
+        // the AC drain, Hamlib upstream 635d11fe.
+        try await sendSetCommand(command)
     }
 }

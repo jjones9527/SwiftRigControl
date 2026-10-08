@@ -240,22 +240,14 @@ import Testing
         try await yaesu.connect()
         await mock.reset()
 
-        await mock.setResponse(
-            for: "FT2;".data(using: .ascii)!,
-            response: "FT2;".data(using: .ascii)!
-        )
+        await mock.setResponse(for: "ID;".data(using: .ascii)!, response: "ID0670;".data(using: .ascii)!)
         try await yaesu.selectVFO(.a)
 
-        await mock.setResponse(
-            for: "FT3;".data(using: .ascii)!,
-            response: "FT3;".data(using: .ascii)!
-        )
         try await yaesu.selectVFO(.b)
 
-        let writes = await mock.recordedWrites
-        #expect(writes.count == 2)
-        #expect(String(data: writes[0], encoding: .ascii) == "FT2;")
-        #expect(String(data: writes[1], encoding: .ascii) == "FT3;")
+        // FT is verified with ID; (v1.2.19, Hamlib newcat_set_cmd).
+        let writes = await mock.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["FT2;", "ID;", "FT3;", "ID;"])
     }
 
     /// FT-710 uses classic `FT0;`/`FT1;` for VFO A/B per Hamlib
@@ -270,22 +262,14 @@ import Testing
         try await yaesu.connect()
         await mock.reset()
 
-        await mock.setResponse(
-            for: "FT0;".data(using: .ascii)!,
-            response: "FT0;".data(using: .ascii)!
-        )
+        await mock.setResponse(for: "ID;".data(using: .ascii)!, response: "ID0670;".data(using: .ascii)!)
         try await yaesu.selectVFO(.a)
 
-        await mock.setResponse(
-            for: "FT1;".data(using: .ascii)!,
-            response: "FT1;".data(using: .ascii)!
-        )
         try await yaesu.selectVFO(.b)
 
-        let writes = await mock.recordedWrites
-        #expect(writes.count == 2)
-        #expect(String(data: writes[0], encoding: .ascii) == "FT0;")
-        #expect(String(data: writes[1], encoding: .ascii) == "FT1;")
+        // FT is verified with ID; (v1.2.19, Hamlib newcat_set_cmd).
+        let writes = await mock.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["FT0;", "ID;", "FT1;", "ID;"])
     }
 
     // MARK: - FT-891 capability flag
