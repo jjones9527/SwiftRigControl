@@ -51,7 +51,32 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.18** (git tag, 2026-10-07), the
+The shipped version is **v1.2.19** (git tag, 2026-10-08),
+jjones9527/SwiftRigControl#34–#37:
+
+- **Icom DATA modes** (`IcomCIVProtocol+Mode.swift`): `0x26` is opt-in
+  per radio (`acceptsSelectedVFOModeCommand`, IC-7300 / MK2 only) and
+  carries `[vfo, mode, data, filter]` for every mode, with a NAK
+  fallback to `0x06` + `0x1A 0x06`. `getMode` reads the DATA flag from
+  `0x26` or `0x1A 0x06`. `supportsDataMode` follows Hamlib
+  `data_mode_supported` for every command set. The MK2 has
+  `StandardIcomCommandSet.ic7300MK2` and a `1A 05` menu table
+  (`IcomRadioModel.menuSettingParameter`).
+- **Set-command verification** for Yaesu newcat
+  (`YaesuCATProtocol+SetCommand.swift`: `FA/FB/TX/MD/ST` write-only,
+  `AC` drained, the rest verified with `ID;` / `AI;` on FTDX-9000) and
+  Elecraft K3/K4/KX (`ElecraftProtocol+SetCommand.swift`, `ID;`;
+  K2 path unchanged pending hardware re-check). Same pattern as the
+  v1.2.18 Kenwood fix: none of these radios echo set commands.
+- **IC-F8101** uses `ICF8101CommandSet` (`1A 35/36/34/37`); D-STAR
+  radios no longer list DATA modes as a DV stand-in; Yaesu
+  `setPowerState` follows `newcat_set_powerstat`.
+
+**Mock-tested only.** Test count 851 → 894. Remaining work, ranked:
+`Documentation/HAMLIB_TRIAGE_2026-10.md` "Remaining work" and ROADMAP
+Phase 5.9.
+
+The previously-shipped version was **v1.2.18** (git tag, 2026-10-07), the
 P0/P1 follow-ups from the 2026-10 Hamlib review
 (jjones9527/SwiftRigControl#30, #31, #32):
 
@@ -68,9 +93,7 @@ P0/P1 follow-ups from the 2026-10 Hamlib review
   `YaesuFT1000MPCAT(family: .ft920)`) at 4800 baud.
 - **`IOKitSerialPort.open()` sets `TIOCEXCL`** (Hamlib `4b39d3cd`).
 
-**Mock-tested only.** Test count 817 → 851. Remaining work, ranked:
-`Documentation/HAMLIB_TRIAGE_2026-10.md` "Remaining work" and ROADMAP
-Phase 5.9 (next up: Icom `0x26` NAK fallback for IC-7300 DATA modes).
+**Mock-tested only.** Test count 817 → 851.
 
 The previously-shipped version was **v1.2.17** (git tag, 2026-10-07), the
 outcome of the Hamlib upstream review covering `0839c031` →

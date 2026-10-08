@@ -75,6 +75,10 @@ commit's neighborhood, not in the commit itself.
 - **v1.2.17** shipped the four fixes in "Ported in this change".
 - **v1.2.18** shipped the P0 Kenwood fix (item 1), the FT-100 / FT-920
   fix (item 2) and `TIOCEXCL` (jjones9527/SwiftRigControl#30, #31, #32).
+- **v1.2.19** (2026-10-08) shipped A1 (rescoped Icom DATA-mode fixes),
+  A2 (Yaesu newcat set commands), the Elecraft K3/K4/KX set path, the
+  IC-F8101 command set, the D-STAR mode cleanup and Yaesu power on/off
+  (jjones9527/SwiftRigControl#34–#37).
 - Digests jjones9527/SwiftRigControl#16, #18 and #20–#26 and the
   earlier triage issue #17 are closed; their open items are folded
   into the list below. #19 (IC-7300MK2 `1A 05`) is item C3.
