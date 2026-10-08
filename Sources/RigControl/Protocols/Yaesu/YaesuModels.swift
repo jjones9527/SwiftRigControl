@@ -353,8 +353,9 @@ extension RadioDefinition.Yaesu {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx9000,
                 // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
-                // `rigs/yaesu/ft9000.c`.
-                quirks: .newcatNoST.withTargetableMode()
+                // `rigs/yaesu/ft9000.c`, and Hamlib verifies its set
+                // commands with `AI;` instead of `ID;` (newcat.c:10926).
+                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI")
             )
         }
     )

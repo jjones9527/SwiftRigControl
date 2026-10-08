@@ -103,6 +103,14 @@ extension YaesuCATProtocol {
         /// (set) and `newcat.c:1879-1882` (get) for the dispatch.
         public let hasTargetableMode: Bool
 
+        /// Query sent after a set command to find out whether the
+        /// radio rejected it (a `?;` arrives before the query's reply).
+        ///
+        /// `"ID"` everywhere except the FTDX-9000, which Hamlib
+        /// verifies with `"AI"` (`newcat.c:10806-10807`, `10926-10927`).
+        /// See ``YaesuCATProtocol`` `sendSetCommand(_:)`.
+        public let verifyCommand: String
+
         /// `SH` command wire format.
         ///
         /// Every value cites the Hamlib line where the format is
@@ -141,7 +149,8 @@ extension YaesuCATProtocol {
             modeCodeTable: [Mode: Character]? = nil,
             requiresMemoryModeEscape: Bool = false,
             filterCommandStyle: SHCommandStyle = .qualifierOnly,
-            hasTargetableMode: Bool = false
+            hasTargetableMode: Bool = false,
+            verifyCommand: String = "ID"
         ) {
             self.supportsSTSplit = supportsSTSplit
             self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
@@ -151,6 +160,7 @@ extension YaesuCATProtocol {
             self.requiresMemoryModeEscape = requiresMemoryModeEscape
             self.filterCommandStyle = filterCommandStyle
             self.hasTargetableMode = hasTargetableMode
+            self.verifyCommand = verifyCommand
         }
 
         /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
@@ -278,7 +288,27 @@ extension YaesuCATProtocol {
                 modeCodeTable: modeCodeTable,
                 requiresMemoryModeEscape: requiresMemoryModeEscape,
                 filterCommandStyle: filterCommandStyle,
-                hasTargetableMode: enabled
+                hasTargetableMode: enabled,
+                verifyCommand: verifyCommand
+            )
+        }
+
+        /// Returns a copy with ``verifyCommand`` replaced.
+        ///
+        /// - Parameter command: The verification query, without the
+        ///   `;` terminator (`"AI"` for the FTDX-9000).
+        /// - Returns: The adjusted quirks.
+        public func withVerifyCommand(_ command: String) -> Quirks {
+            Quirks(
+                supportsSTSplit: supportsSTSplit,
+                usesFT23ForVFOSelection: usesFT23ForVFOSelection,
+                supportsFTVFOSelection: supportsFTVFOSelection,
+                frequencyDigits: frequencyDigits,
+                modeCodeTable: modeCodeTable,
+                requiresMemoryModeEscape: requiresMemoryModeEscape,
+                filterCommandStyle: filterCommandStyle,
+                hasTargetableMode: hasTargetableMode,
+                verifyCommand: command
             )
         }
 

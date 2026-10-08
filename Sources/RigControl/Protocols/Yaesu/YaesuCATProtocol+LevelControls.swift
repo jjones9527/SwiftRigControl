@@ -40,8 +40,7 @@ extension YaesuCATProtocol {
     public func setAFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "AG0%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AF gain.
@@ -80,8 +79,7 @@ extension YaesuCATProtocol {
     public func setRFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "RG0%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current RF gain on the main receiver.
@@ -115,8 +113,7 @@ extension YaesuCATProtocol {
     public func setSquelch(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
         let command = String(format: "SQ0%03d", clamped)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current squelch level.
@@ -156,8 +153,7 @@ extension YaesuCATProtocol {
             throw RigError.invalidParameter("Preamp level must be 0 (IPO), 1 (AMP1), or 2 (AMP2)")
         }
         let command = "PA0\(level)"
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current preamplifier stage.
@@ -202,8 +198,7 @@ extension YaesuCATProtocol {
         default: throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB (valid: 0, 6, 12, 18)")
         }
         let command = String(format: "RA%02d", code)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current attenuator level in dB.
@@ -260,8 +255,7 @@ extension YaesuCATProtocol {
         case .auto:   code = 4
         }
         let command = String(format: "GT%02d", code)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current AGC speed.
@@ -300,11 +294,10 @@ extension YaesuCATProtocol {
     public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
         switch config {
         case .off:
-            try await sendCommand("NB0")
+            try await sendSetCommand("NB0")
         case .enabled:
-            try await sendCommand("NB1")
+            try await sendSetCommand("NB1")
         }
-        _ = try await receiveResponse()
     }
 
     /// Gets the current noise blanker state.
@@ -338,13 +331,11 @@ extension YaesuCATProtocol {
     public func setNoiseReduction(_ config: NoiseReduction) async throws {
         switch config {
         case .off:
-            try await sendCommand("NR0")
-            _ = try await receiveResponse()
+            try await sendSetCommand("NR0")
         case .enabled(let level):
             // Map level 0–5 → NR1, 6–10 → NR2
             let code = level > 5 ? 2 : 1
-            try await sendCommand("NR\(code)")
-            _ = try await receiveResponse()
+            try await sendSetCommand("NR\(code)")
         }
     }
 
@@ -421,8 +412,7 @@ extension YaesuCATProtocol {
             // has no "bandwidth off" state to communicate.
             command = String(format: "SH01%02d", highCut)
         }
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Gets the current IF filter by reading the DSP high-cut setting.
@@ -520,8 +510,7 @@ extension YaesuCATProtocol {
             throw RigError.invalidParameter("Memory channel must be 1–999")
         }
         let command = String(format: "MC%03d", channel.number)
-        try await sendCommand(command)
-        _ = try await receiveResponse()
+        try await sendSetCommand(command)
     }
 
     /// Reads the currently selected memory channel number.

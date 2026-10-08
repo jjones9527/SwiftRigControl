@@ -101,9 +101,14 @@ test it without hardware. ROADMAP Phase 5.9 tracks the checkboxes.
    mode set. All fixed; a NAK fallback was added as well. New
    follow-ups: the IC-F8101 needs its own `1A 35/36/34` commands, and
    the D-STAR radios use `.dataFM` as a stand-in for DV (ROADMAP 5.9.5).
-2. **Yaesu newcat `AC` reject drain** (`635d11fe`). A rejected tuner
-   command answers `?;` ahead of the verification reply and desyncs
-   the next transaction (FT-991A, FTDX10, FTDX101, FT-710).
+2. ~~**Yaesu newcat `AC` reject drain** (`635d11fe`).~~ **Done for
+   v1.2.19, widened.** Sizing it showed every newcat set command read
+   an echo that real radios never send (the Kenwood bug again), on all
+   16 `YaesuCATProtocol` radios. Ported Hamlib `newcat_set_cmd` whole:
+   write-only `FA`/`FB`/`TX`/`MD`/`ST`, `ID;` verification for the rest
+   (`AI;` on FTDX-9000), `AC` drained. Also found `getRIT` sending
+   `RC;` (clarifier clear); it now reads `IF;`. Next: audit Elecraft
+   K3/K4, whose set path also reads an "echo".
 3. **Elecraft reply validation**: K3/K3S `SW`, K4 `TM` / `FR` / `FT` /
    `TQ` (`900c4d3`, `ffe227a3`). Reject malformed replies rather than
    parsing prefixes only.

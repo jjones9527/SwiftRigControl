@@ -1388,9 +1388,16 @@ In priority order:
       ~20 radios without DATA modes were sent `0x1A 0x06`. Added a NAK
       fallback anyway, an `.ic7300MK2` command set and the MK2 `1A 05`
       menu-number table (#19).
-- [ ] **Yaesu newcat `AC` reject drain** (`635d11fe`). A `?;` before the
-      verification reply desyncs the next transaction on FT-991A /
-      FTDX10 / FTDX101 / FT-710 tuner commands.
+- [x] **Yaesu newcat set commands** (done for v1.2.19; grew out of the
+      `635d11fe` `AC` reject-drain item). Every set waited for an echo
+      newcat radios never send; now `FA`/`FB`/`TX`/`MD`/`ST` are
+      write-only and the rest are verified with `ID;` (`AI;` on the
+      FTDX-9000), as Hamlib `newcat_set_cmd` does; `AC` is drained, not
+      resent. Also `getRIT` no longer sends `RC;` (clarifier clear).
+- [ ] **Elecraft K3/K4 set path.** `ElecraftProtocol.setFrequency` reads
+      an echo on non-K2 radios ("K3/K4 and newer radios echo SET
+      commands"). Check against Hamlib `k3.c` / `kenwood.c` — likely
+      the same class of bug.
 - [ ] **Elecraft reply validation** — K3/K3S `SW`, K4 `TM` / `FR` /
       `FT` / `TQ` (`900c4d3`, `ffe227a3`; carried over from
       jjones9527/SwiftRigControl#17).
