@@ -1413,6 +1413,9 @@ In priority order:
 - [ ] FT-817/857 DIG sideband EEPROM write (`65ce74ca`) — opt-in only,
       and only with a volunteer who has the radio (EEPROM wear risk).
 
+- [x] **Yaesu newcat power on/off** (v1.2.19): `PS0` write-only, `PS1`
+      wake + poll `FA`, per Hamlib `newcat_set_powerstat`.
+
 ### 5.9.5 Low-priority audits
 
 - [ ] TH-D75 dedicated-backend diff (`07d6a7ff`).
@@ -1423,10 +1426,10 @@ In priority order:
 - [x] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
       per-model menu-number table and test added in v1.2.19. Still to
       look up: the MK2's DATA mod-source number (not in Hamlib).
-- [ ] **IC-F8101 needs its own commands.** Hamlib drives it with
+- [x] **IC-F8101 needs its own commands** (done for v1.2.19, `ICF8101CommandSet`). Hamlib drives it with
       `1A 35` / `1A 36` / `1A 34` for frequency and mode
       (`icf8101.c:39-130`), not `0x05` / `0x06`. Definition-only today.
-- [ ] **D-STAR DV mode.** ID-31/51/52/4100/5100 advertise `.dataFM`
+- [x] **D-STAR DV stand-ins removed** (v1.2.19). A real DV mode case is a v1.3 item. ID-31/51/52/4100/5100 advertise `.dataFM`
       (and the IC-R30 `.dataUSB`) as a stand-in for D-STAR DV; Hamlib
       models it as `RIG_MODE_DSTAR`. Needs a mode case or removing the
       stand-in.

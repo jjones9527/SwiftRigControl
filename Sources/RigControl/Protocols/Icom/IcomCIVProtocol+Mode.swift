@@ -87,6 +87,11 @@ extension IcomCIVProtocol {
         let response = try await receiveFrame()
         let modeCode = try commandSet.parseModeResponse(response)
 
+        // Radios whose mode codes include the DATA variants (IC-F8101).
+        if let isData = commandSet.parseDataModeFlag(response) {
+            return try icomCodeToMode(modeCode, isData: isData)
+        }
+
         guard usesDataModeFlagFrame else {
             // Radios without DATA sub-modes: keep the pre-v1.2.19
             // reading, where filter byte 0x00 marks the legacy

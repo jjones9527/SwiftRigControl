@@ -109,8 +109,9 @@ extension RadioCapabilitiesDatabase.Icom {
     /// Icom IC-F8101 HF SSB transceiver (2010).
     ///
     /// Full-transmit HF 1.6-30 MHz SSB, 100 W. Designed as a
-    /// commercial-adjacent land-mobile HF radio but exposes a
-    /// standard CI-V CAT interface. Per Hamlib `rigs/icom/icf8101.c`
+    /// commercial-adjacent land-mobile HF radio. Its CI-V interface
+    /// takes frequency, mode and PTT through `1A` sub-commands rather
+    /// than the amateur commands (see ``ICF8101CommandSet``). Per Hamlib `rigs/icom/icf8101.c`
     /// the serial link tops out at 38400 baud (higher than most
     /// Icom radios of this generation). Modes are LSB, USB, CW,
     /// AM, RTTY (not typical amateur RTTY — vendor mode variant).
@@ -119,7 +120,9 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .am, .rtty],
+        // DATA-LSB / DATA-USB map to the LSB-D1 / USB-D1 mode codes
+        // (Hamlib ICF8101_MODES, icf8101.c:180-182), added in v1.2.19.
+        supportedModes: [.lsb, .usb, .cw, .am, .rtty, .dataLSB, .dataUSB],
         frequencyRange: FrequencyRange(min: 500_000, max: 29_999_900),
         detailedFrequencyRanges: [
             // RX only below 1.6 MHz; TX allowed 1.6–30 MHz.

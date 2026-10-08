@@ -427,11 +427,11 @@ extension StandardIcomCommandSet {
     /// - **38400 baud** (higher than most Icoms of the era)
     /// - Per Hamlib `icf8101.c`, default CI-V address 0x8A. 100 W TX.
     ///
-    /// No DATA modes (`supportsDataMode: false`): Hamlib's
-    /// `icf8101_priv_caps` doesn't set `data_mode_supported`, and the
-    /// radio has no `0x26`. Note that Hamlib drives frequency and mode
-    /// on the F8101 with its own `1A 35` / `1A 36` / `1A 34` commands
-    /// (`icf8101.c:39-130`), which this command set doesn't model yet.
+    ///
+    /// Not used by the catalog since v1.2.19: the IC-F8101 takes
+    /// frequency, mode and PTT through `1A 35` / `1A 36` / `1A 34` /
+    /// `1A 37`, which ``ICF8101CommandSet`` implements. Kept for source
+    /// compatibility; prefer ``ICF8101CommandSet``.
     public static var icF8101: StandardIcomCommandSet {
         StandardIcomCommandSet(civAddress: 0x8A, vfoModel: .targetable,
                                supportsDataMode: false)

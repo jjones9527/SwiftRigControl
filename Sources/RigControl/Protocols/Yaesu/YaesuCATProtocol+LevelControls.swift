@@ -464,17 +464,46 @@ extension YaesuCATProtocol {
     ///
     /// Command: `PS1;` (power on) or `PS0;` (standby / power off).
     ///
-    /// Not all radios support remote power-on via CAT — power-on typically requires
-    /// physical interaction or a dedicated wake signal on some models.
+    /// Power-on sends `PS1;` twice 1.2 s apart (the first only wakes the
+    /// radio) and then polls `FA;` for up to about 10 s, so it returns once
+    /// the radio is answering. Not all radios support remote power-on via CAT.
     ///
     /// - Parameter on: `true` to power on, `false` for standby
-    /// - Throws: `RigError` if the command fails
+    /// - Throws: `RigError.timeout` if the radio doesn't answer after
+    ///   power-on; other `RigError`s if the write fails
     public func setPowerState(_ on: Bool) async throws {
-        let command = on ? "PS1" : "PS0"
-        try await sendCommand(command)
-        // Radio may not respond after powering off — ignore response errors
-        _ = try? await receiveResponse()
+        // Hamlib `newcat_set_powerstat` (newcat.c:3719-3800). Pre-v1.2.19
+        // this wrote PS once and waited out a reply that never comes.
+        guard on else {
+            // Power off: write PS0; and read nothing (newcat.c:3763-3767).
+            try await sendCommand("PS0")
+            return
+        }
+
+        // Power on: the first PS1; only wakes the CAT processor, so send it
+        // again after 1.2 s, then poll FA until the radio answers.
+        // Divergence: Hamlib also closes and reopens the port on
+        // everything but the FT-991 because some radios reset their USB
+        // serial port while powering up; reopening is left to the caller.
+        try await sendCommand("PS1")
+        try await Task.sleep(nanoseconds: Self.powerOnWakeDelay)
+        try await sendCommand("PS1")
+        for _ in 0..<Self.powerOnPollAttempts {
+            try await Task.sleep(nanoseconds: Self.powerOnPollInterval)
+            try await transport.flush()
+            if (try? await getFrequency(vfo: .a)) != nil {
+                return
+            }
+        }
+        throw RigError.timeout
     }
+
+    /// Delay between the wake-up `PS1;` and the real one (Hamlib 1.2 s).
+    static let powerOnWakeDelay: UInt64 = 1_200_000_000
+    /// Wait between `FA;` polls after power-on (Hamlib 1 s).
+    static let powerOnPollInterval: UInt64 = 1_000_000_000
+    /// `FA;` polls before giving up, about 10 s with timeouts (Hamlib 8).
+    static let powerOnPollAttempts = 8
 
     /// Returns `true` if the radio is powered on and responding.
     ///
