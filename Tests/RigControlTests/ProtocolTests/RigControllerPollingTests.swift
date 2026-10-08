@@ -132,9 +132,12 @@ import Testing
         let collector = Task<[RigStateEvent], Never> {
             var collected: [RigStateEvent] = []
             for await event in stream {
-                if case .frequencyChanged = event {
+                if case .frequencyChanged(_, let hz) = event {
                     collected.append(event)
-                    if collected.count >= 2 { break }
+                    // Stop on the last set, not after two events: an
+                    // event for the default 14.2 MHz can still arrive
+                    // after subscribing and would use up a slot.
+                    if hz == 14_074_000 { break }
                 }
             }
             return collected
