@@ -36,14 +36,7 @@ extension ElecraftProtocol {
         // ship-supported because we don't have hardware to verify
         // against; when added, branch on isK2.
         let command = "AN\(index)"
-        try await sendCommand(command)
-        // K2 SET commands don't echo (per existing protocol notes
-        // in setPower for K2), so we don't wait for an ACK on the
-        // K2 path. For other K-series (when added) the existing
-        // ElecraftProtocol pattern is `_ = try await receiveResponse()`.
-        if !isK2 {
-            _ = try await receiveResponse()
-        }
+        try await sendSetCommand(command)
     }
 
     public func getAntenna() async throws -> Int {

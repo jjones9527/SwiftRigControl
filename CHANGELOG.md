@@ -22,8 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 Targeted for **v1.2.19**. Icom DATA-mode wire and readback fixes
-(cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`) and
-Yaesu newcat set-command handling (`rigs/yaesu/newcat.c`). Mock-tested
+(cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`), and
+set-command handling for Yaesu newcat (`rigs/yaesu/newcat.c`) and
+Elecraft K3/K4/KX (`rigs/kenwood/kenwood.c`). Mock-tested
 only; no hardware was available.
 
 ### Fixed
@@ -42,6 +43,20 @@ only; no hardware was available.
   on the FTDX-9000) and its reply is read; `?;` means busy, so the
   command is resent once, then `RigError.commandFailed`; `N;` throws
   `unsupportedOperation`; unsolicited frames are skipped.
+- **Elecraft K3 / K3S / K4 / KX2 / KX3 set commands required an echo
+  the radio never sends.**  `setFrequency`, `setMode`, `setPower`,
+  `selectVFO`, `setSplit` and the RIT/XIT commands read one reply and
+  threw unless it echoed the command ("K3/K4 and newer radios echo SET
+  commands"); the level, DSP, antenna, function and VFO-operation sets
+  read and discarded one.  Elecraft radios answer set commands with
+  nothing, so each should have timed out.  They now go through
+  `sendSetCommand`, which follows the set with `ID;` and checks for a
+  `?;` / `N;` / `E;` / `O;` rejection, as Hamlib `kenwood_transaction`
+  does for every Elecraft model (`kenwood.c:400-443`, `655-700`).  `PS`,
+  `RX`, `RU`, `RD` and `K22` stay unverified, as in Hamlib.  The K2
+  path (write, then wait 100 ms) is unchanged: it is the behaviour the
+  K2 hardware validation ran against; moving it to `ID;` verification
+  waits for a hardware re-check.
 - **Rejected tuner commands desynchronised the next transaction**
   (Hamlib upstream `635d11fe`).  `AC` (tuner on/off, `AC002;` tune) is
   now sent once and drained through the `ID;` reply, so a `?;` is
@@ -113,6 +128,9 @@ only; no hardware was available.
 
 ### Tests
 
+- `ElecraftSetCommandTests` — K3 sets verified with `ID;`, rejection
+  drained, unsolicited frame skipped, `PS` write-only, K2 path unchanged;
+  `ElecraftProtocolTests` updated for the `ID;` round trip.
 - `YaesuSetCommandTests` — write-only `FA`/`MD`/`TX`/`ST`, `ID;`
   verification (accept, `?;` resend and give-up, `N;`, unsolicited
   frame, timeout), FTDX-9000 `AI;`, `AC` drain without resend, and

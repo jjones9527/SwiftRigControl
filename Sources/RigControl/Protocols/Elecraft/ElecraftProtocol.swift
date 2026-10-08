@@ -107,20 +107,7 @@ public actor ElecraftProtocol:
             command = String(format: "FB%011llu", hz)
         }
 
-        try await sendCommand(command)
-
-        // K2 does NOT echo SET commands, only QUERY commands
-        // K3/K4 and newer radios echo SET commands
-        if !isK2 {
-            // Newer Elecraft radios echo the command as confirmation
-            let response = try await receiveResponse()
-            guard response.hasPrefix(command) else {
-                throw RigError.commandFailed("Unexpected response: \(response)")
-            }
-        } else {
-            // K2: Just send and trust it worked, add delay for command processing
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     public func getFrequency(vfo: VFO) async throws -> UInt64 {
@@ -158,18 +145,7 @@ public actor ElecraftProtocol:
         let modeCode = try modeToElecraftCode(mode)
         let command = "MD\(modeCode)"
 
-        try await sendCommand(command)
-
-        // K2 does NOT echo SET commands, only QUERY commands
-        if !isK2 {
-            let response = try await receiveResponse()
-            guard response.hasPrefix(command) else {
-                throw RigError.commandFailed("Unexpected response: \(response)")
-            }
-        } else {
-            // K2: Just send and trust it worked, add delay for command processing
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
@@ -254,26 +230,10 @@ public actor ElecraftProtocol:
         }
 
         // Set receive VFO
-        try await sendCommand(frCommand)
-        if !isK2 {
-            let frResponse = try await receiveResponse()
-            guard frResponse.hasPrefix(frCommand) else {
-                throw RigError.commandFailed("VFO RX selection failed")
-            }
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(frCommand)
 
         // Set transmit VFO
-        try await sendCommand(ftCommand)
-        if !isK2 {
-            let ftResponse = try await receiveResponse()
-            guard ftResponse.hasPrefix(ftCommand) else {
-                throw RigError.commandFailed("VFO TX selection failed")
-            }
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(ftCommand)
     }
 
     // MARK: - Power Control
@@ -296,17 +256,7 @@ public actor ElecraftProtocol:
             command = String(format: "PC%03d", percentage)
         }
 
-        try await sendCommand(command)
-
-        // K2 does NOT echo SET commands, only QUERY commands
-        if !isK2 {
-            let response = try await receiveResponse()
-            guard response.hasPrefix("PC") else {
-                throw RigError.commandFailed("Power setting failed")
-            }
-        } else {
-            try await Task.sleep(nanoseconds: k2CommandDelay)
-        }
+        try await sendSetCommand(command)
     }
 
     public func getPower() async throws -> Int {
@@ -350,46 +300,14 @@ public actor ElecraftProtocol:
 
         if enabled {
             // Split: RX on VFO A, TX on VFO B
-            try await sendCommand("FR0")
-            if !isK2 {
-                let frResponse = try await receiveResponse()
-                guard frResponse.hasPrefix("FR0") else {
-                    throw RigError.commandFailed("Split RX VFO selection failed")
-                }
-            } else {
-                try await Task.sleep(nanoseconds: k2CommandDelay)
-            }
+            try await sendSetCommand("FR0")
 
-            try await sendCommand("FT1")
-            if !isK2 {
-                let ftResponse = try await receiveResponse()
-                guard ftResponse.hasPrefix("FT1") else {
-                    throw RigError.commandFailed("Split TX VFO selection failed")
-                }
-            } else {
-                try await Task.sleep(nanoseconds: k2CommandDelay)
-            }
+            try await sendSetCommand("FT1")
         } else {
             // Normal: RX and TX on VFO A
-            try await sendCommand("FR0")
-            if !isK2 {
-                let frResponse = try await receiveResponse()
-                guard frResponse.hasPrefix("FR0") else {
-                    throw RigError.commandFailed("Normal RX VFO selection failed")
-                }
-            } else {
-                try await Task.sleep(nanoseconds: k2CommandDelay)
-            }
+            try await sendSetCommand("FR0")
 
-            try await sendCommand("FT0")
-            if !isK2 {
-                let ftResponse = try await receiveResponse()
-                guard ftResponse.hasPrefix("FT0") else {
-                    throw RigError.commandFailed("Normal TX VFO selection failed")
-                }
-            } else {
-                try await Task.sleep(nanoseconds: k2CommandDelay)
-            }
+            try await sendSetCommand("FT0")
         }
     }
 

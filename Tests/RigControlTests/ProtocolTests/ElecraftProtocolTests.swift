@@ -3,6 +3,11 @@ import Testing
 
 /// Protocol-level tests for Elecraft text-based CAT communication
 @Suite struct ElecraftProtocolTests {
+    /// K3/K4/KX set commands are confirmed with `ID;` (v1.2.19, Hamlib
+    /// `kenwood_transaction`); K-series radios answer `ID017;`.
+    static let idQuery = "ID;".data(using: .ascii)!
+    static let idReply = "ID017;".data(using: .ascii)!
+
     var mockTransport: MockTransport
     var elecraftProtocol: ElecraftProtocol
 
@@ -82,6 +87,7 @@ import Testing
     @Test func setFrequency() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Expected command: FA00014230000; (14.230 MHz)
         let expectedCommand = "FA00014230000;".data(using: .ascii)!
@@ -91,7 +97,7 @@ import Testing
         try await elecraftProtocol.setFrequency(14_230_000, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID;
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "FA00014230000;")
@@ -100,6 +106,7 @@ import Testing
     @Test func getFrequency() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Query: FA;
         // Response: FA00014230000;
@@ -115,6 +122,7 @@ import Testing
     @Test func setFrequencyVFOB() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Expected command: FB00007100000; (7.100 MHz)
         let expectedCommand = "FB00007100000;".data(using: .ascii)!
@@ -124,7 +132,7 @@ import Testing
         try await elecraftProtocol.setFrequency(7_100_000, vfo: .b)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID;
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "FB00007100000;")
@@ -135,6 +143,7 @@ import Testing
     @Test func setMode() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Set mode to USB (code 2)
         let expectedCommand = "MD2;".data(using: .ascii)!
@@ -144,7 +153,7 @@ import Testing
         try await elecraftProtocol.setMode(.usb, vfo: .a)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID;
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "MD2;")
@@ -153,6 +162,7 @@ import Testing
     @Test func getMode() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Query: MD;
         // Response: MD2; (USB)
@@ -182,6 +192,7 @@ import Testing
 
         for (mode, expectedCmd) in modeMappings {
             await mockTransport.reset()
+            await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
             let expectedCommand = expectedCmd.data(using: .ascii)!
             let response = expectedCmd.data(using: .ascii)!
@@ -190,7 +201,7 @@ import Testing
             try await elecraftProtocol.setMode(mode, vfo: .a)
 
             let writes = await mockTransport.recordedWrites
-            #expect(writes.count == 1, "Mode \(mode) failed")
+            #expect(writes.count == 2, "Mode \(mode) failed")
 
             let command = String(data: writes[0], encoding: .ascii)
             #expect(command == expectedCmd, "Mode \(mode) command mismatch")
@@ -202,6 +213,7 @@ import Testing
     @Test func setPTTOn() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // PTT commands may not get a response
         let expectedCommand = "TX;".data(using: .ascii)!
@@ -219,6 +231,7 @@ import Testing
     @Test func setPTTOff() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         let expectedCommand = "RX;".data(using: .ascii)!
         await mockTransport.setResponse(for: expectedCommand, response: Data())
@@ -237,6 +250,7 @@ import Testing
     @Test func selectVFO() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Select VFO A (FR0 and FT0)
         let frCommand = "FR0;".data(using: .ascii)!
@@ -249,10 +263,10 @@ import Testing
         try await elecraftProtocol.selectVFO(.a)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 2)
+        #expect(writes.count == 4)   // FR, ID, FT, ID
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
+        let cmd2 = String(data: writes[2], encoding: .ascii)
         #expect(cmd1 == "FR0;")
         #expect(cmd2 == "FT0;")
     }
@@ -262,6 +276,7 @@ import Testing
     @Test func setPower() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Set power to 50W (50%)
         let expectedCommand = "PC050;".data(using: .ascii)!
@@ -271,7 +286,7 @@ import Testing
         try await elecraftProtocol.setPower(50)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 1)
+        #expect(writes.count == 2)   // command + ID;
 
         let command = String(data: writes[0], encoding: .ascii)
         #expect(command == "PC050;")
@@ -280,6 +295,7 @@ import Testing
     @Test func getPower() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Query: PC;
         // Response: PC050; (50%)
@@ -298,6 +314,7 @@ import Testing
     @Test func setSplitOn() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Split: FR0 (RX on VFO A) and FT1 (TX on VFO B)
         let frCommand = "FR0;".data(using: .ascii)!
@@ -310,10 +327,10 @@ import Testing
         try await elecraftProtocol.setSplit(true)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 2)
+        #expect(writes.count == 4)   // FR, ID, FT, ID
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
+        let cmd2 = String(data: writes[2], encoding: .ascii)
         #expect(cmd1 == "FR0;")
         #expect(cmd2 == "FT1;")
     }
@@ -321,6 +338,7 @@ import Testing
     @Test func getSplit() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Query: FT;
         // Response: FT1; (split on)
@@ -338,6 +356,7 @@ import Testing
     @Test func completeWorkflow() async throws {
         try await elecraftProtocol.connect()
         await mockTransport.reset()
+        await mockTransport.setResponse(for: Self.idQuery, response: Self.idReply)
 
         // Simulate a complete workflow: Set frequency, mode, and PTT
 
@@ -357,11 +376,11 @@ import Testing
         try await elecraftProtocol.setPTT(true)
 
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 3)
+        #expect(writes.count == 5)   // FA, ID, MD, ID, TX (PTT is not verified)
 
         let cmd1 = String(data: writes[0], encoding: .ascii)
-        let cmd2 = String(data: writes[1], encoding: .ascii)
-        let cmd3 = String(data: writes[2], encoding: .ascii)
+        let cmd2 = String(data: writes[2], encoding: .ascii)
+        let cmd3 = String(data: writes[4], encoding: .ascii)
 
         #expect(cmd1 == "FA00014230000;")
         #expect(cmd2 == "MD2;")

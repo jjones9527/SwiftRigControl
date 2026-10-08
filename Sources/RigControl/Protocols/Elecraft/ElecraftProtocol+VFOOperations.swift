@@ -41,12 +41,6 @@ extension ElecraftProtocol {
             )
         }
 
-        try await sendCommand(command)
-        if !isK2 {
-            // Newer Elecrafts echo set commands the same way as
-            // setMode / setFrequency. Drain the echo so the next
-            // command sees a clean state.
-            _ = try? await receiveResponse()
-        }
+        try await sendSetCommand(command)
     }
 }
