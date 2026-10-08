@@ -132,7 +132,9 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        // DATA-FM added in v1.2.19: Hamlib IC7300_ALL_RX_MODES includes
+        // RIG_MODE_PKTFM (ic7300.c:43), and the MK2 already listed it.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [
             // MW/LW receive only

@@ -1379,10 +1379,15 @@ the ranked backlog; this section tracks status.
 
 In priority order:
 
-- [ ] **Icom `0x26` NAK fallback** (`5ec5e6d2`). The IC-7300 and the
-      other `.targetable` Icoms send `0x26` for every DATA-mode set;
-      firmware that predates `0x25`/`0x26` NAKs it, so DATA-USB (FT8,
-      VARA) fails. Fall back once to `0x06` + `0x1A 0x06` and remember.
+- [x] **Icom DATA-mode wire and readback** (done for v1.2.19; started
+      as the `5ec5e6d2` fallback item, whose premise was wrong — Hamlib
+      never falls back on the IC-7300, `x25x26_always = 1`). Found and
+      fixed instead: the `0x26` frame lacked its VFO byte; IC-7300 / MK2
+      voice modes went through `0x06` and couldn't clear DATA; `getMode`
+      never read the DATA flag on any Icom; the IC-7700 was sent `0x26`;
+      ~20 radios without DATA modes were sent `0x1A 0x06`. Added a NAK
+      fallback anyway, an `.ic7300MK2` command set and the MK2 `1A 05`
+      menu-number table (#19).
 - [ ] **Yaesu newcat `AC` reject drain** (`635d11fe`). A `?;` before the
       verification reply desyncs the next transaction on FT-991A /
       FTDX10 / FTDX101 / FT-710 tuner commands.
@@ -1408,9 +1413,16 @@ In priority order:
       hardening review (`c0adbb2`) — likely immune by construction
       (Swift collections, bounded parser), carried over from
       jjones9527/SwiftRigControl#17.
-- [ ] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
-      no current bug because we send no `1A 05` settings, but the
-      first `1A 05` feature must be per-model, with a guard test.
+- [x] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
+      per-model menu-number table and test added in v1.2.19. Still to
+      look up: the MK2's DATA mod-source number (not in Hamlib).
+- [ ] **IC-F8101 needs its own commands.** Hamlib drives it with
+      `1A 35` / `1A 36` / `1A 34` for frequency and mode
+      (`icf8101.c:39-130`), not `0x05` / `0x06`. Definition-only today.
+- [ ] **D-STAR DV mode.** ID-31/51/52/4100/5100 advertise `.dataFM`
+      (and the IC-R30 `.dataUSB`) as a stand-in for D-STAR DV; Hamlib
+      models it as `RIG_MODE_DSTAR`. Needs a mode case or removing the
+      stand-in.
 
 ---
 

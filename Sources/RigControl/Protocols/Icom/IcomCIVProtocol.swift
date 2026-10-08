@@ -58,6 +58,12 @@ public actor IcomCIVProtocol:
     /// Default timeout for radio responses
     internal let responseTimeout: TimeInterval = 1.0
 
+    /// Set when the radio NAKs `0x26` on a radio whose command set uses
+    /// it. Mode commands then fall back to `0x06` + `0x1A 0x06` until
+    /// the next `connect()`, as Hamlib does after a failed `0x26`
+    /// (`x26cmdfails`, `icom.c:2268-2271`, `2604-2609`).
+    internal var selectedVFOModeCommandRejected = false
+
     /// Initializes a new Icom CI-V protocol instance with a command set.
     ///
     /// - Parameters:
@@ -83,6 +89,7 @@ public actor IcomCIVProtocol:
     // MARK: - Connection
 
     public func connect() async throws {
+        selectedVFOModeCommandRejected = false
         try await transport.open()
         // Flush any pending data
         try await transport.flush()
@@ -138,102 +145,6 @@ public actor IcomCIVProtocol:
 
         // Parse response using command set
         return try commandSet.parseFrequencyResponse(response)
-    }
-
-    // MARK: - Mode Control
-
-    public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        // Select the appropriate VFO first (if radio requires AND supports it)
-        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
-            try await selectVFO(vfo)
-        }
-
-        // Convert Mode enum to Icom mode code
-        let modeCode = try modeToIcomCode(mode)
-
-        // Choose the correct command path based on mode type and radio capability:
-        // - DATA modes on targetable radios: use 0x26 [mode, data_flag=0x01, filter] (Hamlib-preferred)
-        // - DATA modes on non-targetable radios: use 0x06 [mode, 0x00] (filter byte = DATA marker)
-        // - Normal modes: delegate to command set (handles filter byte presence per radio)
-        let (command, data): ([UInt8], [UInt8])
-        if isDataMode(mode) {
-            (command, data) = commandSet.setDataModeCommand(mode: modeCode)
-        } else {
-            (command, data) = commandSet.setModeCommand(mode: modeCode)
-        }
-
-        let frame = CIVFrame(to: civAddress, command: command, data: data)
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-
-        guard response.isAck else {
-            throw RigError.commandFailed("Radio rejected mode \(mode)")
-        }
-
-        // Non-targetable Icoms (IC-7600, IC-7100, IC-705,
-        // IC-9100, IC-9700, …) need a separate `0x1A 0x06
-        // [data_flag, filter]` frame to flip the DATA sub-mode
-        // bit. The base mode set above only sets USB / LSB / FM;
-        // without this follow-up the radio stays in voice mode
-        // even when DATA was requested (and vice versa — exiting
-        // DATA back to plain voice needs `data_flag = 0x00`).
-        //
-        // Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800,
-        // IC-7851) skip this — the `0x26` command above already
-        // carried the data flag in the same frame.
-        //
-        // Matches Hamlib `icom_set_mode` for every radio with
-        // `data_mode_supported = 1` (rigs/icom/icom.c:2494).
-        if commandSet.requiresDataModeSubCommand {
-            // When ENTERING a data mode: send [0x01, FIL1].
-            // When LEAVING data mode (or setting any non-data mode):
-            // both bytes MUST be 0 — per Hamlib `icom_set_mode`
-            // (icom.c:2637): "the only good combo possible
-            // according to manual". IC-7600 returns NAK otherwise.
-            let dataModeFlag: UInt8 = isDataMode(mode) ? 0x01 : 0x00
-            let filterByte: UInt8   = isDataMode(mode) ? CIVFrame.FilterCode.fil1 : 0x00
-            let dataModeFrame = CIVFrame(
-                to: civAddress,
-                command: [0x1A, 0x06],
-                data: [dataModeFlag, filterByte]
-            )
-            try await sendFrame(dataModeFrame)
-            let dataModeResponse = try await receiveFrame()
-            guard dataModeResponse.isAck else {
-                throw RigError.commandFailed("Radio rejected data mode flag for mode \(mode)")
-            }
-        }
-    }
-
-    public func getMode(vfo: VFO) async throws -> Mode {
-        // Select the appropriate VFO first (if radio requires AND supports it)
-        if capabilities.requiresVFOSelection, commandSet.selectVFOCommand(vfo) != nil {
-            try await selectVFO(vfo)
-        }
-
-        let frame = CIVFrame(to: civAddress, command: commandSet.readModeCommand())
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-
-        // Parse mode code. Two possible response formats:
-        // - 0x04 response: data[0]=mode, data[1]=filter (0x00=DATA, 0x01-0x03=FIL1-3)
-        // - 0x26 response (targetable): data[0]=mode, data[1]=data_flag (0x01=DATA), data[2]=filter
-        let modeCode: UInt8
-        let isData: Bool
-
-        if response.command.count == 1 && response.command[0] == CIVFrame.Command.targetableMode {
-            // 0x26 response: [mode, data_flag, filter]
-            guard response.data.count >= 2 else { throw RigError.invalidResponse }
-            modeCode = response.data[0]
-            isData = response.data[1] == 0x01
-        } else {
-            // 0x04 response: [mode] or [mode, filter]
-            modeCode = try commandSet.parseModeResponse(response)
-            let filterByte: UInt8 = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
-            isData = (filterByte == CIVFrame.FilterCode.data)
-        }
-
-        return try icomCodeToMode(modeCode, isData: isData)
     }
 
     // MARK: - PTT Control
@@ -520,68 +431,4 @@ public actor IcomCIVProtocol:
     /// several async broadcasts in flight (freq change + mode
     /// change + spectrum scope tick) fits comfortably within 8.
     private static let asyncFrameSkipBudget = 8
-
-    /// Converts a Mode enum to an Icom mode code byte (CI-V command 0x06 first data byte).
-    ///
-    /// Data modes (DATA-USB, DATA-LSB, DATA-FM) share their mode byte with the equivalent
-    /// voice mode. The radio distinguishes them via the filter byte (0x00 = DATA, 0x01-0x03 = FIL1-3).
-    /// FM-Narrow also shares the FM mode byte; filter selection controls bandwidth.
-    internal func modeToIcomCode(_ mode: Mode) throws -> UInt8 {
-        switch mode {
-        case .lsb:     return CIVFrame.ModeCode.lsb
-        case .usb:     return CIVFrame.ModeCode.usb
-        case .am:      return CIVFrame.ModeCode.am
-        case .cw:      return CIVFrame.ModeCode.cw
-        case .cwR:     return CIVFrame.ModeCode.cwR
-        case .rtty:    return CIVFrame.ModeCode.rtty
-        case .rttyR:   return CIVFrame.ModeCode.rttyR
-        case .fm:      return CIVFrame.ModeCode.fm
-        case .fmN:     return CIVFrame.ModeCode.fm   // FM-Narrow uses same code; filter controls bandwidth
-        case .wfm:     return CIVFrame.ModeCode.wfm
-        case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA-LSB uses LSB mode code + filter byte 0x00
-        case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
-        case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
-        }
-    }
-
-    /// Returns true if the mode requires the DATA filter byte (0x00) instead of FIL1-3.
-    ///
-    /// On Icom radios, data modes are set by sending the base voice mode code with filter byte 0x00.
-    /// This is what triggers the radio's DATA mode (separate audio path, flat response).
-    internal func isDataMode(_ mode: Mode) -> Bool {
-        switch mode {
-        case .dataLSB, .dataUSB, .dataFM: return true
-        default: return false
-        }
-    }
-
-    /// Converts an Icom mode code to a Mode enum.
-    ///
-    /// The `isData` flag is derived from either:
-    /// - The filter byte being `0x00` (legacy `0x06` command)
-    /// - The data-flag byte being `0x01` (modern `0x26` targetable command)
-    internal func icomCodeToMode(_ code: UInt8, isData: Bool = false) throws -> Mode {
-        switch code {
-        case CIVFrame.ModeCode.lsb:
-            return isData ? .dataLSB : .lsb
-        case CIVFrame.ModeCode.usb:
-            return isData ? .dataUSB : .usb
-        case CIVFrame.ModeCode.am:
-            return .am
-        case CIVFrame.ModeCode.cw:
-            return .cw
-        case CIVFrame.ModeCode.cwR:
-            return .cwR
-        case CIVFrame.ModeCode.rtty:
-            return .rtty
-        case CIVFrame.ModeCode.rttyR:
-            return .rttyR
-        case CIVFrame.ModeCode.fm:
-            return isData ? .dataFM : .fm
-        case CIVFrame.ModeCode.wfm:
-            return .wfm
-        default:
-            throw RigError.invalidResponse
-        }
-    }
 }

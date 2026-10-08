@@ -6,9 +6,9 @@ import Testing
 /// mode setting. The IC-7600 (and every other non-targetable
 /// modern Icom) needs a two-frame sequence: the normal mode set
 /// followed by `0x1A 0x06 [data_flag, filter]` to flip the DATA
-/// sub-mode bit. Targetable radios (IC-7300, IC-7610, IC-7700,
-/// IC-7800, IC-7851) carry the data flag in the same `0x26`
-/// frame so they don't need the follow-up.
+/// sub-mode bit. The `0x26` radios (IC-7300, IC-7300MK2) carry
+/// the data flag in the same `0x26` frame so they don't need the
+/// follow-up. See also `IcomSelectedVFOModeTests`.
 ///
 /// Cross-checked against Hamlib `icom_set_mode`
 /// (rigs/icom/icom.c:2494) for each radio family.
@@ -147,15 +147,16 @@ import Testing
 
         let writes = await mock.recordedWrites
 
-        // Targetable radios carry the data flag inline in the
-        // 0x26 frame — no 0x1A 0x06 follow-up. Check the last
-        // frame is 0x26 [USB, 0x01, FIL1] and that no 0x1A 0x06
-        // appears in the writes.
+        // 0x26 radios carry the data flag inline — no 0x1A 0x06
+        // follow-up. The last frame is 0x26 [vfo, USB, 0x01, FIL1]
+        // (Hamlib icom.c:2392-2394); pre-v1.2.19 the VFO byte was
+        // missing.
         let last = writes.last!
         #expect(last[4] == 0x26)
-        #expect(last[5] == 0x01)           // USB
-        #expect(last[6] == 0x01)           // data flag ON
-        #expect(last[7] == 0x01)           // FIL1
+        #expect(last[5] == 0x00)           // selected VFO
+        #expect(last[6] == 0x01)           // USB
+        #expect(last[7] == 0x01)           // data flag ON
+        #expect(last[8] == 0x01)           // FIL1
 
         for frame in writes {
             // No frame should be a 0x1A 0x06 follow-up.

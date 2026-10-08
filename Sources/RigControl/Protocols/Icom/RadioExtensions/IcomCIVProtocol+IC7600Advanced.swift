@@ -334,21 +334,9 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getDataModeIC7600 is only available on IC-7600")
         }
 
-        let frame = CIVFrame(
-            to: civAddress,
-            command: [0x1A, 0x06],
-            data: []
-        )
-        try await sendFrame(frame)
-        let response = try await receiveFrame()
-
-        guard response.command.count >= 2,
-              response.command[0] == 0x1A,
-              response.command[1] == 0x06,
-              response.data.count == 2 else {
-            throw RigError.invalidResponse
-        }
-
-        return (dataMode: response.data[0], filter: response.data[1])
+        // Pre-v1.2.19 this expected the reply as command `[0x1A, 0x06]`,
+        // but `CIVFrame.parse` returns `[0x1A]` with `0x06` in the data,
+        // so it always threw `invalidResponse`.
+        return try await readDataModeFlag()
     }
 }

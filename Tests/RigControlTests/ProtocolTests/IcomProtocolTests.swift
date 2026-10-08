@@ -123,9 +123,13 @@ import Testing
 
         try await icomProtocol.setMode(.usb, vfo: .a)
 
+        // This command set doesn't use 0x26, so the mode set is followed
+        // by `0x1A 0x06 [0x00, 0x00]` to clear the DATA flag (v1.2.19;
+        // Hamlib `icom_set_mode`, icom.c:2563-2609).
         let writes = await mockTransport.recordedWrites
-        #expect(writes.count == 2)
+        #expect(writes.count == 3)
         #expect(writes[1] == modeCommand)
+        #expect(writes[2] == Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1A, 0x06, 0x00, 0x00, 0xFD]))
     }
 
     @Test func getMode() async throws {
@@ -140,6 +144,12 @@ import Testing
         // Response with USB mode: FE FE E0 A2 04 01 FD
         let modeResponse = Data([0xFE, 0xFE, 0xE0, 0xA2, 0x04, 0x01, 0xFD])
         await mockTransport.setResponse(for: modeQuery, response: modeResponse)
+
+        // DATA flag query (v1.2.19): FE FE E0 A2 1A 06 00 00 FD = off
+        await mockTransport.setResponse(
+            for: Data([0xFE, 0xFE, 0xA2, 0xE0, 0x1A, 0x06, 0xFD]),
+            response: Data([0xFE, 0xFE, 0xE0, 0xA2, 0x1A, 0x06, 0x00, 0x00, 0xFD])
+        )
 
         let result = try await icomProtocol.getMode(vfo: .a)
 

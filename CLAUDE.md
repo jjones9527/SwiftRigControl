@@ -644,10 +644,14 @@ status honestly. Do not claim "supported" without a validator run.
 - **Echo handling.** Some Icom radios (IC-7100, IC-705) echo every
   command. The command set's `echoesCommands` flag drives the
   receive loop to skip the echo frame.
-- **Data modes are filter-byte encoded** on Icom (see
-  `IcomCIVProtocol.setMode`). DATA-USB is `USB mode code + filter
-  byte 0x00`, not a separate mode. Cross-check Hamlib's
-  `icom.c::icom_set_mode` if extending.
+- **Data modes are a flag on the voice mode** on Icom (see
+  `IcomCIVProtocol+Mode.swift`). DATA-USB is USB plus the DATA flag,
+  set and read either in one `0x26 [vfo, mode, data, filter]` frame
+  (IC-7300 / MK2) or with `0x06` then `0x1A 0x06 [data, filter]`
+  (every other radio with Hamlib `data_mode_supported`). It is not a
+  filter byte of `0x00` — that was the pre-v1.2.19 reading and it
+  never matched real radios. Cross-check Hamlib's
+  `icom.c::icom_set_mode` / `icom_get_mode` if extending.
 
 ---
 

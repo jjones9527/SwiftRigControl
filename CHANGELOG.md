@@ -21,8 +21,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
-("Remaining work") and ROADMAP Phase 5.9.
+Targeted for **v1.2.19**. Icom DATA-mode wire and readback fixes,
+cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`.
+Mock-tested only; no hardware was available.
+
+### Fixed
+
+- **IC-7300 / IC-7300MK2 `0x26` frame was missing its VFO byte.**  We
+  sent `0x26 [mode, data, filter]`; Hamlib sends
+  `0x26 [vfo, mode, data, filter]` (`icom.c:2392-2394`), with `0x00`
+  for the selected VFO.  DATA-USB/LSB on both radios put the wrong
+  bytes on the wire.
+- **IC-7300 / IC-7300MK2 couldn't leave a DATA mode.**  Voice modes went
+  through `0x06`, which doesn't touch the DATA flag, so DATA-USB → USB
+  stayed in DATA-USB.  Every mode now goes through `0x26` with the DATA
+  byte set or cleared, as Hamlib does for these radios
+  (`x25x26_always = 1`, `ic7300.c:543`, `652`).  If the radio NAKs `0x26`
+  (firmware without it), we fall back to `0x06` + `0x1A 0x06` until the
+  next `connect()`.
+- **DATA modes read back as voice modes on every Icom.**  `getMode`
+  sent only `0x04` and treated filter byte `0x00` as DATA, but modern
+  Icoms report FIL1-3 there.  It now reads the flag the way Hamlib
+  `icom_get_mode` does (`icom.c:2904-2952`): from the `0x26` reply on
+  the IC-7300 / MK2, and with `0x1A 0x06` on every other radio that
+  has DATA modes, including the verified IC-7100, IC-7600 and IC-9700.
+  Apps reading the mode back (WSJT-X, fldigi and JS8Call through the
+  rigctld bridge) now see PKTUSB / PKTLSB / PKTFM.
+- **IC-7700 sent `0x26` for DATA modes.**  Hamlib switches `0x25` /
+  `0x26` off when the IC-7700 opens (`ic7700.c:153-158`).  It now uses
+  `0x06` + `0x1A 0x06`.
+- **Radios without DATA sub-modes were sent `0x1A 0x06` after every
+  mode set.**  The IC-718, IC-703, IC-735, IC-751, IC-756, IC-756PRO,
+  IC-910H, IC-820H, IC-970, IC-7400, IC-2730, the ID-series D-STAR
+  radios and the IC-R receivers inherited `supportsDataMode = true`.
+  Hamlib sets `data_mode_supported` for none of them; they now pass
+  `supportsDataMode: false` and get a single `0x06`.
+- **`getDataModeIC7600()` always threw `invalidResponse`.**  It expected
+  the reply as command `[0x1A, 0x06]`, but `CIVFrame.parse` returns
+  `[0x1A]` with `0x06` in the data.
+
+### Added
+
+- `StandardIcomCommandSet.ic7300MK2` (CI-V `0xB6`), now used by the
+  IC-7300MK2 definition so it no longer borrows the IC-7300's set.
+- `IcomRadioCommandSet.acceptsSelectedVFOModeCommand` and
+  `CIVCommandSet.usesSelectedVFOModeCommand`, plus an
+  `acceptsSelectedVFOModeCommand:` parameter on
+  `StandardIcomCommandSet.init` and a `supportsDataMode:` parameter on
+  `IC756CommandSet.init` (both additive, defaulted).
+- An internal per-model table of `1A 05` menu numbers for the IC-7300
+  and IC-7300MK2 from Hamlib (`ic7300.c:323-354`, `424-430`).  The MK2
+  renumbered every one (jjones9527/SwiftRigControl#19), so the first
+  menu-setting feature has verified numbers for both.
+- `.dataFM` on the IC-7300 (Hamlib `IC7300_ALL_RX_MODES` includes
+  PKTFM; the MK2 already listed it).
+
+### Changed
+
+- `0x26` is now opt-in per radio rather than implied by
+  `vfoModel: .targetable`.  A custom `StandardIcomCommandSet` built
+  with the default `.targetable` model now sets DATA modes with
+  `0x06` + `0x1A 0x06` unless it passes
+  `acceptsSelectedVFOModeCommand: true`.
+- `getMode` on radios with DATA sub-modes costs one extra `0x1A 0x06`
+  transaction when the mode is USB, LSB, FM or AM, as in Hamlib.
+
+### Tests
+
+- `IcomSelectedVFOModeTests` — `0x26` set and read frames on the
+  IC-7300 / MK2, NAK fallback and reset on reconnect, IC-7700 DATA path,
+  `0x1A 0x06` readback (including one-byte replies and no query for
+  CW), `getDataModeIC7600` parsing, MK2 menu-number table, and which
+  command sets use `0x26` or `0x1A 0x06`.
+- `IcomDataModeTests` / `IcomProtocolTests` updated for the new frames;
+  `StandardIcomCommandSetVariantsTests` covers `.ic7300MK2`.
 
 ## [1.2.18] - 2026-10-07
 

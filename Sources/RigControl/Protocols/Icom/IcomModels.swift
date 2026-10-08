@@ -71,12 +71,15 @@ extension RadioDefinition.Icom {
     /// enumerate the radio.
     ///
     /// At the wire-protocol level, the IC-7300MK2 uses the same
-    /// command set as the IC-7300 (Hamlib's `ic7300mk2_caps`
+    /// commands as the IC-7300 (Hamlib's `ic7300mk2_caps`
     /// dispatches to `icom_set_freq` / `icom_set_mode` /
-    /// `icom_set_ptt` etc., identical to the IC-7300).  The mk2's
-    /// divergences from the mk1 live entirely in ext-parameter byte
-    /// tuples (backlight, screensaver, clock, VOX-delay-persisted,
-    /// keyer-type) that SwiftRigControl does not currently surface.
+    /// `icom_set_ptt` etc., identical to the IC-7300), but it has its
+    /// own `StandardIcomCommandSet.ic7300MK2` so the two can diverge.
+    /// The mk2's differences from the mk1 are the `1A 05` menu
+    /// numbers (beep, backlight, screensaver, clock, VOX delay,
+    /// transceive, USB AF level, keyer type, DATA mod source) that
+    /// SwiftRigControl does not currently send; they are recorded in
+    /// `IcomRadioModel.menuSettingParameter(_:)` for when it does.
     ///
     /// - Parameter civAddress: CI-V bus address (default: **0xB6**)
     /// - Returns: RadioDefinition for IC-7300MK2
@@ -92,7 +95,7 @@ extension RadioDefinition.Icom {
                     transport: transport,
                     civAddress: civAddress,
                     radioModel: .ic7300mk2,
-                    commandSet: StandardIcomCommandSet.ic7300,
+                    commandSet: StandardIcomCommandSet.ic7300MK2,
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7300MK2
                 )
             },

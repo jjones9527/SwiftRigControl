@@ -33,11 +33,20 @@ public struct IC756CommandSet: IcomRadioCommandSet {
     public let requiresModeFilter = true
     public let echoesCommands = false
     public let powerUnits: PowerUnits = .percentage
+    /// Whether the radio has DATA sub-modes (`0x1A 0x06`). Hamlib sets
+    /// `data_mode_supported` only for the IC-756PROII and PROIII
+    /// (`ic756.c:488`, `924`); the IC-756 and IC-756PRO reject `0x1A 0x06`.
+    public let supportsDataMode: Bool
 
     /// Initialize IC-756 command set
-    /// - Parameter civAddress: CI-V address (0x50/0x5C/0x64/0x6E)
-    public init(civAddress: UInt8 = 0x50) {
+    /// - Parameters:
+    ///   - civAddress: CI-V address (0x50/0x5C/0x64/0x6E)
+    ///   - supportsDataMode: Whether the radio has DATA sub-modes. `nil`
+    ///     (the default) means `true` for the PROII (0x64) and PROIII
+    ///     (0x6E) addresses and `false` otherwise.
+    public init(civAddress: UInt8 = 0x50, supportsDataMode: Bool? = nil) {
         self.civAddress = civAddress
+        self.supportsDataMode = supportsDataMode ?? (civAddress == 0x64 || civAddress == 0x6E)
     }
 
     // All command methods inherited from IcomRadioCommandSet protocol extension!
@@ -53,23 +62,23 @@ public struct IC756CommandSet: IcomRadioCommandSet {
 // MARK: - Convenience Initializers
 
 extension IC756CommandSet {
-    /// IC-756 HF/6m base station transceiver with dual receiver
+    /// IC-756 HF/6m base station transceiver with dual receiver (no DATA sub-modes)
     public static var ic756: IC756CommandSet {
-        IC756CommandSet(civAddress: 0x50)
+        IC756CommandSet(civAddress: 0x50, supportsDataMode: false)
     }
 
-    /// IC-756PRO HF/6m base station transceiver with enhanced features
+    /// IC-756PRO HF/6m base station transceiver with enhanced features (no DATA sub-modes)
     public static var ic756PRO: IC756CommandSet {
-        IC756CommandSet(civAddress: 0x5C)
+        IC756CommandSet(civAddress: 0x5C, supportsDataMode: false)
     }
 
     /// IC-756PROII HF/6m base station transceiver with advanced DSP
     public static var ic756PROII: IC756CommandSet {
-        IC756CommandSet(civAddress: 0x64)
+        IC756CommandSet(civAddress: 0x64, supportsDataMode: true)
     }
 
     /// IC-756PROIII HF/6m base station transceiver, top of line
     public static var ic756PROIII: IC756CommandSet {
-        IC756CommandSet(civAddress: 0x6E)
+        IC756CommandSet(civAddress: 0x6E, supportsDataMode: true)
     }
 }
