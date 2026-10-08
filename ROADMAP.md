@@ -1,6 +1,16 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.18 (cut 2026-10-07 — P0/P1 items from
+**Current version:** v1.2.19 (cut 2026-10-08 — Icom DATA modes:
+the IC-7300/MK2 `0x26` frame gained its VFO byte and carries every mode,
+`getMode` reads the DATA flag on every Icom, the IC-7700 and ~20 radios
+without DATA modes stop getting the wrong DATA commands, the MK2 has its
+own command set and `1A 05` menu table.  Yaesu newcat and Elecraft
+K3/K4/KX set commands are verified like Hamlib (`ID;`) instead of waiting
+for echoes the radios never send; Yaesu `AC` tuner replies are drained and
+`getRIT` no longer clears the clarifier.  IC-F8101 gets its own command
+set; D-STAR radios drop fake DATA modes; Yaesu power on/off follows
+Hamlib.  Mock-tested only.  Test count 851 → 894.)
+Previous release **v1.2.18** (cut 2026-10-07 — P0/P1 items from
 the 2026-10 Hamlib review.  Kenwood set commands are now verified with
 `ID;` instead of waiting for a reply real radios never send, and DATA
 modes use each radio's real command (`MD`+`DA` on TS-590S/SG,
@@ -1375,7 +1385,7 @@ the ranked backlog; this section tracks status.
 - [x] `TIOCEXCL` exclusive serial open, Hamlib `4b39d3cd`
       (jjones9527/SwiftRigControl#32).
 
-### 5.9.3 Next patch (v1.2.19) — bug-class fixes, mock-testable
+### 5.9.3 v1.2.19 — bug-class fixes, mock-testable (shipped 2026-10-08)
 
 In priority order:
 

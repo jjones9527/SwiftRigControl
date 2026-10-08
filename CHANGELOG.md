@@ -21,11 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Targeted for **v1.2.19**. Icom DATA-mode wire and readback fixes
-(cross-checked against Hamlib `rigs/icom/icom.c` and `ic7300.c`), and
-set-command handling for Yaesu newcat (`rigs/yaesu/newcat.c`) and
-Elecraft K3/K4/KX (`rigs/kenwood/kenwood.c`). Mock-tested
-only; no hardware was available.
+Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
+("Remaining work") and ROADMAP Phase 5.9.
+
+## [1.2.19] - 2026-10-08
+
+Icom DATA-mode wire and readback fixes (cross-checked against Hamlib
+`rigs/icom/icom.c` and `ic7300.c`); set-command handling for Yaesu newcat
+(`rigs/yaesu/newcat.c`) and Elecraft K3/K4/KX (`rigs/kenwood/kenwood.c`);
+the IC-F8101 command set, D-STAR mode-list cleanup and Yaesu power on/off.
+Shipped in jjones9527/SwiftRigControl#34, #35, #36 and #37. Test count
+851 → 894.
+
+**Verification status:** mock-tested only; no hardware was available.
+The most useful field checks: DATA-USB set *and read back* on an IC-7300 /
+IC-7300MK2 (and read back on the verified IC-7100 / IC-7600 / IC-9700);
+frequency and mode changes on any modern Yaesu (FT-991A, FTDX-10, …) and
+on a K3 / K4, which should now apply without a one-second stall.
 
 ### Fixed
 
