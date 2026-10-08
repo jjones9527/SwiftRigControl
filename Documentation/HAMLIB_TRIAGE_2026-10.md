@@ -88,15 +88,19 @@ test it without hardware. ROADMAP Phase 5.9 tracks the checkboxes.
 
 **A — next patch (v1.2.19): bug-class fixes we can mock-test**
 
-1. **Icom `0x26` NAK fallback** (`5ec5e6d2`). Every `.targetable`
-   Icom (IC-7300, IC-7700, IC-R8600, …) sets DATA modes with `0x26`
-   (`IcomRadioCommandSet.setDataModeCommand`). Firmware older than
-   the `0x25`/`0x26` addition NAKs it, and we throw, so FT8 / VARA
-   DATA-USB fails on the most popular HF radio in the catalog. Hamlib
-   probes once, records the NAK in `x26cmdfails`, and uses the legacy
-   commands from then on (`icom.c`, `5ec5e6d2`). Port: on NAK, send
-   `0x06` + `0x1A 0x06` and cache the result per connection. We don't
-   send `0x25` today, so only `0x26` needs the fallback.
+1. ~~**Icom `0x26` NAK fallback** (`5ec5e6d2`).~~ **Done for
+   v1.2.19, rescoped.** The premise was wrong: Hamlib marks the
+   IC-7300 and IC-7300MK2 `x25x26_always = 1` (`ic7300.c:543`, `652`)
+   and never stops using `0x26` on them. Checking that path found the
+   real bugs instead: our `0x26` frame had no VFO byte
+   (`icom.c:2392-2394`); voice modes on the IC-7300 / MK2 went through
+   `0x06`, so DATA couldn't be cleared; `getMode` never read the DATA
+   flag on any Icom (`icom.c:2904-2952`); the IC-7700 was sent `0x26`
+   although Hamlib turns it off (`ic7700.c:153-158`); and ~20 radios
+   without `data_mode_supported` were sent `0x1A 0x06` after every
+   mode set. All fixed; a NAK fallback was added as well. New
+   follow-ups: the IC-F8101 needs its own `1A 35/36/34` commands, and
+   the D-STAR radios use `.dataFM` as a stand-in for DV (ROADMAP 5.9.5).
 2. **Yaesu newcat `AC` reject drain** (`635d11fe`). A rejected tuner
    command answers `?;` ahead of the verification reply and desyncs
    the next transaction (FT-991A, FTDX10, FTDX101, FT-710).
@@ -126,8 +130,10 @@ report arrives)
 2. Icom table-bounds (`b9b9723`) and rigctld parser hardening
    (`c0adbb2`). Swift collections and our bounded parser are likely
    immune; confirm with a test or two.
-3. IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
-   the first `1A 05` feature must be per-model, with a guard test.
+3. ~~IC-7300MK2 `1A 05` renumbering~~ (jjones9527/SwiftRigControl#19):
+   per-model table and test added for v1.2.19
+   (`IcomRadioModel.menuSettingParameter`). The MK2 DATA mod-source
+   number still has to come from its CI-V manual.
 
 **D — next minor (v1.3.0): features, not fixes**
 

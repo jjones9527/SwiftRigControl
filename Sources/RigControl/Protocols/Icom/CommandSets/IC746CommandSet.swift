@@ -31,6 +31,9 @@ public struct IC746CommandSet: IcomRadioCommandSet {
     public let requiresModeFilter = false
     public let echoesCommands = false
     public let powerUnits: PowerUnits = .percentage
+    /// No DATA sub-modes: Hamlib's IC-746 caps don't set
+    /// `data_mode_supported`, so `setMode` never sends `0x1A 0x06`.
+    public let supportsDataMode = false
 
     /// Initialize IC-746 command set
     /// - Parameter civAddress: CI-V address (0x56 for IC-746, 0x66 for IC-746PRO)

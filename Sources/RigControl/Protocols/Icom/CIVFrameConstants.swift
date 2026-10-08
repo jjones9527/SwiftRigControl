@@ -405,7 +405,16 @@ extension CIVFrame {
         public static let agcTimeConstant: UInt8 = 0x04
         /// Miscellaneous radio settings (0x05)
         public static let variousSettings: UInt8 = 0x05
+        /// DATA mode on/off and filter (0x06), `S_MEM_DATA_MODE` in Hamlib
+        public static let dataMode: UInt8 = 0x06
     }
+
+    /// VFO byte for `0x25` / `0x26`: the selected (operating) VFO.
+    ///
+    /// `0x01` would address the unselected VFO
+    /// (`icom_get_vfo_number_x25x26`, `icom.c:10168-10220`).
+    /// `IcomCIVProtocol` selects the VFO first, so it always uses `0x00`.
+    static let selectedVFO: UInt8 = 0x00
 
     /// Tone sub-commands (used with `Command.tone` 0x1B).
     public enum ToneCode {

@@ -52,15 +52,25 @@ public protocol CIVCommandSet: Sendable {
     /// `0x1A 0x06 [data_flag, filter]` frame after the base
     /// mode set in order to enter or leave a DATA sub-mode.
     ///
-    /// Most non-targetable modern Icoms (IC-7600, IC-9100,
-    /// IC-9700, IC-7100, IC-705, …) need this — the base mode
-    /// command only sets USB/LSB/FM; the second frame flips
-    /// the DATA sub-mode bit.
+    /// Every modern Icom that supports DATA modes but doesn't use
+    /// `0x26` (IC-7600, IC-7700, IC-9100, IC-9700, IC-7100, IC-705, …)
+    /// needs this — the base mode command only sets USB/LSB/FM; the
+    /// second frame flips the DATA sub-mode bit. `getMode` reads the
+    /// flag back with `0x1A 0x06`.
     ///
-    /// Targetable radios (IC-7300, IC-7610, IC-7700, IC-7800,
-    /// IC-7851) return `false` because their `0x26` mode frame
-    /// already carries the data flag inline.
+    /// The `0x26` radios (IC-7300, IC-7300MK2) return `false` because
+    /// their mode frame already carries the data flag inline.
     var requiresDataModeSubCommand: Bool { get }
+
+    /// Whether `setMode` / `getMode` use `0x26` (`C_SEND_SEL_MODE`),
+    /// which carries mode, DATA flag and filter in one frame.
+    ///
+    /// When `true`, every mode set is `0x26 [0x00, mode, data, filter]`
+    /// and reads are `0x26 [0x00]`. If the radio NAKs `0x26`,
+    /// `IcomCIVProtocol` falls back to `0x06` + `0x1A 0x06` for the rest
+    /// of the connection. See
+    /// ``IcomRadioCommandSet/acceptsSelectedVFOModeCommand``.
+    var usesSelectedVFOModeCommand: Bool { get }
 
     /// Whether `IcomCIVProtocol.sendFrame` must flush the
     /// transport's input buffer before writing each frame.
@@ -155,6 +165,10 @@ extension CIVCommandSet {
     /// Real Icom command sets override this — see
     /// ``IcomRadioCommandSet/requiresDataModeSubCommand``.
     public var requiresDataModeSubCommand: Bool { false }
+
+    /// Default: no `0x26`. Real Icom command sets override this — see
+    /// ``IcomRadioCommandSet/usesSelectedVFOModeCommand``.
+    public var usesSelectedVFOModeCommand: Bool { false }
 
     /// Default: no pre-transaction flush.  Overridden on radios
     /// (currently IC-7100 / IC-705) that share a single USB

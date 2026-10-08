@@ -190,7 +190,11 @@ extension RadioDefinition.Icom {
                     transport: transport,
                     civAddress: civAddress,
                     radioModel: .ic7400,
-                    commandSet: StandardIcomCommandSet.ic7600,
+                    // IC-7600 command set without DATA sub-modes: the
+                    // IC-7400 is the IC-746PRO's European twin, and Hamlib's
+                    // IC-746PRO caps have no `data_mode_supported`.
+                    commandSet: StandardIcomCommandSet(civAddress: 0x7A, vfoModel: .mainSub,
+                                                       echoesCommands: true, supportsDataMode: false),
                     capabilities: RadioCapabilitiesDatabase.Icom.ic7400
                 )
             },
@@ -262,7 +266,10 @@ extension RadioDefinition.Icom {
                     transport: transport,
                     civAddress: civAddress,
                     radioModel: .ic970,
-                    commandSet: StandardIcomCommandSet.ic9100,
+                    // IC-9100 command set without DATA sub-modes: Hamlib
+                    // `ic970.c` modes are CW/SSB/FM, no `data_mode_supported`.
+                    commandSet: StandardIcomCommandSet(civAddress: 0x7C, vfoModel: .mainSub,
+                                                       supportsDataMode: false),
                     capabilities: RadioCapabilitiesDatabase.Icom.ic970
                 )
             },

@@ -61,6 +61,7 @@ import Testing
     static let allVariants: [IcomVariantSpec] = [
         // HF transceivers
         IcomVariantSpec(name: "ic7300",  make: { .ic7300 },  expectedAddress: 0x94, expectedEchoesCommands: false, hamlibReference: "ic7300.c"),
+        IcomVariantSpec(name: "ic7300MK2", make: { .ic7300MK2 }, expectedAddress: 0xB6, expectedEchoesCommands: false, hamlibReference: "ic7300.c IC7300MK2_priv_caps"),
         IcomVariantSpec(name: "ic7610",  make: { .ic7610 },  expectedAddress: 0x98, expectedEchoesCommands: false, hamlibReference: "ic7610.c"),
         IcomVariantSpec(name: "ic7600",  make: { .ic7600 },  expectedAddress: 0x7A, expectedEchoesCommands: true,  hamlibReference: "ic7600.c (issue #583)"),
         IcomVariantSpec(name: "ic9100",  make: { .ic9100 },  expectedAddress: 0x7C, expectedEchoesCommands: false, hamlibReference: "ic9100.c"),
@@ -232,9 +233,9 @@ import Testing
     /// a manual reminder to update the table when the variant list
     /// grows.
     @Test func variantTableCountMatchesShippedFactories() {
-        // As of v1.2.4 there are 30 named `StandardIcomCommandSet`
-        // variants shipped. Bump this if you add a new one.
-        #expect(Self.allVariants.count == 30)
+        // As of v1.2.19 there are 31 named `StandardIcomCommandSet`
+        // variants shipped (v1.2.19 added `.ic7300MK2`). Bump this if you add a new one.
+        #expect(Self.allVariants.count == 31)
     }
 
     // MARK: - Category D — Hamlib non-targetable receivers/handhelds (v1.2.7)
