@@ -176,4 +176,21 @@ import Testing
             try YaesuCATProtocol.ritOffset(fromIF: "IF001014074", frequencyDigits: 9)
         }
     }
+
+    // MARK: - Power state (newcat_set_powerstat, newcat.c:3719-3800)
+
+    @Test func powerOffIsWriteOnly() async throws {
+        let (mock, proto) = try await make()
+        await mock.setShouldThrowOnRead(true)
+        try await proto.setPowerState(false)
+        #expect(await sent(mock) == ["PS0;"])
+    }
+
+    @Test func powerOnSendsPS1TwiceThenWaitsForFA() async throws {
+        // The first PS1; only wakes the radio; FA; polls until it answers.
+        let (mock, proto) = try await make()
+        await mock.setResponse(for: Self.ascii("FA;"), response: Self.ascii("FA014074000;"))
+        try await proto.setPowerState(true)
+        #expect(await sent(mock) == ["PS1;", "PS1;", "FA;"])
+    }
 }

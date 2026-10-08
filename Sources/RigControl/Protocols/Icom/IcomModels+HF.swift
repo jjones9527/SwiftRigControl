@@ -411,7 +411,7 @@ extension RadioDefinition.Icom {
                     transport: transport,
                     civAddress: civAddress,
                     radioModel: .icf8101,
-                    commandSet: StandardIcomCommandSet.icF8101,
+                    commandSet: ICF8101CommandSet(),
                     capabilities: RadioCapabilitiesDatabase.Icom.icF8101
                 )
             },

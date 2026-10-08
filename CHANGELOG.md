@@ -57,6 +57,27 @@ only; no hardware was available.
   path (write, then wait 100 ms) is unchanged: it is the behaviour the
   K2 hardware validation ran against; moving it to `ID;` verification
   waits for a hardware re-check.
+- **IC-F8101 frequency, mode and PTT used commands the radio doesn't
+  implement.**  The IC-F8101 takes them as `0x1A` sub-commands, not the
+  amateur `0x05` / `0x06` / `0x1C`: `1A 35` frequency set, `1A 36` mode
+  set, `1A 34` mode read, `1A 37` PTT (Hamlib `rigs/icom/icf8101.c`).  New
+  public `ICF8101CommandSet` implements them and the catalog uses it; the
+  IC-F8101 now advertises DATA-LSB / DATA-USB (LSB-D1 `0x18` / USB-D1
+  `0x19`).  Still definition-only.
+- **D-STAR radios advertised DATA modes as a stand-in for DV.**  ID-31,
+  ID-51, ID-52, ID-4100, ID-5100, IC-92AD, TH-D74 and TH-D75 listed
+  `.dataFM` and the IC-R30 `.dataUSB`, none of which their protocols can
+  set, so `setMode` threw and the rigctld `\dump_state` mode list
+  over-claimed.  Removed; Hamlib models DV as `RIG_MODE_DSTAR`, which
+  SwiftRigControl doesn't have.  The ID-4100 / ID-5100 also dropped
+  `.usb` (FM/AM mobiles per Hamlib).
+- **Yaesu newcat power on/off.**  `setPowerState` wrote `PS` once and
+  waited out a reply that never comes.  Now it follows Hamlib
+  `newcat_set_powerstat` (`newcat.c:3719-3800`): power-off writes `PS0;`
+  and reads nothing; power-on sends `PS1;` twice 1.2 s apart (the first
+  only wakes the radio) and polls `FA;` until the radio answers, throwing
+  `RigError.timeout` after about 10 s.  Unlike Hamlib it doesn't close
+  and reopen the serial port.
 - **Rejected tuner commands desynchronised the next transaction**
   (Hamlib upstream `635d11fe`).  `AC` (tuner on/off, `AC002;` tune) is
   now sent once and drained through the `ID;` reply, so a `?;` is
@@ -100,6 +121,8 @@ only; no hardware was available.
 
 ### Added
 
+- `ICF8101CommandSet`, and `CIVCommandSet.parseDataModeFlag(_:)` (default
+  `nil`) for radios whose mode codes carry the DATA variant.
 - `YaesuCATProtocol.Quirks.verifyCommand` (default `"ID"`) and
   `withVerifyCommand(_:)`; the FTDX-9000 uses `"AI"`.
 - `StandardIcomCommandSet.ic7300MK2` (CI-V `0xB6`), now used by the
@@ -128,6 +151,9 @@ only; no hardware was available.
 
 ### Tests
 
+- `ICF8101CommandSetTests` (frequency, mode set/read including D2/D3
+  DATA profiles, PTT), `DStarModeCapabilityTests`, and Yaesu power-state
+  tests in `YaesuSetCommandTests`.
 - `ElecraftSetCommandTests` — K3 sets verified with `ID;`, rejection
   drained, unsolicited frame skipped, `PS` write-only, K2 path unchanged;
   `ElecraftProtocolTests` updated for the `ID;` round trip.

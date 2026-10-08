@@ -359,7 +359,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: false,
         powerControl: true,
         maxPower: 5,  // 5W handheld
-        supportedModes: [.fm, .fmN, .dataFM],  // D-STAR via dataFM
+        // D-STAR DV isn't modelled; THD72Protocol sets FM / FM-N / AM only
+        // (pre-v1.2.19 this listed .dataFM, which setMode rejected).
+        supportedModes: [.fm, .fmN],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive
@@ -367,19 +369,19 @@ extension RadioCapabilitiesDatabase.Kenwood {
                                     modes: [.fm, .fmN, .am], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
-                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "2m"),
+                                    modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
             // General receive between bands
             DetailedFrequencyRange(min: 148_000_001, max: 219_999_999,
                                     modes: [.fm, .fmN], canTransmit: false),
             // 1.25m band (220 MHz)
             DetailedFrequencyRange(min: 220_000_000, max: 225_000_000,
-                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "1.25m"),
+                                    modes: [.fm, .fmN], canTransmit: true, bandName: "1.25m"),
             // More general receive
             DetailedFrequencyRange(min: 225_000_001, max: 429_999_999,
                                     modes: [.fm, .fmN], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
-                                    modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "70cm"),
+                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 524_000_000,
                                     modes: [.fm, .fmN], canTransmit: false),
@@ -400,21 +402,23 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: false,
         powerControl: true,
         maxPower: 5,  // 5W handheld
-        supportedModes: [.fm, .fmN, .dataFM],  // D-STAR via dataFM
+        // D-STAR DV isn't modelled; THD72Protocol sets FM / FM-N / AM only
+        // (pre-v1.2.19 this listed .dataFM, which setMode rejected).
+        supportedModes: [.fm, .fmN],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // Airband receive
             DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
             // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
             // General receive
             DetailedFrequencyRange(min: 148_000_001, max: 219_999_999, modes: [.fm], canTransmit: false),
             // 1.25m band (220 MHz)
-            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "1.25m"),
+            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "1.25m"),
             // More receive
             DetailedFrequencyRange(min: 225_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
             // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .dataFM], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm], canTransmit: false),
         ],

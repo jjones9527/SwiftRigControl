@@ -100,6 +100,16 @@ public protocol CIVCommandSet: Sendable {
     /// - Throws: `RigError.invalidResponse` if response is malformed
     func parseModeResponse(_ response: CIVFrame) throws -> UInt8
 
+    /// The DATA flag carried in a mode reply, for radios whose mode
+    /// codes include DATA variants (IC-F8101: LSB-D1 `0x18`, USB-D1
+    /// `0x19`), or `nil` for the usual radios, where DATA travels in
+    /// `0x26` or `0x1A 0x06`. When non-`nil`, `getMode` uses it instead
+    /// of reading or guessing the flag.
+    ///
+    /// - Parameter response: The reply to ``readModeCommand()``.
+    /// - Returns: Whether the reply reports a DATA mode, or `nil`.
+    func parseDataModeFlag(_ response: CIVFrame) -> Bool?
+
     // MARK: - Power Commands
 
     /// Format a power set command.
@@ -169,6 +179,9 @@ extension CIVCommandSet {
     /// Default: no `0x26`. Real Icom command sets override this — see
     /// ``IcomRadioCommandSet/usesSelectedVFOModeCommand``.
     public var usesSelectedVFOModeCommand: Bool { false }
+
+    /// Default: the mode reply carries no DATA flag.
+    public func parseDataModeFlag(_ response: CIVFrame) -> Bool? { nil }
 
     /// Default: no pre-transaction flush.  Overridden on radios
     /// (currently IC-7100 / IC-705) that share a single USB
