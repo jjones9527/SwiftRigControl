@@ -26,6 +26,7 @@ Each validator is a standalone executable that tests all major radio functions u
 | IC-7600 | `IC7600Validator` | HF/6m | 15 | ~85% | High-performance dual receiver |
 | IC-9700 | `IC9700Validator` | VHF/UHF/1.2GHz | 15 | ~80% | Satellite mode, dual receiver |
 | K2 | `K2Validator` | HF (160m-10m) | 13 | ~90% | QRP transceiver (0-15W) |
+| IC-7100 / IC-7600 / IC-9700 | `IcomReleaseValidator` | per radio | 6 groups | v1.2.16–v1.2.19 changes | DATA modes, AGC, `TIOCEXCL`, PTT; see `Documentation/HARDWARE_CHECK_v1.2.19.md` |
 
 ## Quick Start
 
