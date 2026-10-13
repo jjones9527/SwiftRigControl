@@ -26,13 +26,7 @@ extension ElecraftProtocol {
         try await sendCommand("RT")
         let rtResponse = try await receiveResponse()
 
-        guard rtResponse.hasPrefix("RT"),
-              rtResponse.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let rtIndex = rtResponse.index(rtResponse.startIndex, offsetBy: 2)
-        let enabled = rtResponse[rtIndex] == "1"
+        let enabled = try Self.parseOnOffReply(rtResponse, command: "RT")
 
         // Get offset from IF command
         let offset = try await getRITXITOffset()
@@ -62,13 +56,7 @@ extension ElecraftProtocol {
         try await sendCommand("XT")
         let xtResponse = try await receiveResponse()
 
-        guard xtResponse.hasPrefix("XT"),
-              xtResponse.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let xtIndex = xtResponse.index(xtResponse.startIndex, offsetBy: 2)
-        let enabled = xtResponse[xtIndex] == "1"
+        let enabled = try Self.parseOnOffReply(xtResponse, command: "XT")
 
         // Get offset from IF command
         let offset = try await getRITXITOffset()
@@ -168,14 +156,8 @@ extension ElecraftProtocol {
         try await sendCommand("TQ")
         let response = try await receiveResponse()
 
-        // Response format: TQ0; (RX) or TQ1; (TX)
-        guard response.hasPrefix("TQ"),
-              response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let statusIndex = response.index(response.startIndex, offsetBy: 2)
-        return response[statusIndex] == "1"
+        // TQ0; (RX) or TQ1; (TX)
+        return try Self.parseOnOffReply(response, command: "TQ")
     }
 
     // MARK: - Private Methods

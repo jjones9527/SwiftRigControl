@@ -1408,10 +1408,14 @@ In priority order:
       bug: sets required an echo. Now verified with `ID;` like Hamlib
       `kenwood_transaction`. K2 path left as hardware-validated
       (write + 100 ms); moving it to `ID;` waits on 5.8.1.
-- [ ] **Elecraft reply validation** — K3/K3S `SW`, K4 `TM` / `FR` /
-      `FT` / `TQ` (`900c4d3`, `ffe227a3`; carried over from
-      jjones9527/SwiftRigControl#17).
-- [ ] **G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).
+- [x] **Elecraft reply validation** (v1.2.20) — `FT` / `TQ` / `RT` /
+      `XT` replies must be exactly `<cmd>0` or `<cmd>1`, as Hamlib
+      `parse_binary_response` (`900c4d3`, `ffe227a3`; carried over from
+      jjones9527/SwiftRigControl#17). We never send `SW` or `TM`, and
+      `FR` is set-only here, so those parts don't apply.
+- [x] **G90 RFPOWER malformed-BCD clamp** (v1.2.20, `b61dd14d`) —
+      power readback clamped to the 0-255 scale for every Icom-family
+      radio.
 
 ### 5.9.4 Waiting on hardware or field reports
 
@@ -1434,10 +1438,12 @@ The Icom and K2 items have a ready-made check:
 ### 5.9.5 Low-priority audits
 
 - [ ] TH-D75 dedicated-backend diff (`07d6a7ff`).
-- [ ] Icom table-bounds audit (`b9b9723`) and rigctld parser
-      hardening review (`c0adbb2`) — likely immune by construction
-      (Swift collections, bounded parser), carried over from
-      jjones9527/SwiftRigControl#17.
+- [x] Icom table-bounds audit (`b9b9723`) and rigctld parser
+      hardening review (`c0adbb2`), v1.2.20. `b9b9723` is the Icom
+      tuning-step table, which we don't implement (only the `0x10`
+      constant exists). `c0adbb2` found a real gap: `LineBuffer` had no
+      limit; lines are now capped at 4096 bytes. Parser tests cover
+      raw-hex, `send_raw`, NUL and oversized numbers.
 - [x] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
       per-model menu-number table and test added in v1.2.19. Still to
       look up: the MK2's DATA mod-source number (not in Hamlib).

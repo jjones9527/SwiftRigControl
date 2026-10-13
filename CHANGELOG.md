@@ -35,6 +35,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   jjones9527/SwiftRigControl#36 and #37).
 
 ### Fixed
+- **Elecraft on/off replies are validated.** `getSplit` (`FT`),
+  `getTXStatus` / K2 `getPTT` (`TQ`), `getRIT` (`RT`) and `getXIT`
+  (`XT`) used to check the prefix only and read anything but `1` as
+  off. A reply other than `<cmd>0` / `<cmd>1` now throws
+  `RigError.invalidResponse`, matching Hamlib `parse_binary_response`
+  (`elecraft.c:594-608`, upstream `ffe227a3` / `900c4d3`).
+- **Icom power readback is clamped to 100%.** At full power the
+  Xiegu G90 replies `02 5F` instead of `02 55`, which read as 103%.
+  Hamlib clamps it in `g90_get_level` (upstream `b61dd14d`); ours
+  clamps in the shared parser, which no valid reply ever exceeds.
+- **rigctld lines are capped at 4096 bytes.** The server's line buffer
+  had no limit, so a client that never sent a newline could grow it
+  without bound. Overlong lines are now dropped whole. Prompted by
+  Hamlib `c0adbb2` (bounded command parsing).
 - `RigControllerPollingTests.frequencyOnlyEmitsOnChange` no longer
   depends on timing: it stops on the last frequency set instead of
   after two events (failed on `main` after

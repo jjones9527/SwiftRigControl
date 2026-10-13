@@ -205,13 +205,27 @@ public actor RigControlServer {
 /// 9-byte reply, both mapped by Hamlib to warning codes -9 and
 /// -10 (macwinlink-releases#54 second followup).
 ///
+/// Lines longer than ``maxLineLength`` bytes are dropped whole, up to
+/// and including their `\n`. Before v1.2.20 the buffer had no limit,
+/// so a client that never sent `\n` grew it without bound. No rigctld
+/// command comes near the limit; Hamlib bounds its own command reads
+/// the same way (`rigctl_parse.c`, upstream `c0adbb2`).
+///
 /// This buffer is internal to the module for test visibility.
 struct LineBuffer {
+    /// Longest line kept, in bytes, not counting the `\n`.
+    static let maxLineLength = 4096
+
     private var data: Data = Data()
+
+    /// Whether the bytes up to the next `\n` belong to a line already
+    /// dropped for being too long.
+    private var discardingOverlongLine = false
 
     /// Append `chunk` to the buffer.
     mutating func append(_ chunk: Data) {
         data.append(chunk)
+        dropUnterminatedOverflow()
     }
 
     /// Pop the next `\n`-terminated line from the buffer, if any.
@@ -221,16 +235,28 @@ struct LineBuffer {
     ///
     /// The buffer retains any bytes after the consumed `\n` so
     /// subsequent calls see them, which is how case 2 (coalesced
-    /// commands) is handled.
+    /// commands) is handled. Overlong lines are skipped.
     mutating func nextLine() -> String? {
-        guard let newlineIdx = data.firstIndex(of: 0x0A) else {
-            return nil
+        while let newlineIdx = data.firstIndex(of: 0x0A) {
+            let lineBytes = data[data.startIndex..<newlineIdx]
+            let tooLong = discardingOverlongLine || lineBytes.count > Self.maxLineLength
+            let line = String(data: lineBytes, encoding: .utf8) ?? ""
+            // Drop the line + its trailing `\n` from the buffer.
+            data.removeSubrange(data.startIndex...newlineIdx)
+            discardingOverlongLine = false
+            if !tooLong { return line }
         }
-        let lineBytes = data[data.startIndex..<newlineIdx]
-        let line = String(data: lineBytes, encoding: .utf8) ?? ""
-        // Drop the line + its trailing `\n` from the buffer.
-        data.removeSubrange(data.startIndex...newlineIdx)
-        return line
+        dropUnterminatedOverflow()
+        return nil
+    }
+
+    /// Discards a partial line once it passes the limit, and remembers
+    /// to discard the rest of it when its `\n` arrives.
+    private mutating func dropUnterminatedOverflow() {
+        guard data.count > Self.maxLineLength,
+              !data.contains(0x0A) else { return }
+        data.removeAll()
+        discardingOverlongLine = true
     }
 
     /// True if the buffer holds no unconsumed bytes.

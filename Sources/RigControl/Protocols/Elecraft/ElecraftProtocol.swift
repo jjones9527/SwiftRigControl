@@ -315,16 +315,8 @@ public actor ElecraftProtocol:
         try await sendCommand("FT")
         let response = try await receiveResponse()
 
-        // Response format: FTx; where x is 0 or 1
-        guard response.hasPrefix("FT"),
-              response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
-        let codeChar = response[codeIndex]
-
-        return codeChar == "1"
+        // FT0; (TX on VFO A) or FT1; (TX on VFO B, split)
+        return try Self.parseOnOffReply(response, command: "FT")
     }
 
     // MARK: - Signal Strength
