@@ -1415,6 +1415,11 @@ In priority order:
 
 ### 5.9.4 Waiting on hardware or field reports
 
+The Icom and K2 items have a ready-made check:
+`Documentation/HARDWARE_CHECK_v1.2.19.md` (`IcomReleaseValidator`).
+
+- [ ] v1.2.19 DATA-mode set / readback on IC-7100 / IC-7600 / IC-9700
+      (verified radios; highest priority).
 - [ ] AGC on IC-7100 / IC-7600 / IC-9700 (v1.2.17).
 - [ ] DATA-USB on FT-817 / FT-857 (v1.2.17).
 - [ ] Any Kenwood / Flex / Lab599 report against v1.2.18 — set-command

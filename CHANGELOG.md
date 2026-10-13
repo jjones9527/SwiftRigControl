@@ -21,7 +21,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
+### Added
+- `IcomReleaseValidator` (Tools/SwiftRigControlTools) and
+  `Documentation/HARDWARE_CHECK_v1.2.19.md`: a hardware check of the
+  v1.2.16–v1.2.19 changes on the IC-7100 / IC-7600 / IC-9700 (DATA-mode
+  set and readback including front-panel changes, AGC, `TIOCEXCL`,
+  power-state probe, opt-in PTT), plus rigctld and K2 steps.
+
+### Changed
+- CI: the GitHub Pages deploy is its own job, run after the build
+  and test job passes. It used to run before the tests, so a Pages
+  outage skipped the tests on `main` (runs for
+  jjones9527/SwiftRigControl#36 and #37).
+
+### Fixed
+- `RigControllerPollingTests.frequencyOnlyEmitsOnChange` no longer
+  depends on timing: it stops on the last frequency set instead of
+  after two events (failed on `main` after
+  jjones9527/SwiftRigControl#38).
+
+Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
 ("Remaining work") and ROADMAP Phase 5.9.
 
 ## [1.2.19] - 2026-10-08
