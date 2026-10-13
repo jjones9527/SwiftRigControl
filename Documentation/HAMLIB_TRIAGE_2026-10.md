@@ -113,12 +113,14 @@ test it without hardware. ROADMAP Phase 5.9 tracks the checkboxes.
    (`AI;` on FTDX-9000), `AC` drained. Also found `getRIT` sending
    `RC;` (clarifier clear); it now reads `IF;`. Next: audit Elecraft
    K3/K4, whose set path also reads an "echo".
-3. **Elecraft.** Set path **done for v1.2.19**: K3/K4/KX sets required
+3. **Elecraft.** Set path **done for v1.2.19**; reply validation
+   **done for v1.2.20** (`FT` / `TQ` / `RT` / `XT`).: K3/K4/KX sets required
    an echo the radio never sends; now verified with `ID;` like Hamlib
    `kenwood_transaction`. Still open: reply validation for K3/K3S `SW`,
    K4 `TM` / `FR` / `FT` / `TQ` (`900c4d3`, `ffe227a3`) — reject
    malformed replies rather than parsing prefixes only.
-4. **G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).
+4. ~~**G90 RFPOWER malformed-BCD clamp** (`b61dd14d`).~~ Done for
+   v1.2.20, together with the Elecraft reply validation in item 3.
 
 **B — waiting on hardware or field reports** (nothing to code until a
 report arrives)
@@ -138,9 +140,10 @@ report arrives)
 **C — low-priority audits** (do when touching the code)
 
 1. TH-D75 dedicated-backend diff (`07d6a7ff`).
-2. Icom table-bounds (`b9b9723`) and rigctld parser hardening
-   (`c0adbb2`). Swift collections and our bounded parser are likely
-   immune; confirm with a test or two.
+2. ~~Icom table-bounds (`b9b9723`) and rigctld parser hardening
+   (`c0adbb2`).~~ Done for v1.2.20. The tuning-step table doesn't
+   exist here. The rigctld check found `LineBuffer` unbounded; it now
+   caps lines at 4096 bytes.
 3. ~~IC-7300MK2 `1A 05` renumbering~~ (jjones9527/SwiftRigControl#19):
    per-model table and test added for v1.2.19
    (`IcomRadioModel.menuSettingParameter`). The MK2 DATA mod-source
