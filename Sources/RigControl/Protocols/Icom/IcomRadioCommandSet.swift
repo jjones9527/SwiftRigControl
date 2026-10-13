@@ -360,7 +360,12 @@ extension IcomRadioCommandSet {
               response.data.count >= 2 else {
             throw RigError.invalidResponse
         }
-        let scale = BCDEncoding.decodePower(response.data)
+        // Clamp to the 0-255 scale. At full power the Xiegu G90 replies
+        // `02 5F` instead of `02 55`, which decodes to 265 (103%).
+        // Hamlib clamps it in `g90_get_level` (`xiegu.c:1392-1410`,
+        // upstream `b61dd14d`); here the clamp is shared, since a valid
+        // reply never exceeds 255 on any radio.
+        let scale = min(BCDEncoding.decodePower(response.data), 255)
         // Convert back to percentage
         return (scale * 100) / 255
     }
