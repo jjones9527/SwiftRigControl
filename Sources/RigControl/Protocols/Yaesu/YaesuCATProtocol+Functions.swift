@@ -13,7 +13,7 @@ import Foundation
 //   "AC00" + 0/1    tuner enable
 //   "BC0" + 0/1     auto notch
 //   "BP00" + 0/1    manual notch
-//   "ML0" + 0/1     monitor
+//   "ML0" + 000/001 monitor
 //   "NB0" + 0/2     noise blanker 2
 //   "CO" frame     audio peak filter (model-specific framing)
 //
@@ -73,7 +73,9 @@ extension YaesuCATProtocol {
         case .manualNotch:
             return set ? "BP00\(digit)" : "BP00"
         case .monitor:
-            return set ? "ML0\(digit)" : "ML0"
+            // ML0 + 3 digits (newcat.c:6254). Pre-v1.2.20 code sent
+            // ML01 / ML00, two digits short.
+            return set ? "ML000\(digit)" : "ML0"
         case .noiseBlanker2:
             let nbPayload = enabled ? "2" : "0"
             return set ? "NB0\(nbPayload)" : "NB0"

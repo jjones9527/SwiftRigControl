@@ -193,4 +193,33 @@ import Testing
         try await proto.setPowerState(true)
         #expect(await sent(mock) == ["PS1;", "PS1;", "FA;"])
     }
+
+    // MARK: - Monitor (newcat.c:4873-4880, 5478-5485, 6254)
+
+    @Test func monitorGainUsesML1() async throws {
+        // ML0 is the monitor switch; the level is selector 1.
+        let (mock, proto) = try await make()
+        await mock.setResponse(for: Self.ascii("ML1;"), response: Self.ascii("ML1050;"))
+        try await proto.setMonitorGain(50)
+        #expect(try await proto.getMonitorGain() == 50)
+        #expect(await sent(mock) == ["ML1050;", "ID;", "ML1;"])
+    }
+
+    @Test func monitorGainUsesBareMLOnFTDX9000() async throws {
+        let (mock, proto) = try await make(.newcatNoST.withTargetableMode().withVerifyCommand("AI"))
+        await mock.setResponse(for: Self.ascii("AI;"), response: Self.ascii("AI0;"))
+        await mock.setResponse(for: Self.ascii("ML;"), response: Self.ascii("ML075;"))
+        try await proto.setMonitorGain(75)
+        #expect(try await proto.getMonitorGain() == 75)
+        #expect(await sent(mock) == ["ML075;", "AI;", "ML;"])
+    }
+
+    @Test func monitorSwitchSendsThreeDigits() async throws {
+        let (mock, proto) = try await make()
+        await mock.setResponse(for: Self.ascii("ML0;"), response: Self.ascii("ML0001;"))
+        try await proto.setFunction(.monitor, enabled: true)
+        try await proto.setFunction(.monitor, enabled: false)
+        #expect(try await proto.getFunction(.monitor))
+        #expect(await sent(mock) == ["ML0001;", "ID;", "ML0000;", "ID;", "ML0;"])
+    }
 }

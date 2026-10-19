@@ -6,7 +6,7 @@ import Foundation
 //
 //   "MG" + 3-digit  — mic gain (0-100)
 //   "PL" + 3-digit  — speech processor / compressor level
-//   "ML0" + 3-digit — monitor level (CW sidetone)
+//   "ML1" + 3-digit — monitor level ("ML" + 3-digit on the FTDX-9000)
 //   "VG" + 3-digit  — VOX gain
 //   "VD" + 4-digit  — VOX delay (ms)
 //   "IS" + 5-digit  — IF shift offset (signed Hz, ±1200 typical)
@@ -32,10 +32,20 @@ extension YaesuCATProtocol {
     }
 
     public func setMonitorGain(_ level: Int) async throws {
-        try await setLevel(prefix: "ML0", level: level, width: 3)
+        try await setLevel(prefix: monitorGainPrefix, level: level, width: 3)
     }
     public func getMonitorGain() async throws -> Int {
-        try await getLevel(prefix: "ML0", width: 3)
+        try await getLevel(prefix: monitorGainPrefix, width: 3)
+    }
+
+    /// `ML1` selects the monitor level on newcat radios; `ML0` is the
+    /// monitor on/off switch (see `setFunction(.monitor)`). The FTDX-9000
+    /// takes a bare `ML` (`newcat.c:4873-4880` set, `5478-5485` get;
+    /// FTX-1 `ftx1_audio.c:630`). Pre-v1.2.20 code sent `ML0` + level.
+    /// The FTDX-9000 is the only radio verified with `AI;`, which comes
+    /// from the same Hamlib `is_ftdx9000` branch.
+    private var monitorGainPrefix: String {
+        quirks.verifyCommand == "AI" ? "ML" : "ML1"
     }
 
     public func setVOXGain(_ level: Int) async throws {
