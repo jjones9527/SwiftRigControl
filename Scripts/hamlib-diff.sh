@@ -458,7 +458,7 @@ hamlib_to_swift() {
             echo "Sources/RigControl/Protocols/Yaesu/YaesuModels.swift"
             echo "Sources/RigControl/Models/RadioCapabilitiesDatabase+YaesuModern.swift"
             ;;
-        rigs/yaesu/ftx1/*.c|rigs/yaesu/ftx1/*.h|rigs/yaesu/ftx1.c|rigs/yaesu/ftx1.h)
+        rigs/yaesu/ftx1|rigs/yaesu/ftx1/*.c|rigs/yaesu/ftx1/*.h|rigs/yaesu/ftx1.c|rigs/yaesu/ftx1.h)
             # FTX-1 (2025) — newcat-based with FTX-1-specific mode
             # codes, memory-mode escape prelude, and per-subsystem
             # extensions in the ftx1/ subdirectory.

@@ -111,6 +111,11 @@ extension YaesuCATProtocol {
         /// See ``YaesuCATProtocol`` `sendSetCommand(_:)`.
         public let verifyCommand: String
 
+        /// Uses the FTX-1 `CF` command family for independent RX/TX
+        /// clarifiers instead of the shared newcat `RC`/`RU`/`RD`/`RT`/`XT`
+        /// commands.
+        public let usesFTX1ClarifierCommands: Bool
+
         /// `SH` command wire format.
         ///
         /// Every value cites the Hamlib line where the format is
@@ -150,7 +155,8 @@ extension YaesuCATProtocol {
             requiresMemoryModeEscape: Bool = false,
             filterCommandStyle: SHCommandStyle = .qualifierOnly,
             hasTargetableMode: Bool = false,
-            verifyCommand: String = "ID"
+            verifyCommand: String = "ID",
+            usesFTX1ClarifierCommands: Bool = false
         ) {
             self.supportsSTSplit = supportsSTSplit
             self.usesFT23ForVFOSelection = usesFT23ForVFOSelection
@@ -161,6 +167,7 @@ extension YaesuCATProtocol {
             self.filterCommandStyle = filterCommandStyle
             self.hasTargetableMode = hasTargetableMode
             self.verifyCommand = verifyCommand
+            self.usesFTX1ClarifierCommands = usesFTX1ClarifierCommands
         }
 
         /// Portable / mobile radios (FT-817/818/857/897/847/920/100/
@@ -308,7 +315,8 @@ extension YaesuCATProtocol {
                 requiresMemoryModeEscape: requiresMemoryModeEscape,
                 filterCommandStyle: filterCommandStyle,
                 hasTargetableMode: hasTargetableMode,
-                verifyCommand: command
+                verifyCommand: command,
+                usesFTX1ClarifierCommands: usesFTX1ClarifierCommands
             )
         }
 
@@ -356,7 +364,8 @@ extension YaesuCATProtocol {
             filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
             // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
             // which includes RIG_TARGETABLE_MODE.
-            hasTargetableMode: true
+            hasTargetableMode: true,
+            usesFTX1ClarifierCommands: true
         )
     }
 }

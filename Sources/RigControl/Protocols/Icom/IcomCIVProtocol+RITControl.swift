@@ -16,6 +16,11 @@ extension IcomCIVProtocol {
     /// - Parameter state: The desired RIT state (enabled/disabled and offset)
     /// - Throws: `RigError` if operation fails or radio doesn't support RIT
     public func setRIT(_ state: RITXITState) async throws {
+        if radioModel == .xieguG90 {
+            try await setG90RIT(state)
+            return
+        }
+
         // Validate offset range
         guard abs(state.offset) <= 9999 else {
             throw RigError.invalidParameter("RIT offset must be between -9999 and +9999 Hz")
@@ -58,6 +63,14 @@ extension IcomCIVProtocol {
     /// - Returns: Current RIT state including enabled status and offset
     /// - Throws: `RigError` if operation fails or radio doesn't support RIT
     public func getRIT() async throws -> RITXITState {
+        if radioModel == .xieguG90 {
+            // Stock G90 firmware returns the same lossy FF FF 01 value for
+            // distinct negative offsets. Hamlib deliberately exposes SET
+            // only rather than returning incorrect state (xiegu.c,
+            // upstream aff6e940).
+            throw RigError.unsupportedOperation("The Xiegu G90 does not provide reliable RIT readback")
+        }
+
         // Read RIT ON/OFF status
         let enableFrame = CIVFrame(
             to: civAddress,
@@ -123,6 +136,33 @@ extension IcomCIVProtocol {
         let offset = try BCDEncoding.decodeRITXITOffset(offsetData)
 
         return RITXITState(enabled: enabled, offset: offset)
+    }
+
+    /// Sets the G90's combined RIT value using its SET-only CI-V behavior.
+    ///
+    /// Unlike Icom radios, the G90 accepts only `21 00` and treats zero as
+    /// disabled; sending the usual follow-up `21 01` enable command is wrong.
+    /// Its documented and Hamlib-enforced range is ±500 Hz.
+    private func setG90RIT(_ state: RITXITState) async throws {
+        guard abs(state.offset) <= 500 else {
+            throw RigError.invalidParameter("Xiegu G90 RIT offset must be between -500 and +500 Hz")
+        }
+        guard !state.enabled || state.offset != 0 else {
+            throw RigError.invalidParameter("Xiegu G90 requires a nonzero offset to enable RIT")
+        }
+
+        let effectiveOffset = state.enabled ? state.offset : 0
+        let frame = CIVFrame(
+            to: civAddress,
+            command: [CIVFrame.Command.ritXit, CIVFrame.RITXITCode.ritFrequency],
+            data: BCDEncoding.encodeRITXITOffset(effectiveOffset)
+        )
+
+        try await sendFrame(frame)
+        let response = try await receiveFrame()
+        guard response.isAck else {
+            throw RigError.commandFailed("Radio rejected G90 RIT offset \(effectiveOffset) Hz")
+        }
     }
 
     /// Sets the XIT (Transmitter Incremental Tuning) state.
