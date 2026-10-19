@@ -51,7 +51,28 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.19** (git tag, 2026-10-08),
+The shipped version is **v1.2.20** (git tag, 2026-10-19),
+jjones9527/SwiftRigControl#41, #42, #44:
+
+- **Elecraft on/off replies** (`ElecraftProtocol+ReplyParsing.swift`):
+  `FT` / `TQ` / `RT` / `XT` must be exactly `<cmd>0` or `<cmd>1`
+  (Hamlib `parse_binary_response`, `elecraft.c:594-608`).
+- **Icom power readback** is clamped to the 0–255 scale in
+  `parsePowerResponse` (G90 sends `02 5F` at full power, Hamlib
+  `b61dd14d`).
+- **rigctld `LineBuffer`** drops lines over 4096 bytes
+  (`LineBuffer.maxLineLength`); it used to grow without bound.
+- **Yaesu newcat monitor**: gain is `ML1` + level, on/off is `ML0` +
+  3 digits (`newcat.c:4873-4880`, `6254`).
+- **CI**: the Pages deploy is a separate `deploy-docs` job after the
+  build-and-test job. `IcomReleaseValidator` +
+  `Documentation/HARDWARE_CHECK_v1.2.19.md` check v1.2.16–v1.2.19 on
+  the verified radios (not run yet).
+
+**Mock-tested only.** Test count 894 → 911. Remaining work: hardware
+checks (triage section B) and v1.3.0 features (ROADMAP 5.7, 5.8).
+
+The previously-shipped version was **v1.2.19** (git tag, 2026-10-08),
 jjones9527/SwiftRigControl#34–#37:
 
 - **Icom DATA modes** (`IcomCIVProtocol+Mode.swift`): `0x26` is opt-in

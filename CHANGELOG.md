@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
+("Remaining work") and ROADMAP Phase 5.9.
+
+## [1.2.20] - 2026-10-19
+
+The rest of the mock-testable Hamlib-review batch: Elecraft on/off
+reply validation, the G90 full-power readback clamp, a line-length cap
+on the rigctld server, and the Yaesu newcat monitor commands. Also a
+hardware check for v1.2.16–v1.2.19, CI that runs the tests before
+publishing docs, and a timing fix in one test. Shipped in
+jjones9527/SwiftRigControl#41, #42 and #44. Test count 894 → 911.
+
+**Verification status:** mock-tested only. The hardware check in
+`Documentation/HARDWARE_CHECK_v1.2.19.md` covers the verified
+IC-7100 / IC-7600 / IC-9700 / K2 and has not been run yet.
+
 ### Added
 - `IcomReleaseValidator` (Tools/SwiftRigControlTools) and
   `Documentation/HARDWARE_CHECK_v1.2.19.md`: a hardware check of the
@@ -61,9 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   depends on timing: it stops on the last frequency set instead of
   after two events (failed on `main` after
   jjones9527/SwiftRigControl#38).
-
-Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
-("Remaining work") and ROADMAP Phase 5.9.
 
 ## [1.2.19] - 2026-10-08
 

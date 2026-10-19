@@ -1,6 +1,13 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.19 (cut 2026-10-08 — Icom DATA modes:
+**Current version:** v1.2.20 (cut 2026-10-19 — Elecraft `FT` / `TQ` /
+`RT` / `XT` replies are validated instead of prefix-checked; Icom power
+readback is clamped to 100% (G90 full-power `02 5F`); the rigctld server
+caps lines at 4096 bytes; Yaesu newcat monitor gain uses `ML1` and
+monitor on/off sends `ML0` + 3 digits.  CI runs the tests before the
+Pages deploy; `IcomReleaseValidator` checks v1.2.16–v1.2.19 on real
+radios.  Mock-tested only.  Test count 894 → 911.)
+Previous release **v1.2.19** (cut 2026-10-08 — Icom DATA modes:
 the IC-7300/MK2 `0x26` frame gained its VFO byte and carries every mode,
 `getMode` reads the DATA flag on every Icom, the IC-7700 and ~20 radios
 without DATA modes stop getting the wrong DATA commands, the MK2 has its
