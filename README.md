@@ -5,19 +5,23 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.1.1
+**Current release:** v1.2.20
 
-## What's new in v1.1.1
+## What's new in v1.2.20
 
-- **Yaesu PTT-on-connect fix (issue #11)** — `IOKitSerialPort.open()`
-  now de-asserts DTR and RTS after configuring termios. Yaesu HF
-  radios (FT-DX10, FT-DX101, FT-991A, FT-891, FT-450D, and many
-  earlier models) drive hardware PTT off one of these lines on
-  their CAT USB port; the previous behavior keyed the radio into
-  transmit the moment the port opened, and held it there until
-  the USB cable was unplugged. Safe by default; opt back in via
-  the new `setDTR(_:)` / `setRTS(_:)` methods on `SerialTransport`
-  if a specific device needs a line asserted.
+- **Safer CAT reply handling** — Elecraft boolean replies are validated,
+  Yaesu newcat monitor commands use their correct wire formats, and Xiegu
+  G90 power readback is clamped to the valid range.
+- **Hardened rigctld bridge** — incoming command lines are capped at 4096
+  bytes, complementing the decimal and non-finite-number parsing fixes from
+  v1.2.17.
+- **Correct command sets across major families** — v1.2.17–v1.2.19 repaired
+  Icom DATA-mode and AGC handling, Kenwood DATA-mode selection, Yaesu and
+  Elecraft set-command verification, FT-100/FT-920 routing, and IC-F8101
+  commands.
+- **Improved validation** — 986 automated tests pass locally, CI-gated documentation,
+  and an `IcomReleaseValidator` covering the highest-risk recent Icom
+  changes. See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ## What's new in v1.1.0
 
@@ -49,8 +53,8 @@ A native Swift library for controlling amateur radio transceivers on macOS.
   pass uncovered a half-dozen real protocol bugs that are
   fixed in this release.
 
-459 tests pass; five radios re-verified on real hardware (IC-7100,
-IC-7600, IC-9700, K2, TH-D72A); zero new runtime dependencies.
+986 automated tests pass; five radios have hardware-verified definitions (IC-7100,
+IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Features
 
@@ -66,7 +70,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero new runtime dependencies.
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: 459 tests on Swift Testing framework with mock transport
+- ✅ **Well-Tested**: 986 passing tests on Swift Testing framework with mock transport
 - ✅ **Frequency Validation**: Safety-critical validation with amateur band support
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching
@@ -78,7 +82,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero new runtime dependencies.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **~96 radio definitions**, but only a subset
+SwiftRigControl ships with **126 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
