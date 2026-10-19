@@ -79,6 +79,10 @@ commit's neighborhood, not in the commit itself.
   A2 (Yaesu newcat set commands), the Elecraft K3/K4/KX set path, the
   IC-F8101 command set, the D-STAR mode cleanup and Yaesu power on/off
   (jjones9527/SwiftRigControl#34–#37).
+- **v1.2.20** (2026-10-19) shipped A3 (Elecraft reply validation), A4
+  (G90 power clamp), C2 (rigctld line cap) and the Yaesu newcat monitor
+  fix (jjones9527/SwiftRigControl#41, #42, #44). Section A is done;
+  what's left needs hardware (B) or is feature work (D, E).
 - Digests jjones9527/SwiftRigControl#16, #18 and #20–#26 and the
   earlier triage issue #17 are closed; their open items are folded
   into the list below. #19 (IC-7300MK2 `1A 05`) is item C3.
