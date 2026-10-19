@@ -1413,6 +1413,10 @@ In priority order:
       `parse_binary_response` (`900c4d3`, `ffe227a3`; carried over from
       jjones9527/SwiftRigControl#17). We never send `SW` or `TM`, and
       `FR` is set-only here, so those parts don't apply.
+- [x] **Yaesu newcat monitor wire format** (v1.2.20, found via
+      Hamlib #2170) — monitor gain now `ML1` + 3 digits (`ML` on the
+      FTDX-9000) instead of `ML0`; monitor on/off now `ML0001` /
+      `ML0000` instead of `ML01` / `ML00` (`newcat.c:4879`, `6254`).
 - [x] **G90 RFPOWER malformed-BCD clamp** (v1.2.20, `b61dd14d`) —
       power readback clamped to the 0-255 scale for every Icom-family
       radio.

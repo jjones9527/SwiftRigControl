@@ -49,6 +49,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   had no limit, so a client that never sent a newline could grow it
   without bound. Overlong lines are now dropped whole. Prompted by
   Hamlib `c0adbb2` (bounded command parsing).
+- **Yaesu newcat monitor commands used the wrong format.**
+  `setMonitorGain` / `getMonitorGain` sent `ML0` + level, which is the
+  monitor on/off switch; they now send `ML1` + level (bare `ML` on the
+  FTDX-9000), per Hamlib `newcat.c:4873-4880` / `5478-5485` and FTX-1
+  `ftx1_audio.c:630`. `setFunction(.monitor)` sent `ML01` / `ML00`,
+  two digits short; it now sends `ML0001` / `ML0000` (`newcat.c:6254`).
+  Affects every `YaesuCATProtocol` radio. Mock-tested only. Found while
+  checking Hamlib #2170 (FTX-1 monitor).
 - `RigControllerPollingTests.frequencyOnlyEmitsOnChange` no longer
   depends on timing: it stops on the last frequency set instead of
   after two events (failed on `main` after
