@@ -21,8 +21,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet. Planned work is in `Documentation/HAMLIB_TRIAGE_2026-10.md`
-("Remaining work") and ROADMAP Phase 5.9.
+### Fixed
+
+- **Xiegu G90 RIT now uses the radio's SET-only CI-V form.** The G90
+  accepts `21 00` with a ±500 Hz value and treats zero as disabled; it
+  does not accept the normal Icom `21 01` enable follow-up. Its negative
+  readback is lossy, so `getRIT` is explicitly unsupported, matching
+  Hamlib `aff6e940`.
+- **FTX-1 RIT/XIT now uses the `CF` command family.** The shared Yaesu
+  `RC`/`RU`/`RD`/`RT`/`XT` path does not apply to the FTX-1. Main-side
+  RX/TX clarifier operations now preserve the paired enable state and
+  validate exact `CF` replies, following Hamlib's FTX-1 backend.
+- **The Hamlib watcher now sees FTX-1 subsystem changes.** Its quoted
+  literal `rigs/yaesu/ftx1/*.c` path never expanded, so it missed upstream
+  CW fix `91deb674`. The watcher now tracks the whole directory.
+
+### Documentation
+
+- Added `Documentation/HAMLIB_AUDIT_2026-10-19.md`, a current-source
+  review of all 126 mapped radio definitions against Hamlib `06335264`.
+
+Planned work remains in `Documentation/HAMLIB_TRIAGE_2026-10.md`
+("Remaining work"), the new audit, and ROADMAP Phase 5.9.
 
 ## [1.2.20] - 2026-10-19
 

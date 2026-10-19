@@ -137,7 +137,7 @@ always includes them in the diff scope.
 | mcHF QRP | `rigs/yaesu/ft847.c` (v1.2.0) |
 | FT-1000MP MARK-V | `rigs/yaesu/ft1000mp.c` (v1.2.0) |
 | FT-1000MP MARK-V Field | `rigs/yaesu/ft1000mp.c` (v1.2.0) |
-| FTX-1 | `rigs/yaesu/ftx1/*.c` (v1.2.0 — 18-file subsystem in Hamlib; core in ftx1.c / ftx1_freq.c / ftx1_mode.c) |
+| FTX-1 | `rigs/yaesu/ftx1` (v1.2.0 — watch the entire subsystem; core in ftx1.c / ftx1_freq.c / ftx1_mode.c) |
 
 ### Kenwood (24 radios)
 
@@ -146,7 +146,7 @@ always includes them in the diff scope.
 | TH-D72 | `rigs/kenwood/thd72.c` |
 | TH-D72A | `rigs/kenwood/thd72.c` |
 | TH-D74 | `rigs/kenwood/thd74.c` |
-| TH-D75 | — (not in Hamlib as of 4.7.2; watch `rigs/kenwood/thd74.c` as the closest analogue) |
+| TH-D75 | `rigs/kenwood/thd74.c` + `rigs/kenwood/thd7x.c` + `rigs/kenwood/thd7x.h` (dedicated TH-D74/TH-D75 record codec) |
 | TS-2000 | `rigs/kenwood/ts2000.c` |
 | TS-480HX | `rigs/kenwood/ts480.c` |
 | TS-480SAT | `rigs/kenwood/ts480.c` |

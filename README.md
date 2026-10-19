@@ -19,7 +19,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
   Icom DATA-mode and AGC handling, Kenwood DATA-mode selection, Yaesu and
   Elecraft set-command verification, FT-100/FT-920 routing, and IC-F8101
   commands.
-- **Improved validation** — 986 automated tests pass locally, CI-gated documentation,
+- **Improved validation** — more than 900 automated tests, CI-gated documentation,
   and an `IcomReleaseValidator` covering the highest-risk recent Icom
   changes. See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
@@ -53,7 +53,7 @@ A native Swift library for controlling amateur radio transceivers on macOS.
   pass uncovered a half-dozen real protocol bugs that are
   fixed in this release.
 
-986 automated tests pass; five radios have hardware-verified definitions (IC-7100,
+More than 900 automated tests pass; five radios have hardware-verified definitions (IC-7100,
 IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Features
@@ -70,7 +70,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 - ✅ **Mac App Store Compatible**: XPC helper pattern for sandboxed apps
 - ✅ **Protocol-Based**: Clean abstraction supporting multiple radio protocols
 - ✅ **Type-Safe**: Full Swift type safety with enums and error handling
-- ✅ **Well-Tested**: 986 passing tests on Swift Testing framework with mock transport
+- ✅ **Well-Tested**: More than 900 tests on Swift Testing framework with mock transport
 - ✅ **Frequency Validation**: Safety-critical validation with amateur band support
 - ✅ **S-Meter Reading**: Real-time signal strength monitoring
 - ✅ **Performance Caching**: 10-20x faster queries with intelligent caching

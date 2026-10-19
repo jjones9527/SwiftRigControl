@@ -28,6 +28,11 @@ extension YaesuCATProtocol {
     ///   and offset in Hz, -9999 to +9999)
     /// - Throws: `RigError` if operation fails
     public func setRIT(_ state: RITXITState) async throws {
+        if quirks.usesFTX1ClarifierCommands {
+            try await setFTX1Clarifier(state, transmit: false)
+            return
+        }
+
         // Validate offset range
         guard abs(state.offset) <= 9999 else {
             throw RigError.invalidParameter("RIT offset must be between -9999 and +9999 Hz")
@@ -59,6 +64,10 @@ extension YaesuCATProtocol {
     /// - Returns: Current RIT state including enabled status and offset
     /// - Throws: `RigError` if operation fails
     public func getRIT() async throws -> RITXITState {
+        if quirks.usesFTX1ClarifierCommands {
+            return try await getFTX1Clarifier(transmit: false)
+        }
+
         // Read RIT ON/OFF status
         try await sendCommand("RT")
         let enableResponse = try await receiveResponse()
@@ -99,6 +108,11 @@ extension YaesuCATProtocol {
     /// - Parameter state: The desired XIT state (enabled/disabled and offset)
     /// - Throws: `RigError` if operation fails or unsupported
     public func setXIT(_ state: RITXITState) async throws {
+        if quirks.usesFTX1ClarifierCommands {
+            try await setFTX1Clarifier(state, transmit: true)
+            return
+        }
+
         // Try to set XIT - many radios don't support this
         let enableCommand = state.enabled ? "XT1" : "XT0"
 
@@ -117,6 +131,10 @@ extension YaesuCATProtocol {
     /// - Returns: Current XIT state including enabled status and offset
     /// - Throws: `RigError.unsupportedOperation` if XIT not supported
     public func getXIT() async throws -> RITXITState {
+        if quirks.usesFTX1ClarifierCommands {
+            return try await getFTX1Clarifier(transmit: true)
+        }
+
         // Try to read XIT status
         do {
             try await sendCommand("XT")
@@ -161,5 +179,72 @@ extension YaesuCATProtocol {
             throw RigError.invalidResponse
         }
         return offset
+    }
+
+    // MARK: - FTX-1 Clarifier
+
+    /// Sets the FTX-1 Main-side clarifier while preserving the other
+    /// clarifier's enable state. SwiftRigControl's RIT/XIT API currently
+    /// addresses the active/main VFO, so P1 is `0` here.
+    private func setFTX1Clarifier(_ state: RITXITState, transmit: Bool) async throws {
+        guard abs(state.offset) <= 9999 else {
+            throw RigError.invalidParameter("FTX-1 clarifier offset must be between -9999 and +9999 Hz")
+        }
+        guard !state.enabled || state.offset != 0 else {
+            throw RigError.invalidParameter("FTX-1 requires a nonzero offset to enable a clarifier")
+        }
+
+        let current = try await queryFTX1ClarifierState()
+        let enabled = state.enabled ? "1" : "0"
+        let rx = transmit ? (current.rxEnabled ? "1" : "0") : enabled
+        let tx = transmit ? enabled : (current.txEnabled ? "1" : "0")
+        try await sendSetCommand("CF000\(rx)\(tx)000")
+
+        if state.enabled {
+            let sign = state.offset < 0 ? "-" : "+"
+            try await sendSetCommand(String(format: "CF001%@%04d", sign, abs(state.offset)))
+        }
+    }
+
+    /// Reads the FTX-1 Main-side clarifier state and its shared offset.
+    private func getFTX1Clarifier(transmit: Bool) async throws -> RITXITState {
+        let state = try await queryFTX1ClarifierState()
+        let enabled = transmit ? state.txEnabled : state.rxEnabled
+        guard enabled else {
+            return .disabled
+        }
+
+        try await sendCommand("CF001")
+        let response = try await receiveResponse()
+        return RITXITState(enabled: true, offset: try Self.ftx1ClarifierOffset(from: response))
+    }
+
+    private func queryFTX1ClarifierState() async throws -> (rxEnabled: Bool, txEnabled: Bool) {
+        try await sendCommand("CF000")
+        let response = try await receiveResponse()
+        return try Self.ftx1ClarifierState(from: response)
+    }
+
+    static func ftx1ClarifierState(from response: String) throws -> (rxEnabled: Bool, txEnabled: Bool) {
+        let chars = Array(response)
+        guard chars.count == 10,
+              String(chars[0...4]) == "CF000",
+              chars[5] == "0" || chars[5] == "1",
+              chars[6] == "0" || chars[6] == "1",
+              String(chars[7...9]) == "000" else {
+            throw RigError.invalidResponse
+        }
+        return (chars[5] == "1", chars[6] == "1")
+    }
+
+    static func ftx1ClarifierOffset(from response: String) throws -> Int {
+        let chars = Array(response)
+        guard chars.count == 10,
+              String(chars[0...4]) == "CF001",
+              chars[5] == "+" || chars[5] == "-",
+              let magnitude = Int(String(chars[6...9])) else {
+            throw RigError.invalidResponse
+        }
+        return chars[5] == "-" ? -magnitude : magnitude
     }
 }
