@@ -9,6 +9,8 @@ import Foundation
 public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
+
+    /// Zero-based SmartSDR slice index (`0...7`, corresponding to A–H).
     public let slice: Int
 
     private static let terminator: UInt8 = 0x0A
@@ -19,6 +21,12 @@ public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
     private var transmitting = false
     private var transmitSlice = false
 
+    /// Creates a native SmartSDR controller for one slice.
+    ///
+    /// - Parameters:
+    ///   - transport: An openable TCP transport, normally targeting port 4992.
+    ///   - capabilities: Capability declaration for the SmartSDR endpoint.
+    ///   - slice: Zero-based slice index from 0 (A) through 7 (H).
     public init(
         transport: any SerialTransport,
         capabilities: RigCapabilities = RadioCapabilitiesDatabase.Flex.smartSDR,
