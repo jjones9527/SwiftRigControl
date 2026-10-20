@@ -82,7 +82,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **134 radio definitions**, but only a subset
+SwiftRigControl ships with **135 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -266,6 +266,12 @@ table above — are field-tested; all others are definition-only.
 ### Lab599 — 1 model
 
 - **TX-500** - Portable HF transceiver (10W, Kenwood-compatible CAT)
+
+### QRP Labs — 1 model
+
+- **QMX** - Definition-only TS-480-subset control with QMX power/SWR
+  metering; applications should use `preferredDataMode` (`USB`) for digital
+  audio rather than the radio's `DiGi` packet mode.
 
 ### FlexRadio family — 13 definitions
 

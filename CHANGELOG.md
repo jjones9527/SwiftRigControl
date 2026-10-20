@@ -21,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **QRP Labs QMX definition-only support.** A dedicated TS-480-subset
+  adapter covers frequency, mode, VFO, split, PTT, and the QMX `PC`/`SW`
+  power and SWR meters. `RadioDefinition.preferredDataMode` identifies
+  ordinary USB for QMX digital applications, avoiding the radio's `DiGi`
+  mode. Cross-referenced with Hamlib `ts480.c`; hardware remains unverified.
+
 ### Fixed
 
 - **Xiegu G90 RIT now uses the radio's SET-only CI-V form.** The G90

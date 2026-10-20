@@ -42,4 +42,7 @@ public struct RadioCapabilitiesDatabase {
 
     /// FlexRadio Systems and compatible SDRs (PowerSDR, Thetis).
     public enum Flex {}
+
+    /// QRP Labs compact HF transceivers.
+    public enum QRPLabs {}
 }

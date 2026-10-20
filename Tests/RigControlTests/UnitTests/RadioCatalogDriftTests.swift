@@ -114,6 +114,10 @@ import Testing
         #expect(actual == expected)
     }
 
+    @Test func qrpLabsCatalogMatchesExpectedModels() {
+        #expect(Set(RadioDefinition.QRPLabs.allRadios.map(\.model)) == ["QMX"])
+    }
+
     // MARK: - Sort order
 
     @Test func perVendorCatalogsAreAlphabeticallySortedByModel() {
@@ -125,6 +129,7 @@ import Testing
             RadioDefinition.Xiegu.allRadios,
             RadioDefinition.Flex.allRadios,
             RadioDefinition.TenTec.allRadios,
+            RadioDefinition.QRPLabs.allRadios,
         ] {
             let sorted = radios.sorted { $0.model < $1.model }
             #expect(radios.map(\.model) == sorted.map(\.model))
@@ -143,6 +148,7 @@ import Testing
             + RadioDefinition.Flex.allRadios.count
             + RadioDefinition.TenTec.allRadios.count
             + RadioDefinition.Lab599.allRadios.count
+            + RadioDefinition.QRPLabs.allRadios.count
         #expect(RadioDefinition.allSupportedRadios.count == expectedCount)
     }
 
@@ -178,6 +184,10 @@ import Testing
         #expect(
             RadioDefinition.allRadios(for: .lab599).map(\.model)
                 == RadioDefinition.Lab599.allRadios.map(\.model)
+        )
+        #expect(
+            RadioDefinition.allRadios(for: .qrpLabs).map(\.model)
+                == RadioDefinition.QRPLabs.allRadios.map(\.model)
         )
         // v1.2.0 new vendors — populated in follow-up adapter PRs.
         // The dispatch match is enforced now so a new radio landing in

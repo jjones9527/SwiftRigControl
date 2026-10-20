@@ -53,4 +53,8 @@ public enum KenwoodModeCommandStyle: Sendable, Equatable {
     /// `powersdr_mode_table` and `powersdr_set_mode` /
     /// `powersdr_get_mode` (`flex6xxx.c`).
     case powerSDR
+
+    /// QRP Labs QMX. The radio's useful digital-audio operating mode is
+    /// ordinary USB (`MD2`), not Kenwood packet USB (`MD13`, shown as DiGi).
+    case qmx
 }
