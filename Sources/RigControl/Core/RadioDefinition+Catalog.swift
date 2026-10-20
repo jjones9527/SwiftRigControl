@@ -193,6 +193,14 @@ extension RadioDefinition.Flex {
     /// UI and connect using `flex6000` here.
     public static let allRadios: [RadioDefinition] = [
         flex6000,
+        smartSDRA,
+        smartSDRB,
+        smartSDRC,
+        smartSDRD,
+        smartSDRE,
+        smartSDRF,
+        smartSDRG,
+        smartSDRH,
         powerSDR,
         thetis,
         // v1.2.0 Group I — TS-2000-emulation SDR clients

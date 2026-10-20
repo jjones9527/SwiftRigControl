@@ -5,13 +5,14 @@ extension RadioDefinition.Flex {
     /// Flex 6000-series — SmartSDR-driven SDR transceivers.
     ///
     /// Covers the 6300, 6400, 6500, 6600, and 6700 variants. SmartSDR
-    /// exposes a Kenwood-derived CAT bridge on TCP port 4992; pair
-    /// this definition with ``ConnectionType/tcp(host:port:)``:
+    /// can expose a Kenwood-derived CAT bridge on a user-configured
+    /// TCP port. This compatibility definition is distinct from the
+    /// native SmartSDR API slice definitions below.
     ///
     /// ```swift
     /// let rig = try RigController(
     ///     radio: .Flex.flex6000,
-    ///     connection: .tcp(host: "flex-6400.local", port: 4992)
+    ///     connection: .tcp(host: "flex-6400.local", port: 5002)
     /// )
     /// ```
     ///
@@ -32,6 +33,49 @@ extension RadioDefinition.Flex {
             )
         }
     )
+
+    /// SmartSDR native TCP API, slice A (slice index 0).
+    public static let smartSDRA = smartSDRSlice(0)
+
+    /// SmartSDR native TCP API, slice B (slice index 1).
+    public static let smartSDRB = smartSDRSlice(1)
+
+    /// SmartSDR native TCP API, slice C (slice index 2).
+    public static let smartSDRC = smartSDRSlice(2)
+
+    /// SmartSDR native TCP API, slice D (slice index 3).
+    public static let smartSDRD = smartSDRSlice(3)
+
+    /// SmartSDR native TCP API, slice E (slice index 4).
+    public static let smartSDRE = smartSDRSlice(4)
+
+    /// SmartSDR native TCP API, slice F (slice index 5).
+    public static let smartSDRF = smartSDRSlice(5)
+
+    /// SmartSDR native TCP API, slice G (slice index 6).
+    public static let smartSDRG = smartSDRSlice(6)
+
+    /// SmartSDR native TCP API, slice H (slice index 7).
+    public static let smartSDRH = smartSDRSlice(7)
+
+    /// Builds one of the eight Hamlib-compatible SmartSDR slice endpoints.
+    /// Connect with `.tcp(host: radioAddress, port: 4992)`.
+    private static func smartSDRSlice(_ slice: Int) -> RadioDefinition {
+        let letter = String(UnicodeScalar(65 + slice)!)
+        return RadioDefinition(
+            manufacturer: .flex,
+            model: "SmartSDR Slice \(letter)",
+            defaultBaudRate: 0,
+            capabilities: RadioCapabilitiesDatabase.Flex.smartSDR,
+            protocolFactory: { transport in
+                FlexSmartSDRProtocol(
+                    transport: transport,
+                    capabilities: RadioCapabilitiesDatabase.Flex.smartSDR,
+                    slice: slice
+                )
+            }
+        )
+    }
 
     /// PowerSDR (FlexRadio / Apache Labs) — virtual serial CAT
     /// bridge.

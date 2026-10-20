@@ -192,3 +192,14 @@ TH-D75 entry was also updated to reflect Hamlib's current dedicated
   skipped, zero failures.
 - The focused FTX-1/FT-857/Kenwood follow-up ran 1,060 tests: 1,003
   passed, 57 hardware tests skipped, zero failures.
+
+## Follow-up: native Flex SmartSDR
+
+The catalog now also includes SmartSDR Slice A–H through a dedicated
+native TCP adapter cross-referenced against Hamlib `smartsdr.c` and
+`smartsdr_caps.h`. It uses port 4992 command/reply/status framing rather
+than the separate Kenwood-compatible CAT bridge. The original 6000-series
+CAT definition remains available for compatibility.
+
+The native SmartSDR follow-up ran 1,068 tests: 1,011 passed, 57
+hardware tests skipped, zero failures.

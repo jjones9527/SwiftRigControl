@@ -200,11 +200,19 @@ Xiegu radios speak CI-V and are supported in Hamlib via a shared file.
 | X6100 | `rigs/icom/xiegu.c` |
 | X6200 | `rigs/icom/xiegu.c` |
 
-### FlexRadio family (5 radios)
+### FlexRadio family (13 radios)
 
 | SwiftRigControl radio | Hamlib source |
 | --- | --- |
 | 6000-series | `rigs/kenwood/flex6xxx.c` |
+| SmartSDR Slice A | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice B | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice C | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice D | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice E | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice F | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice G | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
+| SmartSDR Slice H | `rigs/flexradio/smartsdr.c` + `rigs/flexradio/smartsdr_caps.h` |
 | PowerSDR | `rigs/kenwood/flex6xxx.c` |
 | Thetis | `rigs/kenwood/flex6xxx.c` |
 | SDR-Console | `rigs/kenwood/ts2000.c` (v1.2.0 — SDR-Console registers as its own model in ts2000.c) |

@@ -3,12 +3,13 @@ import Network
 
 /// TCP-backed ``SerialTransport`` that talks to a remote CAT endpoint.
 ///
-/// Used for two distinct scenarios:
+/// Used for three distinct scenarios:
 ///
-/// 1. **Flex 6000-series radios** — SmartSDR exposes a Kenwood-derived
-///    text CAT surface on TCP port 4992. Pair this transport with
-///    ``KenwoodProtocol`` via ``RadioDefinition/Flex/flex6000``.
-/// 2. **Remote rigctld bridging** — connect to another machine's
+/// 1. **Flex SmartSDR native API** — port 4992, using
+///    ``FlexSmartSDRProtocol`` and one of the slice A–H definitions.
+/// 2. **Configured CAT bridges** — including SmartSDR CAT and other
+///    network-exposed emulation endpoints.
+/// 3. **Remote rigctld bridging** — connect to another machine's
 ///    `rigctld` (or another SwiftRigControl instance's
 ///    ``RigControlServer``) and drive it as if it were a local
 ///    serial port.
