@@ -280,6 +280,7 @@ public actor RigctldCommandHandler {
         case "PKTLSB", "DATA-LSB", "DATALSB": return .dataLSB
         case "PKTUSB", "DATA-USB", "DATAUSB": return .dataUSB
         case "PKTFM", "DATA-FM", "DATAFM": return .dataFM
+        case "D-STAR", "DSTAR", "DV": return .dstar
         default:
             throw RigError.invalidParameter("Unknown mode: \(modeStr)")
         }
@@ -300,6 +301,7 @@ public actor RigctldCommandHandler {
         case .dataLSB: return "PKTLSB"
         case .dataUSB: return "PKTUSB"
         case .dataFM: return "PKTFM"
+        case .dstar: return "D-STAR"
         }
     }
 
@@ -315,6 +317,7 @@ public actor RigctldCommandHandler {
         case .rtty, .rttyR: return 500
         case .dataLSB, .dataUSB: return 2400
         case .dataFM: return 15000
+        case .dstar: return 6000
         }
     }
 

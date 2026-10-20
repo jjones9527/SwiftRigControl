@@ -254,7 +254,7 @@ public actor TenTecOrionProtocol:
         case .am:               return 0x41  // 'A'
         case .fm:               return 0x46  // 'F'
         case .rtty:             return 0x54  // 'T'
-        case .dataUSB, .dataLSB, .dataFM, .fmN, .rttyR, .wfm:
+        case .dataUSB, .dataLSB, .dataFM, .fmN, .rttyR, .wfm, .dstar:
             return nil
         }
     }

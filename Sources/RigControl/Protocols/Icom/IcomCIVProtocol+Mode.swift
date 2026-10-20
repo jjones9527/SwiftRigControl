@@ -218,6 +218,7 @@ extension IcomCIVProtocol {
         case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA-LSB uses LSB mode code + filter byte 0x00
         case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
         case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
+        case .dstar:   return CIVFrame.ModeCode.dstar
         }
     }
 
@@ -254,6 +255,8 @@ extension IcomCIVProtocol {
             return isData ? .dataFM : .fm
         case CIVFrame.ModeCode.wfm:
             return .wfm
+        case CIVFrame.ModeCode.dstar:
+            return .dstar
         default:
             throw RigError.invalidResponse
         }

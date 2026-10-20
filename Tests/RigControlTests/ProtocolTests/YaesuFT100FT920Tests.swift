@@ -131,21 +131,93 @@ import Testing
         // ft920.c:109-119 and ft920_set_mode (ft920.c:975-1009).
         let (transport, proto) = try await makeFT920()
         try await proto.setMode(mode, vfo: .a)
-        #expect(await transport.recordedWrites == [Data([0x00, 0x00, 0x00, selector, 0x0C])])
+        #expect(await transport.recordedWrites == [
+            Data([0x00, 0x00, 0x00, selector, 0x0C]),
+            Data([0x00, 0x00, 0x00, 0x00, 0x8C]),
+        ])
     }
 
     @Test func ft920VFOBModeSetsHighBit() async throws {
         // ft920.c:122-132 — VFO B forms are 0x80 | base.
         let (transport, proto) = try await makeFT920()
         try await proto.setMode(.dataUSB, vfo: .b)
-        #expect(await transport.recordedWrites == [Data([0x00, 0x00, 0x00, 0x8A, 0x0C])])
+        #expect(await transport.recordedWrites == [
+            Data([0x00, 0x00, 0x00, 0x8A, 0x0C]),
+            Data([0x00, 0x00, 0x00, 0x80, 0x8C]),
+        ])
     }
 
     @Test func ft920DataUSBDiffersFromFT1000MP() throws {
-        // FT-1000MP has no DATA-USB and falls back to 0x0A for both;
-        // on the FT-920 DATA-L is 0x08 and DATA-U is 0x0A.
+        // The families use distinct packet selectors.
         #expect(try YaesuFT1000MPCAT.modeSelector(for: .dataLSB, vfo: .a, family: .ft920) == 0x08)
         #expect(try YaesuFT1000MPCAT.modeSelector(for: .dataLSB, vfo: .a, family: .ft1000mp) == 0x0A)
+    }
+
+    @Test func ft920ReadsBothVFOFrequencies() async throws {
+        let (transport, proto) = try await makeFT920()
+        var status = [UInt8](repeating: 0, count: 28)
+        status.replaceSubrange(1...4, with: [0x00, 0xD6, 0x72, 0x70]) // 14,054,000
+        status.replaceSubrange(15...18, with: [0x00, 0x6B, 0xF9, 0x10]) // 7,076,112
+        let query = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        await transport.setResponse(for: query, response: Data(status))
+
+        #expect(try await proto.getFrequency(vfo: .a) == 14_054_000)
+        #expect(try await proto.getFrequency(vfo: .b) == 7_076_112)
+    }
+
+    @Test func ft920ReadsModePTTAndSplit() async throws {
+        let (transport, proto) = try await makeFT920()
+        var status = [UInt8](repeating: 0, count: 28)
+        status[7] = 0x40       // USB
+        status[21] = 0x85      // narrow DATA-U; width bit is ignored
+        let vfoQuery = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        let flagsQuery = Data([0x00, 0x00, 0x00, 0x01, 0xFA])
+        await transport.setResponse(for: vfoQuery, response: Data(status))
+        await transport.setResponse(for: flagsQuery, response: Data([0x82, 0, 0, 0, 0, 0, 0, 0]))
+
+        #expect(try await proto.getMode(vfo: .a) == .usb)
+        #expect(try await proto.getMode(vfo: .b) == .dataUSB)
+        #expect(try await proto.getPTT())
+        #expect(try await proto.getSplit())
+    }
+
+    @Test func ft920SetsAndReadsClarifierState() async throws {
+        let (transport, proto) = try await makeFT920()
+        try await proto.setRIT(RITXITState(enabled: true, offset: 1_230))
+        try await proto.setXIT(RITXITState(enabled: false, offset: -900))
+        #expect(await transport.recordedWrites == [
+            Data([0x00, 0x00, 0x00, 0x01, 0x09]),
+            Data([0x23, 0x01, 0x00, 0xFF, 0x09]),
+            Data([0x00, 0x00, 0x00, 0x80, 0x09]),
+            Data([0x00, 0x00, 0x00, 0xFF, 0x09]),
+        ])
+
+        await transport.reset()
+        var status = [UInt8](repeating: 0, count: 28)
+        status[5] = 0xFB
+        status[6] = 0x2E // signed big-endian -1234
+        let query = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        await transport.setResponse(for: query, response: Data(status))
+        #expect(try await proto.getRIT() == RITXITState(enabled: true, offset: -1_234))
+        #expect(try await proto.getXIT() == RITXITState(enabled: true, offset: -1_234))
+    }
+
+    @Test func ft920AndFT1000AdvertiseImplementedClarifierTraits() async throws {
+        let (_, ft920) = try await makeFT920()
+        let (_, ft1000) = try await makeFT1000MPForTraitCheck()
+        #expect(ft920 is any SupportsRIT)
+        #expect(ft920 is any SupportsXIT)
+        #expect(ft1000 is any SupportsRIT)
+        #expect(ft1000 is any SupportsXIT)
+        #expect(!RadioCapabilitiesDatabase.Yaesu.ft920.powerControl)
+        #expect(!RadioCapabilitiesDatabase.Yaesu.ft920.supportsSignalStrength)
+    }
+
+    private func makeFT1000MPForTraitCheck() async throws -> (MockTransport, YaesuFT1000MPCAT) {
+        let transport = MockTransport()
+        let proto = YaesuFT1000MPCAT(transport: transport, capabilities: .full)
+        try await proto.connect()
+        return (transport, proto)
     }
 
     // MARK: - Catalog wiring

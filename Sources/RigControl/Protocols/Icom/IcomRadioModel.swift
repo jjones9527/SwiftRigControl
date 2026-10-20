@@ -313,7 +313,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     public var supportsDSTAR: Bool {
         switch self {
         case .ic7100, .ic9700, .ic9100, .ic705, .id4100, .id5100,
-             .id31, .id51, .id52, .ic92d, .id1:
+             .id31, .id51, .id52, .ic92d, .id1, .icr30, .icr8600:
             return true
         default:
             return false

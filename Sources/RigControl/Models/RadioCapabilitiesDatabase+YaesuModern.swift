@@ -43,7 +43,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: false,
-        supportsSignalStrength: true,
+        supportsSignalStrength: false,
         requiresVFOSelection: false,
         requiresModeFilter: true,
         powerUnits: .percentage,
@@ -271,34 +271,38 @@ extension RadioCapabilitiesDatabase.Yaesu {
     public static let ft847 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
-        powerControl: true,
+        // Hamlib exposes BAND_SELECT only; FT-847 CAT has no RF power
+        // set/get command despite the radio's 100 W rated output.
+        powerControl: false,
         maxPower: 100,  // 100W HF/6m, 50W 2m/70cm
-        supportedModes: [.lsb, .usb, .cw, .am, .fm, .fmN, .dataUSB, .dataLSB],
+        // Hamlib FT847_ALL_RX_MODES has no DIG/PKT mode; sound-card
+        // applications use ordinary USB or LSB.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .am, .fm, .fmN],
         frequencyRange: FrequencyRange(min: 100_000, max: 512_000_000),
         detailedFrequencyRanges: [
             // General coverage receive
             DetailedFrequencyRange(min: 100_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
             // HF bands
-            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "160m"),
+            DetailedFrequencyRange(min: 1_800_000, max: 2_000_000, modes: [.lsb, .cw], canTransmit: true, bandName: "160m"),
             DetailedFrequencyRange(min: 2_000_001, max: 3_499_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "80m"),
+            DetailedFrequencyRange(min: 3_500_000, max: 4_000_000, modes: [.lsb, .cw], canTransmit: true, bandName: "80m"),
             DetailedFrequencyRange(min: 4_000_001, max: 6_999_999, modes: [.lsb, .usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw, .dataLSB], canTransmit: true, bandName: "40m"),
+            DetailedFrequencyRange(min: 7_000_000, max: 7_300_000, modes: [.lsb, .cw], canTransmit: true, bandName: "40m"),
             DetailedFrequencyRange(min: 7_300_001, max: 10_099_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb, .dataUSB], canTransmit: true, bandName: "30m"),
+            DetailedFrequencyRange(min: 10_100_000, max: 10_150_000, modes: [.cw, .usb], canTransmit: true, bandName: "30m"),
             DetailedFrequencyRange(min: 10_150_001, max: 13_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "20m"),
+            DetailedFrequencyRange(min: 14_000_000, max: 14_350_000, modes: [.usb, .cw], canTransmit: true, bandName: "20m"),
             DetailedFrequencyRange(min: 14_350_001, max: 18_067_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "17m"),
+            DetailedFrequencyRange(min: 18_068_000, max: 18_168_000, modes: [.usb, .cw], canTransmit: true, bandName: "17m"),
             DetailedFrequencyRange(min: 18_168_001, max: 20_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "15m"),
+            DetailedFrequencyRange(min: 21_000_000, max: 21_450_000, modes: [.usb, .cw], canTransmit: true, bandName: "15m"),
             DetailedFrequencyRange(min: 21_450_001, max: 24_889_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw, .dataUSB], canTransmit: true, bandName: "12m"),
+            DetailedFrequencyRange(min: 24_890_000, max: 24_990_000, modes: [.usb, .cw], canTransmit: true, bandName: "12m"),
             DetailedFrequencyRange(min: 24_990_001, max: 27_999_999, modes: [.usb, .cw, .am], canTransmit: false),
-            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .am, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
+            DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .am, .fm], canTransmit: true, bandName: "10m"),
             DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .fm, .am], canTransmit: false),
             // 6m
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .fm], canTransmit: true, bandName: "6m"),
             DetailedFrequencyRange(min: 54_000_001, max: 143_999_999, modes: [.usb, .fm, .am], canTransmit: false),
             // 2m
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .fm, .fmN], canTransmit: true, bandName: "2m"),
@@ -312,14 +316,15 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsALCMeter: true
     )
 
     /// Yaesu FT-920 HF/6m transceiver with DSP
     public static let ft920 = RigCapabilities(
         hasVFOB: true,
         hasSplit: true,
-        powerControl: true,
+        powerControl: false,
         maxPower: 100,  // 100W SSB/CW, 25W AM
         supportedModes: [.lsb, .usb, .cw, .rtty, .am, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 100_000, max: 56_000_000),
@@ -349,7 +354,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true,
+        supportsSignalStrength: false,
         requiresVFOSelection: false,
         requiresModeFilter: true,
         powerUnits: .percentage

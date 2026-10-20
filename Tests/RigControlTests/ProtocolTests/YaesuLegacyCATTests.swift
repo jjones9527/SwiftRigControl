@@ -161,14 +161,158 @@ import Testing
         #expect(writes[0] == Data([0x00, 0x00, 0x00, 0x01, 0x05]))
     }
 
-    @Test func ft1000mpGetFrequencyThrowsForNow() async throws {
-        // Status-block decode isn't implemented in this release.
-        // Explicit throw so downstream apps get a clear signal
-        // rather than a silent fallthrough.
+    @Test func ft1000mpReadsBothVFOFrequenciesFromStatus() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        var status = [UInt8](repeating: 0, count: 32)
+        // 14,230,000 * 16 / 10 = 0x015B6980.
+        status.replaceSubrange(1...4, with: [0x01, 0x5B, 0x69, 0x80])
+        // 7,074,000 * 16 / 10 = 0x00ACB480.
+        status.replaceSubrange(17...20, with: [0x00, 0xAC, 0xB4, 0x80])
+        let query = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        await transport.setResponse(for: query, response: Data(status))
+
+        #expect(try await proto.getFrequency(vfo: .a) == 14_230_000)
+        #expect(try await proto.getFrequency(vfo: .b) == 7_074_000)
+    }
+
+    @Test func ft1000mpReadsModeAndExtensionFlag() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        var status = [UInt8](repeating: 0, count: 32)
+        status[7] = 0x02
+        status[8] = 0x80       // CW with extension = CW (USB)
+        status[23] = 0x05
+        status[24] = 0x80      // RTTY with extension = RTTY-R
+        let query = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        await transport.setResponse(for: query, response: Data(status))
+
+        #expect(try await proto.getMode(vfo: .a) == .cw)
+        #expect(try await proto.getMode(vfo: .b) == .rttyR)
+    }
+
+    @Test func ft1000mpModeSettersMatchHamlibDirection() throws {
+        #expect(try YaesuFT1000MPCAT.modeSelector(for: .cw, vfo: .a) == 0x03)
+        #expect(try YaesuFT1000MPCAT.modeSelector(for: .cwR, vfo: .a) == 0x02)
+        #expect(try YaesuFT1000MPCAT.modeSelector(for: .dataUSB, vfo: .a) == 0x09)
+        #expect(try YaesuFT1000MPCAT.modeSelector(for: .dataFM, vfo: .b) == 0x8B)
+    }
+
+    @Test func ft1000mpSplitUsesFlagsStatus() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xFA])
+        await transport.setResponse(for: query, response: Data([0x01, 0, 0, 0, 0]))
+
+        try await proto.setSplit(true)
+        #expect(try await proto.getSplit())
+        #expect(await transport.recordedWrites.contains(
+            Data([0x00, 0x00, 0x00, 0x01, 0x01])
+        ))
+    }
+
+    @Test func ft1000mpPTTReadRemainsExplicitlyUnsupported() async throws {
+        let (_, proto) = try await makeFT1000MP()
+        await #expect(throws: RigError.self) { _ = try await proto.getPTT() }
+    }
+
+    @Test func ft1000mpSetsRITAndXITUsingClarifierFrames() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        try await proto.setRIT(RITXITState(enabled: true, offset: 1_230))
+        try await proto.setXIT(RITXITState(enabled: true, offset: -450))
+
+        #expect(await transport.recordedWrites == [
+            Data([0x00, 0x00, 0x00, 0x01, 0x09]),
+            Data([0x23, 0x01, 0x00, 0xFF, 0x09]),
+            Data([0x00, 0x00, 0x00, 0x81, 0x09]),
+            Data([0x45, 0x00, 0xFF, 0xFF, 0x09]),
+        ])
+    }
+
+    @Test func ft1000mpReadsIndependentClarifierEnableBits() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        var status = [UInt8](repeating: 0, count: 32)
+        status[5] = 0x03
+        status[6] = 0x20 // 800 native units × 10/16 = +500 Hz
+        status[9] = 0x02 // RIT on, XIT off
+        let query = Data([0x00, 0x00, 0x00, 0x03, 0x10])
+        await transport.setResponse(for: query, response: Data(status))
+
+        #expect(try await proto.getRIT() == RITXITState(enabled: true, offset: 500))
+        #expect(try await proto.getXIT() == RITXITState(enabled: false, offset: 500))
+    }
+
+    @Test func ft1000mpRejectsOutOfRangeClarifierOffset() async throws {
         let (_, proto) = try await makeFT1000MP()
         await #expect(throws: RigError.self) {
-            _ = try await proto.getFrequency(vfo: .a)
+            try await proto.setRIT(RITXITState(enabled: true, offset: 10_000))
         }
+    }
+
+    @Test func ft1000mpDoesNotOverclaimRFPowerSetSupport() {
+        #expect(!RadioCapabilitiesDatabase.Yaesu.ft1000MP.powerControl)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft1000MP.supportsSignalStrength)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft1000MP.supportsRFPowerMeter)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft1000MP.supportsSWRMeter)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft1000MP.supportsALCMeter)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft1000MP.supportsCompMeter)
+    }
+
+    @Test func ft1000mpVariantsUseCorrectRatedPowerCapabilities() async throws {
+        #expect(RadioDefinition.Yaesu.ft1000MP.capabilities.maxPower == 100)
+        #expect(RadioDefinition.Yaesu.ft1000MPMkV.capabilities.maxPower == 200)
+        #expect(RadioDefinition.Yaesu.ft1000MPMkVField.capabilities.maxPower == 100)
+
+        let mkVProtocol = try #require(
+            RadioDefinition.Yaesu.ft1000MPMkV.createProtocol(transport: MockTransport())
+                as? YaesuFT1000MPCAT
+        )
+        let fieldProtocol = try #require(
+            RadioDefinition.Yaesu.ft1000MPMkVField.createProtocol(transport: MockTransport())
+                as? YaesuFT1000MPCAT
+        )
+        #expect(await mkVProtocol.capabilities.maxPower == 200)
+        #expect(await fieldProtocol.capabilities.maxPower == 100)
+    }
+
+    @Test func ft1000mpSignalStrengthUsesHamlibCalibration() async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xF7])
+        await transport.setResponse(for: query, response: Data([160, 0, 0, 0, 0]))
+        #expect(try await proto.getSignalStrength() == SignalStrength(sUnits: 9, raw: 160))
+
+        await transport.setResponse(for: query, response: Data([255, 0, 0, 0, 0]))
+        #expect(try await proto.getSignalStrength() == SignalStrength(sUnits: 9, overS9: 60, raw: 255))
+    }
+
+    @Test(arguments: [
+        (UInt8(0x80), MeterReading.Kind.rfPower),
+        (UInt8(0x81), MeterReading.Kind.alc),
+        (UInt8(0x83), MeterReading.Kind.comp),
+        (UInt8(0x85), MeterReading.Kind.swr),
+    ])
+    func ft1000mpReadsTXMeters(selector: UInt8,
+                               kind: MeterReading.Kind) async throws {
+        let (transport, proto) = try await makeFT1000MP()
+        let query = Data([selector, selector, selector, selector, 0xF7])
+        await transport.setResponse(for: query, response: Data([128, 0, 0, 0, 0]))
+
+        let reading: MeterReading
+        switch kind {
+        case .rfPower: reading = try await proto.getRFPowerOut()
+        case .alc: reading = try await proto.getALC()
+        case .comp: reading = try await proto.getComp()
+        case .swr: reading = try await proto.getSWR()
+        default: throw RigError.invalidResponse
+        }
+        #expect(reading.kind == kind)
+        #expect(reading.raw == 128)
+        #expect(abs(reading.normalized - 128.0 / 255.0) < 0.000_001)
+    }
+
+    @Test func ft920RejectsFT1000OnlyMeters() async throws {
+        let transport = MockTransport()
+        let proto = YaesuFT1000MPCAT(transport: transport, capabilities: .full, family: .ft920)
+        try await proto.connect()
+        await #expect(throws: RigError.self) { _ = try await proto.getSignalStrength() }
+        await #expect(throws: RigError.self) { _ = try await proto.getALC() }
     }
 
     // MARK: - FT-847 setup
@@ -179,11 +323,20 @@ import Testing
         let transport = MockTransport()
         let proto = YaesuFT847CAT(
             transport: transport,
-            capabilities: .full,
+            capabilities: RadioCapabilitiesDatabase.Yaesu.ft847,
             isUnidirectional: unidirectional
         )
         try await proto.connect()
         return (transport, proto)
+    }
+
+    @Test func ft847CapabilitiesMatchImplementedTraits() async throws {
+        let (_, proto) = try await makeFT847()
+        #expect(proto is any SupportsSplit)
+        #expect(proto is any SupportsSignalStrength)
+        #expect(proto is any SupportsTXMeters)
+        #expect(!RadioCapabilitiesDatabase.Yaesu.ft847.powerControl)
+        #expect(RadioCapabilitiesDatabase.Yaesu.ft847.supportsALCMeter)
     }
 
     // MARK: - FT-847 frequency
@@ -211,6 +364,17 @@ import Testing
         #expect(writes.count == 1)
     }
 
+    @Test func ft847ReadsFrequencyFromCombinedStatusFrame() async throws {
+        let (transport, proto) = try await makeFT847()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0x03])
+        await transport.setResponse(
+            for: query,
+            response: Data([0x01, 0x42, 0x30, 0x00, 0x01])
+        )
+
+        #expect(try await proto.getFrequency(vfo: .a) == 14_230_000)
+    }
+
     // MARK: - FT-847 mode
 
     @Test func ft847SetModeLSB() async throws {
@@ -233,6 +397,30 @@ import Testing
         try await proto.setMode(.fmN, vfo: .a)
         let writes = await transport.recordedWrites
         #expect(writes[0] == Data([0x88, 0x00, 0x00, 0x00, 0x07]))
+    }
+
+    @Test func ft847ReadsModeFromCombinedStatusFrame() async throws {
+        let (transport, proto) = try await makeFT847()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0x03])
+        await transport.setResponse(
+            for: query,
+            response: Data([0x01, 0x42, 0x30, 0x00, 0x88])
+        )
+
+        #expect(try await proto.getMode(vfo: .a) == .fmN)
+    }
+
+    @Test func ft847SatelliteModeRoutesModeToRxAndTxVFOs() async throws {
+        let (transport, proto) = try await makeFT847()
+        try await proto.setSplit(true)
+        try await proto.setMode(.usb, vfo: .a)
+        try await proto.setMode(.fm, vfo: .b)
+
+        let writes = await transport.recordedWrites
+        #expect(writes[0] == Data([0x00, 0x00, 0x00, 0x00, 0x4E]))
+        #expect(writes[1] == Data([0x01, 0x00, 0x00, 0x00, 0x17]))
+        #expect(writes[2] == Data([0x08, 0x00, 0x00, 0x00, 0x27]))
+        #expect(try await proto.getSplit())
     }
 
     // MARK: - FT-847 PTT
@@ -349,5 +537,27 @@ import Testing
 
         let ptt = try await proto.getPTT()
         #expect(ptt == true)
+    }
+
+    @Test func ft847SignalStrengthUsesRxStatusDots() async throws {
+        let (transport, proto) = try await makeFT847()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xE7])
+        await transport.setResponse(for: query, response: Data([0x1F]))
+
+        let strength = try await proto.getSignalStrength()
+        #expect(strength.sUnits == 9)
+        #expect(strength.overS9 == 60)
+        #expect(strength.raw == 0x1F)
+    }
+
+    @Test func ft847ALCUsesTxStatusLowFiveBits() async throws {
+        let (transport, proto) = try await makeFT847()
+        let query = Data([0x00, 0x00, 0x00, 0x00, 0xF7])
+        await transport.setResponse(for: query, response: Data([0x90]))
+
+        let alc = try await proto.getALC()
+        #expect(alc.kind == .alc)
+        #expect(alc.raw == 16)
+        #expect(alc.normalized == 16.0 / 31.0)
     }
 }

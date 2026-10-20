@@ -35,6 +35,8 @@ enum IcomMenuSetting: CaseIterable, Sendable {
     case clockTime
     /// Clock UTC offset (`icom_clock_cmds.offset_cmds`).
     case clockUTCOffset
+    /// DATA-mode modulation input (`DATA MOD`).
+    case dataModulationSource
 }
 
 extension IcomRadioModel {
@@ -45,10 +47,8 @@ extension IcomRadioModel {
     /// `ic7300mk2_extcmds` (`ic7300.c:323-354`) and `ic7300_clock_cmds` /
     /// `ic7300mk2_clock_cmds` (`ic7300.c:424-430`).
     ///
-    /// The IC-7300's DATA modulation source (`00 67`) is deliberately not
-    /// listed: on the MK2 `00 67` is the calibration marker, Hamlib has no
-    /// entry for either, and the MK2 number has to come from its CI-V
-    /// manual (attached to jjones9527/SwiftRigControl#19).
+    /// DATA modulation-source numbers come from the corresponding Icom
+    /// CI-V reference guides. Hamlib does not currently expose this item.
     func menuSettingParameter(_ setting: IcomMenuSetting) -> [UInt8]? {
         switch self {
         case .ic7300:
@@ -65,6 +65,7 @@ extension IcomRadioModel {
             case .clockDate:       return [0x00, 0x94]
             case .clockTime:       return [0x00, 0x95]
             case .clockUTCOffset:  return [0x00, 0x96]
+            case .dataModulationSource: return [0x00, 0x67]
             }
         case .ic7300mk2:
             switch setting {
@@ -80,6 +81,7 @@ extension IcomRadioModel {
             case .clockDate:       return [0x01, 0x32]
             case .clockTime:       return [0x01, 0x33]
             case .clockUTCOffset:  return [0x01, 0x36]
+            case .dataModulationSource: return [0x00, 0x85]
             }
         default:
             return nil

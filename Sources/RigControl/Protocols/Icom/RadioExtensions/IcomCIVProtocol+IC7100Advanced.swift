@@ -228,7 +228,7 @@ extension IcomCIVProtocol {
         case CIVFrame.ModeCode.rttyR: mode = .rttyR
         case CIVFrame.ModeCode.fm: mode = .fm
         case CIVFrame.ModeCode.wfm: mode = .wfm
-        case 0x17: mode = .dataUSB  // DV mode on IC-7100
+        case 0x17: mode = .dstar
         default: mode = .usb  // Default fallback
         }
         return (mode, dataMode, filter)

@@ -324,16 +324,16 @@ extension RadioCapabilitiesDatabase.Icom {
         powerControl: true,
         maxPower: 50,
         // FM/AM only: Hamlib lists AM/FM + DSTAR, no SSB or DATA. D-STAR
-        // DV isn't modelled (it used to be faked as .dataFM).
-        supportedModes: [.fm, .fmN, .am],
+        // DV is represented by the native `.dstar` mode.
+        supportedModes: [.fm, .fmN, .am, .dstar],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // Airband receive only
             DetailedFrequencyRange(min: 118_000_000, max: 136_000_000, modes: [.am], canTransmit: false, bandName: "Airband"),
             // 2m
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // 70cm
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
         ],
         hasDualReceiver: true,  // Dual band dual watch
         hasATU: false,
@@ -354,16 +354,16 @@ extension RadioCapabilitiesDatabase.Icom {
         powerControl: true,
         maxPower: 65,
         // FM/AM only: Hamlib lists AM/FM + DSTAR, no SSB or DATA. D-STAR
-        // DV isn't modelled (it used to be faked as .dataFM).
-        supportedModes: [.fm, .fmN, .am],
+        // DV is represented by the native `.dstar` mode.
+        supportedModes: [.fm, .fmN, .am, .dstar],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // Airband receive only
             DetailedFrequencyRange(min: 118_000_000, max: 136_000_000, modes: [.am], canTransmit: false, bandName: "Airband"),
             // 2m
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // 70cm
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
         ],
         hasDualReceiver: true,  // Dual band dual watch
         hasATU: false,
@@ -385,11 +385,11 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: false,  // Receiver only
         powerControl: false,  // No transmit power
         maxPower: 0,
-        supportedModes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm],
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm, .dstar],
         frequencyRange: FrequencyRange(min: 10_000, max: 3_000_000_000),
         detailedFrequencyRanges: [
             // Wideband coverage
-            DetailedFrequencyRange(min: 10_000, max: 3_000_000_000, modes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm], canTransmit: false, bandName: "Wideband"),
+            DetailedFrequencyRange(min: 10_000, max: 3_000_000_000, modes: [.lsb, .usb, .cw, .am, .fm, .fmN, .wfm, .dstar], canTransmit: false, bandName: "Wideband"),
         ],
         hasDualReceiver: false,
         hasATU: false,

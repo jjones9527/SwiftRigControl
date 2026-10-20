@@ -139,6 +139,8 @@ extension CIVFrame {
         public static let psk: UInt8 = 0x12
         /// PSK-R — PSK reverse sideband (0x13)
         public static let pskR: UInt8 = 0x13
+        /// D-STAR digital voice (0x17)
+        public static let dstar: UInt8 = 0x17
     }
 
     /// Filter byte values (second data byte in set-mode 0x06 frames).

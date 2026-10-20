@@ -235,7 +235,7 @@ extension IcomCIVProtocol {
         case CIVFrame.ModeCode.cw: mode = .cw
         case CIVFrame.ModeCode.cwR: mode = .cwR
         case CIVFrame.ModeCode.fm: mode = .fm
-        case 0x17: mode = .dataUSB  // DV mode on IC-9700
+        case 0x17: mode = .dstar
         default: mode = .usb  // Default fallback
         }
         return (mode, dataMode, filter)

@@ -1456,15 +1456,18 @@ The Icom and K2 items have a ready-made check:
       limit; lines are now capped at 4096 bytes. Parser tests cover
       raw-hex, `send_raw`, NUL and oversized numbers.
 - [x] IC-7300MK2 `1A 05` renumbering (jjones9527/SwiftRigControl#19):
-      per-model menu-number table and test added in v1.2.19. Still to
-      look up: the MK2's DATA mod-source number (not in Hamlib).
+      per-model menu-number table and test added in v1.2.19. The official
+      CI-V guide confirms DATA MOD as `00 85` on the MK2 (`00 67` on the
+      original IC-7300); both are now covered by tests.
 - [x] **IC-F8101 needs its own commands** (done for v1.2.19, `ICF8101CommandSet`). Hamlib drives it with
       `1A 35` / `1A 36` / `1A 34` for frequency and mode
       (`icf8101.c:39-130`), not `0x05` / `0x06`. Definition-only today.
-- [x] **D-STAR DV stand-ins removed** (v1.2.19). A real DV mode case is a v1.3 item. ID-31/51/52/4100/5100 advertise `.dataFM`
-      (and the IC-R30 `.dataUSB`) as a stand-in for D-STAR DV; Hamlib
-      models it as `RIG_MODE_DSTAR`. Needs a mode case or removing the
-      stand-in.
+- [x] **Native D-STAR DV mode** (Unreleased). `Mode.dstar` maps to Icom
+      CI-V `0x17`, Kenwood TH-D74/75 mode index `1`/readback `7`, and
+      rigctld `D-STAR`. Applicable transceivers and the IC-R30/IC-R8600
+      receivers advertise native DV instead of DATA stand-ins. Rich
+      callsign, routing, message, GPS, and status operations remain a
+      separate feature-trait item.
 
 ---
 

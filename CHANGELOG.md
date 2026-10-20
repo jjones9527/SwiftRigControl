@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+- Completed FT-1000MP/MARK-V/MARK-V Field and FT-920 core status support:
+  frequency and mode readback now decode both VFOs from their Hamlib-defined
+  binary status layouts, split has set/read support, and FT-920 PTT readback
+  uses its flags block. FT-920 mode changes now also select the normal-width
+  VFO filter. Corrected FT-1000MP CW/CW-R and packet-mode selectors to current
+  Hamlib behavior. FT-1000MP PTT readback remains explicitly unsupported
+  because Hamlib does not advertise it.
+- Added Hamlib-aligned RIT/XIT control and readback to FT-1000MP/MARK-V and
+  FT-920, including signed clarifier decoding, independent FT-1000MP enable
+  flags, range validation, and disable semantics. Removed unsupported RF-power
+  set claims from both families; Hamlib exposes meter readback, not RF-power
+  level setting, for these radios. Removed the FT-920 signal-strength claim
+  because its Hamlib backend exposes no signal-strength getter.
+- Added FT-1000MP/MARK-V S-meter readback using Hamlib's twelve-point
+  `FT1000MP_STR_CAL` curve, plus normalized RF-power, ALC, compression, and
+  SWR meter reads using the radio's five-byte `0xF7` response. FT-920 meter
+  calls remain explicitly unsupported because its Hamlib backend exposes no
+  corresponding getters.
+- Split the FT-1000MP-family capability records by hardware variant: the
+  original FT-1000MP and MARK-V Field now correctly report 100 W, while the
+  desktop MARK-V reports 200 W. Their CAT commands and feature flags remain
+  shared.
+
 All notable changes to SwiftRigControl will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -23,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Native D-STAR digital-voice mode support.** `Mode.dstar` now maps to
+  Icom CI-V mode `0x17`, Kenwood TH-D74/TH-D75 mode index `1` (and index
+  `7` on readback), and rigctld `D-STAR`/`DSTAR`/`DV`. Capabilities and
+  frequency ranges now advertise DV for the applicable Icom transceivers,
+  IC-R30/IC-R8600 receivers, and Kenwood handhelds. Cross-referenced with
+  current Hamlib source; hardware validation remains pending user feedback.
 - **Hamgeek uSDX definition-only support.** A dedicated minimal adapter
   implements the radio's VFO-A-only TS-480 subset, firmware mode aliases,
   asymmetric PTT replies, and non-printable-byte cleanup without advertising
@@ -35,6 +66,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Icom catalog capability parity.** IC-7000 no longer advertises DATA
+  modes its Hamlib backend and command set do not support; ID-31 and ID-51
+  now include their Hamlib-declared AM receive mode. New catalog invariants
+  verify that all 51 Icom definitions have encodable modes, internally
+  consistent frequency ranges, and DATA-capable command paths. The official
+  IC-7300MK2 CI-V `DATA MOD` menu address (`1A 05 00 85`) is recorded alongside
+  the original IC-7300 address (`1A 05 00 67`).
+- **FT-847 satellite routing and capability parity.** Satellite RX/TX
+  mode writes now use the required `0x17`/`0x27` opcodes, split state is
+  exposed through the public split trait, and RX/TX status bytes provide
+  S-meter and ALC readings. Removed unsupported RF-power control and
+  DATA-mode claims; the FT-847 CAT command set uses ordinary USB/LSB for
+  sound-card operation. Cross-referenced with current Hamlib `ft847.c`.
 - **Xiegu G90 RIT now uses the radio's SET-only CI-V form.** The G90
   accepts `21 00` with a ±500 Hz value and treats zero as disabled; it
   does not accept the normal Icom `21 01` enable follow-up. Its negative

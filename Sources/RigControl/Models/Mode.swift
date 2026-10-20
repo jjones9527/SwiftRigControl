@@ -45,4 +45,7 @@ public enum Mode: String, Sendable, Codable, CaseIterable {
 
     /// Digital FM
     case dataFM = "DATA-FM"
+
+    /// D-STAR digital voice (DV).
+    case dstar = "D-STAR"
 }
