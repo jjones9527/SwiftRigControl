@@ -18,7 +18,7 @@ extension RadioDefinition.Yaesu {
         }
     )
 
-    /// Yaesu FTX-1 HF/6m transceiver (2025 flagship portable)
+    /// Yaesu FTX-1 HF/VHF/UHF portable transceiver
     ///
     /// Uses ``YaesuCATProtocol`` with ``YaesuCATProtocol/Quirks/ftx1``
     /// — the FTX-1 speaks semicolon-terminated newcat but with
@@ -29,18 +29,19 @@ extension RadioDefinition.Yaesu {
     /// `Quirks.ftx1` for full source citations against Hamlib
     /// `rigs/yaesu/ftx1/`.
     ///
-    /// RF coverage matches the FTDX-10 (HF + 6m, 100 W), so the
-    /// FTdx10 capabilities entry is reused rather than duplicated.
+    /// Unlike Yaesu's desktop radios, its CAT port is 8-N-1 with no
+    /// hardware handshake. The radio covers HF, 6 m, 2 m, and 70 cm;
+    /// maximum power depends on the attached amplifier/power source.
     public static let ftx1 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FTX-1",
         defaultBaudRate: 38400,
-        capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
-        serialDefaults: .yaesuHFDesktop,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ftx1,
+        serialDefaults: .standard,
         protocolFactory: { transport in
             YaesuCATProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ftx1,
                 quirks: .ftx1
             )
         }
@@ -155,7 +156,7 @@ extension RadioDefinition.Yaesu {
     public static let ft857D = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-857D",
-        defaultBaudRate: 38400,
+        defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft857D,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
@@ -516,7 +517,7 @@ extension RadioDefinition.Yaesu {
     public static let ft857 = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-857",
-        defaultBaudRate: 38400,
+        defaultBaudRate: 4800,
         capabilities: RadioCapabilitiesDatabase.Yaesu.ft857,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in

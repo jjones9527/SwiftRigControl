@@ -1,6 +1,59 @@
 import Foundation
 
 extension RadioCapabilitiesDatabase.Yaesu {
+    /// FTX-1 capability surface from Hamlib `rigs/yaesu/ftx1/ftx1.c`.
+    /// The 100 W ceiling applies with the SPA-1 amplifier; the field unit
+    /// itself is limited to 6 W on battery or 10 W on external DC power.
+    public static let ftx1 = RigCapabilities(
+        hasVFOB: true,
+        hasSplit: true,
+        powerControl: true,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
+        frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
+        detailedFrequencyRanges: {
+            let all: Set<Mode> = [.lsb, .usb, .cw, .cwR, .rtty, .rttyR,
+                                  .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM]
+            let bands: [(UInt64, UInt64, String)] = [
+                (1_800_000, 1_999_999, "160m"), (3_500_000, 3_999_999, "80m"),
+                (5_167_500, 5_406_500, "60m"), (7_000_000, 7_300_000, "40m"),
+                (10_100_000, 10_150_000, "30m"), (14_000_000, 14_350_000, "20m"),
+                (18_068_000, 18_168_000, "17m"), (21_000_000, 21_450_000, "15m"),
+                (24_890_000, 24_990_000, "12m"), (28_000_000, 29_700_000, "10m"),
+                (50_000_000, 54_000_000, "6m"), (144_000_000, 148_000_000, "2m"),
+                (430_000_000, 450_000_000, "70cm"),
+            ]
+            let receiveRanges: [(UInt64, UInt64)] = [
+                (30_000, 174_000_000), (400_000_000, 470_000_000),
+            ]
+            var result: [DetailedFrequencyRange] = []
+            for (rxMin, rxMax) in receiveRanges {
+                var cursor = rxMin
+                for (bandMin, bandMax, name) in bands where bandMax >= rxMin && bandMin <= rxMax {
+                    if cursor < bandMin {
+                        result.append(DetailedFrequencyRange(min: cursor, max: bandMin - 1, modes: all, canTransmit: false))
+                    }
+                    result.append(DetailedFrequencyRange(min: bandMin, max: bandMax, modes: all, canTransmit: true, bandName: name))
+                    cursor = bandMax + 1
+                }
+                if cursor <= rxMax {
+                    result.append(DetailedFrequencyRange(min: cursor, max: rxMax, modes: all, canTransmit: false))
+                }
+            }
+            return result
+        }(),
+        hasDualReceiver: false,
+        hasATU: true,
+        supportsSignalStrength: true,
+        powerUnits: .watts(max: 100),
+        supportsRIT: true,
+        supportsXIT: true,
+        supportsCTCSS: true,
+        supportsDCS: true,
+        supportsDuplex: true,
+        supportsSendCW: true
+    )
+
 
     // MARK: - Yaesu Radios
 

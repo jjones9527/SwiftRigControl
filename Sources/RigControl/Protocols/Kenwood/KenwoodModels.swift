@@ -147,7 +147,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-D74",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd74,
-        serialDefaults: .kenwoodDesktop,
+        serialDefaults: .kenwoodTHD74,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
@@ -160,9 +160,8 @@ extension RadioDefinition.Kenwood {
     /// Kenwood TH-D75A tri-band handheld with D-STAR and APRS
     /// (2023 successor to the TH-D74).
     ///
-    /// TH-D75 does not exist in Hamlib as of 4.7.2, but Kenwood's
-    /// service documentation states the CAT command set is
-    /// backward-compatible with the TH-D74. Uses ``THD72Protocol``
+    /// Hamlib's TH-D75 backend uses the TH-D74 record codec and
+    /// command family. Uses ``THD72Protocol``
     /// with ``THD72Protocol/Family/thd74`` accordingly. Same latent-
     /// bug story as TH-D74: prior to v1.2.0 this factory shipped
     /// wired to `KenwoodProtocol` (semicolon-terminated), which
@@ -172,7 +171,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-D75",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thd75,
-        serialDefaults: .kenwoodDesktop,
+        serialDefaults: .standard,
         protocolFactory: { transport in
             THD72Protocol(
                 transport: transport,
@@ -405,7 +404,7 @@ extension RadioDefinition.Kenwood {
         model: "TM-V71(A)",
         defaultBaudRate: 57600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.tmv71,
-        serialDefaults: .kenwoodDesktop,
+        serialDefaults: .standard,
         protocolFactory: { transport in
             TMFamilyCAT(
                 transport: transport,
@@ -425,7 +424,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-F6A",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thf6a,
-        serialDefaults: .kenwoodDesktop,
+        serialDefaults: .standard,
         protocolFactory: { transport in
             THFamilyCAT(
                 transport: transport,
@@ -443,7 +442,7 @@ extension RadioDefinition.Kenwood {
         model: "TH-F7E",
         defaultBaudRate: 9600,
         capabilities: RadioCapabilitiesDatabase.Kenwood.thf7e,
-        serialDefaults: .kenwoodDesktop,
+        serialDefaults: .standard,
         protocolFactory: { transport in
             THFamilyCAT(
                 transport: transport,

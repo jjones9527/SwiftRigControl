@@ -60,9 +60,9 @@ import Testing
         #expect(secondWrite.contains("0147500000"))
     }
 
-    // MARK: - THD72Protocol .thd74 (mode at position 31, not 51)
+    // MARK: - THD72Protocol .thd74 / .thd75 command family
 
-    @Test func thd74ModeAtPosition31NotPosition51() async throws {
+    @Test func thd74GetModeUsesDedicatedMDCommand() async throws {
         let transport = MockTransport()
         let proto = THD72Protocol(
             transport: transport,
@@ -72,31 +72,33 @@ import Testing
         try await proto.connect()
         await transport.reset()
 
-        // TH-D74 response is 72 bytes; mode selector at char 31.
-        // For this test we only need the parser to look at position
-        // 31 correctly. Construct a 72-byte response where char 31
-        // holds '1' (FM-N).
-        let responsePayload = String(
-            repeating: "0",
-            count: 72
-        )
-        var chars = Array(responsePayload)
-        chars[0] = "F"; chars[1] = "O"; chars[2] = " "; chars[3] = "0"; chars[4] = ","
-        // freq at chars 5-14
-        for (i, c) in "0146000000".enumerated() {
-            chars[5 + i] = c
-        }
-        // mode at char 31
-        chars[31] = "1"
-        let responseStr = String(chars)
-        let query = "FO 0\r".data(using: .ascii)!
+        // Hamlib thd74_get_mode uses `MD <band>`, not the mode field
+        // embedded in FO. Mode 6 is narrow FM.
+        let query = "MD 0\r".data(using: .ascii)!
         await transport.setResponse(
             for: query,
-            response: (responseStr + "\r").data(using: .ascii)!
+            response: "MD 0,6\r".data(using: .ascii)!
         )
 
         let mode = try await proto.getMode(vfo: .a)
         #expect(mode == .fmN)
+    }
+
+    @Test func thd75SetModeUsesDedicatedMDCommand() async throws {
+        let transport = MockTransport()
+        let proto = THD72Protocol(
+            transport: transport,
+            capabilities: RadioCapabilitiesDatabase.Kenwood.thd75,
+            family: .thd74
+        )
+        try await proto.connect()
+        await transport.reset()
+
+        let command = "MD 1,4\r".data(using: .ascii)!
+        await transport.setResponse(for: command, response: command)
+        try await proto.setMode(.usb, vfo: .b)
+
+        #expect(await transport.recordedWrites == [command])
     }
 
     // MARK: - TMFamilyCAT

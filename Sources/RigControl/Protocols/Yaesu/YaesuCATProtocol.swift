@@ -35,7 +35,8 @@ public actor YaesuCATProtocol:
     SupportsMonitorGain,
     SupportsVOXGain,
     SupportsVOXDelay,
-    SupportsIFShift
+    SupportsIFShift,
+    SupportsSendCW
 {
     /// The serial transport for communication
     public let transport: any SerialTransport

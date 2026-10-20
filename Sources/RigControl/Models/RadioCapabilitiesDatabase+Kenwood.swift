@@ -337,14 +337,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
     /// Kenwood TH-D75A — tri-band D-STAR/APRS handheld (announced
     /// Hamvention 2024, shipping mid-2024; successor to the TH-D74).
     ///
-    /// **Verification status: definition-only, reverse-engineered.**
-    /// Kenwood does not publish a TH-D75 PC command reference;
-    /// the radio's CAT surface is inferred from the TH-D74's
-    /// community-derived command set and the TH-D75 user
-    /// manual's references to MCP-D75 and ARFC-D75 PC software.
-    /// CAT operations should mirror the TH-D74 ("FQ", "MD",
-    /// "FO", "PC", "SM", "SQ", etc.) but specific commands have
-    /// not been hardware-verified.
+    /// Cross-checked against Hamlib's dedicated TH-D75 backend in
+    /// `rigs/kenwood/thd74.c` and shared `thd7x` record codec.
     ///
     /// **Transport:** USB-C virtual COM or Bluetooth SPP only.
     /// The TH-D75 does NOT support RS-232 over a serial cable —
@@ -359,26 +353,25 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: false,
         powerControl: true,
         maxPower: 5,  // 5W handheld
-        // D-STAR DV isn't modelled; THD72Protocol sets FM / FM-N / AM only
-        // (pre-v1.2.19 this listed .dataFM, which setMode rejected).
-        supportedModes: [.fm, .fmN],
-        frequencyRange: FrequencyRange(min: 118_000_000, max: 524_000_000),
+        // D-STAR DV isn't modelled; list every other mode accepted by `MD`.
+        supportedModes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw, .cwR],
+        frequencyRange: FrequencyRange(min: 100_000, max: 524_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive
-            DetailedFrequencyRange(min: 118_000_000, max: 143_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 100_000, max: 143_999_999,
+                                    modes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
                                     modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
             // General receive between bands
             DetailedFrequencyRange(min: 148_000_001, max: 219_999_999,
-                                    modes: [.fm, .fmN], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 1.25m band (220 MHz)
             DetailedFrequencyRange(min: 220_000_000, max: 225_000_000,
                                     modes: [.fm, .fmN], canTransmit: true, bandName: "1.25m"),
             // More general receive
             DetailedFrequencyRange(min: 225_000_001, max: 429_999_999,
-                                    modes: [.fm, .fmN], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
                                     modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
@@ -393,7 +386,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         supportsDCS: true,
         supportsDuplex: true,
         // Hamlib thd74.c:37-38 — TONE/TSQL. Same surface on TH-D75.
-        supportedFunctions: [.ctcssTone, .ctcssSquelch]
+        supportedFunctions: [.ctcssTone, .ctcssSquelch, .vox]
     )
 
     /// Kenwood TH-D74A - Tri-band handheld with D-STAR and APRS

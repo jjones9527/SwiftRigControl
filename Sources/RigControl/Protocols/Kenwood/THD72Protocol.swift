@@ -156,6 +156,14 @@ public actor THD72Protocol:
     // MARK: - Mode Control
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
+        if family == .thd74 {
+            let modeIndex = try modeToTHD74Index(mode)
+            let vfoChar = vfoCharacter(vfo)
+            try await sendCommand("MD \(vfoChar),\(modeIndex)")
+            _ = try await receiveResponse()
+            return
+        }
+
         let modeIndex = try modeToTHD72Index(mode)
         var info = try await fetchFOString(vfo: vfo)
         let offset = family.modeCharOffset
@@ -168,6 +176,20 @@ public actor THD72Protocol:
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
+        if family == .thd74 {
+            let vfoChar = vfoCharacter(vfo)
+            try await sendCommand("MD \(vfoChar)")
+            let response = try await receiveResponse()
+            let fields = response.split(separator: " ", maxSplits: 1)
+            guard fields.count == 2 else { throw RigError.invalidResponse }
+            let values = fields[1].split(separator: ",")
+            guard values.count == 2, values[0] == Substring(vfoChar),
+                  let index = Int(values[1]) else {
+                throw RigError.invalidResponse
+            }
+            return try modeFromTHD74Index(index)
+        }
+
         let info = try await fetchFOString(vfo: vfo)
         return try parseMode(from: info)
     }
@@ -394,6 +416,36 @@ public actor THD72Protocol:
         case .am:  return 2
         default:
             throw RigError.unsupportedOperation("Mode \(mode) not supported by TH-D72")
+        }
+    }
+
+    /// TH-D74/TH-D75 `MD band,mode` mapping from Hamlib `thd74_mode_table`.
+    private func modeToTHD74Index(_ mode: Mode) throws -> Int {
+        switch mode {
+        case .fm: return 0
+        case .am: return 2
+        case .lsb: return 3
+        case .usb: return 4
+        case .cw: return 5
+        case .fmN: return 6
+        case .wfm: return 8
+        case .cwR: return 9
+        default:
+            throw RigError.unsupportedOperation("Mode \(mode) not supported by TH-D74/TH-D75")
+        }
+    }
+
+    private func modeFromTHD74Index(_ index: Int) throws -> Mode {
+        switch index {
+        case 0: return .fm
+        case 2: return .am
+        case 3: return .lsb
+        case 4: return .usb
+        case 5: return .cw
+        case 6: return .fmN
+        case 8: return .wfm
+        case 9: return .cwR
+        default: throw RigError.invalidResponse
         }
     }
 

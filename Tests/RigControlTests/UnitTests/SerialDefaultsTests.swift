@@ -89,6 +89,18 @@ import Testing
         #expect(d.hardwareFlowControl == false)
     }
 
+    @Test func ftx1Uses8N1WithoutHandshake() {
+        // Hamlib rigs/yaesu/ftx1/ftx1.c specifies 8-N-1 and NONE.
+        let d = RadioDefinition.Yaesu.ftx1.serialDefaults
+        #expect(d.stopBits == 1)
+        #expect(d.hardwareFlowControl == false)
+    }
+
+    @Test func ft857FactoryDefaultBaudIs4800() {
+        #expect(RadioDefinition.Yaesu.ft857.defaultBaudRate == 4800)
+        #expect(RadioDefinition.Yaesu.ft857D.defaultBaudRate == 4800)
+    }
+
     @Test func portableYaesuRadiosUseYaesuHFPortableProfile() {
         // FT-817/818/857/857D/897/897D — 2 stop, no handshake per
         // Hamlib rigs/yaesu/ft{817,857,897}.c.
@@ -122,6 +134,28 @@ import Testing
             #expect(radio.serialDefaults.stopBits == 1)
             #expect(radio.serialDefaults.hardwareFlowControl == true)
         }
+    }
+
+    @Test func thd74UsesXONXOFFAndTHD75UsesNoHandshake() {
+        let d74 = RadioDefinition.Kenwood.thd74.serialDefaults
+        #expect(d74.stopBits == 1)
+        #expect(d74.hardwareFlowControl == false)
+        #expect(d74.softwareFlowControl == true)
+
+        let d75 = RadioDefinition.Kenwood.thd75.serialDefaults
+        #expect(d75.stopBits == 1)
+        #expect(d75.hardwareFlowControl == false)
+        #expect(d75.softwareFlowControl == false)
+    }
+
+    @Test func kenwoodHandheldAndTMV71NoHandshakeProfilesMatchHamlib() {
+        for radio in [RadioDefinition.Kenwood.thd75, .Kenwood.thF6A,
+                      .Kenwood.thF7E, .Kenwood.tmV71] {
+            #expect(radio.serialDefaults.stopBits == 1)
+            #expect(radio.serialDefaults.hardwareFlowControl == false)
+            #expect(radio.serialDefaults.softwareFlowControl == false)
+        }
+        #expect(RadioDefinition.Kenwood.tmD710.serialDefaults.hardwareFlowControl)
     }
 
     @Test func ts850UsesKenwoodLegacyProfile() {

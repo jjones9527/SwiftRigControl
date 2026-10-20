@@ -271,6 +271,15 @@ public struct RadioDefinition: Sendable {
             hardwareFlowControl: true
         )
 
+        /// 8-N-1 with XON/XOFF software flow control. Used by the
+        /// TH-D74 USB serial interface.
+        ///
+        /// Source: Hamlib `rigs/kenwood/thd74.c` —
+        /// `.serial_handshake = RIG_HANDSHAKE_XONXOFF`.
+        public static let kenwoodTHD74 = SerialDefaults(
+            softwareFlowControl: true
+        )
+
         /// 8-N-2 with RTS/CTS hardware flow control. Legacy Kenwood
         /// desktop HF profile — TS-450S, TS-690S, TS-850S, TS-940S.
         ///
