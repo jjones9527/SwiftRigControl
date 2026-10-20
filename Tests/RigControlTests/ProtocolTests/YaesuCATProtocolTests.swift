@@ -953,4 +953,37 @@ import Testing
         let writes = await mockTransport.recordedWrites
         #expect(String(data: writes[2], encoding: .ascii) == "RD0250;")
     }
+
+    @Test func ftx1SendCWStoresUppercaseTextInSlotFiveThenPlaysIt() async throws {
+        let transport = MockTransport()
+        let proto = YaesuCATProtocol(
+            transport: transport,
+            capabilities: RadioCapabilitiesDatabase.Yaesu.ftx1,
+            quirks: .ftx1
+        )
+        try await proto.connect()
+        await transport.reset()
+
+        try await proto.sendCW("cq dé va3ztf")
+
+        let writes = await transport.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["KM5CQ D VA3ZTF;", "KY05;"])
+    }
+
+    @Test func ftx1SendCWMemoryNumberPlaysSlotAndStopUsesKY00() async throws {
+        let transport = MockTransport()
+        let proto = YaesuCATProtocol(
+            transport: transport,
+            capabilities: RadioCapabilitiesDatabase.Yaesu.ftx1,
+            quirks: .ftx1
+        )
+        try await proto.connect()
+        await transport.reset()
+
+        try await proto.sendCW("3")
+        try await proto.stopCW()
+
+        let writes = await transport.recordedWrites.map { String(data: $0, encoding: .ascii) }
+        #expect(writes == ["KY03;", "KY00;"])
+    }
 }

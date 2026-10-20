@@ -116,10 +116,8 @@ aligned; readback completeness varies by adapter.
   getters unsupported because their status-block decoders are incomplete.
   These radios must remain definition-only until getter parity is added.
 - Hamlib declares FT-817/857/897 serial ranges of 4800–38400, 8-N-2,
-  without flow control. SwiftRigControl has the correct 8-N-2 profile,
-  but the FT-857/857D catalog default of 38400 conflicts with the reported
-  factory 4800 setting in issue #40. Confirm against the Yaesu manual or
-  reporter before changing all related defaults.
+  without flow control. SwiftRigControl retains that framing and now uses
+  the FT-857/857D factory 4800-baud setting as its connection default.
 
 ### Kenwood, Flex, and Lab599
 
@@ -134,8 +132,12 @@ Hamlib's per-model styles and are protected by `KenwoodModeStyleTests`.
   radios. Unsupported modes are rejected by hardware, but trimming each
   table would improve capability accuracy.
 - TH-D75 now has a dedicated Hamlib TH-D74/TH-D75 record codec in
-  `thd7x.c/.h`; SwiftRigControl still routes it through the older D74-like
-  TH-D72 adapter. This is the highest-priority Kenwood completeness audit.
+  `thd7x.c/.h`. The focused follow-up corrected TH-D74/TH-D75 mode access
+  to use `MD band,mode`, updated TH-D75 modes/ranges/functions, and aligned
+  model-specific serial flow control. Frequency record rewriting remains
+  compatible with the shared codec for the fields SwiftRigControl changes.
+- The same serial audit corrected TM-V71, TH-F6A, and TH-F7E to 8-N-1
+  without handshake; TM-D710 remains RTS/CTS as Hamlib specifies.
 - QRP-Labs QMX exists in Hamlib's `ts480.c` with model-specific modes and
   metering. It is not yet in SwiftRigControl (issue #39).
 
@@ -174,11 +176,9 @@ TH-D75 entry was also updated to reflect Hamlib's current dedicated
 ## Priority order before hardware validation
 
 1. Land and mock-test the G90 RIT, FTX-1 clarifier, and watcher fixes.
-2. Decide whether FTX-1 CW send belongs in the same patch or the next
-   feature release; it is missing functionality, not a regression.
-3. Investigate FT-857 issue #40 with its log and menu-013 baud setting.
-4. Perform a focused TH-D75 `thd7x` diff before claiming TH-D75 protocol
-   completeness.
+2. Hardware-validate the new FTX-1 `KM5`/`KY` CW-message path.
+3. Hardware-validate FT-857/857D startup at the factory 4800-baud setting.
+4. Hardware-validate TH-D75 frequency/mode and flow-control behavior.
 5. Run `HARDWARE_CHECK_v1.2.19.md`, then seek Kenwood/Yaesu field reports.
 
 ## Verification performed
@@ -190,3 +190,5 @@ TH-D75 entry was also updated to reflect Hamlib's current dedicated
   skipped, zero failures.
 - The post-change suite ran 1,052 tests: 995 passed, 57 hardware tests
   skipped, zero failures.
+- The focused FTX-1/FT-857/Kenwood follow-up ran 1,060 tests: 1,003
+  passed, 57 hardware tests skipped, zero failures.

@@ -10,6 +10,16 @@ import Testing
 /// `RigController` can connect to them via the mock transport.
 @Suite struct V11RadioDefinitionsTests {
 
+    @Test func ftx1CapabilitiesUseAmateurTransmitBandsAndSplitReceiveCoverage() {
+        let caps = RadioCapabilitiesDatabase.Yaesu.ftx1
+        #expect(caps.supportsSendCW)
+        #expect(caps.canTransmit(on: 14_230_000))
+        #expect(caps.canTransmit(on: 146_520_000))
+        #expect(caps.canTransmit(on: 446_000_000))
+        #expect(!caps.canTransmit(on: 12_000_000))
+        #expect(!caps.isFrequencyValid(200_000_000))
+    }
+
     // MARK: - Kenwood TH-D75
 
     @Test func thd75BasicCaps() {
@@ -17,6 +27,9 @@ import Testing
         #expect(caps.maxPower == 5)
         #expect(caps.hasDualReceiver == true)
         #expect(caps.supportsCTCSS == true)
+        #expect(caps.supportedFunctions.contains(.vox))
+        #expect(caps.supportedModes.contains(.usb))
+        #expect(caps.isFrequencyValid(1_000_000))
         // 2m TX
         #expect(caps.canTransmit(on: 146_520_000))
         // 70cm TX
