@@ -15,6 +15,8 @@ public actor QRPLabsQMXProtocol: CATProtocol, SupportsSplit, SupportsTXMeters {
     private static let terminator: UInt8 = 0x3B
     private static let timeout: TimeInterval = 1.0
 
+    /// Creates a QMX adapter over the radio's USB serial transport.
+    /// - Parameter transport: Openable transport connected to the QMX CAT port.
     public init(transport: any SerialTransport) {
         self.transport = transport
         self.capabilities = RadioCapabilitiesDatabase.QRPLabs.qmx
