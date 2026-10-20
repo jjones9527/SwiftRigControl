@@ -158,6 +158,11 @@ extension RadioDefinition.Kenwood {
     ].sorted { $0.model < $1.model }
 }
 
+extension RadioDefinition.QRPLabs {
+    /// Every QRP Labs radio SwiftRigControl supports.
+    public static let allRadios: [RadioDefinition] = [qmx]
+}
+
 extension RadioDefinition.Elecraft {
 
     /// Every Elecraft radio SwiftRigControl supports, alphabetically by
@@ -332,6 +337,7 @@ extension RadioDefinition {
         + Flex.allRadios
         + TenTec.allRadios
         + Lab599.allRadios
+        + QRPLabs.allRadios
         + Guohetec.allRadios
         + Anytone.allRadios
         + Elad.allRadios
@@ -359,6 +365,7 @@ extension RadioDefinition {
         case .flex:      return Flex.allRadios
         case .tentec:    return TenTec.allRadios
         case .lab599:    return Lab599.allRadios
+        case .qrpLabs:   return QRPLabs.allRadios
         case .guohetec:  return Guohetec.allRadios
         case .anytone:   return Anytone.allRadios
         case .elad:      return Elad.allRadios

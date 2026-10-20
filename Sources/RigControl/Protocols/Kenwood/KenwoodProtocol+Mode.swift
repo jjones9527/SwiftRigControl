@@ -14,7 +14,7 @@ extension KenwoodProtocol {
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         switch modeStyle {
-        case .standard, .flexDigital:
+        case .standard, .flexDigital, .qmx:
             let code = try Self.modeCode(for: mode, style: modeStyle)
             try await sendSetCommand("MD\(Self.modeCharacter(code))")
 
@@ -56,7 +56,7 @@ extension KenwoodProtocol {
 
     public func getMode(vfo: VFO) async throws -> Mode {
         switch modeStyle {
-        case .standard, .flexDigital:
+        case .standard, .flexDigital, .qmx:
             let code = try await readModeCode(query: "MD", offset: 2)
             return try Self.mode(forCode: code, style: modeStyle)
 
@@ -195,7 +195,7 @@ extension KenwoodProtocol {
             (.rtty, 6), (.cwR, 7), (.rttyR, 9),
         ]
         switch style {
-        case .standard, .dataSubMode:
+        case .standard, .dataSubMode, .qmx:
             return shared
         case .operatingMode, .setFrequencyAndMode:
             // C = LSB-D1, D = USB-D1, E = FM-D1: ts990s.c:106-108 and the

@@ -49,6 +49,12 @@ public struct RadioDefinition: Sendable {
     /// Mac alone is not sufficient.
     public let hostRequirement: HostRequirement
 
+    /// Operating mode applications should select for sound-card digital work.
+    /// `nil` means the radio has no model-specific preference. QMX uses plain
+    /// USB because its Kenwood packet-mode code selects the front-panel `DiGi`
+    /// mode, which is not suitable for applications such as Winlink.
+    public let preferredDataMode: Mode?
+
     /// Protocol factory closure
     private let protocolFactory: @Sendable (any SerialTransport) -> any CATProtocol
 
@@ -76,6 +82,7 @@ public struct RadioDefinition: Sendable {
         case tentec = "Ten-Tec"
         case lab599 = "Lab599"
         case flex = "FlexRadio"
+        case qrpLabs = "QRP Labs"
 
         // v1.2.0 additions. Downstream code that exhaustively switches
         // on `Manufacturer` without a `default:` arm will fail to
@@ -378,6 +385,8 @@ public struct RadioDefinition: Sendable {
     ///     connects to. Set this on definitions like PowerSDR /
     ///     Thetis / SDR-Console (Windows-only apps) or PiHPSDR
     ///     (Linux/Pi-only). See ``HostRequirement``.
+    ///   - preferredDataMode: Model-specific mode applications should use for
+    ///     sound-card digital operation, or `nil` when there is no preference.
     public init(
         manufacturer: Manufacturer,
         model: String,
@@ -388,7 +397,8 @@ public struct RadioDefinition: Sendable {
         serialDefaults: SerialDefaults = .standard,
         protocolFactory: @escaping @Sendable (any SerialTransport) -> any CATProtocol,
         civAddressRebuilder: (@Sendable (UInt8?) -> RadioDefinition)? = nil,
-        hostRequirement: HostRequirement = .standalone
+        hostRequirement: HostRequirement = .standalone,
+        preferredDataMode: Mode? = nil
     ) {
         self.manufacturer = manufacturer
         self.model = model
@@ -400,6 +410,7 @@ public struct RadioDefinition: Sendable {
         self.protocolFactory = protocolFactory
         self.civAddressRebuilder = civAddressRebuilder
         self.hostRequirement = hostRequirement
+        self.preferredDataMode = preferredDataMode
     }
 
     /// Creates a protocol instance for this radio.
@@ -480,6 +491,9 @@ public struct RadioDefinition: Sendable {
     /// that share the Kenwood-derived CAT command set documented
     /// in Hamlib `kenwood/flex6xxx.c`.
     public enum Flex {}
+
+    /// QRP Labs compact HF transceivers.
+    public enum QRPLabs {}
 
     // v1.2.0 vendor namespaces — see Documentation/RADIO_PARITY_v1.2.md
     // for the target radio list per vendor. Radios land in follow-up

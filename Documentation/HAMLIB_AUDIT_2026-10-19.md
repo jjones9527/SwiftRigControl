@@ -138,8 +138,10 @@ Hamlib's per-model styles and are protected by `KenwoodModeStyleTests`.
   compatible with the shared codec for the fields SwiftRigControl changes.
 - The same serial audit corrected TM-V71, TH-F6A, and TH-F7E to 8-N-1
   without handshake; TM-D710 remains RTS/CTS as Hamlib specifies.
-- QRP-Labs QMX exists in Hamlib's `ts480.c` with model-specific modes and
-  metering. It is not yet in SwiftRigControl (issue #39).
+- QRP Labs QMX is now implemented as a definition-only TS-480 subset with
+  model-specific `PC`/`SW` metering. SwiftRigControl deliberately recommends
+  ordinary USB for digital audio (`preferredDataMode`) because QMX users report
+  Hamlib's packet-USB mapping selects the incompatible front-panel `DiGi` mode.
 
 ### Elecraft
 

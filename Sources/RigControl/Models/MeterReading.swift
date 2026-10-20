@@ -54,6 +54,11 @@ public struct MeterReading: Sendable, Equatable {
     /// - `.current`: `0.0` = 0 A, `1.0` = ≈25 A (Icom default).
     public let normalized: Double
 
+    /// Exact value in the meter's natural unit when supplied by a protocol.
+    /// This bypasses the default Icom calibration curves for radios such as
+    /// QMX that report watts and SWR directly.
+    public let physicalValue: Double?
+
     /// Which transmit-side meter a reading is from. Discriminates
     /// the typed-accessor branch on ``MeterReading``.
     public enum Kind: String, Sendable, Equatable, CaseIterable {
@@ -75,25 +80,28 @@ public struct MeterReading: Sendable, Equatable {
     /// convenience ``decode(kind:raw:)`` factory in most cases;
     /// this initializer is exposed for tests and for protocols
     /// that build readings outside the standard Icom curve.
-    public init(kind: Kind, raw: Int, normalized: Double) {
+    public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil) {
         self.kind = kind
         self.raw = raw
         self.normalized = normalized
+        self.physicalValue = physicalValue
     }
 
     /// RF power output in watts, if this is an `.rfPower` reading.
     /// Returns `nil` for any other meter kind.
     ///
-    /// Uses the Icom default RF-power meter calibration curve.
+    /// Uses a protocol-supplied physical value when available, otherwise the
+    /// Icom default RF-power meter calibration curve.
     public var watts: Double? {
-        kind == .rfPower ? Self.rfPowerCurve.interpolate(rawDouble) : nil
+        kind == .rfPower ? (physicalValue ?? Self.rfPowerCurve.interpolate(rawDouble)) : nil
     }
 
     /// SWR as an X:1 ratio, if this is a `.swr` reading. Returns
-    /// `nil` for any other meter kind. The curve maps `raw == 0` to
+    /// `nil` for any other meter kind. A protocol-supplied physical value wins;
+    /// otherwise the default curve maps `raw == 0` to
     /// 1.0 (perfect match) and `raw == 240` to 6.0 (i.e. 6:1).
     public var swrRatio: Double? {
-        kind == .swr ? Self.swrCurve.interpolate(rawDouble) : nil
+        kind == .swr ? (physicalValue ?? Self.swrCurve.interpolate(rawDouble)) : nil
     }
 
     /// Speech compressor activity in dB, if this is a `.comp`
