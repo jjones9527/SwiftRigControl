@@ -45,4 +45,7 @@ public struct RadioCapabilitiesDatabase {
 
     /// QRP Labs compact HF transceivers.
     public enum QRPLabs {}
+
+    /// Hamgeek Arduino-based HF transceivers.
+    public enum Hamgeek {}
 }

@@ -82,7 +82,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **135 radio definitions**, but only a subset
+SwiftRigControl ships with **136 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -272,6 +272,12 @@ table above — are field-tested; all others are definition-only.
 - **QMX** - Definition-only TS-480-subset control with QMX power/SWR
   metering; applications should use `preferredDataMode` (`USB`) for digital
   audio rather than the radio's `DiGi` packet mode.
+
+### Hamgeek — 1 model
+
+- **uSDX** - Definition-only, VFO-A-only TS-480 subset over USB serial or
+  Bluetooth. Supports frequency, mode, and PTT with model-specific reply and
+  digital-mode handling.
 
 ### FlexRadio family — 13 definitions
 

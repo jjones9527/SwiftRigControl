@@ -19,7 +19,7 @@ internal struct RadioIdentifyProbe {
         case .icom:
             return try await probeIcom(transport: transport, timeout: timeout)
 
-        case .kenwood, .elecraft, .yaesu, .xiegu, .lab599, .flex, .qrpLabs:
+        case .kenwood, .elecraft, .yaesu, .xiegu, .lab599, .flex, .qrpLabs, .hamgeek:
             // Kenwood TH-handhelds (TH-D72, TH-D74, TH-D75) use the
             // CR (`\r`) terminator and reply with an alphabetic
             // model name like `ID TH-D72\r` per Hamlib `thd72.c`
