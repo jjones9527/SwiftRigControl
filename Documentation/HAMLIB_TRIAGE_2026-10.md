@@ -39,6 +39,7 @@ commit's neighborhood, not in the commit itself.
 | `07d6a7ff`, `f440c9cd`, `2bc935fa` — dedicated TH-D75 backend | Low-medium. Our TH-D74/D75 use `THD72Protocol(.d74)`. Hamlib now has a richer backend worth diffing. | P3 audit. |
 | `ca840d04` et al. — TCI 2.0 backend (Expert Electronics) | New vendor protocol. | Out of current scope; candidate for a future minor. |
 | QMX | Implemented as a definition-only TS-480 subset, including direct power/SWR meters and USB digital-mode preference. | Done; await user hardware feedback. |
+| Hamgeek uSDX | Implemented with a dedicated VFO-A-only TS-480-subset adapter matching `hamgeek.c`. | Done; await user hardware feedback. |
 | ats-mini, guohetec, usrp, KEYSPD NULL deref, docs/CI/SWIG commits | Not in our catalog / C-only. | Skip. |
 
 ## Pre-existing issues found during this review (not upstream-driven)

@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Hamgeek uSDX definition-only support.** A dedicated minimal adapter
+  implements the radio's VFO-A-only TS-480 subset, firmware mode aliases,
+  asymmetric PTT replies, and non-printable-byte cleanup without advertising
+  unsupported Kenwood features. Cross-referenced with Hamlib `hamgeek.c`.
 - **QRP Labs QMX definition-only support.** A dedicated TS-480-subset
   adapter covers frequency, mode, VFO, split, PTT, and the QMX `PC`/`SW`
   power and SWR meters. `RadioDefinition.preferredDataMode` identifies

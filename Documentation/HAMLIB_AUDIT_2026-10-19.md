@@ -142,6 +142,10 @@ Hamlib's per-model styles and are protected by `KenwoodModeStyleTests`.
   model-specific `PC`/`SW` metering. SwiftRigControl deliberately recommends
   ordinary USB for digital audio (`preferredDataMode`) because QMX users report
   Hamlib's packet-USB mapping selects the incompatible front-panel `DiGi` mode.
+- Hamgeek uSDX is now implemented against Hamlib's dedicated `hamgeek.c`
+  backend. The adapter models its single VFO, `MD1`…`MD5` aliases, lack of
+  reliable PTT readback, asymmetric `TX`/`RX0` replies, and serial garbage
+  filtering; hardware validation remains outstanding.
 
 ### Elecraft
 

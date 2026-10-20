@@ -61,7 +61,7 @@ Grouped by vendor / protocol family for batching efficiency.
 | 2 | ID-52A/E Plus | Icom | `rigs/icom/id52plus.c` | 2024 | reuse-existing (CI-V) | ~2 hours |
 | 3 | Q900 | Guohetec | `rigs/guohetec/q900.c` | 2024 | **new-vendor-protocol** | ~1 day |
 | 4 | PMR-171 | Guohetec | `rigs/guohetec/pmr171.c` | 2023 | reuse (same guohetec adapter) | ~4 hours |
-| 5 | Hamgeek uSDX | Kenwood family | `rigs/kenwood/hamgeek.c` | 2024 | reuse-existing (TS-480 subset over BT) | ~4 hours |
+| 5 | Hamgeek uSDX ✅ | Kenwood family | `rigs/kenwood/hamgeek.c` | 2024 | dedicated VFO-A-only adapter | complete; definition-only |
 | 6 | QRP Labs QMX ✅ | Kenwood family | `rigs/kenwood/ts480.c` (in-file entry) | 2023 | dedicated TS-480-subset adapter | complete; definition-only |
 | 7 | (tr)uSDX | Kenwood family | `rigs/kenwood/ts480.c` (in-file entry) | 2022 | reuse-existing (Kenwood TS-480 subset) | ~2 hours |
 

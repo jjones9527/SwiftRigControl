@@ -83,6 +83,7 @@ public struct RadioDefinition: Sendable {
         case lab599 = "Lab599"
         case flex = "FlexRadio"
         case qrpLabs = "QRP Labs"
+        case hamgeek = "Hamgeek"
 
         // v1.2.0 additions. Downstream code that exhaustively switches
         // on `Manufacturer` without a `default:` arm will fail to
@@ -494,6 +495,9 @@ public struct RadioDefinition: Sendable {
 
     /// QRP Labs compact HF transceivers.
     public enum QRPLabs {}
+
+    /// Hamgeek Arduino-based HF transceivers.
+    public enum Hamgeek {}
 
     // v1.2.0 vendor namespaces — see Documentation/RADIO_PARITY_v1.2.md
     // for the target radio list per vendor. Radios land in follow-up

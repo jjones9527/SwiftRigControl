@@ -163,6 +163,11 @@ extension RadioDefinition.QRPLabs {
     public static let allRadios: [RadioDefinition] = [qmx]
 }
 
+extension RadioDefinition.Hamgeek {
+    /// Every Hamgeek radio SwiftRigControl supports.
+    public static let allRadios: [RadioDefinition] = [usdx]
+}
+
 extension RadioDefinition.Elecraft {
 
     /// Every Elecraft radio SwiftRigControl supports, alphabetically by
@@ -338,6 +343,7 @@ extension RadioDefinition {
         + TenTec.allRadios
         + Lab599.allRadios
         + QRPLabs.allRadios
+        + Hamgeek.allRadios
         + Guohetec.allRadios
         + Anytone.allRadios
         + Elad.allRadios
@@ -366,6 +372,7 @@ extension RadioDefinition {
         case .tentec:    return TenTec.allRadios
         case .lab599:    return Lab599.allRadios
         case .qrpLabs:   return QRPLabs.allRadios
+        case .hamgeek:   return Hamgeek.allRadios
         case .guohetec:  return Guohetec.allRadios
         case .anytone:   return Anytone.allRadios
         case .elad:      return Elad.allRadios
