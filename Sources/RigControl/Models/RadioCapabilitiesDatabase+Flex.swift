@@ -84,6 +84,39 @@ extension RadioCapabilitiesDatabase.Flex {
                                 modes: [.fm, .am], canTransmit: false),
     ]
 
+    private static let smartSDRFrequencyRanges: [DetailedFrequencyRange] =
+        flexFrequencyRanges.filter { $0.max <= 54_000_000 } + [
+            DetailedFrequencyRange(
+                min: 54_000_001,
+                max: 100_000_000,
+                modes: [.lsb, .usb, .cw, .am, .fm, .fmN, .dataLSB, .dataUSB],
+                canTransmit: false
+            ),
+        ]
+
+    /// Native SmartSDR TCP API capability surface for slices A–H.
+    ///
+    /// Cross-checked against Hamlib `rigs/flexradio/smartsdr.c` and
+    /// `smartsdr_caps.h`: one targetable slice, 30 kHz–100 MHz receive,
+    /// amateur HF/6 m transmit, native CWX text transmission, and no VFO B.
+    public static let smartSDR = RigCapabilities(
+        hasVFOB: false,
+        hasSplit: false,
+        powerControl: false,
+        maxPower: 100,
+        supportedModes: [.lsb, .usb, .cw, .am, .fm, .fmN, .dataLSB, .dataUSB],
+        frequencyRange: FrequencyRange(min: 30_000, max: 100_000_000),
+        detailedFrequencyRanges: smartSDRFrequencyRanges,
+        hasDualReceiver: false,
+        hasATU: false,
+        supportsSignalStrength: false,
+        requiresVFOSelection: false,
+        supportsRIT: false,
+        supportsXIT: false,
+        availableTuningSteps: [1],
+        supportsSendCW: true
+    )
+
     /// Flex 6000-series — SmartSDR-driven SDR transceivers.
     ///
     /// Covers the 6300, 6400, 6500, 6600, and 6700 variants. All

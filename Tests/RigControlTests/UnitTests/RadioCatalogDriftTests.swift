@@ -85,6 +85,8 @@ import Testing
     @Test func flexCatalogMatchesExpectedModels() {
         let expected: Set<String> = [
             "6000-series", "PowerSDR", "Thetis",
+            "SmartSDR Slice A", "SmartSDR Slice B", "SmartSDR Slice C", "SmartSDR Slice D",
+            "SmartSDR Slice E", "SmartSDR Slice F", "SmartSDR Slice G", "SmartSDR Slice H",
             // v1.2.0 Group I — TS-2000-emulation SDR clients
             "SDR-Console", "PiHPSDR",
         ]

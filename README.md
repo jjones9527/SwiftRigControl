@@ -32,8 +32,8 @@ A native Swift library for controlling amateur radio transceivers on macOS.
   by vendor. **This is a breaking change.** See
   [`Documentation/MIGRATION_v1.1.md`](Documentation/MIGRATION_v1.1.md).
 - **TCP transport** — new `ConnectionType.tcp(host:port:)`
-  backed by Network.framework. Drives Flex 6000-series radios
-  (SmartSDR @ 4992) and remote `rigctld` / `RigControlServer`
+  backed by Network.framework. Drives native Flex SmartSDR
+  (port 4992), configured CAT bridges, and remote `rigctld` / `RigControlServer`
   instances.
 - **FlexRadio family** — three definition-only radios under the
   new `.Flex` namespace: `flex6000`, `powerSDR`, `thetis`. All
@@ -82,7 +82,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **126 radio definitions**, but only a subset
+SwiftRigControl ships with **134 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -267,15 +267,18 @@ table above — are field-tested; all others are definition-only.
 
 - **TX-500** - Portable HF transceiver (10W, Kenwood-compatible CAT)
 
-### FlexRadio — 3 definitions
+### FlexRadio family — 13 definitions
 
-All three are **definition-only** (no hardware verification yet).
-They reuse `KenwoodProtocol` on the wire — Hamlib does the same in
-`kenwood/flex6xxx.c`.
+All are **definition-only** (no hardware verification yet). The native
+SmartSDR definitions use FlexRadio's TCP API; the compatibility and
+software-radio definitions retain their Hamlib-matched CAT protocols.
 
-- **Flex 6000-series** - 6300/6400/6500/6600/6700 via SmartSDR's TCP CAT bridge (`.tcp(host:port: 4992)`)
+- **SmartSDR Slice A–H** - Native SmartSDR TCP API (`.tcp(host:port: 4992)`)
+- **Flex 6000-series** - 6300/6400/6500/6600/6700 via a configured Kenwood CAT bridge
 - **PowerSDR** - FlexRadio/Apache Labs PowerSDR via virtual serial CAT
 - **Thetis** - TAPR open-source PowerSDR fork via virtual serial CAT
+- **SDR-Console** - TS-2000-compatible virtual CAT
+- **PiHPSDR** - TS-2000-compatible CAT on Linux/Raspberry Pi
 
 ## Installation
 
@@ -981,14 +984,14 @@ See our comprehensive [Adding Radio Support Guide](Documentation/ADDING_RADIOS.m
 7. Submit PR
 
 **We currently support:**
-- Icom CI-V protocol (38 radios)
-- Yaesu CAT protocol (21 radios)
-- Kenwood text protocol (12 radios, includes TH-D72/TH-D74)
+- Icom CI-V protocol (51 radios)
+- Yaesu CAT protocol (30 radios)
+- Kenwood protocol families (24 radios)
 - Elecraft text protocol (6 radios)
-- Ten-Tec protocol (5 radios — Orion family + Legacy)
+- Ten-Tec protocol (6 radios — Orion family + Legacy)
 - Xiegu (CI-V compatible) (3 radios)
 - Lab599 (Kenwood-compatible) (1 radio)
-- FlexRadio (Kenwood-compatible via SmartSDR / PowerSDR / Thetis) (3 definitions)
+- Flex/software-radio protocols (13 definitions, including native SmartSDR slices A–H)
 
 Adding a radio using an existing protocol typically takes 30-60 minutes!
 
