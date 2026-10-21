@@ -6,6 +6,10 @@ import Foundation
 /// - Voice modes: AM, FM, SSB (USB/LSB)
 /// - Digital modes: RTTY, PSK, FT8 (typically use USB or DATA-USB)
 /// - Morse code: CW
+///
+/// New cases are added in minor releases as radios gain modes (v1.3.0
+/// added `amN`, `dataFMN`, `c4fm` and `dstar`). Keep a `default` arm in
+/// any `switch` over `Mode`.
 public enum Mode: String, Sendable, Codable, CaseIterable {
     /// Lower Side Band (voice, primarily HF below 10 MHz)
     case lsb = "LSB"

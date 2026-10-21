@@ -51,7 +51,25 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.2.20** (git tag, 2026-10-19),
+The shipped version is **v1.3.0** (git tag, 2026-10-21),
+jjones9527/SwiftRigControl#46–#51 and the release PR:
+
+- **New radios** (catalog 126 → 137): native Flex SmartSDR slices
+  A–H (`FlexSmartSDRProtocol`, port 4992, Hamlib `smartsdr.c`),
+  QRP Labs QMX, Hamgeek uSDX (`hamgeek.c`), Icom ID-52A/E PLUS.
+- **New `Mode` cases** `.amN`, `.dataFMN`, `.c4fm`, `.dstar`, plus
+  `RadioDefinition.preferredDataMode`. New cases on public enums
+  break exhaustive `switch`es downstream (no library evolution), so
+  they go in minor releases only, with a CHANGELOG Migration note.
+- **Hamlib audit** of all mapped radios against `06335264`
+  (`Documentation/HAMLIB_AUDIT_2026-10-19.md`): G90 RIT, FTX-1 `CF`
+  clarifier, FT-1000MP/MARK-V/FT-920, FT-847 satellite, TH-D74/D75.
+
+**Mock-tested only.** Test count 911 → 985 (`swift test` count;
+Xcode reports more because it counts parameterized cases). Remaining
+work: ROADMAP Phase 5.10.2 hardware checks.
+
+The previously-shipped version was **v1.2.20** (git tag, 2026-10-19),
 jjones9527/SwiftRigControl#41, #42, #44:
 
 - **Elecraft on/off replies** (`ElecraftProtocol+ReplyParsing.swift`):

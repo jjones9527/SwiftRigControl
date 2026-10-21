@@ -1,6 +1,16 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.2.20 (cut 2026-10-19 — Elecraft `FT` / `TQ` /
+**Current version:** v1.3.0 (cut 2026-10-21 — catalog 126 → 137:
+native Flex SmartSDR slices A–H (`FlexSmartSDRProtocol`, port 4992),
+QRP Labs QMX, Hamgeek uSDX, Icom ID-52A/E PLUS.  New `Mode` cases
+`.amN` / `.dataFMN` / `.c4fm` / `.dstar` and
+`RadioDefinition.preferredDataMode`.  Hamlib audit of every mapped radio
+against `06335264`: G90 RIT, FTX-1 `CF` clarifier and full mode table,
+FT-1000MP / MARK-V / FT-920 status, meters and RIT/XIT, FT-847 satellite
+opcodes, TH-D74/D75 `MD band,mode`, Kenwood TM/TH serial settings.
+Minor bump because public enums gained cases.  Mock-tested only.  Test
+count 911 → 985.)
+Previous release **v1.2.20** (cut 2026-10-19 — Elecraft `FT` / `TQ` /
 `RT` / `XT` replies are validated instead of prefix-checked; Icom power
 readback is clamped to 100% (G90 full-power `02 5F`); the rigctld server
 caps lines at 4096 bytes; Yaesu newcat monitor gain uses `ML1` and
@@ -1462,12 +1472,52 @@ The Icom and K2 items have a ready-made check:
 - [x] **IC-F8101 needs its own commands** (done for v1.2.19, `ICF8101CommandSet`). Hamlib drives it with
       `1A 35` / `1A 36` / `1A 34` for frequency and mode
       (`icf8101.c:39-130`), not `0x05` / `0x06`. Definition-only today.
-- [x] **Native D-STAR DV mode** (Unreleased). `Mode.dstar` maps to Icom
+- [x] **Native D-STAR DV mode** (v1.3.0). `Mode.dstar` maps to Icom
       CI-V `0x17`, Kenwood TH-D74/75 mode index `1`/readback `7`, and
       rigctld `D-STAR`. Applicable transceivers and the IC-R30/IC-R8600
       receivers advertise native DV instead of DATA stand-ins. Rich
       callsign, routing, message, GPS, and status operations remain a
       separate feature-trait item.
+
+---
+
+## Phase 5.10 — Hamlib audit 2026-10-19 and new radios (v1.3.0)
+
+Source: `Documentation/HAMLIB_AUDIT_2026-10-19.md` (all 126 mapped
+radios against Hamlib `06335264`). Shipped in
+jjones9527/SwiftRigControl#46–#51.
+
+### 5.10.1 Shipped in v1.3.0 (mock-tested; no hardware verification)
+
+- [x] Xiegu G90 RIT: set-only `21 00`, `getRIT` unsupported (Hamlib
+      `aff6e940`).
+- [x] FTX-1 RIT/XIT on the `CF` command family; full FTX-1 mode table
+      (DATA-FM, AM-N, C4FM, DATA-FM-N, WFM receive).
+- [x] FT-1000MP / MARK-V / MARK-V Field / FT-920: both-VFO status,
+      split, RIT/XIT, S-meter and meters; RF-power and signal-strength
+      claims Hamlib doesn't back removed; per-variant power (100 / 200 W).
+- [x] FT-847 satellite `0x17` / `0x27` opcodes, split, S-meter / ALC.
+- [x] FT-857 family 4800-baud default; TH-D74/D75 `MD band,mode`;
+      TM-V71 / TH-F6A / TH-F7E 8-N-1.
+- [x] Icom catalog invariants (IC-7000 DATA removed, ID-31/ID-51 AM).
+- [x] Native D-STAR (`Mode.dstar`) across Icom, TH-D74/D75 and rigctld.
+- [x] New radios: Flex SmartSDR slices A–H (native API), QRP Labs QMX,
+      Hamgeek uSDX, Icom ID-52A/E PLUS.
+- [x] Hamlib watcher tracks the whole `rigs/yaesu/ftx1` directory.
+
+### 5.10.2 Hardware and field checks (from the audit's priority list)
+
+- [ ] FTX-1 CW messages (`KM5` / `KY`).
+- [ ] FT-857 / 857D start-up at the factory 4800 baud.
+- [ ] TH-D75 frequency, mode and flow control.
+- [ ] Field reports for QMX, uSDX and SmartSDR slices.
+- [ ] `HARDWARE_CHECK_v1.2.19.md` on IC-7100 / IC-7600 / IC-9700 / K2
+      (still outstanding from v1.2.20).
+
+### 5.10.3 Deferred
+
+- [ ] ID-50, ID-5200, IC-R15: wait for Hamlib backends.
+- [ ] Richer D-STAR operations (callsigns, routing, messages, GPS).
 
 ---
 

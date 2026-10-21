@@ -73,6 +73,9 @@ public struct RadioDefinition: Sendable {
 
     /// The manufacturer of a radio. The raw value is a
     /// human-readable name suitable for display in UI.
+    ///
+    /// New cases are added in minor releases as vendors join the catalog.
+    /// Keep a `default` arm in any `switch` over `Manufacturer`.
     public enum Manufacturer: String, Sendable {
         case icom = "Icom"
         case elecraft = "Elecraft"

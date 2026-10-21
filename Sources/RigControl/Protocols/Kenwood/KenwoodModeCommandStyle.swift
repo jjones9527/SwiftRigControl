@@ -18,6 +18,9 @@ import Foundation
 /// )
 /// try await proto.setMode(.dataUSB, vfo: .a)   // MD2; then DA1;
 /// ```
+///
+/// New cases are added in minor releases when a radio needs a new
+/// strategy. Keep a `default` arm in any `switch` over this type.
 public enum KenwoodModeCommandStyle: Sendable, Equatable {
     /// `MD<n>;` with the shared Kenwood mode table and no DATA modes
     /// (TS-2000, TS-480, TS-870S, TS-850S, TS-570, TS-450S, TS-690S,
