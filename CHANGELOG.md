@@ -1,6 +1,54 @@
 # Changelog
 
-## Unreleased
+All notable changes to SwiftRigControl will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+> **Version-numbering note (Phase 0 reconciliation, 2026-05-22):**
+> The actual released git tags through April 2026 are `v1.0.0`,
+> `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.6` (1.0.5 was
+> skipped). The earlier `[1.1.0]`, `[1.2.0]`, and `[1.3.0]`
+> headings that appear lower in this file describe **real shipped
+> work that was bundled into the `v1.0.6` release tag on
+> 2026-04-30**, not separately released versions. They are
+> preserved as historical feature batches.
+>
+> The **second** `[1.1.0]` heading below — dated 2026-05-29 — is
+> the *real* v1.1.0 release, the first feature release after
+> v1.0.6. From this release forward, CHANGELOG version headings
+> match the git tag they ship under.
+
+## [Unreleased]
+
+### Added
+
+- **Icom ID-52A/E PLUS.** Added a distinct Hamlib-backed definition using
+  CI-V address `0xB4`, Main/Sub operation, D-STAR, tones/DCS/VOX, and the
+  model's documented receive/transmit ranges. CI-V FIL2 is now preserved so
+  FM-N and AM-N set and read back accurately. ID-50, ID-5200, and IC-R15 are
+  deferred because Hamlib does not yet provide authoritative backends.
+- **Expanded FTX-1 modes.** Added AM-N, C4FM, and DATA-FM-N to the public mode
+  model and completed the FTX-1 table with Hamlib's executable mappings for
+  DATA-FM (`A`), AM-N (`D`), C4FM (`E`), and DATA-FM-N (`F`), plus WFM receive.
+
+- **Native D-STAR digital-voice mode support.** `Mode.dstar` now maps to
+  Icom CI-V mode `0x17`, Kenwood TH-D74/TH-D75 mode index `1` (and index
+  `7` on readback), and rigctld `D-STAR`/`DSTAR`/`DV`. Capabilities and
+  frequency ranges now advertise DV for the applicable Icom transceivers,
+  IC-R30/IC-R8600 receivers, and Kenwood handhelds. Cross-referenced with
+  current Hamlib source; hardware validation remains pending user feedback.
+- **Hamgeek uSDX definition-only support.** A dedicated minimal adapter
+  implements the radio's VFO-A-only TS-480 subset, firmware mode aliases,
+  asymmetric PTT replies, and non-printable-byte cleanup without advertising
+  unsupported Kenwood features. Cross-referenced with Hamlib `hamgeek.c`.
+- **QRP Labs QMX definition-only support.** A dedicated TS-480-subset
+  adapter covers frequency, mode, VFO, split, PTT, and the QMX `PC`/`SW`
+  power and SWR meters. `RadioDefinition.preferredDataMode` identifies
+  ordinary USB for QMX digital applications, avoiding the radio's `DiGi`
+  mode. Cross-referenced with Hamlib `ts480.c`; hardware remains unverified.
+
+### Fixed
 
 - Completed FT-1000MP/MARK-V/MARK-V Field and FT-920 core status support:
   frequency and mode readback now decode both VFOs from their Hamlib-defined
@@ -25,51 +73,10 @@
   desktop MARK-V reports 200 W. Their CAT commands and feature flags remain
   shared.
 
-All notable changes to SwiftRigControl will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-> **Version-numbering note (Phase 0 reconciliation, 2026-05-22):**
-> The actual released git tags through April 2026 are `v1.0.0`,
-> `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.6` (1.0.5 was
-> skipped). The earlier `[1.1.0]`, `[1.2.0]`, and `[1.3.0]`
-> headings that appear lower in this file describe **real shipped
-> work that was bundled into the `v1.0.6` release tag on
-> 2026-04-30**, not separately released versions. They are
-> preserved as historical feature batches.
->
-> The **second** `[1.1.0]` heading below — dated 2026-05-29 — is
-> the *real* v1.1.0 release, the first feature release after
-> v1.0.6. From this release forward, CHANGELOG version headings
-> match the git tag they ship under.
-
-## [Unreleased]
-
-### Added
-
-- **Native D-STAR digital-voice mode support.** `Mode.dstar` now maps to
-  Icom CI-V mode `0x17`, Kenwood TH-D74/TH-D75 mode index `1` (and index
-  `7` on readback), and rigctld `D-STAR`/`DSTAR`/`DV`. Capabilities and
-  frequency ranges now advertise DV for the applicable Icom transceivers,
-  IC-R30/IC-R8600 receivers, and Kenwood handhelds. Cross-referenced with
-  current Hamlib source; hardware validation remains pending user feedback.
-- **Hamgeek uSDX definition-only support.** A dedicated minimal adapter
-  implements the radio's VFO-A-only TS-480 subset, firmware mode aliases,
-  asymmetric PTT replies, and non-printable-byte cleanup without advertising
-  unsupported Kenwood features. Cross-referenced with Hamlib `hamgeek.c`.
-- **QRP Labs QMX definition-only support.** A dedicated TS-480-subset
-  adapter covers frequency, mode, VFO, split, PTT, and the QMX `PC`/`SW`
-  power and SWR meters. `RadioDefinition.preferredDataMode` identifies
-  ordinary USB for QMX digital applications, avoiding the radio's `DiGi`
-  mode. Cross-referenced with Hamlib `ts480.c`; hardware remains unverified.
-
-### Fixed
-
 - **Icom catalog capability parity.** IC-7000 no longer advertises DATA
   modes its Hamlib backend and command set do not support; ID-31 and ID-51
   now include their Hamlib-declared AM receive mode. New catalog invariants
-  verify that all 51 Icom definitions have encodable modes, internally
+  verify that all Icom definitions have encodable modes, internally
   consistent frequency ranges, and DATA-capable command paths. The official
   IC-7300MK2 CI-V `DATA MOD` menu address (`1A 05 00 85`) is recorded alongside
   the original IC-7300 address (`1A 05 00 67`).

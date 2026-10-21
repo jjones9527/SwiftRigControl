@@ -1125,6 +1125,7 @@ public enum Mode: String, Sendable, CaseIterable {
     case cw         // Morse Code
     case cwR        // CW Reverse
     case am         // Amplitude Modulation
+    case amN        // Narrow AM
     case fm         // Frequency Modulation
     case fmN        // FM Narrow
     case wfm        // Wide FM (receivers)
@@ -1133,6 +1134,9 @@ public enum Mode: String, Sendable, CaseIterable {
     case dataLSB    // Digital modes (LSB)
     case dataUSB    // Digital modes (USB)
     case dataFM     // Digital modes (FM)
+    case dataFMN    // Digital modes (narrow FM)
+    case c4fm       // Yaesu System Fusion digital voice
+    case dstar      // D-STAR digital voice
 }
 ```
 
