@@ -100,13 +100,15 @@ power-state, and filter forms agree with Hamlib for the catalog presets.
 
 Open completeness items:
 
-- Implement FTX-1 `SupportsSendCW` with `KM5`/`KY05`, `KY00` stop,
-  uppercase/50-character handling, and playback sequencing. Do not add a
-  generic `KY0<text>` implementation.
 - SwiftRigControl's RIT/XIT public API cannot target Main versus Sub. A
   future VFO-qualified overload is needed for complete FTX-1 clarifier
   coverage.
-- FTX-1 C4FM and PSK modes have no Swift `Mode` equivalents.
+- FTX-1 CW message send/stop is implemented with `KM5`/`KY05` and
+  `KY00`, including uppercase ASCII and 50-character handling.
+- FTX-1 DATA-FM, AM-N, C4FM, and DATA-FM-N now follow Hamlib's
+  executable newcat conversion table. The older `ftx1_mode.c` comment
+  labeling code `E` as PSK conflicts with both that table and Hamlib's
+  FTX-1 capability mask; no unsupported PSK mode is advertised.
 
 ### Yaesu binary CAT
 

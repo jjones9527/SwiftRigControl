@@ -219,6 +219,8 @@ extension IcomCIVProtocol {
         case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
         case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
         case .dstar:   return CIVFrame.ModeCode.dstar
+        case .amN, .dataFMN, .c4fm:
+            throw RigError.unsupportedOperation("Mode \(mode) is not representable by Icom CI-V")
         }
     }
 

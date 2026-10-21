@@ -272,6 +272,7 @@ public actor RigctldCommandHandler {
         case "CW", "CWL": return .cw
         case "CWR", "CWU": return .cwR
         case "AM": return .am
+        case "AMN", "AM-N": return .amN
         case "FM": return .fm
         case "FMN": return .fmN
         case "WFM": return .wfm
@@ -280,6 +281,8 @@ public actor RigctldCommandHandler {
         case "PKTLSB", "DATA-LSB", "DATALSB": return .dataLSB
         case "PKTUSB", "DATA-USB", "DATAUSB": return .dataUSB
         case "PKTFM", "DATA-FM", "DATAFM": return .dataFM
+        case "PKTFMN", "DATA-FMN", "DATA-FM-N", "DATAFMN": return .dataFMN
+        case "C4FM": return .c4fm
         case "D-STAR", "DSTAR", "DV": return .dstar
         default:
             throw RigError.invalidParameter("Unknown mode: \(modeStr)")
@@ -293,6 +296,7 @@ public actor RigctldCommandHandler {
         case .cw: return "CW"
         case .cwR: return "CWR"
         case .am: return "AM"
+        case .amN: return "AMN"
         case .fm: return "FM"
         case .fmN: return "FMN"
         case .wfm: return "WFM"
@@ -301,6 +305,8 @@ public actor RigctldCommandHandler {
         case .dataLSB: return "PKTLSB"
         case .dataUSB: return "PKTUSB"
         case .dataFM: return "PKTFM"
+        case .dataFMN: return "PKTFMN"
+        case .c4fm: return "C4FM"
         case .dstar: return "D-STAR"
         }
     }
@@ -311,12 +317,15 @@ public actor RigctldCommandHandler {
         case .lsb, .usb: return 2400
         case .cw, .cwR: return 500
         case .am: return 6000
+        case .amN: return 3000
         case .fm: return 15000
         case .fmN: return 10000
         case .wfm: return 150000
         case .rtty, .rttyR: return 500
         case .dataLSB, .dataUSB: return 2400
         case .dataFM: return 15000
+        case .dataFMN: return 10000
+        case .c4fm: return 12500
         case .dstar: return 6000
         }
     }

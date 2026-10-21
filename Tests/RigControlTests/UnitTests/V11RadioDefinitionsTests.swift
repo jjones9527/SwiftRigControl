@@ -18,6 +18,10 @@ import Testing
         #expect(caps.canTransmit(on: 446_000_000))
         #expect(!caps.canTransmit(on: 12_000_000))
         #expect(!caps.isFrequencyValid(200_000_000))
+        #expect(caps.supportedModes.contains(.wfm))
+        #expect(caps.supportedModes.contains(.amN))
+        #expect(caps.supportedModes.contains(.c4fm))
+        #expect(caps.supportedModes.contains(.dataFMN))
     }
 
     // MARK: - Kenwood TH-D75

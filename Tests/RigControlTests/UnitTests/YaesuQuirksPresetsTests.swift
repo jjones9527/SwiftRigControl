@@ -204,6 +204,12 @@ import Testing
         #expect(table[.usb] == "2")
         #expect(table[.fm] == "4")
         #expect(table[.am] == "5")
+        #expect(table[.dataFM] == "A")
+        #expect(table[.fmN] == "B")
+        #expect(table[.dataUSB] == "C")
+        #expect(table[.amN] == "D")
+        #expect(table[.c4fm] == "E")
+        #expect(table[.dataFMN] == "F")
     }
 
     // MARK: - withTargetableMode helper
