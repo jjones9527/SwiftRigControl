@@ -3,7 +3,7 @@ import Testing
 
 /// Unit tests for `RadioDefinition.VerificationStatus`.
 ///
-/// The four radios listed under "Hardware-Verified" in README.md and
+/// The hardware-verified radios listed in README.md and
 /// ROADMAP.md must report `.hardware`. Every other radio definition
 /// defaults to `.definition`. These tests guard against accidental
 /// promotion (claiming a radio is verified when it isn't) and against
@@ -37,6 +37,27 @@ import Testing
         // IC-7300 is widely deployed and likely works, but we don't
         // own one — so it must report as definition-only until we do.
         #expect(RadioDefinition.Icom.ic7300().verificationStatus == .definition)
+    }
+
+    @Test func everyCatalogRadioHasTheExpectedVerificationClassification() {
+        let radios = RadioDefinition.allSupportedRadios
+        let hardware = Set(
+            radios
+                .filter { $0.verificationStatus == .hardware }
+                .map(\.fullName)
+        )
+        let expectedHardware: Set<String> = [
+            "Icom IC-7100",
+            "Icom IC-7600",
+            "Icom IC-9700",
+            "Elecraft K2",
+            "Kenwood TH-D72",
+            "Kenwood TH-D72A",
+        ]
+
+        #expect(hardware == expectedHardware)
+        #expect(radios.count == 137)
+        #expect(radios.filter { $0.verificationStatus == .definition }.count == 131)
     }
 
     @Test func defaultVerificationStatusIsDefinition() {
