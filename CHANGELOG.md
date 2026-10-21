@@ -21,8 +21,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-21
+
+New radios, new modes and a Hamlib parity audit of every mapped radio
+against Hamlib `06335264` (`Documentation/HAMLIB_AUDIT_2026-10-19.md`).
+The catalog grows 126 → 137 radios: native Flex SmartSDR slices A–H,
+QRP Labs QMX, Hamgeek uSDX and the Icom ID-52A/E PLUS. Shipped in
+jjones9527/SwiftRigControl#46–#51. Test count 911 → 985 (`swift test`).
+
+This is a minor release rather than a patch because it adds public API
+(new `Mode` cases, `RadioDefinition.preferredDataMode`,
+`FlexSmartSDRProtocol`) and new cases on public enums. See
+**Migration** below.
+
+**Verification status:** mock-tested only. Every new radio is
+definition-only. The hardware check in
+`Documentation/HARDWARE_CHECK_v1.2.19.md` has still not been run.
+
+### Migration
+
+New cases were added to four public enums. SwiftRigControl is built
+without library evolution, so a `switch` over one of these enums that
+lists every case and has no `default` arm will stop compiling:
+
+| Enum | New cases |
+| --- | --- |
+| `Mode` | `.amN`, `.dataFMN`, `.c4fm`, `.dstar` |
+| `RadioDefinition.Manufacturer` | `.qrpLabs`, `.hamgeek` |
+| `IcomRadioModel` | `.id52Plus` |
+| `KenwoodModeCommandStyle` | `.qmx` |
+
+Handle the new cases explicitly where the meaning matters, and add a
+`default` arm so later additions don't break the build:
+
+```swift
+switch mode {
+case .usb, .dataUSB: return .usbFamily
+case .fm, .fmN, .dataFM, .dataFMN: return .fmFamily
+case .am, .amN: return .amFamily
+case .dstar, .c4fm: return .digitalVoice
+// ...
+default: return .other   // future Mode cases land here
+}
+```
+
+Code that already has a `default` arm still compiles, but the new modes
+fall into it. Check that this is the right answer: a radio reporting
+`.dataFMN` or `.amN` should probably not be shown as USB.
+
+`Mode` raw values are new strings (`"AM-N"`, `"DATA-FM-N"`, `"C4FM"`,
+`"D-STAR"`). A value encoded with `Codable` by v1.3.0 will fail to decode
+in an app still linked against v1.2.x.
+
+`RadioDefinition.init` gained a trailing `preferredDataMode: Mode? = nil`
+parameter, and `MeterReading.init` a trailing `physicalValue: Double? = nil`.
+Both have defaults, so existing calls still compile.
+
+The **`Flex.flex6000` doc example now uses port 5002.** Port 4992 is
+SmartSDR's native API, which the Kenwood-style `flex6000` definition
+does not speak; the CAT bridge listens on a port set in SmartSDR CAT.
+For port 4992, use the new `Flex.smartSDRA`…`smartSDRH` definitions.
+
 ### Added
 
+- **Native Flex SmartSDR slice control.** `FlexSmartSDRProtocol` speaks
+  SmartSDR's own TCP API on port 4992 (`C<seq>|<command>` commands,
+  `R<seq>|<code>|` replies, `S` status lines) and controls one slice.
+  `RadioDefinition.Flex.smartSDRA` through `smartSDRH` cover slices A–H,
+  with frequency, mode (LSB/USB/CW/AM/FM/FM-N/DATA-LSB/DATA-USB), PTT,
+  VFO selection and CW sending. The Kenwood-compatible `Flex.flex6000`
+  definition is still available for SmartSDR CAT. Cross-referenced with
+  Hamlib `smartsdr.c` and `smartsdr_caps.h`; definition-only.
 - **Icom ID-52A/E PLUS.** Added a distinct Hamlib-backed definition using
   CI-V address `0xB4`, Main/Sub operation, D-STAR, tones/DCS/VOX, and the
   model's documented receive/transmit ranges. CI-V FIL2 is now preserved so
@@ -103,9 +172,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `Documentation/HAMLIB_AUDIT_2026-10-19.md`, a current-source
   review of all 126 mapped radio definitions against Hamlib `06335264`.
+- Definition-only radios are marked as such in the catalog.
+- `Mode`, `RadioDefinition.Manufacturer`, `IcomRadioModel` and
+  `KenwoodModeCommandStyle` docs now say that new cases can be added in
+  minor releases and that callers should keep a `default` arm.
 
 Planned work remains in `Documentation/HAMLIB_TRIAGE_2026-10.md`
-("Remaining work"), the new audit, and ROADMAP Phase 5.9.
+("Remaining work"), the new audit, and ROADMAP Phase 5.10.
 
 ## [1.2.20] - 2026-10-19
 

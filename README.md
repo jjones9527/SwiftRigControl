@@ -5,7 +5,23 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.2.20
+**Current release:** v1.3.0
+
+## What's new in v1.3.0
+
+- **New radios (137 in the catalog)** — native Flex SmartSDR slice control
+  (slices A–H over the SmartSDR TCP API on port 4992), QRP Labs QMX,
+  Hamgeek uSDX and the Icom ID-52A/E PLUS. All definition-only.
+- **New modes** — `Mode.dstar` (D-STAR DV), `.amN`, `.dataFMN` and `.c4fm`.
+  `RadioDefinition.preferredDataMode` tells apps which mode to use for
+  sound-card digital work (plain USB on the QMX).
+- **Hamlib audit of every mapped radio** — fixes for Xiegu G90 RIT, the
+  FTX-1 clarifier and mode table, FT-1000MP / MARK-V / FT-920 status and
+  meters, FT-847 satellite mode, TH-D74/D75 mode commands and Kenwood
+  handheld serial settings.
+- **Upgrading:** four public enums gained cases. A `switch` that lists every
+  case without a `default` arm needs updating — see the Migration section
+  of the [1.3.0 CHANGELOG entry](CHANGELOG.md).
 
 ## What's new in v1.2.20
 

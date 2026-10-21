@@ -19,6 +19,9 @@ import Foundation
 ///     capabilities: capabilities
 /// )
 /// ```
+///
+/// New cases are added in minor releases as Icom models join the catalog.
+/// Keep a `default` arm in any `switch` over `IcomRadioModel`.
 public enum IcomRadioModel: String, Sendable, CaseIterable {
     // MARK: - HF Transceivers
 
