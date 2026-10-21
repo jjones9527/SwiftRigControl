@@ -104,14 +104,15 @@ power-state, and filter forms agree with Hamlib for the catalog presets.
   targetable mode behavior remain aligned.
 - FTX-1 RIT/XIT now uses `CF` and preserves the paired clarifier state.
 - The upstream per-VFO cache bug does not apply to the new implementation:
-  SwiftRigControl queries current paired state for each write and its
-  public RIT/XIT API currently targets Main.
+  SwiftRigControl queries the target side's current paired state for
+  each write. The unqualified RIT/XIT API targets Main; the
+  VFO-qualified overloads on `YaesuCATProtocol` reach Sub.
 
 Open completeness items:
 
-- SwiftRigControl's RIT/XIT public API cannot target Main versus Sub. A
-  future VFO-qualified overload is needed for complete FTX-1 clarifier
-  coverage.
+- ~~SwiftRigControl's RIT/XIT public API cannot target Main versus Sub.~~
+  Closed after v1.3.0: `YaesuCATProtocol.setRIT(_:vfo:)` and its
+  siblings address `CF0` (Main) and `CF1` (Sub) independently.
 - FTX-1 CW message send/stop is implemented with `KM5`/`KY05` and
   `KY00`, including uppercase ASCII and 50-character handling.
 - FTX-1 DATA-FM, AM-N, C4FM, and DATA-FM-N now follow Hamlib's

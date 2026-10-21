@@ -1514,7 +1514,14 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] `HARDWARE_CHECK_v1.2.19.md` on IC-7100 / IC-7600 / IC-9700 / K2
       (still outstanding from v1.2.20).
 
-### 5.10.3 Deferred
+### 5.10.3 Next minor (unreleased, mock-tested)
+
+- [x] FTX-1 VFO-qualified clarifier: `setRIT/getRIT/setXIT/getXIT(vfo:)`
+      on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
+      independently.
+- [ ] Hardware check of FTX-1 Sub-side clarifier.
+
+### 5.10.4 Deferred
 
 - [ ] ID-50, ID-5200, IC-R15: wait for Hamlib backends.
 - [ ] Richer D-STAR operations (callsigns, routing, messages, GPS).
