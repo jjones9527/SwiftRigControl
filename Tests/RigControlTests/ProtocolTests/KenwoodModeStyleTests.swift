@@ -188,6 +188,34 @@ import Testing
         #expect(await proto.modeStyle == style)
     }
 
+    @Test func hamlibModeMasksAreReflectedInCatalog() {
+        #expect(RadioCapabilitiesDatabase.Kenwood.ts570D.supportedModes
+            == [.lsb, .usb, .cw, .rtty, .am, .fm])
+        #expect(RadioCapabilitiesDatabase.Kenwood.ts570S.supportedModes
+            == [.lsb, .usb, .cw, .rtty, .am, .fm])
+        for capabilities in [
+            RadioCapabilitiesDatabase.Kenwood.ts570D,
+            RadioCapabilitiesDatabase.Kenwood.ts570S,
+        ] {
+            let advertised = Set(capabilities.supportedModes)
+            #expect(capabilities.detailedFrequencyRanges.allSatisfy {
+                Set($0.modes).isSubset(of: advertised)
+            })
+        }
+        #expect(!RadioCapabilitiesDatabase.Kenwood.ts2000.supportedModes.contains(.fmN))
+
+        for capabilities in [
+            RadioCapabilitiesDatabase.Kenwood.ts590S,
+            RadioCapabilitiesDatabase.Kenwood.ts590SG,
+            RadioCapabilitiesDatabase.Kenwood.ts890S,
+        ] {
+            #expect(capabilities.supportedModes.contains(.dataFM))
+        }
+
+        #expect(!RadioCapabilitiesDatabase.Kenwood.ts950S.powerControl)
+        #expect(!RadioCapabilitiesDatabase.Kenwood.ts950SDX.powerControl)
+    }
+
     @Test func flexCatalogStyles() async throws {
         let expected: [(RadioDefinition, KenwoodModeCommandStyle)] = [
             (.Flex.flex6000, .flexDigital),
@@ -217,8 +245,7 @@ import Testing
                 let probe = style == .dataSubMode
                     ? KenwoodProtocol.splitDataMode(mode).base : mode
                 #expect(
-                    (try? KenwoodProtocol.modeCode(for: probe, style: style)) != nil
-                        || mode == .fmN,
+                    (try? KenwoodProtocol.modeCode(for: probe, style: style)) != nil,
                     "\(radio.model) advertises \(mode.rawValue) but \(style) cannot set it"
                 )
             }

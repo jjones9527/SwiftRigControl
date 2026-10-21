@@ -353,6 +353,29 @@ extension RadioDefinition.Icom {
         )
     }
 
+    /// Icom ID-52A/E PLUS dual-band V/U D-STAR handheld (2024).
+    /// Its CI-V surface is implemented from Hamlib `id52plus.c`,
+    /// including the 0xB4 address and FIL2 narrow AM/FM modes.
+    public static func id52Plus(civAddress: UInt8? = nil) -> RadioDefinition {
+        RadioDefinition(
+            manufacturer: .icom,
+            model: "ID-52 PLUS",
+            defaultBaudRate: 19200,
+            capabilities: RadioCapabilitiesDatabase.Icom.id52,
+            civAddress: civAddress ?? IcomRadioModel.id52Plus.defaultCIVAddress,
+            protocolFactory: { transport in
+                IcomCIVProtocol(
+                    transport: transport,
+                    civAddress: civAddress,
+                    radioModel: .id52Plus,
+                    commandSet: StandardIcomCommandSet.id52Plus,
+                    capabilities: RadioCapabilitiesDatabase.Icom.id52
+                )
+            },
+            civAddressRebuilder: { RadioDefinition.Icom.id52Plus(civAddress: $0) }
+        )
+    }
+
     /// Icom IC-92AD / IC-E92D dual-band D-STAR handheld (2008).
     ///
     /// - Parameter civAddress: CI-V bus address (default: 0x01 —

@@ -387,8 +387,9 @@ extension RadioDefinition.Yaesu {
     /// Same wire protocol as the FT-847, but the internal CAT
     /// transceiver has TX only — the radio does not send status
     /// responses. Uses ``YaesuFT847CAT`` with the
-    /// `isUnidirectional: true` initializer flag; all getters throw
-    /// `RigError.unsupportedOperation`. Setters continue to work.
+    /// `isUnidirectional: true` initializer flag; wire-backed getters
+    /// throw `RigError.unsupportedOperation`, while cached split state
+    /// remains available. Setters continue to work.
     public static let ft847UNI = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-847UNI",
@@ -455,9 +456,9 @@ extension RadioDefinition.Yaesu {
     /// Uses ``YaesuFT1000MPCAT`` — the pre-newcat 5-byte binary CAT
     /// with dual-VFO opcodes (0x0A for VFO A freq, 0x8A for VFO B)
     /// and **little-endian** BCD encoding per Hamlib
-    /// `rigs/yaesu/ft1000mp.c`. Fire-and-forget writes; getters throw
-    /// `.unsupportedOperation` pending status-block decoder work in a
-    /// future release.
+    /// `rigs/yaesu/ft1000mp.c`. Setters are fire-and-forget; frequency,
+    /// mode, and split getters decode the radio's binary status blocks.
+    /// PTT readback remains unavailable, matching Hamlib's capability.
     public static let ft1000MP = RadioDefinition(
         manufacturer: .yaesu,
         model: "FT-1000MP",
@@ -483,12 +484,12 @@ extension RadioDefinition.Yaesu {
         manufacturer: .yaesu,
         model: "FT-1000MP MARK-V",
         defaultBaudRate: 4800,
-        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MPMkV,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuFT1000MPCAT(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MPMkV
             )
         }
     )
@@ -501,12 +502,12 @@ extension RadioDefinition.Yaesu {
         manufacturer: .yaesu,
         model: "FT-1000MP MARK-V Field",
         defaultBaudRate: 4800,
-        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP,
+        capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MPMkVField,
         serialDefaults: .yaesuHFPortable,
         protocolFactory: { transport in
             YaesuFT1000MPCAT(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MP
+                capabilities: RadioCapabilitiesDatabase.Yaesu.ft1000MPMkVField
             )
         }
     )

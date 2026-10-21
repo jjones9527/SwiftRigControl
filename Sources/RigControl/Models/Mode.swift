@@ -31,6 +31,9 @@ public enum Mode: String, Sendable, Codable, CaseIterable {
     /// Amplitude Modulation (voice, primarily HF)
     case am = "AM"
 
+    /// Narrow Amplitude Modulation
+    case amN = "AM-N"
+
     /// Radio Teletype (digital)
     case rtty = "RTTY"
 
@@ -45,4 +48,13 @@ public enum Mode: String, Sendable, Codable, CaseIterable {
 
     /// Digital FM
     case dataFM = "DATA-FM"
+
+    /// Narrow digital FM
+    case dataFMN = "DATA-FM-N"
+
+    /// Yaesu System Fusion C4FM digital voice
+    case c4fm = "C4FM"
+
+    /// D-STAR digital voice (DV).
+    case dstar = "D-STAR"
 }

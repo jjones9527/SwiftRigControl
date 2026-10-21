@@ -329,12 +329,12 @@ extension YaesuCATProtocol {
         /// - Shared newcat: 3 = CW, 7 = CW-R
         /// - FTX-1:         3 = CW-USB, 7 = CW-LSB
         ///
-        /// FTX-1 also introduces new mode codes not present in
-        /// earlier newcat radios: `E` (PSK), `H` (C4FM-DN),
-        /// `I` (C4FM-VW). We map `.cw` → `3` (CW-USB) and
-        /// `.cwR` → `7` (CW-LSB) as the most operator-obvious
-        /// meaning. C4FM and PSK do not have direct Swift `Mode`
-        /// enum equivalents and are omitted from the table.
+        /// The current Hamlib newcat conversion table also exposes
+        /// `A` (DATA-FM), `D` (AM-N), `E` (C4FM), and `F`
+        /// (DATA-FM-N). Although an older comment in `ftx1_mode.c`
+        /// labels `E` as PSK, Hamlib's executable table and the
+        /// FTX-1 capability mask both identify it as C4FM; this
+        /// implementation follows that authoritative behavior.
         ///
         /// Memory-mode escape: the FTX-1's `MD` set is silently
         /// treated as a transient overlay when Main is in Memory
@@ -357,8 +357,12 @@ extension YaesuCATProtocol {
                 .cwR:      "7",   // CW-LSB on FTX-1
                 .dataLSB:  "8",
                 .rttyR:    "9",   // RTTY-USB
+                .dataFM:   "A",
                 .fmN:      "B",
                 .dataUSB:  "C",
+                .amN:      "D",
+                .c4fm:     "E",
+                .dataFMN:  "F",
             ],
             requiresMemoryModeEscape: true,
             filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214

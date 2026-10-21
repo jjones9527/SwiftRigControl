@@ -82,7 +82,7 @@ IC-7600, IC-9700, K2, TH-D72A); zero runtime dependencies.
 
 ## Hardware verification status
 
-SwiftRigControl ships with **136 radio definitions**, but only a subset
+SwiftRigControl ships with **137 radio definitions**, but only a subset
 has been validated against real hardware. Status categories:
 
 - **Hardware** — exercised against the real radio via the matching
@@ -117,11 +117,13 @@ IC7600_SERIAL_PORT="/dev/cu.usbserial-XXXX" swift run IC7600Validator
 
 If you use SwiftRigControl with a Definition-status radio and confirm
 that core operations (frequency, mode, PTT) work, please open an issue
-or PR so we can promote it.
+or PR so we can promote it. The canonical classification policy and
+hardware-verified set are recorded in
+[`Documentation/RADIO_VERIFICATION_STATUS.md`](Documentation/RADIO_VERIFICATION_STATUS.md).
 
 ## Supported Radios
 
-**~96 radio definitions across 8 manufacturers.** Models tagged
+**137 radio definitions across 10 manufacturers.** Models tagged
 **[Hardware]** below — and listed in the Hardware verification status
 table above — are field-tested; all others are definition-only.
 

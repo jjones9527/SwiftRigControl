@@ -423,6 +423,7 @@ public actor THD72Protocol:
     private func modeToTHD74Index(_ mode: Mode) throws -> Int {
         switch mode {
         case .fm: return 0
+        case .dstar: return 1
         case .am: return 2
         case .lsb: return 3
         case .usb: return 4
@@ -438,6 +439,7 @@ public actor THD72Protocol:
     private func modeFromTHD74Index(_ index: Int) throws -> Mode {
         switch index {
         case 0: return .fm
+        case 1, 7: return .dstar
         case 2: return .am
         case 3: return .lsb
         case 4: return .usb

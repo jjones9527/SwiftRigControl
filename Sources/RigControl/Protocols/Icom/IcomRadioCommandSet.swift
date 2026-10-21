@@ -224,8 +224,16 @@ extension IcomRadioCommandSet {
     /// - If true: Sends mode + filter byte (0x01 = FIL1, default filter)
     /// - If false: Sends mode only (IC-7100 family — NAKs if filter byte sent)
     public func setModeCommand(mode: UInt8) -> (command: [UInt8], data: [UInt8]) {
+        setModeCommand(mode: mode, filter: CIVFrame.FilterCode.fil1)
+    }
+
+    /// Mode set command with an explicit CI-V filter selection.
+    public func setModeCommand(
+        mode: UInt8,
+        filter: UInt8
+    ) -> (command: [UInt8], data: [UInt8]) {
         if requiresModeFilter {
-            return ([CIVFrame.Command.setMode], [mode, CIVFrame.FilterCode.fil1])
+            return ([CIVFrame.Command.setMode], [mode, filter])
         } else {
             return ([CIVFrame.Command.setMode], [mode])
         }

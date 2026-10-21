@@ -73,14 +73,27 @@ Status: core command framing is aligned for the implemented surface.
 
 Open completeness items:
 
-- The IC-7300MK2 DATA modulation-source `1A 05` number is still absent
-  from the available Hamlib table and must come from its CI-V manual.
-- DV/D-STAR has no native Swift `Mode` case; the former DATA stand-ins
-  were correctly removed.
+- The IC-7300MK2 DATA modulation-source number was absent from Hamlib's
+  table. The official Icom CI-V guide identifies it as `1A 05 00 85`;
+  the original IC-7300 remains `1A 05 00 67`. Both are now recorded in
+  the per-model menu-setting table with regression coverage.
+- Native DV/D-STAR mode is now implemented: Icom CI-V `0x17`, Kenwood
+  TH-D74/75 mode indices, rigctld naming/passband, and model/range
+  capabilities are covered. D-STAR-specific callsign, routing, message,
+  GPS, and status operations remain additive work.
 - Several advanced settings implemented only for IC-7100/7600/9700 are
   not generalized to other Icoms even where Hamlib exposes equivalents.
   They are not advertised as portable capabilities, so this is additive
   work rather than a current correctness defect.
+- ID-52A/E PLUS is now a distinct catalog model based on Hamlib
+  `id52plus.c` (CI-V `0xB4`, 4800–19200 baud, Main/Sub, FM/FM-N,
+  AM/AM-N receive, D-STAR, tones, DCS, VOX, levels and PTT). The shared
+  CI-V implementation now preserves FIL2 so FM-N and AM-N set/read
+  correctly instead of collapsing to their wide modes.
+- Hamlib master does not currently provide ID-50, ID-5200, or IC-R15
+  backends. Those models are intentionally not presented as complete
+  Hamlib-derived implementations until authoritative command/address
+  definitions are available upstream.
 
 ### Yaesu newcat and FTX-1
 
@@ -96,13 +109,15 @@ power-state, and filter forms agree with Hamlib for the catalog presets.
 
 Open completeness items:
 
-- Implement FTX-1 `SupportsSendCW` with `KM5`/`KY05`, `KY00` stop,
-  uppercase/50-character handling, and playback sequencing. Do not add a
-  generic `KY0<text>` implementation.
 - SwiftRigControl's RIT/XIT public API cannot target Main versus Sub. A
   future VFO-qualified overload is needed for complete FTX-1 clarifier
   coverage.
-- FTX-1 C4FM and PSK modes have no Swift `Mode` equivalents.
+- FTX-1 CW message send/stop is implemented with `KM5`/`KY05` and
+  `KY00`, including uppercase ASCII and 50-character handling.
+- FTX-1 DATA-FM, AM-N, C4FM, and DATA-FM-N now follow Hamlib's
+  executable newcat conversion table. The older `ftx1_mode.c` comment
+  labeling code `E` as PSK conflicts with both that table and Hamlib's
+  FTX-1 capability mask; no unsupported PSK mode is advertised.
 
 ### Yaesu binary CAT
 
@@ -112,9 +127,23 @@ aligned; readback completeness varies by adapter.
 - `YaesuPortableCAT` covers FT-817/818/857/897 mode, frequency, PTT and
   status parsing; DATA USB/LSB uses DIG `0x0A` and DATA FM uses PKT `0x0C`.
 - `YaesuFT100CAT` corrects the formerly wrong FT-817-family routing.
-- `YaesuFT1000MPCAT` and `YaesuFT847CAT` deliberately leave some core
-  getters unsupported because their status-block decoders are incomplete.
-  These radios must remain definition-only until getter parity is added.
+- `YaesuFT847CAT` now covers its combined frequency/mode status frame,
+  PTT, cached satellite split state, RX S-meter, and TX ALC status. Its
+  satellite mode writes use the Hamlib `opcode_vfo()` routing, and
+  unsupported RF-power/DATA-mode capability claims have been removed.
+- `YaesuFT1000MPCAT` now decodes both VFO frequency/mode records and split
+  flags for the FT-1000MP/MARK-V family and the FT-920's distinct 28-byte
+  layout. FT-920 PTT readback and both families' RIT/XIT clarifier controls
+  are implemented. FT-1000MP PTT readback remains unsupported, matching
+  Hamlib's advertised capability surface. Neither family claims RF-power
+  setting; Hamlib exposes RF power as meter readback rather than a settable
+  level for the FT-1000MP. Its S-meter now uses Hamlib's twelve-point
+  calibration, and RF-power, ALC, compression, and SWR return Hamlib-style
+  normalized readings. FT-920 signal and TX-meter advertising stays disabled
+  because its Hamlib backend exposes no corresponding getters.
+- FT-1000MP-family rated output is model-specific: FT-1000MP and MARK-V Field
+  use 100 W capability records; MARK-V uses 200 W. The protocol implementation
+  remains shared because Hamlib documents an identical CAT surface.
 - Hamlib declares FT-817/857/897 serial ranges of 4800–38400, 8-N-2,
   without flow control. SwiftRigControl retains that framing and now uses
   the FT-857/857D factory 4800-baud setting as its connection default.

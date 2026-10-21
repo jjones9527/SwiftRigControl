@@ -155,6 +155,8 @@ import Testing
         #expect(IcomRadioModel.ic7300.menuSettingParameter(.keyerType) == [0x01, 0x64])
         #expect(IcomRadioModel.ic7300mk2.menuSettingParameter(.keyerType) == [0x02, 0x24])
         #expect(IcomRadioModel.ic7300mk2.menuSettingParameter(.clockDate) == [0x01, 0x32])
+        #expect(IcomRadioModel.ic7300.menuSettingParameter(.dataModulationSource) == [0x00, 0x67])
+        #expect(IcomRadioModel.ic7300mk2.menuSettingParameter(.dataModulationSource) == [0x00, 0x85])
         #expect(IcomRadioModel.ic7600.menuSettingParameter(.beep) == nil)
     }
 

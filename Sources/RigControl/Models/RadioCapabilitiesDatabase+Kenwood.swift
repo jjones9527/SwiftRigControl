@@ -10,7 +10,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // General coverage receive only
@@ -65,7 +65,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // HF bands similar to TS-590SG but with enhanced capabilities
@@ -183,7 +183,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm],
         frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
         detailedFrequencyRanges: [
             // HF bands
@@ -207,15 +207,15 @@ extension RadioCapabilitiesDatabase.Kenwood {
             DetailedFrequencyRange(min: 28_000_000, max: 29_700_000, modes: [.usb, .cw, .cwR, .rtty, .rttyR, .fm, .dataUSB], canTransmit: true, bandName: "10m"),
             DetailedFrequencyRange(min: 29_700_001, max: 49_999_999, modes: [.usb, .fm, .am], canTransmit: false),
             // 6m band
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
             // VHF/UHF receive
             DetailedFrequencyRange(min: 54_000_001, max: 143_999_999, modes: [.usb, .fm, .am], canTransmit: false),
             // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "2m"),
             // More receive
             DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .am], canTransmit: false),
             // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 1_300_000_000, modes: [.fm, .am], canTransmit: false),
         ],
@@ -236,7 +236,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             DetailedFrequencyRange(min: 30_000, max: 1_799_999, modes: [.lsb, .usb, .cw, .cwR, .am], canTransmit: false),
@@ -353,8 +353,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: false,
         powerControl: true,
         maxPower: 5,  // 5W handheld
-        // D-STAR DV isn't modelled; list every other mode accepted by `MD`.
-        supportedModes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw, .cwR],
+        // Includes D-STAR mode index 1 (index 7 is also accepted on readback).
+        supportedModes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw, .cwR, .dstar],
         frequencyRange: FrequencyRange(min: 100_000, max: 524_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive
@@ -362,19 +362,19 @@ extension RadioCapabilitiesDatabase.Kenwood {
                                     modes: [.fm, .fmN, .wfm, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // General receive between bands
             DetailedFrequencyRange(min: 148_000_001, max: 219_999_999,
                                     modes: [.fm, .fmN, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 1.25m band (220 MHz)
             DetailedFrequencyRange(min: 220_000_000, max: 225_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "1.25m"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "1.25m"),
             // More general receive
             DetailedFrequencyRange(min: 225_000_001, max: 429_999_999,
                                     modes: [.fm, .fmN, .am, .lsb, .usb, .cw, .cwR], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 524_000_000,
                                     modes: [.fm, .fmN], canTransmit: false),
@@ -395,23 +395,22 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasSplit: false,
         powerControl: true,
         maxPower: 5,  // 5W handheld
-        // D-STAR DV isn't modelled; THD72Protocol sets FM / FM-N / AM only
-        // (pre-v1.2.19 this listed .dataFM, which setMode rejected).
-        supportedModes: [.fm, .fmN],
+        // Includes D-STAR mode index 1 (index 7 is also accepted on readback).
+        supportedModes: [.fm, .fmN, .dstar],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // Airband receive
             DetailedFrequencyRange(min: 118_000_000, max: 135_995_000, modes: [.fm, .am], canTransmit: false),
             // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // General receive
             DetailedFrequencyRange(min: 148_000_001, max: 219_999_999, modes: [.fm], canTransmit: false),
             // 1.25m band (220 MHz)
-            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "1.25m"),
+            DetailedFrequencyRange(min: 220_000_000, max: 225_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "1.25m"),
             // More receive
             DetailedFrequencyRange(min: 225_000_001, max: 429_999_999, modes: [.fm], canTransmit: false),
             // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm], canTransmit: false),
         ],

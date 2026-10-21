@@ -164,8 +164,8 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: false,
         powerControl: true,
         maxPower: 100,  // Icom uses 0-100% scale
-        // D-STAR DV isn't a DATA mode; Hamlib lists FM + DSTAR only.
-        supportedModes: [.fm, .fmN],
+        // ID31_ALL_RX_MODES adds AM receive to FM + D-STAR.
+        supportedModes: [.fm, .fmN, .am, .dstar],
         frequencyRange: FrequencyRange(min: 400_000_000, max: 479_000_000),
         detailedFrequencyRanges: [
             // General receive 400–440 MHz
@@ -173,7 +173,7 @@ extension RadioCapabilitiesDatabase.Icom {
                                     modes: [.fm, .fmN, .am], canTransmit: false),
             // 70cm band (USA TX allocation)
             DetailedFrequencyRange(min: 440_000_000, max: 450_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 479_000_000,
                                     modes: [.fm, .fmN], canTransmit: false),
@@ -201,8 +201,8 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: false,
         powerControl: true,
         maxPower: 100,
-        // D-STAR DV isn't a DATA mode; Hamlib lists FM + DSTAR only.
-        supportedModes: [.fm, .fmN],
+        // ID51_ALL_RX_MODES adds AM receive to FM + D-STAR.
+        supportedModes: [.fm, .fmN, .am, .dstar],
         frequencyRange: FrequencyRange(min: 118_000_000, max: 550_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive
@@ -210,7 +210,7 @@ extension RadioCapabilitiesDatabase.Icom {
                                     modes: [.fm, .fmN, .am], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // General receive between bands
             DetailedFrequencyRange(min: 148_000_001, max: 374_999_999,
                                     modes: [.fm, .fmN, .am], canTransmit: false),
@@ -219,7 +219,7 @@ extension RadioCapabilitiesDatabase.Icom {
                                     modes: [.fm, .fmN, .am], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 550_000_000,
                                     modes: [.fm, .fmN], canTransmit: false),
@@ -247,27 +247,27 @@ extension RadioCapabilitiesDatabase.Icom {
         powerControl: true,
         maxPower: 100,
         // D-STAR DV isn't a DATA mode; Hamlib lists AM/FM + DSTAR only.
-        supportedModes: [.fm, .fmN, .am],
+        supportedModes: [.fm, .fmN, .am, .amN, .dstar],
         frequencyRange: FrequencyRange(min: 108_000_000, max: 550_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive (108 MHz starts the band)
             DetailedFrequencyRange(min: 108_000_000, max: 143_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "2m"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // General receive between bands
-            DetailedFrequencyRange(min: 148_000_001, max: 374_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 148_000_001, max: 174_000_000,
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // UHF general receive
             DetailedFrequencyRange(min: 375_000_000, max: 429_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
-                                    modes: [.fm, .fmN], canTransmit: true, bandName: "70cm"),
+                                    modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 550_000_000,
-                                    modes: [.fm, .fmN], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
         ],
         hasDualReceiver: true,  // Main/Sub dual-watch
         hasATU: false,
@@ -292,7 +292,7 @@ extension RadioCapabilitiesDatabase.Icom {
         powerControl: true,
         maxPower: 100,
         // No DATA modes: Hamlib ic92d.c:32-33 lists FM (RX) and AM/FM/WFM (TX).
-        supportedModes: [.fm, .fmN, .am, .wfm],
+        supportedModes: [.fm, .fmN, .am, .wfm, .dstar],
         frequencyRange: FrequencyRange(min: 495_000, max: 999_990_000),
         detailedFrequencyRanges: [
             // Broadband receive (VFO A on the IC-92D)
@@ -300,14 +300,14 @@ extension RadioCapabilitiesDatabase.Icom {
                                     modes: [.am, .fm, .wfm], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
-                                    modes: [.fm, .fmN, .am],
+                                    modes: [.fm, .fmN, .am, .dstar],
                                     canTransmit: true, bandName: "2m"),
             // General receive between bands
             DetailedFrequencyRange(min: 148_000_001, max: 429_999_999,
                                     modes: [.fm, .fmN, .am, .wfm], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 440_000_000,
-                                    modes: [.fm, .fmN, .am],
+                                    modes: [.fm, .fmN, .am, .dstar],
                                     canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 440_000_001, max: 999_990_000,
@@ -340,21 +340,21 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: false,
         powerControl: false,
         maxPower: 0,
-        // No PKT modes in Hamlib ICR30_MODES (icr30.c:30-32).
-        supportedModes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR],
+        // No PKT modes in Hamlib ICR30_MODES; D-STAR is native DV.
+        supportedModes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR, .dstar],
         frequencyRange: FrequencyRange(min: 100_000, max: 3_304_999_900),
         detailedFrequencyRanges: [
             // One huge RX-only range, per Hamlib (Region-2 has
             // notches at 821.995–851 MHz and 866.995–896 MHz to
             // comply with US cellular blocking).
             DetailedFrequencyRange(min: 100_000, max: 821_994_999,
-                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR],
+                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR, .dstar],
                                     canTransmit: false),
             DetailedFrequencyRange(min: 851_000_000, max: 866_994_999,
-                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR],
+                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR, .dstar],
                                     canTransmit: false),
             DetailedFrequencyRange(min: 896_000_000, max: 3_304_999_900,
-                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR],
+                                    modes: [.fm, .fmN, .am, .wfm, .lsb, .usb, .cw, .cwR, .dstar],
                                     canTransmit: false),
         ],
         hasDualReceiver: true,  // Main/Sub VFOs

@@ -74,6 +74,7 @@ extension RadioDefinition.Icom {
         id51(),
         id5100(),
         id52(),
+        id52Plus(),
         // v1.2.0 Group D — receivers + specialty
         icF8101(),
         icR20(),

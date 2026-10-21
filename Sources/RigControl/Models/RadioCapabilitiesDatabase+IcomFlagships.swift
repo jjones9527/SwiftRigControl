@@ -72,13 +72,15 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB],
+        // Hamlib IC7000_ALL_RX_MODES has no packet/DATA modes, and the
+        // command set deliberately disables the unsupported 1A 06 flag.
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // HF general coverage
             DetailedFrequencyRange(min: 30_000, max: 60_000_000, modes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm], canTransmit: true, bandName: "HF"),
             // 6m
-            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm, .dataUSB], canTransmit: true, bandName: "6m"),
+            DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.usb, .cw, .cwR, .fm], canTransmit: true, bandName: "6m"),
             // 2m
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN], canTransmit: true, bandName: "2m"),
             // 70cm

@@ -9,11 +9,13 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .amN,
+                         .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dataFMN, .c4fm],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: {
             let all: Set<Mode> = [.lsb, .usb, .cw, .cwR, .rtty, .rttyR,
-                                  .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM]
+                                  .am, .amN, .fm, .fmN, .wfm, .dataUSB,
+                                  .dataLSB, .dataFM, .dataFMN, .c4fm]
             let bands: [(UInt64, UInt64, String)] = [
                 (1_800_000, 1_999_999, "160m"), (3_500_000, 3_999_999, "80m"),
                 (5_167_500, 5_406_500, "60m"), (7_000_000, 7_300_000, "40m"),

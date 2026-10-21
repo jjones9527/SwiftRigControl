@@ -59,14 +59,15 @@ import Foundation
 /// reads — the CAT connection is write-only. Our equivalent is the
 /// `isUnidirectional: Bool` initializer parameter. When true, all
 /// getters throw `.unsupportedOperation`.
-public actor YaesuFT847CAT: CATProtocol {
+public actor YaesuFT847CAT: CATProtocol, SupportsSplit, SupportsSignalStrength, SupportsTXMeters {
 
     public let transport: any SerialTransport
     public let capabilities: RigCapabilities
 
     /// `true` when this instance targets an FT-847UNI (or FT-650)
-    /// which cannot service read queries. Getters throw when this
-    /// flag is set; setters continue to write.
+    /// which cannot service radio status queries. Wire-backed getters
+    /// throw when this flag is set; locally cached split state remains
+    /// readable and setters continue to write.
     public let isUnidirectional: Bool
 
     /// Current satellite-mode state. Toggling this changes which
@@ -135,13 +136,10 @@ public actor YaesuFT847CAT: CATProtocol {
 
     public func setMode(_ mode: Mode, vfo: VFO) async throws {
         let selector = try Self.modeSelector(for: mode)
-        // Mode selector in byte 0 (P1); opcode 0x07 in byte 4.
-        // Sat mode changes only the opcode nibble to match VFO —
-        // for setMode we always use 0x07 (main); the FT-847's SAT
-        // mode commands (0x17 SAT RX, 0x27 SAT TX) are handled by
-        // toggling satellite mode explicitly and re-routing frequency
-        // commands. Set-mode is main-only per operator intent.
-        let frame = Data([selector, 0x00, 0x00, 0x00, 0x07])
+        // Mode selector in byte 0 (P1). In satellite mode Hamlib's
+        // `opcode_vfo()` routes RX to 0x17 and TX to 0x27.
+        let frame = Data([selector, 0x00, 0x00, 0x00,
+                          setModeOpcode(vfo: vfo)])
         try await transport.write(frame)
     }
 
@@ -182,6 +180,63 @@ public actor YaesuFT847CAT: CATProtocol {
         return response[0] & 0x80 == 0
     }
 
+    // MARK: - Split / satellite operation
+
+    public func setSplit(_ enabled: Bool) async throws {
+        try await setSatelliteMode(enabled)
+    }
+
+    public func getSplit() async throws -> Bool {
+        // The FT-847 has no CAT query for satellite mode. Hamlib likewise
+        // returns the state cached after its most recent set command.
+        satelliteModeEnabled
+    }
+
+    // MARK: - Signal strength and ALC
+
+    public func getSignalStrength() async throws -> SignalStrength {
+        try requireBidirectional()
+        let response = try await sendStatusCommand(opcode: 0xE7,
+                                                    expectedLength: 1)
+        let dots = Int(response[0] & 0x1F)
+
+        // Hamlib converts the FT-847's 0...31 display-dot value to dB
+        // relative to S9 with this piecewise calibration.
+        let dBRelativeToS9: Int
+        if dots < 4 {
+            dBRelativeToS9 = -54 + dots * 2
+        } else if dots < 20 {
+            dBRelativeToS9 = -48 + (dots - 3) * 3
+        } else {
+            dBRelativeToS9 = (dots - 19) * 5
+        }
+
+        if dBRelativeToS9 > 0 {
+            return SignalStrength(sUnits: 9, overS9: dBRelativeToS9,
+                                  raw: Int(response[0]))
+        }
+        return SignalStrength(sUnits: (dBRelativeToS9 + 54) / 6,
+                              raw: Int(response[0]))
+    }
+
+    public func getALC() async throws -> MeterReading {
+        try requireBidirectional()
+        guard capabilities.supportsALCMeter else {
+            throw RigError.unsupportedOperation("ALC meter not supported by this radio")
+        }
+        let response = try await sendStatusCommand(opcode: 0xF7,
+                                                    expectedLength: 1)
+        let raw = Int(response[0] & 0x1F)
+        return MeterReading(kind: .alc, raw: raw,
+                            normalized: Double(raw) / 31.0)
+    }
+
+    public func getRFPowerOut() async throws -> MeterReading { throw unsupportedMeter("RF power") }
+    public func getSWR() async throws -> MeterReading { throw unsupportedMeter("SWR") }
+    public func getComp() async throws -> MeterReading { throw unsupportedMeter("compression") }
+    public func getVoltage() async throws -> MeterReading { throw unsupportedMeter("voltage") }
+    public func getCurrent() async throws -> MeterReading { throw unsupportedMeter("current") }
+
     // MARK: - VFO
 
     public func selectVFO(_ vfo: VFO) async throws {
@@ -203,6 +258,15 @@ public actor YaesuFT847CAT: CATProtocol {
     private func getFreqOpcode(vfo: VFO) -> UInt8 {
         guard satelliteModeEnabled else { return 0x03 }
         return vfo == .b ? 0x23 : 0x13
+    }
+
+    private func setModeOpcode(vfo: VFO) -> UInt8 {
+        guard satelliteModeEnabled else { return 0x07 }
+        return vfo == .b ? 0x27 : 0x17
+    }
+
+    private func unsupportedMeter(_ name: String) -> RigError {
+        .unsupportedOperation("FT-847 does not expose a distinct \(name) meter")
     }
 
     private func sendStatusCommand(opcode: UInt8,
@@ -236,12 +300,6 @@ public actor YaesuFT847CAT: CATProtocol {
         case .am:       return 0x04
         case .fm:       return 0x08
         case .fmN:      return 0x88
-        case .dataUSB, .dataLSB:
-            // FT-847 has no DIG/PKT mode in its command table. Fall
-            // back to USB / LSB respectively — most digital modes
-            // operators use on the FT-847 configure the sound-card
-            // interface for USB/LSB anyway.
-            return mode == .dataLSB ? 0x00 : 0x01
         default:
             throw RigError.unsupportedOperation(
                 "Mode \(mode.rawValue) not supported by FT-847 CAT"

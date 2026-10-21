@@ -10,21 +10,21 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataLSB, .dataFM, .dstar],
         frequencyRange: FrequencyRange(min: 30_000, max: 1_300_000_000),
         detailedFrequencyRanges: [
             // HF/VHF General coverage receive only (IC-9700 does NOT transmit on HF or 6m!)
             DetailedFrequencyRange(min: 30_000, max: 143_999_999, modes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm], canTransmit: false),
             // 2m band (144-148 MHz)
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM, .dstar], canTransmit: true, bandName: "2m"),
             // General coverage receive VHF/UHF
             DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .am], canTransmit: false),
             // 70cm band (430-450 MHz)
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM, .dstar], canTransmit: true, bandName: "70cm"),
             // General coverage receive UHF
             DetailedFrequencyRange(min: 450_000_001, max: 1_239_999_999, modes: [.fm, .am], canTransmit: false),
             // 23cm band (1240-1300 MHz)
-            DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "23cm"),
+            DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM, .dstar], canTransmit: true, bandName: "23cm"),
         ],
         hasDualReceiver: true,
         hasATU: false,
@@ -286,7 +286,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -332,11 +332,11 @@ extension RadioCapabilitiesDatabase.Icom {
             // General coverage receive
             DetailedFrequencyRange(min: 54_000_001, max: 143_999_999, modes: [.usb, .fm, .wfm, .am], canTransmit: false),
             // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dstar], canTransmit: true, bandName: "2m"),
             // General coverage receive
             DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .wfm, .am], canTransmit: false),
             // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dstar], canTransmit: true, bandName: "70cm"),
             // General coverage receive
             DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm, .wfm, .am], canTransmit: false),
         ],
@@ -386,7 +386,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 10,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -432,11 +432,11 @@ extension RadioCapabilitiesDatabase.Icom {
             // General coverage receive
             DetailedFrequencyRange(min: 54_000_001, max: 143_999_999, modes: [.usb, .fm, .wfm, .am], canTransmit: false),
             // 2m band
-            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "2m"),
+            DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dstar], canTransmit: true, bandName: "2m"),
             // General coverage receive
             DetailedFrequencyRange(min: 148_000_001, max: 429_999_999, modes: [.fm, .wfm, .am], canTransmit: false),
             // 70cm band
-            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB], canTransmit: true, bandName: "70cm"),
+            DetailedFrequencyRange(min: 430_000_000, max: 450_000_000, modes: [.usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dstar], canTransmit: true, bandName: "70cm"),
             // General coverage receive
             DetailedFrequencyRange(min: 450_000_001, max: 470_000_000, modes: [.fm, .wfm, .am], canTransmit: false),
         ],

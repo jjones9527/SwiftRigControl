@@ -154,11 +154,11 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: false,
         powerControl: true,
         maxPower: 10,
-        supportedModes: [.fm],
+        supportedModes: [.fm, .dstar],
         frequencyRange: FrequencyRange(min: 1_240_000_000, max: 1_300_000_000),
         detailedFrequencyRanges: [
             DetailedFrequencyRange(min: 1_240_000_000, max: 1_300_000_000,
-                                    modes: [.fm],
+                                    modes: [.fm, .dstar],
                                     canTransmit: true),
         ],
         hasATU: false,

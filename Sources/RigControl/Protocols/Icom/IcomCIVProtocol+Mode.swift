@@ -31,6 +31,7 @@ extension IcomCIVProtocol {
 
         let modeCode = try modeToIcomCode(mode)
         let isData = isDataMode(mode)
+        let filter = modeFilter(for: mode)
 
         if usesSelectedVFOModeCommandNow {
             // Every mode goes through 0x26 so that leaving a DATA mode
@@ -39,7 +40,7 @@ extension IcomCIVProtocol {
                 to: civAddress,
                 command: [CIVFrame.Command.targetableMode],
                 data: [CIVFrame.selectedVFO, modeCode, isData ? 0x01 : 0x00,
-                       CIVFrame.FilterCode.fil1]
+                       filter]
             )
             try await sendFrame(frame)
             let response = try await receiveFrame()
@@ -78,7 +79,12 @@ extension IcomCIVProtocol {
                       response.data[0] == CIVFrame.selectedVFO else {
                     throw RigError.invalidResponse
                 }
-                return try icomCodeToMode(response.data[1], isData: response.data[2] != 0x00)
+                let filter = response.data.count >= 4 ? response.data[3] : CIVFrame.FilterCode.fil1
+                return try icomCodeToMode(
+                    response.data[1],
+                    filter: filter,
+                    isData: response.data[2] != 0x00
+                )
             }
         }
 
@@ -86,18 +92,22 @@ extension IcomCIVProtocol {
         try await sendFrame(frame)
         let response = try await receiveFrame()
         let modeCode = try commandSet.parseModeResponse(response)
+        let filter = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
 
         // Radios whose mode codes include the DATA variants (IC-F8101).
         if let isData = commandSet.parseDataModeFlag(response) {
-            return try icomCodeToMode(modeCode, isData: isData)
+            return try icomCodeToMode(modeCode, filter: filter, isData: isData)
         }
 
         guard usesDataModeFlagFrame else {
             // Radios without DATA sub-modes: keep the pre-v1.2.19
             // reading, where filter byte 0x00 marks the legacy
             // `0x06 [mode, 0x00]` DATA shorthand.
-            let filterByte = response.data.count >= 2 ? response.data[1] : CIVFrame.FilterCode.fil1
-            return try icomCodeToMode(modeCode, isData: filterByte == CIVFrame.FilterCode.data)
+            return try icomCodeToMode(
+                modeCode,
+                filter: filter,
+                isData: filter == CIVFrame.FilterCode.data
+            )
         }
 
         // Only these base modes have a DATA variant (icom.c:2904-2910).
@@ -106,10 +116,10 @@ extension IcomCIVProtocol {
             CIVFrame.ModeCode.fm, CIVFrame.ModeCode.am,
         ]
         guard dataCapable.contains(modeCode) else {
-            return try icomCodeToMode(modeCode)
+            return try icomCodeToMode(modeCode, filter: filter)
         }
         let flag = try await readDataModeFlag()
-        return try icomCodeToMode(modeCode, isData: flag.dataMode != 0x00)
+        return try icomCodeToMode(modeCode, filter: filter, isData: flag.dataMode != 0x00)
     }
 
     // MARK: - DATA flag helpers
@@ -133,9 +143,15 @@ extension IcomCIVProtocol {
 
         // Radios with neither 0x26 nor 0x1A 0x06 keep the legacy
         // `0x06 [mode, 0x00]` shorthand from `setDataModeCommand`.
-        let (command, data) = (isData && !flagFrame)
-            ? commandSet.setDataModeCommand(mode: modeCode)
-            : commandSet.setModeCommand(mode: modeCode)
+        let commandData: (command: [UInt8], data: [UInt8])
+        if isData && !flagFrame {
+            commandData = commandSet.setDataModeCommand(mode: modeCode)
+        } else if let standard = commandSet as? StandardIcomCommandSet {
+            commandData = standard.setModeCommand(mode: modeCode, filter: modeFilter(for: mode))
+        } else {
+            commandData = commandSet.setModeCommand(mode: modeCode)
+        }
+        let (command, data) = commandData
 
         let frame = CIVFrame(to: civAddress, command: command, data: data)
         try await sendFrame(frame)
@@ -218,6 +234,10 @@ extension IcomCIVProtocol {
         case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA-LSB uses LSB mode code + filter byte 0x00
         case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
         case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
+        case .dstar:   return CIVFrame.ModeCode.dstar
+        case .amN:     return CIVFrame.ModeCode.am
+        case .dataFMN, .c4fm:
+            throw RigError.unsupportedOperation("Mode \(mode) is not representable by Icom CI-V")
         }
     }
 
@@ -229,19 +249,33 @@ extension IcomCIVProtocol {
         }
     }
 
+    /// CI-V represents narrow AM/FM with the ordinary mode byte and
+    /// FIL2. Hamlib's ID-52 Plus backend documents these as `02 02`
+    /// and `05 02`, respectively.
+    internal func modeFilter(for mode: Mode) -> UInt8 {
+        switch mode {
+        case .amN, .fmN, .dataFMN: return CIVFrame.FilterCode.fil2
+        default: return CIVFrame.FilterCode.fil1
+        }
+    }
+
     /// Converts an Icom mode code to a Mode enum.
     ///
     /// The `isData` flag comes from the `0x26` data byte, the `0x1A 0x06`
     /// DATA flag, or (on radios without DATA sub-modes) a `0x04` filter
     /// byte of `0x00`.
-    internal func icomCodeToMode(_ code: UInt8, isData: Bool = false) throws -> Mode {
+    internal func icomCodeToMode(
+        _ code: UInt8,
+        filter: UInt8 = CIVFrame.FilterCode.fil1,
+        isData: Bool = false
+    ) throws -> Mode {
         switch code {
         case CIVFrame.ModeCode.lsb:
             return isData ? .dataLSB : .lsb
         case CIVFrame.ModeCode.usb:
             return isData ? .dataUSB : .usb
         case CIVFrame.ModeCode.am:
-            return .am
+            return filter == CIVFrame.FilterCode.fil2 ? .amN : .am
         case CIVFrame.ModeCode.cw:
             return .cw
         case CIVFrame.ModeCode.cwR:
@@ -251,9 +285,12 @@ extension IcomCIVProtocol {
         case CIVFrame.ModeCode.rttyR:
             return .rttyR
         case CIVFrame.ModeCode.fm:
-            return isData ? .dataFM : .fm
+            if isData { return filter == CIVFrame.FilterCode.fil2 ? .dataFMN : .dataFM }
+            return filter == CIVFrame.FilterCode.fil2 ? .fmN : .fm
         case CIVFrame.ModeCode.wfm:
             return .wfm
+        case CIVFrame.ModeCode.dstar:
+            return .dstar
         default:
             throw RigError.invalidResponse
         }

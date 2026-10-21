@@ -237,7 +237,8 @@ public actor TenTecLegacyProtocol:
         case .lsb:  return 0x32  // '2'
         case .cw:   return 0x33  // '3'
         case .fm:   return 0x34  // '4'
-        case .cwR, .rtty, .rttyR, .dataUSB, .dataLSB, .dataFM, .fmN, .wfm:
+        case .cwR, .rtty, .rttyR, .dataUSB, .dataLSB, .dataFM, .dataFMN,
+             .fmN, .wfm, .amN, .c4fm, .dstar:
             return nil
         }
     }
