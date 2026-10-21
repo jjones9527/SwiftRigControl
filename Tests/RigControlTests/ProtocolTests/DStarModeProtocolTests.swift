@@ -14,6 +14,26 @@ import Testing
         #expect(await !proto.isDataMode(.dstar))
     }
 
+    @Test func icomNarrowModesUseAndDecodeFilterTwo() async throws {
+        let proto = IcomCIVProtocol(
+            transport: MockTransport(), civAddress: 0xB4,
+            radioModel: .id52Plus, commandSet: StandardIcomCommandSet.id52Plus,
+            capabilities: RadioCapabilitiesDatabase.Icom.id52
+        )
+
+        #expect(await proto.modeFilter(for: .fmN) == CIVFrame.FilterCode.fil2)
+        #expect(await proto.modeFilter(for: .amN) == CIVFrame.FilterCode.fil2)
+        #expect(try await proto.icomCodeToMode(CIVFrame.ModeCode.fm, filter: 0x02) == .fmN)
+        #expect(try await proto.icomCodeToMode(CIVFrame.ModeCode.am, filter: 0x02) == .amN)
+
+        let command = StandardIcomCommandSet.id52Plus.setModeCommand(
+            mode: CIVFrame.ModeCode.fm,
+            filter: CIVFrame.FilterCode.fil2
+        )
+        #expect(command.command == [CIVFrame.Command.setMode])
+        #expect(command.data == [CIVFrame.ModeCode.fm, CIVFrame.FilterCode.fil2])
+    }
+
     @Test func thd74SetsAndReadsDStarModeIndex() async throws {
         let mock = MockTransport()
         let proto = THD72Protocol(

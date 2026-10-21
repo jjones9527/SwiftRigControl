@@ -96,6 +96,7 @@ import Testing
         IcomVariantSpec(name: "id31",    make: { .id31 },    expectedAddress: 0xA0, expectedEchoesCommands: false, hamlibReference: "id31.c"),
         IcomVariantSpec(name: "id51",    make: { .id51 },    expectedAddress: 0x86, expectedEchoesCommands: false, hamlibReference: "id51.c"),
         IcomVariantSpec(name: "id52",    make: { .id52 },    expectedAddress: 0xB4, expectedEchoesCommands: false, hamlibReference: "id52plus.c"),
+        IcomVariantSpec(name: "id52Plus", make: { .id52Plus }, expectedAddress: 0xB4, expectedEchoesCommands: false, hamlibReference: "id52plus.c"),
         IcomVariantSpec(name: "ic92d",   make: { .ic92d },   expectedAddress: 0x01, expectedEchoesCommands: false, hamlibReference: "ic92d.c (shared with ID-1)"),
 
         // Specialty
@@ -233,9 +234,8 @@ import Testing
     /// a manual reminder to update the table when the variant list
     /// grows.
     @Test func variantTableCountMatchesShippedFactories() {
-        // As of v1.2.19 there are 31 named `StandardIcomCommandSet`
-        // variants shipped (v1.2.19 added `.ic7300MK2`). Bump this if you add a new one.
-        #expect(Self.allVariants.count == 31)
+        // There are 32 named variants after adding ID-52 PLUS.
+        #expect(Self.allVariants.count == 32)
     }
 
     // MARK: - Category D — Hamlib non-targetable receivers/handhelds (v1.2.7)

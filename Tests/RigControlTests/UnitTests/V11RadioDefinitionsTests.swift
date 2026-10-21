@@ -112,6 +112,19 @@ import Testing
         #expect(await rig.radioName == "Icom ID-52")
     }
 
+    @Test func id52PlusMatchesHamlibCapabilities() async throws {
+        let radio = RadioDefinition.Icom.id52Plus()
+        #expect(radio.model == "ID-52 PLUS")
+        #expect(radio.civAddress == 0xB4)
+        #expect(radio.defaultBaudRate == 19_200)
+        #expect(radio.capabilities.supportedModes.contains(.amN))
+        #expect(!radio.capabilities.isFrequencyValid(200_000_000))
+
+        let rig = try RigController(radio: radio, connection: .mock)
+        try await rig.connect()
+        #expect(await rig.radioName == "Icom ID-52 PLUS")
+    }
+
     // MARK: - Icom IC-92D
 
     @Test func ic92dBasicCaps() {

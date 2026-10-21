@@ -85,6 +85,15 @@ Open completeness items:
   not generalized to other Icoms even where Hamlib exposes equivalents.
   They are not advertised as portable capabilities, so this is additive
   work rather than a current correctness defect.
+- ID-52A/E PLUS is now a distinct catalog model based on Hamlib
+  `id52plus.c` (CI-V `0xB4`, 4800–19200 baud, Main/Sub, FM/FM-N,
+  AM/AM-N receive, D-STAR, tones, DCS, VOX, levels and PTT). The shared
+  CI-V implementation now preserves FIL2 so FM-N and AM-N set/read
+  correctly instead of collapsing to their wide modes.
+- Hamlib master does not currently provide ID-50, ID-5200, or IC-R15
+  backends. Those models are intentionally not presented as complete
+  Hamlib-derived implementations until authoritative command/address
+  definitions are available upstream.
 
 ### Yaesu newcat and FTX-1
 

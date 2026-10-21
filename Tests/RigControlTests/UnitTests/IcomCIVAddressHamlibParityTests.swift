@@ -147,6 +147,7 @@ import Testing
         (.id31, 0xA0, "id31.c priv_caps"),
         (.id51, 0x86, "id51.c priv_caps"),
         (.id52, 0xB4, "id52plus.c priv_caps"),
+        (.id52Plus, 0xB4, "id52plus.c priv_caps"),
         (.ic92d, 0x01, "ic92d.c priv_caps"),
 
         // Mobile FM D-STAR

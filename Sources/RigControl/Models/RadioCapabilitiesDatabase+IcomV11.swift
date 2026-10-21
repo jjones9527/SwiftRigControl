@@ -247,27 +247,27 @@ extension RadioCapabilitiesDatabase.Icom {
         powerControl: true,
         maxPower: 100,
         // D-STAR DV isn't a DATA mode; Hamlib lists AM/FM + DSTAR only.
-        supportedModes: [.fm, .fmN, .am, .dstar],
+        supportedModes: [.fm, .fmN, .am, .amN, .dstar],
         frequencyRange: FrequencyRange(min: 108_000_000, max: 550_000_000),
         detailedFrequencyRanges: [
             // Airband + VHF general receive (108 MHz starts the band)
             DetailedFrequencyRange(min: 108_000_000, max: 143_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // 2m band
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000,
                                     modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "2m"),
             // General receive between bands
-            DetailedFrequencyRange(min: 148_000_001, max: 374_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+            DetailedFrequencyRange(min: 148_000_001, max: 174_000_000,
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // UHF general receive
             DetailedFrequencyRange(min: 375_000_000, max: 429_999_999,
-                                    modes: [.fm, .fmN, .am], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
             // 70cm band
             DetailedFrequencyRange(min: 430_000_000, max: 450_000_000,
                                     modes: [.fm, .fmN, .dstar], canTransmit: true, bandName: "70cm"),
             // Upper UHF receive
             DetailedFrequencyRange(min: 450_000_001, max: 550_000_000,
-                                    modes: [.fm, .fmN], canTransmit: false),
+                                    modes: [.fm, .fmN, .am, .amN], canTransmit: false),
         ],
         hasDualReceiver: true,  // Main/Sub dual-watch
         hasATU: false,

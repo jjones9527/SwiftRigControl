@@ -185,6 +185,9 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     /// ID-52A/E / ID-52A Plus2 dual-band V/U D-STAR handheld
     case id52 = "ID-52"
 
+    /// ID-52A/E PLUS dual-band V/U D-STAR handheld
+    case id52Plus = "ID-52 PLUS"
+
     /// IC-92AD / IC-E92D dual-band D-STAR handheld
     case ic92d = "IC-92D"
 
@@ -284,7 +287,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .id4100: return 0x9A
         case .id31:   return 0xA0
         case .id51:   return 0x86
-        case .id52:   return 0xB4
+        case .id52, .id52Plus: return 0xB4
         case .ic92d:  return 0x01
 
         // Receivers
@@ -313,7 +316,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
     public var supportsDSTAR: Bool {
         switch self {
         case .ic7100, .ic9700, .ic9100, .ic705, .id4100, .id5100,
-             .id31, .id51, .id52, .ic92d, .id1, .icr30, .icr8600:
+             .id31, .id51, .id52, .id52Plus, .ic92d, .id1, .icr30, .icr8600:
             return true
         default:
             return false
@@ -336,7 +339,7 @@ public enum IcomRadioModel: String, Sendable, CaseIterable {
         case .ic7600, .ic7760, .ic7610, .ic7851, .ic7850, .ic7800,
              .ic756, .ic756pro, .ic756proII, .ic756proIII,
              .ic9700, .ic9100, .ic910h, .ic2730, .id4100, .id5100,
-             .id51, .id52, .ic92d,
+             .id51, .id52, .id52Plus, .ic92d,
              // v1.2.0 Group D — IC-R20 markets "Dual receive" (two
              // independent VFOs with simultaneous audio).
              .icr20:

@@ -363,7 +363,17 @@ extension StandardIcomCommandSet {
     /// - 9600 baud, 5W max, FM + D-STAR. Successor to ID-51.
     /// - Per Hamlib `id52plus.c`, uses 0xB4 default CI-V address.
     public static var id52: StandardIcomCommandSet {
-        StandardIcomCommandSet(civAddress: 0xB4, vfoModel: .mainSub, supportsDataMode: false)
+        StandardIcomCommandSet(
+            civAddress: 0xB4,
+            vfoModel: .mainSub,
+            requiresModeFilter: true,
+            supportsDataMode: false
+        )
+    }
+
+    /// ID-52A/E PLUS, matching Hamlib `id52plus.c`.
+    public static var id52Plus: StandardIcomCommandSet {
+        id52
     }
 
     /// IC-92AD / IC-E92D dual-band D-STAR handheld (2008)
