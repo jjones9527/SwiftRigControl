@@ -184,11 +184,10 @@ import Testing
             (.cw, "MD3;"),
             (.fm, "MD4;"),
             (.am, "MD5;"),
-            (.dataUSB, "MD6;"),
             (.cwR, "MD7;"),
-            (.rtty, "MD8;"),
-            (.dataLSB, "MD9;"),
         ]
+        // DATA / RTTY modes add a DT sub-mode command; see
+        // DataModeWireFormatTests.
 
         for (mode, expectedCmd) in modeMappings {
             await mockTransport.reset()

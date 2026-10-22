@@ -51,7 +51,21 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.3.0** (git tag, 2026-10-21),
+The shipped version is **v1.3.1** (git tag, 2026-10-22), DATA-mode
+wire fixes from a MacWinlink FT-710 field report:
+
+- **Yaesu newcat `MD` table** is Hamlib `newcat_mode_conv[]`
+  (`YaesuCATProtocol.newcatModeCodeTable`, `newcat.c:10963-10980`).
+  `.dataUSB` used to send `9`, which is RTTY-U; DATA-U is `C`.
+  `getMode` parses a character, so `A`–`F` no longer throw.
+- **Elecraft modes** (`ElecraftProtocol+Mode.swift`): K3-family DATA
+  and RTTY are `MD6` / `MD9` + `DT` (`k3.c:1217-1251`). The K2 has its
+  own table, `MD9` = DATA-USB (`k2.c:46-58`), chosen by
+  `usesK2ModeTable` because `isK2` also matches the KX2 and KX3.
+
+**Mock-tested only.** Test count 985 → 1001.
+
+The previously-shipped version was **v1.3.0** (git tag, 2026-10-21),
 jjones9527/SwiftRigControl#46–#51 and the release PR:
 
 - **New radios** (catalog 126 → 137): native Flex SmartSDR slices

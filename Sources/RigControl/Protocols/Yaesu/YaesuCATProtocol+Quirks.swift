@@ -56,16 +56,16 @@ extension YaesuCATProtocol {
         /// CHANGELOG for the fix.
         public let frequencyDigits: Int
 
-        /// FTX-1-specific mode selector table, or `nil` to use the
-        /// shared newcat `MD` table (`1=LSB, 2=USB, 3=CW-USB, 4=FM,
-        /// 5=AM, 6=RTTY-LSB, 7=CW-LSB, 8=DATA-LSB, 9=RTTY-USB,
-        /// A=DATA-FM, B=FM-N, C=DATA-USB, D=AM-N` — the FTX-1 table
-        /// per `rigs/yaesu/ftx1/ftx1_mode.c` file header).
+        /// Per-radio `MD` mode selector table, or `nil` to use the
+        /// shared newcat table,
+        /// ``YaesuCATProtocol/newcatModeCodeTable`` (`1=LSB, 2=USB,
+        /// 3=CW-U, 4=FM, 5=AM, 6=RTTY-L, 7=CW-L, 8=DATA-L, 9=RTTY-U,
+        /// A=DATA-FM, B=FM-N, C=DATA-U, D=AM-N, E=C4FM, F=DATA-FM-N`,
+        /// Hamlib `newcat.c:10963-10980`).
         ///
-        /// The FTX-1 differs from the shared newcat table on codes
-        /// 3 (CW-USB vs CW), 7 (CW-LSB vs CW-R), and adds C4FM entries
-        /// (H, I) plus a PSK entry (E). Radios that use the shared
-        /// table can leave this `nil`.
+        /// The FTX-1 preset sets its own table, which currently has
+        /// the same contents. Radios that use the shared table can
+        /// leave this `nil`.
         public let modeCodeTable: [Mode: Character]?
 
         /// When `true`, `setMode` / `setFrequency` should send an
