@@ -214,38 +214,4 @@ extension ElecraftProtocol {
 
         return response
     }
-
-    /// Converts a Mode enum to an Elecraft mode code.
-    func modeToElecraftCode(_ mode: Mode) throws -> Int {
-        switch mode {
-        case .lsb: return 1
-        case .usb: return 2
-        case .cw: return 3
-        case .fm: return 4
-        case .am: return 5
-        case .dataUSB: return 6  // FSK-D (data)
-        case .cwR: return 7
-        case .rtty: return 8  // RTTY
-        case .dataLSB: return 9  // DATA-A (data on LSB)
-        default:
-            throw RigError.unsupportedOperation("Mode \(mode) not supported by Elecraft protocol")
-        }
-    }
-
-    /// Converts an Elecraft mode code to a Mode enum.
-    func elecraftCodeToMode(_ code: Int) throws -> Mode {
-        switch code {
-        case 1: return .lsb
-        case 2: return .usb
-        case 3: return .cw
-        case 4: return .fm
-        case 5: return .am
-        case 6: return .dataUSB
-        case 7: return .cwR
-        case 8: return .rtty
-        case 9: return .dataLSB
-        default:
-            throw RigError.invalidResponse
-        }
-    }
 }
