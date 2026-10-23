@@ -21,6 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **FTX-1 Main/Sub clarifier control.** `YaesuCATProtocol` gains
+  `setRIT(_:vfo:)`, `getRIT(vfo:)`, `setXIT(_:vfo:)` and `getXIT(vfo:)`,
+  reached through `rig.vendorExtensions`. On the FTX-1, `.a`/`.main`
+  address the Main clarifier (`CF0…`) and `.b`/`.sub` the Sub clarifier
+  (`CF1…`), per Hamlib `ftx1_clarifier.c` (`ftx1_get_cf_vfo_param`).
+  Each write reads that side's current RX/TX enable pair first, so the
+  other clarifier on the same side is preserved, and replies must echo
+  the requested side. Other Yaesu radios accept `.a`/`.main` only and
+  throw `unsupportedOperation` for the Sub side without touching the
+  wire. The unqualified `setRIT`/`getRIT`/`setXIT`/`getXIT` still target
+  Main. Mock-tested only. Test count 1001 → 1009.
+
 ## [1.3.1] - 2026-10-22
 
 DATA-mode wire fixes from a MacWinlink 0.99.56 field report: an FT-710

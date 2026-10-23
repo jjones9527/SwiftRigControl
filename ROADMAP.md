@@ -1535,7 +1535,14 @@ jjones9527/SwiftRigControl#46–#51.
       and KX3, which then get the K2 timeouts, `SM` and set-command path.
       The mode table no longer depends on it; the rest needs fixing.
 
-### 5.10.4 Deferred
+### 5.10.4 Next minor (unreleased, mock-tested)
+
+- [x] FTX-1 VFO-qualified clarifier: `setRIT/getRIT/setXIT/getXIT(vfo:)`
+      on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
+      independently.
+- [ ] Hardware check of FTX-1 Sub-side clarifier.
+
+### 5.10.5 Deferred
 
 - [ ] ID-50, ID-5200, IC-R15: wait for Hamlib backends.
 - [ ] Richer D-STAR operations (callsigns, routing, messages, GPS).
