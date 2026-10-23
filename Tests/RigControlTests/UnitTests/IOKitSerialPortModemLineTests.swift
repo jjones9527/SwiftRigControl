@@ -50,7 +50,7 @@ import Darwin
         // We only need the slave path — close the fd; IOKitSerialPort
         // will open its own.
         Darwin.close(slave)
-        let path = String(cString: name)
+        let path = String(decoding: name.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
         return PtyPair(masterFD: master, slavePath: path)
     }
 

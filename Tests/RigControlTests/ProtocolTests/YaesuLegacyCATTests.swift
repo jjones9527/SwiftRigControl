@@ -332,9 +332,10 @@ import Testing
 
     @Test func ft847CapabilitiesMatchImplementedTraits() async throws {
         let (_, proto) = try await makeFT847()
-        #expect(proto is any SupportsSplit)
-        #expect(proto is any SupportsSignalStrength)
-        #expect(proto is any SupportsTXMeters)
+        // Compile-time conformance checks; these fail to build if a trait is dropped.
+        let _: any SupportsSplit = proto
+        let _: any SupportsSignalStrength = proto
+        let _: any SupportsTXMeters = proto
         #expect(!RadioCapabilitiesDatabase.Yaesu.ft847.powerControl)
         #expect(RadioCapabilitiesDatabase.Yaesu.ft847.supportsALCMeter)
     }

@@ -76,7 +76,7 @@ let package = Package(
             name: "RigControlTests",
             dependencies: ["RigControl"],
             path: "Tests/RigControlTests",
-            exclude: ["Archived"]
+            exclude: ["Archived", "UnitTests/PerRadioCapabilityTemplate.md"]
         ),
     ],
     swiftLanguageModes: [.v6]
