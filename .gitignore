@@ -38,3 +38,6 @@ DerivedData/
 
 # Development notes (if keeping locally)
 # Documentation/Development/
+
+# Claude Code per-user settings (shared project settings go in .claude/settings.json)
+.claude/settings.local.json
