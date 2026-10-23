@@ -25,7 +25,7 @@ import Darwin
             throw RigError.serialPortError("openpty failed")
         }
         Darwin.close(slave)
-        return (master, String(cString: name))
+        return (master, String(decoding: name.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self))
     }
 
     private static func port(_ path: String) -> IOKitSerialPort {
