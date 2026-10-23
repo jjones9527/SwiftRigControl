@@ -205,10 +205,11 @@ import Testing
     @Test func ft920AndFT1000AdvertiseImplementedClarifierTraits() async throws {
         let (_, ft920) = try await makeFT920()
         let (_, ft1000) = try await makeFT1000MPForTraitCheck()
-        #expect(ft920 is any SupportsRIT)
-        #expect(ft920 is any SupportsXIT)
-        #expect(ft1000 is any SupportsRIT)
-        #expect(ft1000 is any SupportsXIT)
+        // Compile-time conformance checks; these fail to build if a trait is dropped.
+        let _: any SupportsRIT = ft920
+        let _: any SupportsXIT = ft920
+        let _: any SupportsRIT = ft1000
+        let _: any SupportsXIT = ft1000
         #expect(!RadioCapabilitiesDatabase.Yaesu.ft920.powerControl)
         #expect(!RadioCapabilitiesDatabase.Yaesu.ft920.supportsSignalStrength)
     }

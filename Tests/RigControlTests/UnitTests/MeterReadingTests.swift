@@ -22,11 +22,11 @@ import Testing
         #expect(MeterReading.decode(kind: .rfPower, raw: 255).watts == 120.0)
     }
 
-    @Test func rfPowerCurveInterpolatesBetweenBreakpoints() {
+    @Test func rfPowerCurveInterpolatesBetweenBreakpoints() throws {
         // Halfway between (21, 5W) and (43, 10W) = (32, 7.5W).
         let r = MeterReading.decode(kind: .rfPower, raw: 32)
-        let w = try? #require(r.watts)
-        #expect(abs((w ?? 0) - 7.5) < 0.1)
+        let w = try #require(r.watts)
+        #expect(abs(w - 7.5) < 0.1)
     }
 
     @Test func rfPowerNormalizedHitsOneAt100W() {
