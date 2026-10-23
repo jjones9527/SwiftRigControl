@@ -33,7 +33,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the requested side. Other Yaesu radios accept `.a`/`.main` only and
   throw `unsupportedOperation` for the Sub side without touching the
   wire. The unqualified `setRIT`/`getRIT`/`setXIT`/`getXIT` still target
-  Main. Mock-tested only. Test count 985 → 993.
+  Main. Mock-tested only. Test count 1001 → 1009.
+
+## [1.3.1] - 2026-10-22
+
+DATA-mode wire fixes from a MacWinlink 0.99.56 field report: an FT-710
+asked for `Mode.dataUSB` (VARA HF, ARDOP) over native serial CAT went
+into RTTY-U. The rigctld / Hamlib path was not affected. Every protocol
+family's DATA-mode encoding was then re-checked against Hamlib
+`7bbde19`. Test count 985 → 1001 (`swift test`).
+
+**Verification status:** mock-tested only. None of these radios has
+been checked on hardware for DATA modes.
+
+### Fixed
+
+- **Yaesu newcat `MD` codes** (FT-450/450D, FT-891, FT-950, FT-991/991A,
+  FT-710, FT-2000, FTDX-1200/3000/5000/9000, FTDX10, FTDX101D/MP).
+  The shared table mapped `.dataUSB` to `9`, which is RTTY-U on these
+  radios. It now uses Hamlib `newcat_mode_conv[]` (`newcat.c:10963-10980`):
+  DATA-U is `C`, so `setMode(.dataUSB)` sends `MD0C;`. `.rttyR` (`9`),
+  `.dataFM` (`A`), `.amN` (`D`), `.c4fm` (`E`) and `.dataFMN` (`F`) are
+  new. `.fmN` is `B`; it used to send plain FM (`4`).
+- **Yaesu newcat `getMode`** parses the mode as a character. It used to
+  call `Int(_:)`, so any reply from `A` to `F` (for example `MD0C;`) threw
+  `invalidResponse`.
+- **Elecraft K3 / K3S / K4 / KX2 / KX3 DATA modes** add the `DT`
+  sub-mode, as Hamlib `k3_set_mode` does (`k3.c:1217-1251`, `1355-1365`):
+  DATA-USB is `MD6;` + `DT0;`, DATA-LSB is `MD9;` + `DT0;`, RTTY is
+  `MD6;` + `DT2;`. Before this fix DATA-USB sent `MD6;` alone, so a radio
+  left in FSK D stayed there, and RTTY sent `MD8;`, which these radios
+  don't have. `getMode` reads `DT` for `MD6` / `MD9`. `.rttyR` is new
+  (`MD9;` + `DT2;`; Hamlib sends `DT1`, which its own `k3_get_mode`
+  reads back as PKT-LSB).
+- **Elecraft K2 DATA modes were swapped.** The K2 has its own table
+  (`k2.c:46-58`): `MD9` is PKT-USB and `MD6` is PKT-LSB. DATA-USB now
+  sends `MD9;`. RTTY, AM and FM now throw `unsupportedOperation` on the
+  K2, matching Hamlib's `K2_MODES`. The K2 hardware validator didn't
+  catch this because a set followed by a read-back used the same
+  swapped table both ways.
+
+### Checked, no change needed
+
+- **Kenwood** (fixed in v1.2.18): only the TS-590S/SG use `MD` + `DA`
+  (`kenwood.c:2634-2644`). TS-890S uses `SF`, TS-990S uses `OM`, and the
+  TS-480 has no PKT modes (`ts480.c:36`).
+- **Icom CI-V and Xiegu**: base mode plus the DATA flag (`0x26`, or
+  `0x06` then `0x1A 0x06`), as fixed in v1.2.19. Only stale comments
+  changed.
+- **Yaesu binary CAT**: FT-817/818/857/897 and mcHF (DIG `0x0A`, PKT
+  `0x0C`), FT-1000MP (`ft1000mp.c:1053-1055`, PKT-USB shares RTTY-USB),
+  FT-920, FT-100 and FT-847 (no PKT modes in Hamlib) all match Hamlib.
+- **Ten-Tec**: no Hamlib Ten-Tec backend has PKT modes, so they throw.
+
+### Added
+
+- `YaesuCATProtocol.newcatModeCodeTable`, the shared newcat `MD` table.
 
 ## [1.3.0] - 2026-10-21
 

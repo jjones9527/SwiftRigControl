@@ -166,20 +166,10 @@ public actor YaesuCATProtocol:
             try await sendSetCommand("SV0")
         }
 
-        // Radios with a custom mode-code table (FTX-1) look up the
-        // character directly; older newcat radios use the shared
-        // numeric table.
-        let modeCodeChar: Character
-        if let table = quirks.modeCodeTable {
-            guard let ch = table[mode] else {
-                throw RigError.unsupportedOperation(
-                    "Mode \(mode.rawValue) not supported by this Yaesu variant"
-                )
-            }
-            modeCodeChar = ch
-        } else {
-            let numericCode = try modeToYaesuCode(mode)
-            modeCodeChar = Character("\(numericCode)")
+        guard let modeCodeChar = modeCodeTable[mode] else {
+            throw RigError.unsupportedOperation(
+                "Mode \(mode.rawValue) not supported by this Yaesu variant"
+            )
         }
 
         // Wire format: `MD0<char>;` (VFO A) or `MD1<char>;` (VFO B).
@@ -214,21 +204,46 @@ public actor YaesuCATProtocol:
         let codeIndex = response.index(response.startIndex, offsetBy: 3)
         let codeChar = response[codeIndex]
 
-        // Custom table lookup (FTX-1) — invert the character table.
-        if let table = quirks.modeCodeTable {
-            for (mode, ch) in table where ch == codeChar {
-                return mode
-            }
+        // Codes run `1`-`9` then `A`-`F`, so this is a character
+        // lookup, not `Int(_:)` (which threw on `MD0C;` before v1.3.1).
+        guard let mode = modeCodeTable.first(where: { $0.value == codeChar })?.key else {
             throw RigError.invalidResponse
         }
-
-        // Shared numeric table.
-        guard let modeCode = Int(String(codeChar)) else {
-            throw RigError.invalidResponse
-        }
-
-        return try yaesuCodeToMode(modeCode)
+        return mode
     }
+
+    /// The `MD` code table for this radio: the quirk override if there
+    /// is one, otherwise ``newcatModeCodeTable``.
+    private var modeCodeTable: [Mode: Character] {
+        quirks.modeCodeTable ?? Self.newcatModeCodeTable
+    }
+
+    /// The newcat `MD` mode characters, copied from Hamlib
+    /// `newcat_mode_conv[]` (`newcat.c:10963-10980`). Hamlib uses this
+    /// one table for every newcat radio (FT-450 through FTDX101 and
+    /// FT-710).
+    ///
+    /// Before v1.3.1 this table was numeric and had `.dataUSB` → `9`.
+    /// On newcat radios `9` is RTTY-U, so DATA-USB requests (VARA HF,
+    /// ARDOP) put an FT-710 into RTTY-U. DATA-U is `C`. The old table
+    /// also mapped `.fmN` to `4` (FM) and had no `.rttyR` or `.dataFM`.
+    public static let newcatModeCodeTable: [Mode: Character] = [
+        .lsb:     "1",
+        .usb:     "2",
+        .cw:      "3",   // CW-U
+        .fm:      "4",
+        .am:      "5",
+        .rtty:    "6",   // RTTY-L
+        .cwR:     "7",   // CW-L
+        .dataLSB: "8",   // DATA-L
+        .rttyR:   "9",   // RTTY-U
+        .dataFM:  "A",
+        .fmN:     "B",
+        .dataUSB: "C",   // DATA-U
+        .amN:     "D",
+        .c4fm:    "E",
+        .dataFMN: "F",
+    ]
 
     /// The `MD` qualifier byte for the given `vfo` per the current
     /// quirks. Returns `"0"` for VFO A / main and `"1"` for VFO B /
@@ -469,40 +484,5 @@ public actor YaesuCATProtocol:
         }
 
         return response
-    }
-
-    /// Converts a Mode enum to a Yaesu mode code.
-    private func modeToYaesuCode(_ mode: Mode) throws -> Int {
-        switch mode {
-        case .lsb: return 1
-        case .usb: return 2
-        case .cw: return 3
-        case .fm: return 4
-        case .am: return 5
-        case .rtty: return 6  // FSK
-        case .cwR: return 7
-        case .dataLSB: return 8  // PKT-LSB
-        case .dataUSB: return 9  // PKT-USB (or DATA-USB)
-        case .fmN: return 4  // FM (Yaesu doesn't distinguish FM/FM-N in mode code)
-        default:
-            throw RigError.unsupportedOperation("Mode \(mode) not supported by Yaesu protocol")
-        }
-    }
-
-    /// Converts a Yaesu mode code to a Mode enum.
-    private func yaesuCodeToMode(_ code: Int) throws -> Mode {
-        switch code {
-        case 1: return .lsb
-        case 2: return .usb
-        case 3: return .cw
-        case 4: return .fm
-        case 5: return .am
-        case 6: return .rtty
-        case 7: return .cwR
-        case 8: return .dataLSB
-        case 9: return .dataUSB
-        default:
-            throw RigError.invalidResponse
-        }
     }
 }

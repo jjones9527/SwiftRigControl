@@ -142,7 +142,10 @@ import Testing
             (.rtty, "MD06;"),
             (.cwR, "MD07;"),
             (.dataLSB, "MD08;"),
-            (.dataUSB, "MD09;"),
+            (.rttyR, "MD09;"),
+            (.dataFM, "MD0A;"),
+            (.fmN, "MD0B;"),
+            (.dataUSB, "MD0C;"),   // was MD09; (RTTY-U) before v1.3.1
         ]
 
         for (mode, expectedCmd) in modeMappings {

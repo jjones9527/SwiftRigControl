@@ -5,7 +5,16 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.3.0
+**Current release:** v1.3.1
+
+## What's new in v1.3.1
+
+- **Yaesu DATA-USB fix** — FT-710, FT-991(A), FTDX10, FTDX101 and the other
+  newcat radios sent `MD09;` (RTTY-U) for `Mode.dataUSB`; they now send
+  `MD0C;` (DATA-U), and `getMode` reads `A`–`F` mode codes.
+- **Elecraft DATA modes** — K3 / K3S / K4 / KX2 / KX3 set the `DT` data
+  sub-mode, and the K2's swapped DATA-USB / DATA-LSB codes are corrected.
+  Mock-tested only; see the [1.3.1 CHANGELOG entry](CHANGELOG.md).
 
 ## What's new in v1.3.0
 

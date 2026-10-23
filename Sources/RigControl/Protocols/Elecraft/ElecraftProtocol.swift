@@ -139,35 +139,6 @@ public actor ElecraftProtocol:
         return freq
     }
 
-    // MARK: - Mode Control
-
-    public func setMode(_ mode: Mode, vfo: VFO) async throws {
-        let modeCode = try modeToElecraftCode(mode)
-        let command = "MD\(modeCode)"
-
-        try await sendSetCommand(command)
-    }
-
-    public func getMode(vfo: VFO) async throws -> Mode {
-        try await sendCommand("MD")
-        let response = try await receiveResponse()
-
-        // Response format: MDx; where x is mode code
-        guard response.hasPrefix("MD"),
-              response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
-        let codeChar = response[codeIndex]
-
-        guard let modeCode = Int(String(codeChar)) else {
-            throw RigError.invalidResponse
-        }
-
-        return try elecraftCodeToMode(modeCode)
-    }
-
     // MARK: - PTT Control
 
     public func setPTT(_ enabled: Bool) async throws {

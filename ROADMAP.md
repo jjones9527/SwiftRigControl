@@ -1,6 +1,11 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.3.0 (cut 2026-10-21 — catalog 126 → 137:
+**Current version:** v1.3.1 (cut 2026-10-22 — DATA-mode wire fixes
+from a MacWinlink FT-710 field report: Yaesu newcat `.dataUSB` is `MD0C;`
+(was `MD09;`, RTTY-U) and `getMode` reads `A`–`F`; Elecraft K3-family
+DATA modes add `DT`; K2 DATA-USB / DATA-LSB were swapped.  Mock-tested
+only.  Test count 985 → 1001.)
+Previous release **v1.3.0** (cut 2026-10-21 — catalog 126 → 137:
 native Flex SmartSDR slices A–H (`FlexSmartSDRProtocol`, port 4992),
 QRP Labs QMX, Hamgeek uSDX, Icom ID-52A/E PLUS.  New `Mode` cases
 `.amN` / `.dataFMN` / `.c4fm` / `.dstar` and
@@ -1514,14 +1519,30 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] `HARDWARE_CHECK_v1.2.19.md` on IC-7100 / IC-7600 / IC-9700 / K2
       (still outstanding from v1.2.20).
 
-### 5.10.3 Next minor (unreleased, mock-tested)
+### 5.10.3 Shipped in v1.3.1 (mock-tested)
+
+- [x] Yaesu newcat `MD` table matches Hamlib `newcat_mode_conv[]`
+      (DATA-U `C`, RTTY-U `9`, DATA-FM `A`, FM-N `B`); `getMode`
+      parses `A`–`F`.
+- [x] Elecraft K3 / K3S / K4 / KX2 / KX3 DATA and RTTY via `MD` + `DT`;
+      K2 own table (`MD9` = DATA-USB, `MD6` = DATA-LSB).
+- [x] DATA-mode check of Kenwood, Icom / Xiegu, Yaesu binary CAT and
+      Ten-Tec against Hamlib `7bbde19`: no changes needed.
+- [ ] Hardware: FT-710 `setMode(.dataUSB)` shows DATA-U; K2 DATA-USB on
+      the K2 hardware validator, checked on the radio's display rather
+      than by reading the mode back.
+- [ ] `ElecraftProtocol.isK2` (max power ≤ 15 W) also matches the KX2
+      and KX3, which then get the K2 timeouts, `SM` and set-command path.
+      The mode table no longer depends on it; the rest needs fixing.
+
+### 5.10.4 Next minor (unreleased, mock-tested)
 
 - [x] FTX-1 VFO-qualified clarifier: `setRIT/getRIT/setXIT/getXIT(vfo:)`
       on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
       independently.
 - [ ] Hardware check of FTX-1 Sub-side clarifier.
 
-### 5.10.4 Deferred
+### 5.10.5 Deferred
 
 - [ ] ID-50, ID-5200, IC-R15: wait for Hamlib backends.
 - [ ] Richer D-STAR operations (callsigns, routing, messages, GPS).

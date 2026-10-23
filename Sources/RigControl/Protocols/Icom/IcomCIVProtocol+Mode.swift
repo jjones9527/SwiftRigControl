@@ -231,9 +231,9 @@ extension IcomCIVProtocol {
         case .fm:      return CIVFrame.ModeCode.fm
         case .fmN:     return CIVFrame.ModeCode.fm   // FM-Narrow uses same code; filter controls bandwidth
         case .wfm:     return CIVFrame.ModeCode.wfm
-        case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA-LSB uses LSB mode code + filter byte 0x00
-        case .dataUSB: return CIVFrame.ModeCode.usb  // DATA-USB uses USB mode code + filter byte 0x00
-        case .dataFM:  return CIVFrame.ModeCode.fm   // DATA-FM  uses FM  mode code + filter byte 0x00
+        case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA flag sent separately (0x26 or 0x1A 0x06)
+        case .dataUSB: return CIVFrame.ModeCode.usb  // DATA flag sent separately (0x26 or 0x1A 0x06)
+        case .dataFM:  return CIVFrame.ModeCode.fm   // DATA flag sent separately (0x26 or 0x1A 0x06)
         case .dstar:   return CIVFrame.ModeCode.dstar
         case .amN:     return CIVFrame.ModeCode.am
         case .dataFMN, .c4fm:
