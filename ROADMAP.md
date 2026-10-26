@@ -1531,9 +1531,20 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] Hardware: FT-710 `setMode(.dataUSB)` shows DATA-U; K2 DATA-USB on
       the K2 hardware validator, checked on the radio's display rather
       than by reading the mode back.
-- [ ] `ElecraftProtocol.isK2` (max power ≤ 15 W) also matches the KX2
-      and KX3, which then get the K2 timeouts, `SM` and set-command path.
-      The mode table no longer depends on it; the rest needs fixing.
+- [x] `ElecraftProtocol.isK2` (max power ≤ 15 W) also matched the KX2
+      and KX3. Replaced by an explicit `ElecraftProtocol.Family`; the
+      K3-family AGC (`GT000/002/004`), S-meter (`SM`), attenuator
+      readback (`RA01` = 10 dB) and power (watts) now follow Hamlib
+      `k3.c` (CHANGELOG `[Unreleased]`).
+- [ ] Hardware: KX2 / KX3 / K3 AGC, S-meter and attenuator after the
+      family fix.
+- [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
+      (`kx3_set_level`, k3.c:2386-2414: `RG` 190–250, `AG` 0–60,
+      `MG` 0–80); ours use the K3 scales.
+- [ ] K4 attenuator steps 5/10/15 dB (`k3.c` K4 caps `.attenuator`);
+      ours treat it like the K3 (one 10 dB step).
+- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter (k3.c:2066-2095)
+      and the K3 `SM` 0–21 bar scale in `getSignalStrength`.
 
 ### 5.10.4 Next minor (unreleased, mock-tested)
 

@@ -54,6 +54,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Elecraft KX2 and KX3 were driven as a K2.** `ElecraftProtocol`
+  decided "K2" from `maxPower <= 15`, which also matched the 12 W KX2
+  and 15 W KX3. Hamlib drives both from `k3.c`, not `k2.c`. They had
+  the K2's 2 s timeout and 100 ms delay after every command, sets
+  that were never checked with `ID;`, K2 AGC codes and the K2-only
+  `RA02` attenuator step. The family is now explicit:
+  `ElecraftProtocol.Family` (`.k2` / `.k3`), passed by every
+  `RadioDefinition.Elecraft` factory. `init(transport:capabilities:family:)`
+  infers it when omitted (≤ 15 W *and* no AM → K2). The K2 path is
+  unchanged.
+- **Elecraft K3-family level commands now match Hamlib `k3.c`.**
+  These apply to the K3, K3S, K4, KX2 and KX3. They had to be fixed
+  together, or the KX2 and KX3 would have regressed when they moved
+  off the K2 path:
+  - **AGC** is `GT000` off, `GT002` fast, `GT004` slow
+    (`k3.c:1939-1962`, `2180-2207`). It used to be `000`/`001`/`002`,
+    so `.fast` turned AGC off and `.slow` selected fast. `.medium`
+    maps to slow. `.auto` now throws `unsupportedOperation` (Hamlib
+    `-RIG_EINVAL`). Other `GT` replies throw `invalidResponse`.
+  - **S-meter** reads `SM;`, not `SM0;` (`k3.c:2059-2080`).
+  - **Attenuator**: `RA01` reads back as 10 dB, not 6 dB
+    (`k3.c:2209-2226`).
+  - **Power** `PC` is watts on every Elecraft (`k3.c:2023-2027`,
+    `2325-2345`), clamped to the radio's maximum. The wire bytes are
+    unchanged on the 100 W K3/K3S/K4. The KX2/KX3 keep the watts they
+    already sent.
+
+  Mock-tested only.
 - **SmartSDR status lines with empty values** (`mode=`, `state=`,
   `RF_frequency=`) no longer wipe the slice's known mode, PTT state or
   frequency; they're ignored, as Hamlib does since `780da9c`
@@ -70,7 +98,7 @@ Nine new commits. Ported: `2870074` (rigctld client cap) and `780da9c`
 `dcd9013` (FTX-1 `SH` to Sub; our IF-filter API has no VFO argument),
 `69b2aa1`, `1391875`, `ca55bcf` (netrigctl string parms, `send_raw`,
 `send_cmd_rx`; we expose none of these), `2b5608a` (Windows build).
-Test count 1009 → 1025.
+Test count 1009 → 1025; the Elecraft family fix takes it to 1040.
 
 ## [1.3.1] - 2026-10-22
 

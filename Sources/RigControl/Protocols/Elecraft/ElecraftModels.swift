@@ -22,7 +22,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.k2
+                capabilities: RadioCapabilitiesDatabase.Elecraft.k2,
+                family: .k2
             )
         }
     )
@@ -36,7 +37,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.k3
+                capabilities: RadioCapabilitiesDatabase.Elecraft.k3,
+                family: .k3
             )
         }
     )
@@ -50,7 +52,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.k3S
+                capabilities: RadioCapabilitiesDatabase.Elecraft.k3S,
+                family: .k3
             )
         }
     )
@@ -64,7 +67,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.k4
+                capabilities: RadioCapabilitiesDatabase.Elecraft.k4,
+                family: .k3
             )
         }
     )
@@ -78,7 +82,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.kx2
+                capabilities: RadioCapabilitiesDatabase.Elecraft.kx2,
+                family: .k3
             )
         }
     )
@@ -92,7 +97,8 @@ extension RadioDefinition.Elecraft {
         protocolFactory: { transport in
             ElecraftProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Elecraft.kx3
+                capabilities: RadioCapabilitiesDatabase.Elecraft.kx3,
+                family: .k3
             )
         }
     )

@@ -34,7 +34,7 @@ extension ElecraftProtocol {
         }
         // K2: `AN<n>;`. Longer forms used by K3/K4 are not yet
         // ship-supported because we don't have hardware to verify
-        // against; when added, branch on isK2.
+        // against; when added, branch on `family`.
         let command = "AN\(index)"
         try await sendSetCommand(command)
     }
