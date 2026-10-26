@@ -34,6 +34,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   throw `unsupportedOperation` for the Sub side without touching the
   wire. The unqualified `setRIT`/`getRIT`/`setXIT`/`getXIT` still target
   Main. Mock-tested only. Test count 1001 → 1009.
+- **FlexRadio SmartSDR network discovery.** `FlexRadioDiscovery`
+  listens for the VITA-49 discovery packets SmartSDR radios broadcast
+  to UDP port 4992 (stream ID `0x800`, packet class `0xFFFF`, ASCII
+  `key=value` payload) and returns `FlexRadioAnnouncement` values:
+  model, serial, firmware version, nickname, callsign, address, API
+  port, status and free client / slice counts. `discover(timeout:)`
+  returns each radio once, by serial; `announcements()` streams every
+  packet. `announcement.connection` and `radioDefinition(slice:)` plug
+  straight into `RigController` with the native SmartSDR slice
+  definitions. Listen-only, `SO_REUSEPORT`, so it coexists with
+  SmartSDR for Mac. Hamlib has no equivalent. Tested with loopback and
+  broadcast datagrams; not yet checked against a real radio.
+- **`RigControlServer(rigController:maxClients:)`**: limits concurrent
+  rigctld clients (default 32, `RigControlServer.defaultMaxClients`).
+  Connections past the limit are closed immediately and the open ones
+  are not disturbed, as Hamlib `rigctld -N` / `--max-clients` (upstream
+  `2870074`). Before this the server had no limit.
+
+### Fixed
+
+- **SmartSDR status lines with empty values** (`mode=`, `state=`,
+  `RF_frequency=`) no longer wipe the slice's known mode, PTT state or
+  frequency; they're ignored, as Hamlib does since `780da9c`
+  (`smartsdr_parse_status_value`). Narrow FM stays `NFM`, the token in
+  SmartSDR's `mode_list`. Hamlib sends `FMN`, which isn't in that list,
+  so this is a deliberate difference, now documented in the code.
+
+### Hamlib upstream review (2026-10-26, `06335264` → `075b78c`)
+
+Nine new commits. Ported: `2870074` (rigctld client cap) and `780da9c`
+(SmartSDR status values). Already matched: `d269f30` (FTX-1 reads the
+`CF` flags before every write, as we already did). Not applicable:
+`a96343d` (FTX-1 `IF` layout; our FTX-1 path never parses `IF`),
+`dcd9013` (FTX-1 `SH` to Sub; our IF-filter API has no VFO argument),
+`69b2aa1`, `1391875`, `ca55bcf` (netrigctl string parms, `send_raw`,
+`send_cmd_rx`; we expose none of these), `2b5608a` (Windows build).
+Test count 1009 → 1025.
 
 ## [1.3.1] - 2026-10-22
 

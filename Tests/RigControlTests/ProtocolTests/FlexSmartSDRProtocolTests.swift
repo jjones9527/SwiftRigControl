@@ -100,6 +100,50 @@ import Testing
         }
     }
 
+    @Test func emptyStatusValuesKeepPreviousState() async throws {
+        let (transport, proto) = try await connectedProtocol(slice: 0)
+        await proto.parseStatus("S1|slice 0 RF_frequency=14.074000 mode=USB tx=1")
+        await proto.parseStatus("S1|interlock state=TRANSMITTING")
+        // Hamlib 780da9c: empty `mode=` / `state=` values are rejected,
+        // not copied, so they must not clear what was already known.
+        await proto.parseStatus("S1|slice 0 RF_frequency= mode= tx=")
+        await proto.parseStatus("S1|interlock state=")
+        await transport.setChunkedResponse([
+            "R1|0|\n".data(using: .ascii)!,
+            "R2|0|\n".data(using: .ascii)!,
+            "R3|0|\n".data(using: .ascii)!,
+        ])
+
+        #expect(try await proto.getFrequency(vfo: .a) == 14_074_000)
+        #expect(try await proto.getMode(vfo: .a) == .usb)
+        #expect(try await proto.getPTT())
+    }
+
+    @Test func nonTransmittingStateClearsPTT() async throws {
+        let (transport, proto) = try await connectedProtocol(slice: 0)
+        await proto.parseStatus("S1|slice 0 tx=1")
+        await proto.parseStatus("S1|interlock state=TRANSMITTING")
+        await proto.parseStatus("S1|interlock state=READY")
+        await transport.setChunkedResponse(["R1|0|\n".data(using: .ascii)!])
+
+        #expect(try await proto.getPTT() == false)
+    }
+
+    @Test func statusForOtherSliceIsIgnored() async throws {
+        let (transport, proto) = try await connectedProtocol(slice: 1)
+        await proto.parseStatus("S1|slice 1 mode=CW")
+        await proto.parseStatus("S1|slice 0 mode=AM")
+        await transport.setChunkedResponse(["R1|0|\n".data(using: .ascii)!])
+
+        #expect(try await proto.getMode(vfo: .a) == .cw)
+    }
+
+    @Test func narrowFMUsesSmartSDRModeListToken() throws {
+        #expect(try FlexSmartSDRProtocol.smartSDRMode(for: .fmN) == "NFM")
+        #expect(FlexSmartSDRProtocol.mode(from: "NFM") == .fmN)
+        #expect(FlexSmartSDRProtocol.mode(from: "FMN") == .fmN)
+    }
+
     @Test func catalogContainsAllEightNativeSlices() {
         let slices = RadioDefinition.Flex.allRadios.filter { $0.model.hasPrefix("SmartSDR Slice") }
         let expected = ["A", "B", "C", "D", "E", "F", "G", "H"]

@@ -239,3 +239,24 @@ CAT definition remains available for compatibility.
 
 The native SmartSDR follow-up ran 1,068 tests: 1,011 passed, 57
 hardware tests skipped, zero failures.
+
+## Follow-up: upstream review 2026-10-26 (`06335264` → `075b78c`)
+
+| Commit | Area | Outcome |
+| --- | --- | --- |
+| `2870074` | rigctld: cap concurrent clients (default 32) | Ported: `RigControlServer.maxClients` |
+| `780da9c` | SmartSDR: reject empty / oversized status values | Ported: empty values ignored in `FlexSmartSDRProtocol.parseStatus` |
+| `d269f30` | FTX-1: re-read `CF` flags before each write | Already matched (we never cached them) |
+| `a96343d` | newcat: FTX-1 30-byte `IF` layout | Not applicable: FTX-1 RIT/XIT use `CF`, not `IF` |
+| `dcd9013` | FTX-1: `SH` width to the targeted receiver | Not applicable: `setIFFilter` has no VFO argument (ROADMAP 5.10.4) |
+| `69b2aa1` | netrigctl string parms | Not applicable: no `\set_parm` / `\get_parm` |
+| `1391875`, `ca55bcf` | rigctl `send_raw` / `send_cmd_rx` bounds | Not applicable: commands not exposed |
+| `2b5608a` | Windows build | Not applicable |
+
+Also checked: SmartSDR narrow FM. Hamlib `smartsdr_set_mode` sends
+`FMN`; the radio's `mode_list` says `NFM`. We keep `NFM` and accept both
+when parsing.
+
+The review also added SmartSDR UDP discovery (`FlexRadioDiscovery`,
+ROADMAP 6.4), which Hamlib doesn't have. `swift test`: 1,025 tests
+passed.

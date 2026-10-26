@@ -166,6 +166,11 @@ public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
     }
 
     /// Parses the state tokens used by Hamlib's `smartsdr_parse_S`.
+    ///
+    /// A token with an empty value (`mode=`, `state=`) is ignored, so it
+    /// can't clear the state a previous status line set. Hamlib rejects
+    /// empty and oversized values since `780da9c` (`smartsdr.c`,
+    /// `smartsdr_parse_status_value`); Swift strings need no size limit.
     func parseStatus(_ line: String) {
         guard line.hasPrefix("S"), let separator = line.firstIndex(of: "|") else { return }
         let payload = line[line.index(after: separator)...]
@@ -175,10 +180,10 @@ public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
         if tokens[0] == "slice", Int(tokens[1]) == slice {
             for token in tokens.dropFirst(2) {
                 let pair = token.split(separator: "=", maxSplits: 1)
-                guard pair.count == 2 else { continue }
+                guard pair.count == 2, !pair[1].isEmpty else { continue }
                 switch pair[0] {
                 case "RF_frequency":
-                    if let mhz = Double(pair[1]) {
+                    if let mhz = Double(pair[1]), mhz.isFinite, mhz > 0 {
                         frequency = UInt64((mhz * 1_000_000).rounded())
                     }
                 case "mode": mode = Self.mode(from: String(pair[1]))
@@ -188,10 +193,8 @@ public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
             }
         } else {
             for token in tokens {
-                if token == "state=TRANSMITTING" { transmitting = true }
-                if token.hasPrefix("state="), token != "state=TRANSMITTING" {
-                    transmitting = false
-                }
+                guard token.hasPrefix("state="), token.count > "state=".count else { continue }
+                transmitting = token == "state=TRANSMITTING"
             }
         }
     }
@@ -202,6 +205,12 @@ public actor FlexSmartSDRProtocol: CATProtocol, SupportsSendCW {
         }
     }
 
+    /// SmartSDR mode token for `mode`.
+    ///
+    /// Narrow FM is `NFM`, the token the radio lists in a slice's
+    /// `mode_list` (`LSB,USB,AM,CW,DIGL,DIGU,SAM,FM,NFM,DFM,…`). Hamlib
+    /// `smartsdr_set_mode` sends `FMN`, which isn't in that list; we
+    /// diverge on purpose and still accept `FMN` when parsing.
     static func smartSDRMode(for mode: Mode) throws -> String {
         switch mode {
         case .usb: return "USB"

@@ -1541,6 +1541,15 @@ jjones9527/SwiftRigControl#46–#51.
       on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
       independently.
 - [ ] Hardware check of FTX-1 Sub-side clarifier.
+- [x] Hamlib review `06335264` → `075b78c` (2026-10-26): rigctld client
+      cap (`2870074`, `RigControlServer.maxClients`, default 32) and
+      SmartSDR empty status values (`780da9c`) ported; the rest already
+      matched or don't apply (CHANGELOG `[Unreleased]`).
+- [x] SmartSDR UDP discovery (`FlexRadioDiscovery`), see 6.4.
+- [ ] Field check of `FlexRadioDiscovery` against a real FLEX-6000 /
+      8000 / Aurora.
+- [ ] Optional: `setIFFilter(_:vfo:)` so the FTX-1 Sub receiver's width
+      can be set (`SH1…`, Hamlib `dcd9013`).
 
 ### 5.10.5 Deferred
 
@@ -1604,8 +1613,10 @@ every adapter.
       wrong-radio rejection, and the Kenwood `ID###;` parser.
 - [ ] Ten-Tec identify probe (no standard query across the
       Orion/Legacy split; left as `.noResponse` for now).
-- [ ] Flex 6000 SmartSDR UDP discovery (separate from serial
-      port discovery; tracked under Phase 6 follow-ups).
+- [x] Flex SmartSDR UDP discovery: `FlexRadioDiscovery` listens
+      for the radios' VITA-49 broadcasts on UDP 4992 and returns
+      `FlexRadioAnnouncement` values that map to the native slice
+      definitions. Separate from serial-port discovery.
 - [ ] Baud-rate fallback when `defaultBaudRate` doesn't answer
       (deferred — most users keep the documented default).
 

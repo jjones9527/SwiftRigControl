@@ -562,6 +562,14 @@ The server supports multiple simultaneous connections. Each client:
 - Maintains independent extended/default protocol mode
 - Shares the same RigController instance (thread-safe via actors)
 
+At most `maxClients` clients are served at once (default 32, the same as
+Hamlib `rigctld -N`). A connection that arrives at the limit is closed
+straight away; connected clients are not affected.
+
+```swift
+let server = RigControlServer(rigController: rig, maxClients: 4)
+```
+
 ### Latency
 
 Typical command latency depends on:
