@@ -35,6 +35,13 @@ public struct SignalStrength: Sendable, Equatable, CustomStringConvertible {
     /// Useful for troubleshooting and comparing different radio implementations.
     public let raw: Int
 
+    /// Calibrated strength in dB relative to S9 (S9 = 0, S0 = −54), when
+    /// the protocol converted the raw reading through the radio's Hamlib
+    /// calibration table. `nil` for protocols that report S-units only.
+    ///
+    /// More precise than ``sUnits`` below S9, which rounds to 6 dB steps.
+    public let calibratedDBRelativeToS9: Int?
+
     /// Human-readable description (e.g., "S5", "S9+20")
     public var description: String {
         if sUnits < 9 {
@@ -63,6 +70,28 @@ public struct SignalStrength: Sendable, Equatable, CustomStringConvertible {
         self.sUnits = max(0, min(9, sUnits))
         self.overS9 = max(0, min(60, overS9))
         self.raw = raw
+        self.calibratedDBRelativeToS9 = nil
+    }
+
+    /// Creates a reading from a calibrated level in dB relative to S9.
+    ///
+    /// ```swift
+    /// let strength = SignalStrength(dBRelativeToS9: -12, raw: 95)   // S7
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - dBRelativeToS9: Calibrated level; S9 = 0, S0 = −54.
+    ///   - raw: The radio's raw reading.
+    public init(dBRelativeToS9: Int, raw: Int) {
+        if dBRelativeToS9 >= 0 {
+            self.sUnits = 9
+            self.overS9 = min(60, dBRelativeToS9)
+        } else {
+            self.sUnits = max(0, min(9, (54 + dBRelativeToS9) / 6))
+            self.overS9 = 0
+        }
+        self.raw = raw
+        self.calibratedDBRelativeToS9 = dBRelativeToS9
     }
 
     /// Approximate signal strength in decibels over S0
@@ -106,5 +135,7 @@ extension SignalStrength: Codable {
         case sUnits
         case overS9
         case raw
+        // Optional: payloads written before it existed still decode.
+        case calibratedDBRelativeToS9
     }
 }

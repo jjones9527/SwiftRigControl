@@ -264,7 +264,8 @@ extension RigctldCommandHandler {
         // polls got `RPRT -4`.
         case "STRENGTH":
             let strength = try await rigController.signalStrength(cached: false)
-            return RigctldResponse(value: String(strength.decibels - 54), command: command)
+            let dB = strength.calibratedDBRelativeToS9 ?? (strength.decibels - 54)
+            return RigctldResponse(value: String(dB), command: command)
 
         case "RAWSTR":
             let strength = try await rigController.signalStrength(cached: false)

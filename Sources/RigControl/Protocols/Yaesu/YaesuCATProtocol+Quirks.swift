@@ -170,6 +170,10 @@ extension YaesuCATProtocol {
         /// radios with another list (FT-991A: `RA01` is 12 dB).
         public internal(set) var attenuatorSteps: [Int] = [6, 12, 18]
 
+        /// S-meter calibration from the model's Hamlib `.str_cal`; see
+        /// ``YaesuCATProtocol/getSignalStrength()``.
+        public internal(set) var sMeterCalibration: CalibrationTable = YaesuCATProtocol.defaultSMeterCalibration
+
         /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
@@ -343,14 +347,17 @@ extension YaesuCATProtocol {
         ///   - rfGainMax: ``rfGainMax``, or `nil` to keep it.
         ///   - noiseReductionLevelMax: ``noiseReductionLevelMax``, or `nil` to keep it.
         ///   - attenuatorSteps: ``attenuatorSteps``, or `nil` to keep it.
+        ///   - sMeterCalibration: ``sMeterCalibration``, or `nil` to keep it.
         /// - Returns: The adjusted quirks.
         public func withLevelScales(
             squelchMax: Int? = nil,
             rfGainMax: Int? = nil,
             noiseReductionLevelMax: Int? = nil,
-            attenuatorSteps: [Int]? = nil
+            attenuatorSteps: [Int]? = nil,
+            sMeterCalibration: CalibrationTable? = nil
         ) -> Quirks {
             var copy = self
+            if let sMeterCalibration { copy.sMeterCalibration = sMeterCalibration }
             if let squelchMax { copy.squelchMax = squelchMax }
             if let rfGainMax { copy.rfGainMax = rfGainMax }
             if let noiseReductionLevelMax { copy.noiseReductionLevelMax = noiseReductionLevelMax }

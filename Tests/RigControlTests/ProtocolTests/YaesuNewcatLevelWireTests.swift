@@ -141,4 +141,26 @@ import Testing
         #expect(scaled.usesFTX1ClarifierCommands)
         #expect(scaled.attenuatorSteps == [6, 12, 18])
     }
+
+    // MARK: - S-meter (newcat.c:5304-5316, per-model .str_cal)
+
+    @Test func sMeterReadsSM0AndCalibratesPerModel() async throws {
+        let (mock, ft710) = try await connect(.Yaesu.ft710)
+        for (reply, dB) in [("SM0000;", -54), ("SM0095;", -12), ("SM0130;", 0), ("SM0172;", 20), ("SM0255;", 60)] {
+            await mock.setResponse(for: Self.ascii("SM0;"), response: Self.ascii(reply))
+            let strength = try await ft710.getSignalStrength()
+            #expect(strength.calibratedDBRelativeToS9 == dB, "\(reply)")
+        }
+        #expect(await sent(mock).allSatisfy { $0 == "SM0;" })
+
+        let (mock101, ftdx101) = try await connect(.Yaesu.ftdx101D)    // S9 at 160
+        await mock101.setResponse(for: Self.ascii("SM0;"), response: Self.ascii("SM0160;"))
+        #expect(try await ftdx101.getSignalStrength().calibratedDBRelativeToS9 == 0)
+
+        let (mock10, ftdx10) = try await connect(.Yaesu.ftdx10)        // Hamlib default table
+        await mock10.setResponse(for: Self.ascii("SM0;"), response: Self.ascii("SM0105;"))
+        let s9minus = try await ftdx10.getSignalStrength()
+        #expect(s9minus.calibratedDBRelativeToS9 == -9)
+        #expect(s9minus.sUnits == 7)
+    }
 }

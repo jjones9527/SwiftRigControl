@@ -42,7 +42,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftx1,
-                quirks: .ftx1.withLevelScales(attenuatorSteps: [12])
+                quirks: .ftx1.withLevelScales(attenuatorSteps: [12], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -58,7 +58,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft991A,
-                quirks: .newcatNoST.withLevelScales(squelchMax: 100, attenuatorSteps: [12])
+                quirks: .newcatNoST.withLevelScales(squelchMax: 100, attenuatorSteps: [12], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -77,7 +77,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft710,
-                quirks: .ft710.withLevelScales(squelchMax: 100)
+                quirks: .ft710.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -93,7 +93,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft891,
-                quirks: .ft891.withLevelScales(squelchMax: 100, rfGainMax: 30, attenuatorSteps: [12])
+                quirks: .ft891.withLevelScales(squelchMax: 100, rfGainMax: 30, attenuatorSteps: [12], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -128,7 +128,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D,
-                quirks: .ftdx101Family.withLevelScales(squelchMax: 100)
+                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration)
             )
         }
     )
@@ -144,7 +144,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP,
-                quirks: .ftdx101Family.withLevelScales(squelchMax: 100)
+                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration)
             )
         }
     )
@@ -196,7 +196,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20])
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration)
             )
         }
     )
@@ -235,7 +235,7 @@ extension RadioDefinition.Yaesu {
                 // `rigs/yaesu/ft2000.c` — FTDX-3000 does not, so
                 // override on this factory rather than baking the
                 // flag into the shared `.ft2000Family` preset.
-                quirks: .ft2000Family.withTargetableMode()
+                quirks: .ft2000Family.withTargetableMode().withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -267,7 +267,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft991,
-                quirks: .newcatNoST.withLevelScales(squelchMax: 100, attenuatorSteps: [12])
+                quirks: .newcatNoST.withLevelScales(squelchMax: 100, attenuatorSteps: [12], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -283,7 +283,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft950,
-                quirks: .newcatNoST
+                quirks: .newcatNoST.withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -356,7 +356,7 @@ extension RadioDefinition.Yaesu {
                 // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft9000.c`, and Hamlib verifies its set
                 // commands with `AI;` instead of `ID;` (newcat.c:10926).
-                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [])
+                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
             )
         }
     )
@@ -558,7 +558,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20])
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration)
             )
         }
     )
