@@ -35,15 +35,16 @@ import Testing
         #expect(k2.family == .k2)
         for definition in Self.k3Family {
             let (_, proto) = try await connect(definition)
-            #expect(proto.family == .k3, "\(definition.model)")
+            let expected: ElecraftProtocol.Family = definition.model.hasPrefix("KX") ? .kx : .k3
+            #expect(proto.family == expected, "\(definition.model)")
         }
     }
 
     @Test func inferenceNoLongerTakesKXRadiosForK2() {
         typealias Caps = RadioCapabilitiesDatabase.Elecraft
         #expect(ElecraftProtocol.inferredFamily(for: Caps.k2) == .k2)
-        #expect(ElecraftProtocol.inferredFamily(for: Caps.kx2) == .k3)
-        #expect(ElecraftProtocol.inferredFamily(for: Caps.kx3) == .k3)
+        #expect(ElecraftProtocol.inferredFamily(for: Caps.kx2) == .kx)
+        #expect(ElecraftProtocol.inferredFamily(for: Caps.kx3) == .kx)
         #expect(ElecraftProtocol.inferredFamily(for: Caps.k3) == .k3)
         #expect(ElecraftProtocol.inferredFamily(for: Caps.k4) == .k3)
     }
@@ -168,5 +169,46 @@ import Testing
         try await kx3.setIFFilter(.filter3)
         #expect(await sent(mock) == ["BW0050;", "ID;"])
         #expect(try await kx3.getMemoryChannelCount() == 100)
+    }
+
+    // MARK: - Level scales (Hamlib k3.c k3_set_level / kx3_set_level)
+
+    /// Bridge-equivalent input: rigctl `L AF 0.5` becomes level 127.
+    @Test func k3AFAndRFUseTwoFiftyScale() async throws {
+        let (mock, k3) = try await connect(.Elecraft.k3)
+        try await k3.setAFGain(127)
+        try await k3.setRFGain(127)
+        #expect(await sent(mock) == ["AG125;", "ID;", "RG125;", "ID;"])
+        await mock.setResponse(for: Self.ascii("AG;"), response: Self.ascii("AG250;"))
+        #expect(try await k3.getAFGain() == 255)
+    }
+
+    @Test func kxAFIsZeroToSixtyAndRFIsOneNinetyToTwoFifty() async throws {
+        let (mock, kx3) = try await connect(.Elecraft.kx3)
+        try await kx3.setAFGain(127)
+        try await kx3.setRFGain(127)
+        try await kx3.setRFGain(0)
+        #expect(await sent(mock) == ["AG030;", "ID;", "RG220;", "ID;", "RG190;", "ID;"])
+        await mock.setResponse(for: Self.ascii("RG;"), response: Self.ascii("RG250;"))
+        #expect(try await kx3.getRFGain() == 255)
+        await mock.setResponse(for: Self.ascii("AG;"), response: Self.ascii("AG060;"))
+        #expect(try await kx3.getAFGain() == 255)
+    }
+
+    @Test func k3FamilySquelchIsZeroToTwentyNine() async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            try await proto.setSquelch(77)          // rigctl L SQL 0.3
+            #expect(await sent(mock) == ["SQ009;", "ID;"], "\(definition.model)")
+            await mock.setResponse(for: Self.ascii("SQ;"), response: Self.ascii("SQ029;"))
+            #expect(try await proto.getSquelch() == 255)
+        }
+    }
+
+    @Test func k2LevelsStayUnscaled() async throws {
+        let (mock, k2) = try await connect(.Elecraft.k2)
+        try await k2.setAFGain(127)
+        try await k2.setSquelch(77)
+        #expect(await sent(mock) == ["AG127;", "SQ077;"])
     }
 }

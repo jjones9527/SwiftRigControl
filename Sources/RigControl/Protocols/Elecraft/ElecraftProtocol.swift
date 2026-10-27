@@ -72,9 +72,13 @@ public actor ElecraftProtocol:
         /// The K2: 2 s timeout, 100 ms between commands, its own mode
         /// table, `FW` filter width (Hamlib `k2.c`).
         case k2
-        /// K3, K3S, K4, KX2 and KX3: 1 s timeout, `ID;`-verified sets,
-        /// `DT` data sub-modes, `BW` filter width (Hamlib `k3.c`).
+        /// K3, K3S and K4: 1 s timeout, `ID;`-verified sets, `DT` data
+        /// sub-modes, `BW` filter width (Hamlib `k3.c`).
         case k3
+        /// KX2 and KX3: the K3 command set, but with their own AF, RF
+        /// and mic-gain scales (Hamlib `kx3_set_level` / `kx3_get_level`,
+        /// `k3.c:2386-2460`).
+        case kx
     }
 
     /// Which command family this radio uses.
@@ -117,13 +121,14 @@ public actor ElecraftProtocol:
     }
 
     /// Guesses the family from capabilities, for callers that don't pass
-    /// one: a radio of 15 W or less without AM is the K2. The KX2 (12 W)
-    /// and KX3 (15 W) have AM, so they are K3 family.
+    /// one: a radio of 15 W or less without AM is the K2, one of 15 W or
+    /// less with AM is a KX2 (12 W) or KX3 (15 W), anything else K3/K4.
     ///
     /// - Parameter capabilities: The radio's capabilities.
-    /// - Returns: `.k2` or `.k3`.
+    /// - Returns: `.k2`, `.kx` or `.k3`.
     public static func inferredFamily(for capabilities: RigCapabilities) -> Family {
-        capabilities.maxPower <= 15 && !capabilities.supportedModes.contains(.am) ? .k2 : .k3
+        guard capabilities.maxPower <= 15 else { return .k3 }
+        return capabilities.supportedModes.contains(.am) ? .kx : .k2
     }
 
     // MARK: - Connection

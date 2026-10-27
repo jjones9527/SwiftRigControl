@@ -378,6 +378,22 @@ public actor RigctldCommandHandler {
             try await rigController.setBreakIn(enabled ? .full : .off)
             return .ok(command: command)
 
+        // Hamlib RIG_FUNC_NB / RIG_FUNC_NR are on/off switches; the levels
+        // are separate (L NB / L NR). Through v1.3.1 these returned
+        // RPRT -4. Our NR API couples state and level, so turning NR on
+        // from off uses mid-scale; if it is already on nothing is sent.
+        case "NB":
+            try await rigController.setNoiseBlanker(enabled ? .enabled(level: nil) : .off)
+            return .ok(command: command)
+
+        case "NR":
+            if !enabled {
+                try await rigController.setNoiseReduction(.off)
+            } else if case .off = try await rigController.noiseReduction() {
+                try await rigController.setNoiseReduction(.enabled(level: 128))
+            }
+            return .ok(command: command)
+
         default:
             // v1.1: also map the RigFunction enum — Hamlib bit
             // names match our enum's raw values once normalised.
@@ -399,6 +415,14 @@ public actor RigctldCommandHandler {
         case "FBKIN":
             let mode = try await rigController.breakIn()
             return RigctldResponse(value: mode == .full ? "1" : "0", command: command)
+
+        case "NB":
+            let on = try await rigController.noiseBlanker() != .off
+            return RigctldResponse(value: on ? "1" : "0", command: command)
+
+        case "NR":
+            let on = try await rigController.noiseReduction() != .off
+            return RigctldResponse(value: on ? "1" : "0", command: command)
 
         default:
             if let function = mapHamlibFuncBit(normalized) {

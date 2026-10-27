@@ -136,21 +136,19 @@ public actor YaesuCATProtocol:
         try await sendCommand(prefix)
         let response = try await receiveResponse()
 
-        // Response format: FA<N-digit hex>; where N = quirks.frequencyDigits
-        // (9 for modern newcat, 8 for older). Prior to v1.2.0 this
-        // was hard-coded to 11 — no real Yaesu response matches
-        // that. See CHANGELOG for the fix.
-        let digits = quirks.frequencyDigits
-        guard response.hasPrefix(prefix),
-              response.count >= prefix.count + digits else {
+        // Response format: FA<digits>;. Radios send
+        // quirks.frequencyDigits digits (9 on modern newcat, 8 on
+        // older), but the reply is parsed like Hamlib newcat_get_freq,
+        // which reads every digit after the prefix (`sscanf "%lf"`),
+        // so another width still decodes. Through v1.3.1 a reply of
+        // any other width threw invalidResponse.
+        guard response.hasPrefix(prefix) else {
             throw RigError.invalidResponse
         }
-
-        let startIndex = response.index(response.startIndex, offsetBy: prefix.count)
-        let endIndex = response.index(startIndex, offsetBy: digits)
-        let freqString = String(response[startIndex..<endIndex])
-
-        guard let freq = UInt64(freqString) else {
+        let freqString = response.dropFirst(prefix.count)
+        guard !freqString.isEmpty,
+              freqString.allSatisfy({ $0.isASCII && $0.isNumber }),
+              let freq = UInt64(freqString) else {
             throw RigError.invalidResponse
         }
 

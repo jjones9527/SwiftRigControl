@@ -92,4 +92,22 @@ import Testing
         #expect(try await run("L VOXDELAY 5", parser, handler) == [notSupported])
         #expect(try await run("l VOXDELAY", parser, handler) == [notSupported])
     }
+
+    // MARK: - Functions
+
+    @Test func noiseBlankerAndReductionFunctionsToggle() async throws {
+        let (parser, handler, _) = try await session()
+        #expect(try await run("U NB 1", parser, handler) == ["RPRT 0"])
+        #expect(try await run("u NB", parser, handler) == ["1", "RPRT 0"])
+        #expect(try await run("U NB 0", parser, handler) == ["RPRT 0"])
+        #expect(try await run("u NB", parser, handler) == ["0", "RPRT 0"])
+        #expect(try await run("U NR 1", parser, handler) == ["RPRT 0"])
+        #expect(try await run("u NR", parser, handler) == ["1", "RPRT 0"])
+        // Turning NR on again keeps the level Hamlib clients set.
+        _ = try await run("L NR 0.2", parser, handler)
+        _ = try await run("U NR 1", parser, handler)
+        #expect(try await run("l NR", parser, handler) == ["0.200000", "RPRT 0"])
+        #expect(try await run("U NR 0", parser, handler) == ["RPRT 0"])
+        #expect(try await run("u NR", parser, handler) == ["0", "RPRT 0"])
+    }
 }

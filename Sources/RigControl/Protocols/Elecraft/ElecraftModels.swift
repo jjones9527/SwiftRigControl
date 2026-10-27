@@ -83,7 +83,7 @@ extension RadioDefinition.Elecraft {
             ElecraftProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Elecraft.kx2,
-                family: .k3
+                family: .kx
             )
         }
     )
@@ -98,7 +98,7 @@ extension RadioDefinition.Elecraft {
             ElecraftProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Elecraft.kx3,
-                family: .k3
+                family: .kx
             )
         }
     )

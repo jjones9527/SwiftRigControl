@@ -74,11 +74,15 @@ extension YaesuCATProtocol {
     /// the VFO qualifier byte — real newcat radios reject the
     /// unqualified form.
     ///
+    /// The API level is 0–255 on every radio; it is scaled to the
+    /// radio's wire range (``YaesuCATProtocol/Quirks/rfGainMax``, 0–30
+    /// on the FT-891) the way Hamlib scales by its `level_gran` step.
+    ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
-        let clamped = min(max(level, 0), 255)
-        let command = String(format: "RG0%03d", clamped)
+        let wire = Self.scale(level, from: 255, to: quirks.rfGainMax)
+        let command = String(format: "RG0%03d", wire)
         try await sendSetCommand(command)
     }
 
@@ -99,20 +103,23 @@ extension YaesuCATProtocol {
         let start = response.index(response.startIndex, offsetBy: 3)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        return Self.scale(value, from: quirks.rfGainMax, to: 255)
     }
 
     // MARK: - Squelch
 
     /// Sets the squelch level.
     ///
-    /// Command: `SQ0nnn;` where nnn is 000–255.
+    /// Command: `SQ0nnn;`. The API level is 0–255; the wire level is
+    /// 0–``YaesuCATProtocol/Quirks/squelchMax`` (100 on the FT-991/991A,
+    /// FT-891, FT-710, FTDX-10, FTDX-101D/MP), as Hamlib
+    /// `newcat_set_level` RIG_LEVEL_SQL scales by the model's step.
     ///
     /// - Parameter level: Squelch threshold 0 (open) – 255 (closed)
     /// - Throws: `RigError` if the command fails
     public func setSquelch(_ level: Int) async throws {
-        let clamped = min(max(level, 0), 255)
-        let command = String(format: "SQ0%03d", clamped)
+        let wire = Self.scale(level, from: 255, to: quirks.squelchMax)
+        let command = String(format: "SQ0%03d", wire)
         try await sendSetCommand(command)
     }
 
@@ -132,7 +139,7 @@ extension YaesuCATProtocol {
         let start = response.index(response.startIndex, offsetBy: 3)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        return Self.scale(value, from: quirks.squelchMax, to: 255)
     }
 
     // MARK: - Preamp
@@ -178,52 +185,46 @@ extension YaesuCATProtocol {
 
     /// Sets the front-end attenuator.
     ///
-    /// Command: `RAnn;` — Yaesu attenuator step codes:
-    /// - 00 = off
-    /// - 01 = 6 dB
-    /// - 02 = 12 dB
-    /// - 03 = 18 dB
+    /// Command: `RA0n;`, where n is the 1-based position of `dB` in this
+    /// radio's ``YaesuCATProtocol/Quirks/attenuatorSteps``; `RA00;` is
+    /// off. Hamlib does the same with the model's `.attenuator` caps list
+    /// (`newcat_set_level` RIG_LEVEL_ATT, `newcat.c:4492-4533`): 12 dB is
+    /// `RA02` on an FT-710 (6/12/18) but `RA01` on an FT-991A.
     ///
-    /// Available steps are model-dependent. Some radios only support 0 and 1.
-    ///
-    /// - Parameter dB: Attenuation in dB — 0, 6, 12, or 18
-    /// - Throws: `RigError.invalidParameter` for unsupported values
+    /// - Parameter dB: Attenuation in dB: 0, or one of the radio's steps
+    /// - Throws: `RigError.invalidParameter` for a value the radio lacks
     public func setAttenuator(_ dB: Int) async throws {
         let code: Int
-        switch dB {
-        case 0:  code = 0
-        case 6:  code = 1
-        case 12: code = 2
-        case 18: code = 3
-        default: throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB (valid: 0, 6, 12, 18)")
+        if dB == 0 {
+            code = 0
+        } else if let index = quirks.attenuatorSteps.firstIndex(of: dB) {
+            code = index + 1
+        } else {
+            let valid = ([0] + quirks.attenuatorSteps).map(String.init).joined(separator: ", ")
+            throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB (valid: \(valid))")
         }
-        let command = String(format: "RA%02d", code)
-        try await sendSetCommand(command)
+        try await sendSetCommand("RA0\(code)")
     }
 
     /// Gets the current attenuator level in dB.
     ///
-    /// Command: `RA;` — Response: `RAnn;`
+    /// Command: `RA0;` — Response: `RA0n;`. Through v1.3.1 this sent
+    /// `RA;`, which newcat radios reject; Hamlib always sends `RA0;`
+    /// (`newcat_get_level`, `newcat.c:5189-5203`).
     ///
-    /// - Returns: Attenuation in dB (0, 6, 12, or 18)
+    /// - Returns: Attenuation in dB, 0 when off
     /// - Throws: `RigError` if the command fails
     public func getAttenuator() async throws -> Int {
-        try await sendCommand("RA")
+        try await sendCommand("RA0")
         let response = try await receiveResponse()
-        // Response: RAnn
-        guard response.hasPrefix("RA"), response.count >= 4 else {
+        let chars = Array(response)
+        guard response.hasPrefix("RA"), chars.count >= 4,
+              let code = chars[3].wholeNumberValue else {
             throw RigError.invalidResponse
         }
-        let start = response.index(response.startIndex, offsetBy: 2)
-        let end = response.index(start, offsetBy: 2)
-        guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        switch code {
-        case 0: return 0
-        case 1: return 6
-        case 2: return 12
-        case 3: return 18
-        default: return 0
-        }
+        guard code > 0 else { return 0 }
+        guard code <= quirks.attenuatorSteps.count else { throw RigError.invalidResponse }
+        return quirks.attenuatorSteps[code - 1]
     }
 
     // MARK: - AGC
@@ -260,12 +261,14 @@ extension YaesuCATProtocol {
 
     /// Gets the current AGC speed.
     ///
-    /// Command: `GT;` — Response: `GTnn;` (2-digit code per Hamlib).
+    /// Command: `GT0;` — Response: `GT0n;`. Through v1.3.1 this sent
+    /// `GT;`, which newcat radios reject; Hamlib sends `GT%c` with the
+    /// receiver digit (`newcat_get_level`, `newcat.c:5061-5075`).
     ///
     /// - Returns: The current AGC speed
     /// - Throws: `RigError` if the command fails
     public func getAGC() async throws -> AGCSpeed {
-        try await sendCommand("GT")
+        try await sendCommand("GT0")
         let response = try await receiveResponse()
         // Response: GTnn
         guard response.hasPrefix("GT"), response.count >= 4 else {
@@ -280,181 +283,6 @@ extension YaesuCATProtocol {
         case 2: return .medium
         case 3: return .slow
         default: return .auto
-        }
-    }
-
-    // MARK: - Noise Blanker
-
-    /// Sets the noise blanker state.
-    ///
-    /// Command: `NBn;` — 0 = off, 1 = on.
-    ///
-    /// - Parameter config: Noise blanker configuration
-    /// - Throws: `RigError` if the command fails
-    public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
-        switch config {
-        case .off:
-            try await sendSetCommand("NB0")
-        case .enabled:
-            try await sendSetCommand("NB1")
-        }
-    }
-
-    /// Gets the current noise blanker state.
-    ///
-    /// Command: `NB;` — Response: `NBn;`
-    ///
-    /// - Returns: Current noise blanker configuration
-    /// - Throws: `RigError` if the command fails
-    public func getNoiseBlanker() async throws -> NoiseBlanker {
-        try await sendCommand("NB")
-        let response = try await receiveResponse()
-        // Response: NBn
-        guard response.hasPrefix("NB"), response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-        let idx = response.index(response.startIndex, offsetBy: 2)
-        return response[idx] == "1" ? .enabled(level: 5) : .off
-    }
-
-    // MARK: - Noise Reduction
-
-    /// Sets the noise reduction state.
-    ///
-    /// Command: `NRn;` — 0 = off, 1 = NR1, 2 = NR2 (where supported).
-    ///
-    /// NR2 availability is model-dependent. Radios without NR2 treat level 2 as NR1.
-    ///
-    /// - Parameter config: Noise reduction configuration; `enabled(level:)` maps
-    ///   level ≤ 5 → NR1, level > 5 → NR2.
-    /// - Throws: `RigError` if the command fails
-    public func setNoiseReduction(_ config: NoiseReduction) async throws {
-        switch config {
-        case .off:
-            try await sendSetCommand("NR0")
-        case .enabled(let level):
-            // Map level 0–5 → NR1, 6–10 → NR2
-            let code = level > 5 ? 2 : 1
-            try await sendSetCommand("NR\(code)")
-        }
-    }
-
-    /// Gets the current noise reduction state.
-    ///
-    /// Command: `NR;` — Response: `NRn;`
-    ///
-    /// - Returns: Current noise reduction configuration
-    /// - Throws: `RigError` if the command fails
-    public func getNoiseReduction() async throws -> NoiseReduction {
-        try await sendCommand("NR")
-        let response = try await receiveResponse()
-        // Response: NRn
-        guard response.hasPrefix("NR"), response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-        let idx = response.index(response.startIndex, offsetBy: 2)
-        switch response[idx] {
-        case "0": return .off
-        case "1": return .enabled(level: 3)   // NR1 — mid-scale level
-        case "2": return .enabled(level: 8)   // NR2 — upper-scale level
-        default:  return .off
-        }
-    }
-
-    // MARK: - IF Filter
-
-    /// Sets the IF filter (DSP passband width).
-    ///
-    /// The exact `SH` wire format is dispatched via
-    /// ``YaesuCATProtocol/Quirks/filterCommandStyle`` per Hamlib
-    /// `rigs/yaesu/newcat.c:9202-9220`. Four variants exist:
-    ///
-    /// | Style | Wire format | Radios |
-    /// | --- | --- | --- |
-    /// | `.qualifierOnly` | `SH%c%02d;` | FT-950, FT-991(A), FTDX-5000/1200/9000, FT-450(D) |
-    /// | `.zeroWithoutQualifier` | `SH0%02d;` | FT-2000, FTDX-3000 |
-    /// | `.doubleZero` | `SH00%02d;` | FTDX-10, FT-710, FTX-1 |
-    /// | `.vfoAndNarrow` | `SH%c%d%02d;` | FTDX-101D/MP (real flag), FT-891 (flag always `1`) |
-    ///
-    /// Prior to the v1.2.2 quirks refactor every radio emitted
-    /// `SH0%02d;` — correct for the FT-2000 family but rejected by
-    /// FTDX-10/101/710/FTX-1/891.
-    ///
-    /// This implementation always addresses VFO `0` (main) — the
-    /// Swift `IFFilter` API has no sub-VFO parameter.
-    ///
-    /// Filter slot mapping (high-cut code, per Hamlib bandwidth
-    /// tables in `rigs/yaesu/newcat.c` — SSB defaults):
-    /// - `.filter1` → 7 (wide, ~3000 Hz)
-    /// - `.filter2` → 5 (medium, ~2400 Hz)
-    /// - `.filter3` → 2 (narrow, ~1500 Hz)
-    ///
-    /// - Parameter filter: The desired IF filter slot
-    /// - Throws: `RigError` if the command fails
-    public func setIFFilter(_ filter: IFFilter) async throws {
-        let highCut: Int
-        switch filter {
-        case .filter1: highCut = 7   // wide
-        case .filter2: highCut = 5   // medium
-        case .filter3: highCut = 2   // narrow
-        }
-        let command: String
-        switch quirks.filterCommandStyle {
-        case .qualifierOnly:
-            command = String(format: "SH0%02d", highCut)
-        case .zeroWithoutQualifier:
-            command = String(format: "SH0%02d", highCut)
-        case .doubleZero:
-            command = String(format: "SH00%02d", highCut)
-        case .vfoAndNarrow:
-            // Both FTDX-101 (real on/off flag) and FT-891 (always
-            // on) code paths send `1` here — the Swift IFFilter API
-            // has no "bandwidth off" state to communicate.
-            command = String(format: "SH01%02d", highCut)
-        }
-        try await sendSetCommand(command)
-    }
-
-    /// Gets the current IF filter by reading the DSP high-cut setting.
-    ///
-    /// Per Hamlib `newcat.c:9477-9486` the get form is `SH0;` for
-    /// `.zeroWithoutQualifier` and `.doubleZero` radios (FT-2000,
-    /// FTDX-3000, FTDX-10, FT-710) and `SH%c;` for everything else.
-    /// The FTX-1 falls into the `SH%c;` bucket on the get side even
-    /// though it uses `SH00%02d;` on the set side — matches Hamlib.
-    ///
-    /// Response is `SH<qualifier><2-digit high-cut>;` for
-    /// non-narrow-flag radios or `SH<qualifier><flag><2-digit>;` for
-    /// FTDX-101 / FT-891. This implementation reads the last two
-    /// digits before the terminator so both response widths decode.
-    ///
-    /// - Returns: The closest matching filter slot
-    /// - Throws: `RigError` if the command fails
-    public func getIFFilter() async throws -> IFFilter {
-        let query: String
-        switch quirks.filterCommandStyle {
-        case .zeroWithoutQualifier, .doubleZero:
-            query = "SH0"
-        case .qualifierOnly, .vfoAndNarrow:
-            query = "SH0"
-        }
-        try await sendCommand(query)
-        let response = try await receiveResponse()
-        guard response.hasPrefix("SH"), response.count >= 5 else {
-            throw RigError.invalidResponse
-        }
-        // The last two ASCII digits before the semicolon (or end of
-        // response) encode the high-cut. This handles both the 6-char
-        // (`SHXnn`) and 7-char (`SHXYnn`) response widths.
-        let trimmed = response.hasSuffix(";")
-            ? String(response.dropLast())
-            : response
-        let tail = trimmed.suffix(2)
-        guard let code = Int(tail) else { throw RigError.invalidResponse }
-        switch code {
-        case 0...3: return .filter3   // narrow
-        case 4...6: return .filter2   // medium
-        default:    return .filter1   // wide
         }
     }
 
@@ -593,5 +421,13 @@ extension YaesuCATProtocol {
     /// - Throws: `RigError.unsupportedOperation` as direct clear is not supported over CAT
     public func clearMemoryChannel(_ number: Int) async throws {
         throw RigError.unsupportedOperation("Memory channel clear is not supported via Yaesu CAT protocol")
+    }
+
+    /// Rescales a level between two full-scale ranges with rounding,
+    /// clamping the input to `0...from`. Mirrors Hamlib's `val / step + 0.5`.
+    static func scale(_ value: Int, from: Int, to: Int) -> Int {
+        guard from > 0, to > 0 else { return 0 }
+        let clamped = min(max(value, 0), from)
+        return (clamped * to + from / 2) / from
     }
 }
