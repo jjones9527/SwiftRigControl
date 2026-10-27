@@ -58,7 +58,7 @@ extension IcomCIVProtocol {
         // - Set 192 → Radio returns 200 → We return 192 ✅
         // - Set 255 → Radio returns 248 → We return 240 (quantization to 16 steps)
         if rawValue >= 8 {
-            return UInt8(rawValue - 8)
+            return UInt8(clamping: rawValue - 8)
         } else {
             // For values 0-7, the radio returns 8-15
             return 0  // These all map to display value 0
@@ -102,13 +102,13 @@ extension IcomCIVProtocol {
             guard response.command[0] == 0x14, response.data[0] == 0x0D else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+            return BCDEncoding.decodeLevel(Array(response.data[1...]))
         } else if response.command.count >= 2 && response.data.count >= 2 {
             // Fallback to standard format
             guard response.command[0] == 0x14, response.command[1] == 0x0D else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
         } else {
             throw RigError.invalidResponse
         }
@@ -151,13 +151,13 @@ extension IcomCIVProtocol {
             guard response.command[0] == 0x14, response.data[0] == 0x15 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+            return BCDEncoding.decodeLevel(Array(response.data[1...]))
         } else if response.command.count >= 2 && response.data.count >= 2 {
             // Fallback to standard format
             guard response.command[0] == 0x14, response.command[1] == 0x15 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
         } else {
             throw RigError.invalidResponse
         }
@@ -200,13 +200,13 @@ extension IcomCIVProtocol {
             guard response.command[0] == 0x14, response.data[0] == 0x16 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+            return BCDEncoding.decodeLevel(Array(response.data[1...]))
         } else if response.command.count >= 2 && response.data.count >= 2 {
             // Fallback to standard format
             guard response.command[0] == 0x14, response.command[1] == 0x16 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
         } else {
             throw RigError.invalidResponse
         }
@@ -249,13 +249,13 @@ extension IcomCIVProtocol {
             guard response.command[0] == 0x14, response.data[0] == 0x17 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+            return BCDEncoding.decodeLevel(Array(response.data[1...]))
         } else if response.command.count >= 2 && response.data.count >= 2 {
             // Fallback to standard format
             guard response.command[0] == 0x14, response.command[1] == 0x17 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
         } else {
             throw RigError.invalidResponse
         }

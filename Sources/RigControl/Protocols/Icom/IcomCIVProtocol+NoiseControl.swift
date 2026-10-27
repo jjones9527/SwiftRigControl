@@ -195,7 +195,7 @@ extension IcomCIVProtocol {
             guard response.command.count >= 2, response.data.count == 2 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
 
         case .ic7100:
             // Use existing IC-7100 specific method

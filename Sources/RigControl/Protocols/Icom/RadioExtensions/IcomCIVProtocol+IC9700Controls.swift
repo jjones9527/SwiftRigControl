@@ -49,13 +49,13 @@ extension IcomCIVProtocol {
             guard response.command[0] == 0x15, response.data[0] == 0x11 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(Array(response.data[1...])))
+            return BCDEncoding.decodeLevel(Array(response.data[1...]))
         } else if response.command.count >= 2 && response.data.count >= 2 {
             // Fallback to standard format
             guard response.command[0] == 0x15, response.command[1] == 0x11 else {
                 throw RigError.invalidResponse
             }
-            return UInt8(BCDEncoding.decodePower(response.data))
+            return BCDEncoding.decodeLevel(response.data)
         } else {
             throw RigError.invalidResponse
         }

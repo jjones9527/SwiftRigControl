@@ -95,10 +95,30 @@ public actor RigctldCommandHandler {
             let caps = await rigController.capabilities
             if caps.hasSplit {
                 let split = try await rigController.isSplitEnabled()
-                return .splitVFO(enabled: split, txVFO: "VFOB", command: command)
+                // Hamlib reports the receive VFO as the TX VFO when split
+                // is off (`kenwood_get_split_vfo`, `icom_get_split_vfo`).
+                return .splitVFO(enabled: split, txVFO: split ? "VFOB" : "VFOA", command: command)
             } else {
                 return .error(.notSupported, command: command)
             }
+
+        // RIT / XIT. Hamlib's offset of 0 resets the clarifier; we turn
+        // it off. `j` / `z` report the offset, 0 when off.
+        case .setRIT(let hz):
+            try await rigController.setRIT(hz == 0 ? .disabled : RITXITState(enabled: true, offset: hz))
+            return .ok(command: command)
+
+        case .getRIT:
+            let state = try await rigController.getRIT(cached: false)
+            return RigctldResponse(value: String(state.enabled ? state.offset : 0), command: command)
+
+        case .setXIT(let hz):
+            try await rigController.setXIT(hz == 0 ? .disabled : RITXITState(enabled: true, offset: hz))
+            return .ok(command: command)
+
+        case .getXIT:
+            let state = try await rigController.getXIT(cached: false)
+            return RigctldResponse(value: String(state.enabled ? state.offset : 0), command: command)
 
         case .setSplitFrequency(let hz):
             let caps = await rigController.capabilities

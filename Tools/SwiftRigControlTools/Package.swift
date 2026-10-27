@@ -52,6 +52,7 @@ let package = Package(
 
         .executable(name: "IC7100ManualValidation", targets: ["IC7100ManualValidation"]),
         .executable(name: "IC7600ManualValidation", targets: ["IC7600ManualValidation"]),
+        .executable(name: "HamlibDiffClient", targets: ["HamlibDiffClient"]),
         .executable(name: "IC7600ModeDebug", targets: ["IC7600ModeDebug"]),
         .executable(name: "IC9700ManualValidation", targets: ["IC9700ManualValidation"]),
         .executable(name: "IC9700InteractiveValidator", targets: ["IC9700InteractiveValidator"]),
@@ -196,6 +197,11 @@ let package = Package(
             name: "K2PTTDebug",
             dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
             path: "Debugging/K2PTTDebug"
+        ),
+        .executableTarget(
+            name: "HamlibDiffClient",
+            dependencies: [.product(name: "RigControl", package: "SwiftRigControl")],
+            path: "Debugging/HamlibDiffClient"
         ),
         .executableTarget(
             name: "IC7600Probe",

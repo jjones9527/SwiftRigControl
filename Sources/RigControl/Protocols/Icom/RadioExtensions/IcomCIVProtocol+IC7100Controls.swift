@@ -30,7 +30,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getInnerPBTIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x07)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set outer Twin PBT position (0-255) (IC-7100)
@@ -58,7 +58,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getOuterPBTIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x08)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set notch position (0-255) (IC-7100)
@@ -87,7 +87,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getNotchPositionIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x0D)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set compression level (0-255) (IC-7100)
@@ -116,7 +116,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getCompLevelIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x0E)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set break-in delay (0-255) (IC-7100)
@@ -145,7 +145,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getBreakInDelayIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x0F)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set NB level (0-255) (IC-7100)
@@ -173,7 +173,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getNBLevelIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x12)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set monitor gain (0-255) (IC-7100)
@@ -201,7 +201,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getMonitorGainIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x15)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set VOX gain (0-255) (IC-7100)
@@ -229,7 +229,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getVoxGainIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x16)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set anti-VOX gain (0-255) (IC-7100)
@@ -257,7 +257,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getAntiVoxGainIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x17)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set LCD contrast (0-255) (IC-7100)
@@ -285,7 +285,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getLCDContrastIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x18)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     /// Set LCD backlight (0-255) (IC-7100)
@@ -313,7 +313,7 @@ extension IcomCIVProtocol {
             throw RigError.unsupportedOperation("getLCDBacklightIC7100 is only available on IC-7100")
         }
         let value = try await getLevelIC7100(0x19)
-        return UInt8(value)
+        return UInt8(clamping: value)
     }
 
     // MARK: - Meter Readings (IC-7100 Specific, NOT in common)

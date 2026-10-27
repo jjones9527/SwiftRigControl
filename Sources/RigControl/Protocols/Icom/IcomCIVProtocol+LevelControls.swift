@@ -47,7 +47,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set RF gain level.
@@ -93,7 +93,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set squelch level.
@@ -139,7 +139,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set noise reduction (NR) level.
@@ -187,7 +187,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set CW pitch (sidetone frequency).
@@ -233,7 +233,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set RF power output level.
@@ -281,7 +281,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Set microphone gain level.
@@ -327,7 +327,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     // MARK: - CATProtocol Conformance (Int-typed bridge)
@@ -550,7 +550,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
 

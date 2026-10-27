@@ -27,7 +27,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read RF power output meter (forward power during TX).
@@ -53,7 +53,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read SWR (standing wave ratio) meter.
@@ -79,7 +79,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read ALC (automatic level control) meter.
@@ -105,7 +105,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read COMP (compression) meter.
@@ -131,7 +131,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read Vd (supply voltage) meter.
@@ -155,7 +155,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     /// Read Id (supply current) meter.
@@ -179,7 +179,7 @@ extension IcomCIVProtocol {
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
         }
-        return UInt8(BCDEncoding.decodePower(response.data))
+        return BCDEncoding.decodeLevel(response.data)
     }
 
     // MARK: - CATProtocol typed meter accessors (Phase 4.1)
