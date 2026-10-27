@@ -29,7 +29,8 @@ extension RadioDefinition.Flex {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.flex6000,
-                modeStyle: .flexDigital
+                modeStyle: .flexDigital,
+                levelProfile: .noAttenuator
             )
         }
     )
@@ -110,7 +111,8 @@ extension RadioDefinition.Flex {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.powerSDR,
-                modeStyle: .powerSDR
+                modeStyle: .powerSDR,
+                levelProfile: .noAttenuator
             )
         },
         hostRequirement: .windowsCompanion(app: "PowerSDR")
@@ -147,7 +149,8 @@ extension RadioDefinition.Flex {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.thetis,
-                modeStyle: .powerSDR
+                modeStyle: .powerSDR,
+                levelProfile: .noAttenuator
             )
         },
         hostRequirement: .windowsCompanion(app: "Thetis")
@@ -191,7 +194,8 @@ extension RadioDefinition.Flex {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Flex.sdrConsole
+                capabilities: RadioCapabilitiesDatabase.Flex.sdrConsole,
+                levelProfile: .ts2000
             )
         },
         hostRequirement: .windowsCompanion(app: "SDR-Console")
@@ -232,7 +236,8 @@ extension RadioDefinition.Flex {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Flex.pihpsdr
+                capabilities: RadioCapabilitiesDatabase.Flex.pihpsdr,
+                levelProfile: .piHPSDR
             )
         },
         hostRequirement: .linuxCompanion(app: "PiHPSDR")

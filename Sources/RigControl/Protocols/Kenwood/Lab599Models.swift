@@ -25,7 +25,8 @@ extension RadioDefinition.Lab599 {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Lab599.tx500
+                capabilities: RadioCapabilitiesDatabase.Lab599.tx500,
+                levelProfile: .tx500
             )
         }
     )

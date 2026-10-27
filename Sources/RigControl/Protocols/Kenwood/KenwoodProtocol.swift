@@ -53,6 +53,10 @@ public actor KenwoodProtocol:
     /// ``KenwoodModeCommandStyle``.
     public let modeStyle: KenwoodModeCommandStyle
 
+    /// Wire formats and scales for level commands. See
+    /// ``KenwoodLevelProfile``.
+    public let levelProfile: KenwoodLevelProfile
+
     /// Maximum number of unrelated replies (for example unsolicited
     /// `FA` / `FB` auto-information) skipped while waiting for the
     /// `ID;` verification reply after a set command.
@@ -66,14 +70,19 @@ public actor KenwoodProtocol:
     ///   - modeStyle: How the radio selects modes, especially DATA
     ///     modes. Defaults to ``KenwoodModeCommandStyle/standard``,
     ///     which rejects DATA modes.
+    ///   - levelProfile: Per-model level formats. Defaults to
+    ///     ``KenwoodLevelProfile/generic``; the `RadioDefinition.Kenwood`
+    ///     factories pass the model's profile.
     public init(
         transport: any SerialTransport,
         capabilities: RigCapabilities,
-        modeStyle: KenwoodModeCommandStyle = .standard
+        modeStyle: KenwoodModeCommandStyle = .standard,
+        levelProfile: KenwoodLevelProfile = .generic
     ) {
         self.transport = transport
         self.capabilities = capabilities
         self.modeStyle = modeStyle
+        self.levelProfile = levelProfile
     }
 
     // MARK: - Connection
