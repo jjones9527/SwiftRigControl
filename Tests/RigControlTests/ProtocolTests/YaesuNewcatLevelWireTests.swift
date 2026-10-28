@@ -163,4 +163,13 @@ import Testing
         #expect(s9minus.calibratedDBRelativeToS9 == -9)
         #expect(s9minus.sUnits == 7)
     }
+
+    // MARK: - FT-710 clarifier (ft710.c:281-284, newcat.c:11236-11290)
+
+    @Test func ft710RITUsesCFClarifierCommands() async throws {
+        let (mock, ft710) = try await connect(.Yaesu.ft710)
+        await mock.setResponse(for: Self.ascii("CF000;"), response: Self.ascii("CF00000000;"))
+        try await ft710.setRIT(RITXITState(enabled: true, offset: 500))
+        #expect(await sent(mock) == ["CF000;", "CF00010000;", "ID;", "CF001+0500;", "ID;"])
+    }
 }

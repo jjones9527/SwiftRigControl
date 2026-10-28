@@ -111,9 +111,9 @@ extension YaesuCATProtocol {
         /// See ``YaesuCATProtocol`` `sendSetCommand(_:)`.
         public internal(set) var verifyCommand: String
 
-        /// Uses the FTX-1 `CF` command family for independent RX/TX
-        /// clarifiers instead of the shared newcat `RC`/`RU`/`RD`/`RT`/`XT`
-        /// commands.
+        /// Uses the `CF` command family (FTX-1, FT-710) for independent
+        /// RX/TX clarifiers instead of the shared newcat
+        /// `RC`/`RU`/`RD`/`RT`/`XT` commands.
         public let usesFTX1ClarifierCommands: Bool
 
         /// `SH` command wire format.
@@ -284,7 +284,13 @@ extension YaesuCATProtocol {
             usesFT23ForVFOSelection: false,
             supportsFTVFOSelection: true,
             filterCommandStyle: .doubleZero,
-            hasTargetableMode: true
+            hasTargetableMode: true,
+            // Hamlib drives FT-710 RIT/XIT with the CF clarifier commands
+            // (ft710.c:281-284 newcat_set_clarifier_frequency, CF%c01%+05d;
+            // newcat_set_clarifier, CF%c00%d%d000, newcat.c:11236-11290),
+            // the same scheme as the FTX-1. Through v1.3.1 it used
+            // RC / RU / RT / XT.
+            usesFTX1ClarifierCommands: true
         )
 
         /// FT-450 / FT-450D — `ST` means Step, not Split, on this
