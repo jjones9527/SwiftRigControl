@@ -57,7 +57,8 @@ extension RadioCapabilitiesDatabase.Icom {
         // VFO ops — IC-9700 has no internal ATU, so no TUNE.
         // Matches Hamlib IC9700_VFO_OPS.
         supportedVFOOperations: .icomNoATU,
-        supportedFunctions: .icomIC9700Funcs
+        supportedFunctions: .icomIC9700Funcs,
+        preampLevels: [1, 2]
     )
 
     /// Icom IC-7610 - HF/6m SDR transceiver
@@ -120,10 +121,24 @@ extension RadioCapabilitiesDatabase.Icom {
         hasATU: true,
         supportsSignalStrength: true,
         powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
         // VFO ops — IC-7610 uses the standard set (Hamlib uses
         // IC7300_VFO_OPS for both — same family).
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7300Funcs
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .lock, .manualNotch, .monitor, .scope, .tuner, .vox],
+        preampLevels: [12, 20]
     )
 
     /// Icom IC-7300 - HF/6m SDR transceiver
@@ -188,9 +203,22 @@ extension RadioCapabilitiesDatabase.Icom {
         hasATU: true,
         supportsSignalStrength: true,
         powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
         // VFO ops — IC-7300 standard set per Hamlib IC7300_VFO_OPS.
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7300Funcs
+        supportedFunctions: .icomIC7300Funcs,
+        preampLevels: [1, 2]
     )
 
     /// Icom IC-7600 - HF/6m transceiver
@@ -277,7 +305,8 @@ extension RadioCapabilitiesDatabase.Icom {
         // VFO ops — matches Hamlib IC7600_VFO_OPS
         // (CPY|XCHG|FROM_VFO|TO_VFO|MCL|TUNE).
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7600Funcs
+        supportedFunctions: .icomIC7600Funcs,
+        preampLevels: [10, 16]
     )
 
     /// Icom IC-7100 - HF/VHF/UHF all-mode transceiver
@@ -377,7 +406,8 @@ extension RadioCapabilitiesDatabase.Icom {
         // VFO ops — matches Hamlib IC7100_VFO_OPS
         // (FROM_VFO|TO_VFO|CPY|MCL|XCHG|TUNE).
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7100Funcs
+        supportedFunctions: .icomIC7100Funcs,
+        preampLevels: [1, 2]
     )
 
     /// Icom IC-705 - HF/VHF/UHF portable transceiver
@@ -450,10 +480,23 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsDCS: true,
         supportsDuplex: true,
         availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
         // VFO ops — IC-705 uses IC7300_VFO_OPS per Hamlib
         // (rigs/icom/ic7300.c:1824).
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7300Funcs
+        supportedFunctions: .icomIC7300Funcs,
+        preampLevels: [1, 2]
     )
 
     /// Icom IC-703 - Portable HF/6m 10W QRP transceiver
@@ -513,7 +556,14 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-703 doesn't require VFO selection
         requiresModeFilter: true,  // IC-703 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .monitor, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-905 VHF/UHF/SHF all-mode transceiver.
@@ -538,9 +588,23 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
         // VFO ops — IC-905 lacks XCHG; TUNE drives an external
         // tuner accessory. Matches Hamlib IC905_VFO_OPS.
-        supportedVFOOperations: .icom905
+        supportedVFOOperations: .icom905,
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .scope, .tuner, .vox],
+        preampLevels: [1, 2]
     )
 
 }

@@ -44,7 +44,19 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .manualNotch, .monitor, .scanResume, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 20]
     )
 
     // MARK: - Icom IC-735
@@ -83,7 +95,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
     /// Icom IC-751 HF all-mode transceiver (classic)
@@ -121,7 +134,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
     /// Icom IC-9100 - HF/VHF/UHF all-mode transceiver
@@ -193,7 +207,16 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportsSWRMeter: true,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoFrequencyControl, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .lock, .manualNotch, .satelliteMode, .scanResume, .voiceSquelch, .vox],
+        preampLevels: [20]
     )
 
     /// Icom IC-7200 - HF/6m all-mode transceiver
@@ -253,7 +276,18 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-7200 doesn't require VFO selection
         requiresModeFilter: true,  // IC-7200 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10]
     )
 
     /// Icom IC-718 - HF 100W budget transceiver
@@ -309,7 +343,12 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-718 doesn't require VFO selection
         requiresModeFilter: true,  // IC-718 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .vox],
+        preampLevels: [10]
     )
 
     /// Icom IC-7410 - HF/6m all-mode transceiver
@@ -369,7 +408,20 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-7410 doesn't require VFO selection
         requiresModeFilter: true,  // IC-7410 requires filter byte in mode commands
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 20]
     )
 
     // The IC-9000 and IC-2820H entries that previously lived

@@ -6,8 +6,9 @@ import Foundation
 // (rigs/icom/icom.c:8710-8800) and `icom_defs.h`:
 //
 //   0x07 (C_SET_VFO) sub-commands:
-//     0xA0 = S_BTOA   — copy active VFO to other (CPY)
-//     0xB0 = S_XCHNG  — exchange A↔B
+//     0xA0 = S_BTOA      — VFO A=B (CPY on radios with A/B VFOs)
+//     0xB1 = S_SUBTOMAIN — MAIN=SUB (CPY on Main/Sub-only radios)
+//     0xB0 = S_XCHNG     — exchange A↔B
 //     0xC0/C1/C2     — dual-watch on/off; not a VFO op for us
 //
 //   0x09 (C_WR_MEM)              — write VFO to current memory channel (FROM_VFO)
@@ -27,7 +28,10 @@ extension IcomCIVProtocol {
 
         switch op {
         case .copyVFO:
-            command = [0x07, 0xA0]
+            // Hamlib picks the sub-command from the radio's VFO list:
+            // S_BTOA with A/B VFOs, S_SUBTOMAIN with Main/Sub only
+            // (icom.c:8773-8791). Through v1.3.1 we sent 07 A0 to all.
+            command = [0x07, radioModel.hasMainSubVFOsOnly ? 0xB1 : 0xA0]
         case .exchange, .toggle:
             // Icom exposes only XCHG (0x07 0xB0); .toggle aliases
             // to XCHG since most user UIs treat them as the same
@@ -62,6 +66,22 @@ extension IcomCIVProtocol {
             throw RigError.commandFailed(
                 "Radio rejected VFO operation '\(op.rawValue)'"
             )
+        }
+    }
+}
+
+extension IcomRadioModel {
+    /// The radio's VFOs are Main and Sub only, with no A/B pair: Hamlib's
+    /// `vfo_list` has `RIG_VFO_MAIN | RIG_VFO_SUB` without `RIG_VFO_A |
+    /// RIG_VFO_B` (ic756.c, ic7600.c, ic7610.c, ic7800.c, ic785x.c,
+    /// ic7760.c:44). Selects MAIN=SUB (`07 B1`) for CPY.
+    var hasMainSubVFOsOnly: Bool {
+        switch self {
+        case .ic756, .ic756pro, .ic756proII, .ic756proIII, .ic7600, .ic7610,
+             .ic7760, .ic7800, .ic7850, .ic7851:
+            return true
+        default:
+            return false
         }
     }
 }

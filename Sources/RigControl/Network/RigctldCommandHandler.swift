@@ -242,6 +242,13 @@ public actor RigctldCommandHandler {
 
         // CW (Phase 4.5)
         case .sendMorse(let text):
+            // Hamlib's rig_send_morse refuses unless the radio is in CW or
+            // CW-R (rig.c:7536-7545, -RIG_EINVAL), so a client can't key CW
+            // from SSB. RigController.sendCW itself doesn't check.
+            let mode = try await rigController.mode(cached: false)
+            guard mode == .cw || mode == .cwR else {
+                return .error(.invalidParam, command: command)
+            }
             try await rigController.sendCW(text)
             return .ok(command: command)
 
