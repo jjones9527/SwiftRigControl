@@ -28,7 +28,7 @@ extension ElecraftProtocol {
     /// Sets the AF (audio) output gain.
     ///
     /// Command: `AGnnn;`. The 0–255 API level is scaled to the family's
-    /// wire range (``afGainRange``): 0–250 on the K3/K4 (Hamlib
+    /// wire range (`afGainRange`): 0–250 on the K3/K4 (Hamlib
     /// `k3_set_level`, `k3.c:2008`), 0–60 on the KX2/KX3 (`kx3_set_level`,
     /// `k3.c:2402`). Through v1.3.1 it was sent unscaled, so half volume
     /// on a KX3 (`AG127`) was over twice the radio's maximum.
@@ -64,7 +64,7 @@ extension ElecraftProtocol {
     /// Sets the RF gain.
     ///
     /// Command: `RGnnn;`. The 0–255 API level is scaled to
-    /// ``rfGainRange``: 0–250 on the K3/K4 (`k3.c:2012`), 190–250 on the
+    /// `rfGainRange`: 0–250 on the K3/K4 (`k3.c:2012`), 190–250 on the
     /// KX2/KX3 (`kx3_set_level`, `k3.c:2397`).
     ///
     /// - Parameter level: Gain level 0–255
@@ -98,7 +98,7 @@ extension ElecraftProtocol {
     /// Sets the squelch level.
     ///
     /// Command: `SQnnn;`. The 0–255 API level is scaled to
-    /// ``squelchRange``: 0–29 on the K3 family and KX2/KX3 (Hamlib
+    /// `squelchRange`: 0–29 on the K3 family and KX2/KX3 (Hamlib
     /// `k3_set_level` / `k3_get_level` RIG_LEVEL_SQL, `k3.c:2004`, `2274`).
     /// Through v1.3.1 it was sent unscaled, so 30% squelch went out as
     /// `SQ076`, past the radio's maximum.
