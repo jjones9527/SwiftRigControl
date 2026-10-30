@@ -9,14 +9,14 @@ extension RigController {
     /// The interpretation of `level` depends on the radio. Check
     /// ``RigCapabilities/powerUnits``:
     ///
-    /// - ``PowerUnits/percentage`` — `level` is a 0–255 value that
-    ///   maps to 0–100% of the radio's rated output. Most radios
-    ///   currently in the database fall in this group.
-    /// - ``PowerUnits/watts(max:)`` — `level` is integer wattage.
+    /// - ``PowerUnits/percentage`` (Icom, Xiegu) — `level` is 0–100,
+    ///   a percentage of the radio's rated output, whatever its
+    ///   wattage: 50 is 5 W on a 10 W IC-705 and 100 W on a 200 W
+    ///   IC-7851.
+    /// - ``PowerUnits/watts(max:)`` (every other radio) — `level` is
+    ///   integer watts, 0 through ``RigCapabilities/maxPower``.
     ///
-    /// Either way, valid range is 0 through
-    /// ``RigCapabilities/maxPower``. Out-of-range values raise
-    /// ``RigError/invalidParameter(_:)``.
+    /// Out-of-range values raise ``RigError/invalidParameter(_:)``.
     ///
     /// - Parameter level: Power level in the radio's native units.
     /// - Throws:
@@ -24,14 +24,14 @@ extension RigController {
     ///   - ``RigError/unsupportedOperation(_:)`` if the radio does
     ///     not support power control.
     ///   - ``RigError/invalidParameter(_:)`` if `level` is outside
-    ///     `0...capabilities.maxPower`.
+    ///     `0...100` (percentage) or `0...maxPower` (watts).
     ///
     /// - Example:
     /// ```swift
     /// // Always check capabilities.powerUnits to know the unit:
     /// switch rig.capabilities.powerUnits {
-    /// case .percentage:        try await rig.setPower(128)  // 50%
-    /// case .watts(let max):    try await rig.setPower(max / 2)
+    /// case .percentage:        try await rig.setPower(50)       // 50%
+    /// case .watts(let max):    try await rig.setPower(max / 2)  // watts
     /// }
     /// ```
     public func setPower(_ level: Int) async throws {
@@ -43,10 +43,15 @@ extension RigController {
             throw RigError.unsupportedOperation("Power control not supported by \(radio.fullName)")
         }
 
-        guard level >= 0 && level <= radio.capabilities.maxPower else {
-            throw RigError.invalidParameter(
-                "Power must be between 0 and \(radio.capabilities.maxPower)"
-            )
+        // Through v1.3.1 the limit was maxPower for every radio, so a
+        // 10 W IC-705 refused anything above 10%.
+        let upperBound: Int
+        switch radio.capabilities.powerUnits {
+        case .percentage: upperBound = 100
+        case .watts: upperBound = radio.capabilities.maxPower
+        }
+        guard level >= 0 && level <= upperBound else {
+            throw RigError.invalidParameter("Power must be between 0 and \(upperBound)")
         }
 
         let p = try requireTrait((any SupportsPower).self, named: "Power control")

@@ -70,8 +70,18 @@ extension RigctldCommandHandler {
             let caps = await rigController.capabilities
             // Hamlib enforces a 0.05 minimum — radios reject 0W
             let normalized = max(0.05, min(1.0, floatVal))
-            let watts = Int(normalized * Double(caps.maxPower))
-            try await rigController.setPower(min(max(watts, 0), caps.maxPower))
+            // Convert to the radio's own unit. Through v1.3.1 this always
+            // sent watts, which CI-V radios read as a percentage: 0.5 on a
+            // 200 W IC-7851 asked for "100%", full power, and 1.0 on a
+            // 10 W IC-705 asked for 10%. Hamlib sends fraction × 255 on
+            // every Icom (icom.c:3558).
+            switch caps.powerUnits {
+            case .percentage:
+                try await rigController.setPower(Int((normalized * 100).rounded()))
+            case .watts:
+                let watts = Int(normalized * Double(caps.maxPower))
+                try await rigController.setPower(min(max(watts, 0), caps.maxPower))
+            }
             return .ok(command: command)
 
         case "AGC":
@@ -222,9 +232,14 @@ extension RigctldCommandHandler {
 
         case "RFPOWER":
             // RF output power: return 0.0-1.0 normalized float, minimum 0.05
-            let watts = try await rigController.power()
+            let level = try await rigController.power()
             let caps = await rigController.capabilities
-            let normalized = Double(watts) / Double(caps.maxPower)
+            let fullScale: Int
+            switch caps.powerUnits {
+            case .percentage: fullScale = 100
+            case .watts: fullScale = caps.maxPower
+            }
+            let normalized = Double(level) / Double(fullScale)
             return RigctldResponse(value: String(format: "%.6f", min(max(normalized, 0.05), 1.0)), command: command)
 
         case "AGC":

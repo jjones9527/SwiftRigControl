@@ -854,7 +854,7 @@ Common patterns:
 | **Set 20m SSTV frequency** | `try await rig.setFrequency(14_230_000, vfo: .a)` |
 | **Set USB mode** | `try await rig.setMode(.usb, vfo: .a)` |
 | **Enable split (+5kHz)** | `try await rig.setFrequency(14_195_000, vfo: .a)`<br>`try await rig.setFrequency(14_200_000, vfo: .b)`<br>`try await rig.setSplit(true)` |
-| **Set QRP power (5W)** | `try await rig.setPower(5)` |
+| **Set QRP power (5W)** | `try await rig.setPower(5)` (watts radios; Icom/Xiegu take a percentage, see `capabilities.powerUnits`) |
 | **Read current frequency** | `let freq = try await rig.frequency()` |
 | **Check if transmitting** | `let isTX = try await rig.isPTTEnabled()` |
 

@@ -335,12 +335,16 @@ public actor YaesuCATProtocol:
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Yaesu radios use PowerUnits.watts; `level` is interpreted
-        // as watts and converted to the radio's 000–100 percentage protocol.
-        let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
-        let command = String(format: "PC%03d", percentage)
-
-        try await sendSetCommand(command)
+        // Newcat `PC` is watts: Hamlib's RFPOWER step is 1/maxWatts
+        // (1/200 on the FTDX-101MP, ftdx101mp.c:121), so 0.5 sends PC100.
+        // Through v1.3.1 this sent a percentage of maxPower, half power on
+        // the 200 W FTDX-101MP / FTDX-5000 and a quarter on the 400 W
+        // FTDX-9000MP. Divergence: Hamlib's FTDX-5000 / FTDX-9000 caps use
+        // the generic 1/255 step (level_gran_yaesu.h:47) although its own
+        // newcat_power2mW treats them as 200 W (newcat.c:3586-3597); ours
+        // follows the CAT manuals (PC 005-200 watts).
+        let watts = min(max(level, 0), capabilities.maxPower)
+        try await sendSetCommand(String(format: "PC%03d", watts))
     }
 
     public func getPower() async throws -> Int {
@@ -351,7 +355,7 @@ public actor YaesuCATProtocol:
         try await sendCommand("PC")
         let response = try await receiveResponse()
 
-        // Response format: PCxxx; where xxx is 000-100
+        // Response format: PCnnn; where nnn is watts
         guard response.hasPrefix("PC"),
               response.count >= 5 else {
             throw RigError.invalidResponse
@@ -359,13 +363,12 @@ public actor YaesuCATProtocol:
 
         let startIndex = response.index(response.startIndex, offsetBy: 2)
         let endIndex = response.index(startIndex, offsetBy: 3)
-        let percentString = String(response[startIndex..<endIndex])
 
-        guard let percentage = Int(percentString) else {
+        guard let watts = Int(response[startIndex..<endIndex]) else {
             throw RigError.invalidResponse
         }
 
-        return (percentage * capabilities.maxPower) / 100
+        return watts
     }
 
     // Signal strength: YaesuCATProtocol+SMeter.swift.

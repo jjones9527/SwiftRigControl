@@ -205,12 +205,15 @@ public actor KenwoodProtocol:
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Kenwood radios use PowerUnits.watts; `level` is interpreted as
-        // watts and converted to the radio's 000–100 percentage protocol.
-        let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
-        let command = String(format: "PC%03d", percentage)
-
-        try await sendSetCommand(command)
+        // `PC` is watts: Hamlib sends `val.f * power_max` (kenwood.c:3459),
+        // with power_max read back from the radio. Through v1.3.1 this
+        // sent a percentage of maxPower, the same number on a 100 W radio
+        // but half power on the 200 W TS-990S and PC050 on the 10 W TX-500.
+        // Divergence: Hamlib caps the TS-480 at 100 W (kenwood.c:3179),
+        // which also caps the 200 W TS-480HX; ours goes to maxPower, per
+        // the TS-480 manual (PC 005-200 on the HX).
+        let watts = min(max(level, 0), capabilities.maxPower)
+        try await sendSetCommand(String(format: "PC%03d", watts))
     }
 
     public func getPower() async throws -> Int {
@@ -221,7 +224,7 @@ public actor KenwoodProtocol:
         try await sendCommand("PC")
         let response = try await receiveResponse()
 
-        // Response format: PCxxx; where xxx is 000-100
+        // Response format: PCnnn; where nnn is watts
         guard response.hasPrefix("PC"),
               response.count >= 5 else {
             throw RigError.invalidResponse
@@ -229,13 +232,12 @@ public actor KenwoodProtocol:
 
         let startIndex = response.index(response.startIndex, offsetBy: 2)
         let endIndex = response.index(startIndex, offsetBy: 3)
-        let percentString = String(response[startIndex..<endIndex])
 
-        guard let percentage = Int(percentString) else {
+        guard let watts = Int(response[startIndex..<endIndex]) else {
             throw RigError.invalidResponse
         }
 
-        return (percentage * capabilities.maxPower) / 100
+        return watts
     }
 
     // MARK: - Signal Strength

@@ -88,6 +88,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`smartsdr_parse_status_value`). Narrow FM stays `NFM`, the token in
   SmartSDR's `mode_list`. Hamlib sends `FMN`, which isn't in that list,
   so this is a deliberate difference, now documented in the code.
+- **RF power was scaled wrongly on every radio that isn't 100 W.** On
+  a 200 W Icom (IC-7700, IC-7760, IC-7800, IC-7850/7851), rigctld
+  `L RFPOWER 0.5` keyed **full power**. rigctld turned the fraction
+  into watts, and `IcomCIVProtocol.setPower` reads its argument as a
+  percentage, so 100 W became "100%". On a 10 W IC-703, IC-705,
+  IC-905 or X6100, `L RFPOWER 1.0` gave 10%. Hamlib sends
+  `fraction × 255` on every Icom (`icom.c:3558`); ours now matches it
+  byte for byte on all 11 non-100 W CI-V radios (checked with
+  `Scripts/hamlib-set-matrix.py` against Hamlib `91e7b97`). Related
+  fixes:
+  - **`RigCapabilities.powerUnits`** said `.percentage` for every
+    catalog radio except the FTX-1. It is now `.percentage` on
+    `IcomCIVProtocol` radios (Icom, Xiegu) and `.watts(max: maxPower)`
+    on all others. The `RigCapabilities.init` default is now
+    `.watts(max: maxPower)`, not `.percentage`. **Migration:** a custom
+    CI-V `RigCapabilities` that relied on the default must pass
+    `powerUnits: .percentage`.
+  - **`RigController.setPower`** checked every radio against
+    `0...maxPower`, so a 10 W IC-705 refused anything above 10%.
+    Percentage radios now accept `0...100`. The doc comment said
+    percentage radios take 0–255; they take 0–100, as the command set
+    always did.
+  - **Kenwood and Yaesu newcat `PC` is watts** (`kenwood.c:3459`;
+    newcat RFPOWER step `1/200` on the FTDX-101MP, `ftdx101mp.c:121`).
+    Both used to send a percentage of `maxPower`. Same bytes on
+    100 W radios. On the 200 W TS-990S, TS-480HX, FTDX-101MP and
+    FTDX-5000, and the 400 W FTDX-9000, that was half or a quarter of
+    the power asked for. On the 10 W Lab599 TX-500, `setPower(5)` sent
+    `PC050`. `getPower` reads watts. Divergences: Hamlib caps the TS-480
+    at 100 W (`kenwood.c:3179`), and gives the FTDX-5000 / FTDX-9000
+    the generic 1/255 step; ours follows the CAT manuals. Both are
+    commented in the code.
+
+  Mock-tested only.
+
+### Hamlib upstream review (2026-10-30, `075b78c` → `91e7b97`)
+
+32 new commits, mostly rigctld daemon hardening. Nothing needed
+porting:
+
+- **Already matched:** `58af5b2` / `6e67889` (`rig_set_split_freq`
+  always sends the TX frequency). Our `I` / `\set_split_freq` never had
+  the skip. `6e67889` adds the skip back only while transmitting, to
+  protect Hamlib's band check in `rig_set_freq`, which we don't have.
+- **Not applicable:** rigctld password authorization (`e4a12d3`,
+  `04aedf3`, `2e49bb4`), per-client VFO mode (`72a2003`), long-command
+  parsing (`479dce7`, `add899a`), lock scope and power refresh
+  (`af176c3`, `06cb759`), state output (`e2b67bc`), spectrum events
+  (`0147d62`), Meade and build changes. We have no password, `chk_vfo`
+  state, spectrum or rotator support. Our parser works line by line
+  and doesn't end the session on a bad command.
+- **Not ported:** `22406fa` (FTX-1 Field-head ATAS tuner type; we only
+  switch the tuner on and off with `AC`), `ed69537` (opt-in G90 AF
+  readback decoder; off by default in Hamlib and confirmed on only one
+  radio), and `14c618f` (new truSDX backend; candidate radio for a
+  minor release, ROADMAP 5.10.4).
+
+Test count 1082 → 1089.
 
 ### Hamlib upstream review (2026-10-26, `06335264` → `075b78c`)
 

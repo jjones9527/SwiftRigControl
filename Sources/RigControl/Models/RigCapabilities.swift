@@ -58,18 +58,20 @@ public struct DetailedFrequencyRange: Sendable, Codable, Equatable {
 
 /// Power control units used by different radio manufacturers.
 ///
-/// **Research findings (2025-12-09):**
-/// - **All Icom radios use percentage (0-100%)** - Confirmed via Hamlib GitHub issue #533
-/// - IC-7100, IC-705, IC-9700, IC-7300, IC-7610 all display power as percentage
-/// - The CI-V command 0x14 0x0A uses BCD scale 0-255 representing 0-100%
-/// - This is independent of the radio's actual max power output
+/// - **Icom and Xiegu (CI-V) use percentage (0-100%).** CI-V `14 0A`
+///   is a BCD 0-255 fraction of rated output, independent of the
+///   radio's wattage: Hamlib sends `fraction × 255` for every model
+///   (`icom.c:3558`), 10 W IC-705 and 200 W IC-7851 alike.
+/// - **Kenwood, Yaesu newcat and Elecraft use watts.** `PC` is watts
+///   (Hamlib `kenwood.c:3459` `val.f * power_max`; newcat RFPOWER step
+///   `1/200` on the FTDX-101MP, `ftdx101mp.c:121`; `k3.c:2023`).
 public enum PowerUnits: Sendable, Codable, Equatable {
-    /// Power specified as percentage (0-100%)
-    /// Used by all Icom radios (IC-7100, IC-705, IC-9700, IC-7300, IC-7610, etc.)
+    /// Power specified as percentage (0-100%) of rated output.
+    /// Used by every CI-V radio (Icom, Xiegu).
     case percentage
 
-    /// Power specified in watts (0 to max watts)
-    /// Used by some manufacturers (Yaesu, Kenwood, Elecraft)
+    /// Power specified in watts (0 to max watts).
+    /// Used by Kenwood, Yaesu, Elecraft and the other text protocols.
     case watts(max: Int)
 
     /// Convert user input (percentage or watts) to BCD scale (0-255) for CI-V
@@ -159,9 +161,17 @@ public struct RigCapabilities: Sendable, Codable {
     /// For these radios, set this to false and only send the mode byte.
     public let requiresModeFilter: Bool
 
-    /// Power control units (percentage vs watts)
-    /// - All Icom radios use `.percentage`
-    /// - Other manufacturers may use `.watts(max: X)`
+    /// The unit of the `level` that ``RigController/setPower(_:)`` takes
+    /// and ``RigController/power()`` returns.
+    ///
+    /// - `.percentage` (0–100) on radios driven by ``IcomCIVProtocol``
+    ///   (Icom and Xiegu): CI-V `14 0A` is a 0–255 fraction of the rated
+    ///   output, whatever the radio's wattage.
+    /// - `.watts(max: maxPower)` on every other radio: Kenwood, Yaesu
+    ///   newcat and Elecraft `PC` take watts.
+    ///
+    /// Before v1.3.2 every catalog radio except the FTX-1 said
+    /// `.percentage`, which was wrong for the watts radios.
     public let powerUnits: PowerUnits
 
     /// ITU region for amateur band validation (defaults to Region 2)
@@ -309,6 +319,10 @@ public struct RigCapabilities: Sendable, Codable {
     /// All capability flags are advisory: ``RigController`` and the
     /// underlying ``CATProtocol`` consult them to decide whether to
     /// attempt an operation or throw ``RigError/unsupportedOperation(_:)``.
+    ///
+    /// `powerUnits` defaults to `.watts(max: maxPower)`; pass
+    /// `.percentage` for a CI-V radio. Before v1.3.2 the default was
+    /// `.percentage`.
     public init(
         hasVFOB: Bool = true,
         hasSplit: Bool = true,
@@ -322,7 +336,7 @@ public struct RigCapabilities: Sendable, Codable {
         supportsSignalStrength: Bool = true,
         requiresVFOSelection: Bool = true,
         requiresModeFilter: Bool = true,
-        powerUnits: PowerUnits = .percentage,
+        powerUnits: PowerUnits? = nil,
         region: AmateurRadioRegion = .region2,
         supportsRIT: Bool = true,
         supportsXIT: Bool = true,
@@ -360,7 +374,8 @@ public struct RigCapabilities: Sendable, Codable {
         self.supportsSignalStrength = supportsSignalStrength
         self.requiresVFOSelection = requiresVFOSelection
         self.requiresModeFilter = requiresModeFilter
-        self.powerUnits = powerUnits
+        // Watts unless told otherwise: only CI-V radios take a percentage.
+        self.powerUnits = powerUnits ?? .watts(max: maxPower)
         self.region = region
         self.supportsRIT = supportsRIT
         self.supportsXIT = supportsXIT
