@@ -1579,19 +1579,39 @@ jjones9527/SwiftRigControl#46–#51.
       (100 W, wire unchanged) and any non-100 W radio a tester has.
 - [ ] Icom set-frame differences found by the same run (IC-7100,
       IC-7300/MK2, IC-705, IC-7600, IC-7610, IC-9700, G90):
-  - [ ] `L KEYSPD` / `L CWPITCH` return `RPRT -11` on IC-7300/MK2,
+  - [x] `L KEYSPD` / `L CWPITCH` return `RPRT -11` on IC-7300/MK2,
         IC-705, IC-7610 and G90; Hamlib sends `14 0C` / `14 09`.
+        (Fixed by the capability sync.)
   - [ ] `L NR` sends NR-on before the level, and rounds 0.5 to 128
         (Hamlib: level only, 127).
-  - [ ] IC-7610 `L PREAMP 20` fails; Hamlib sends `16 02 02`.
+  - [x] IC-7610 `L PREAMP 20` fails; Hamlib sends `16 02 02`.
+        (Fixed: `preampLevels` `[12, 20]`.)
   - [ ] G90 functions and levels against `xiegu.c` `G90_LEVELS` /
         functions (no NR, MICGAIN, COMP level; has TUNER `1C 01`, COMP
-        func).
+        func). Additions done by the capability sync; the levels we
+        claim beyond Hamlib remain.
 - [ ] KX2 / KX3 power in the extended `PCnnnx` form (0.1 W steps up to
       15 W, `k3.c:2023-2027`); ours sends whole watts.
 - [ ] FTX-1 power uses `PC1nnn` / `PC2nnn` by head type in Hamlib
       (`ftx1_audio.c:332-393`); ours sends `PCnnn`.
 - [ ] Candidate radio: truSDX (Hamlib `trusdx.c`, `14c618f`).
+- [x] Hamlib capability coverage measured for all 129 serial radios
+      (`Documentation/HAMLIB_COVERAGE_2026-10-30.md`): 49% at first.
+- [x] Icom / Xiegu capability records synced from Hamlib caps and every
+      new command byte-checked (49% → 77%); VSC, dual watch, IC-910H
+      satellite mode and Main/Sub CPY bytes fixed; rigctld PREAMP, mode
+      aliases, U RIT/XIT, send_morse CW check. Catalog 49% → 64%.
+- [ ] Hardware: IC-7600 CPY (`07 B1`) and dual watch (`07 C1`);
+      `L PREAMP 10` / `16` on the IC-7600.
+- [ ] Review the over-claims in the coverage report (RIT/XIT on 41 Icom
+      records, IC-7100 / IC-7760 scope, IC-92D functions).
+- [ ] Same sync for Yaesu newcat, Kenwood and Elecraft. Needs the Hamlib
+      simulators for the byte check (text protocols don't work against
+      the ACK radio).
+- [ ] New library APIs from the coverage report's "no API" list: CTCSS /
+      DCS tone values, repeater shift / offset, tuning step, memory via
+      rigctld (`E` / `\set_channel`), DCD.
+- [ ] Hamlib `AM-D` / PKTAM: needs a `Mode` case (minor release).
 
 ### 5.10.5 Deferred
 
