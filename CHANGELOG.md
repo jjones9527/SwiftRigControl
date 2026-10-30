@@ -83,9 +83,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Scripts/hamlib-wire-capture.py` captures Hamlib's bytes, and
   `Tools/SwiftRigControlTools` `HamlibDiffClient` is the Swift side. Most
   of the fixes below were found with these.
+- **Icom and Xiegu capabilities now follow Hamlib's caps.** 55 radios
+  share `IcomCIVProtocol`, but most of their records didn't advertise
+  what that code does. On the IC-7300, for example, SWR / ALC meters,
+  CW speed and pitch, and scanning all returned `unsupportedOperation`.
+  `Scripts/hamlib-caps-sync.py` set each record from its Hamlib model:
+  CW keyer, send-CW, TX meters, scans, VFO ops and functions. It only
+  adds; nothing Hamlib omits was removed. Every newly enabled command
+  was byte-compared with Hamlib on every radio first (772 identical;
+  the four differences are under Fixed). Icom/Xiegu coverage of
+  Hamlib's capability list went from 49% to 77%
+  (`Documentation/HAMLIB_COVERAGE_2026-10-30.md`). Mock-tested only.
+- **`RigCapabilities.preampLevels`**: the radio's preamp settings in
+  Hamlib's units (IC-7600 `[10, 16]`, IC-7300 `[1, 2]`), set for every
+  Icom and Xiegu radio from Hamlib. `RigCapabilities` encoded before
+  this still decodes.
+- **Developer tooling:** `Scripts/hamlib-coverage.py` measures, per
+  radio, how much of Hamlib's capability list we implement.
+  `Scripts/hamlib-caps-sync.py` compares capability records with Hamlib
+  and can rewrite them. `hamlib-set-matrix.py --tx` compares every frame
+  written, reads included. `HamlibDiffClient --list --caps / --traits`
+  dump our records and protocol traits.
 
 ### Fixed
 
+- **Icom function and VFO-op bytes that differed from Hamlib**
+  (`hamlib-set-matrix.py --tx`):
+  - **Voice squelch control** sent `16 4D`; Hamlib `S_FUNC_VSC` is
+    `16 4C` (`icom_defs.h:334`).
+  - **Dual watch** sent `16 59` on every radio. That is right only on
+    the IC-9100 / IC-9700 / ID-5100. The others take `07 C1` on, `07 C0`
+    off and `07 C2` to read (`icom.c:7290-7303`, `7547-7560`).
+  - **IC-910H satellite mode** is `1A 07` (`icom.c:7312-7323`); we sent
+    `16 5A`.
+  - **CPY on Main/Sub radios** (IC-756 family, IC-7600, IC-7610, IC-7760,
+    IC-7800, IC-7850/7851) is MAIN=SUB `07 B1`, as Hamlib picks from the
+    VFO list (`icom.c:8773-8791`); we sent A=B `07 A0`. The IC-7600 is a
+    hardware-verified radio; this command needs re-checking on it.
+- **rigctld values as Hamlib clients send them:**
+  - **`L` / `l PREAMP`** is a value from the model's preamp list (0 =
+    off, otherwise its position picks the stage: `icom.c:3650-3675`,
+    `kenwood.c:3591-3613`, `newcat.c:4457-4474`). We read it as the
+    stage number, so `L PREAMP 10` failed on 57 radios.
+  - **Mode names** `FM-D`, `USB-D`, `LSB-D`, `CW-R` and `RTTY-R` are
+    accepted (`misc.c:460-480`; Hamlib prints PKTFM as `FM-D`).
+  - **`U` / `u RIT` and `XIT`** switch the clarifier and keep its
+    offset (were `RPRT -4`).
+  - **`b` / `send_morse`** returns `RPRT -1` unless the radio is in CW
+    or CW-R, as `rig_send_morse` does (`rig.c:7536-7545`).
+    `RigController.sendCW` itself is unchanged.
+
+  Mock-tested only. Test count 1089 → 1105.
 - **Elecraft KX2 and KX3 were driven as a K2.** `ElecraftProtocol`
   decided "K2" from `maxPower <= 15`, which also matched the 12 W KX2
   and 15 W KX3. Hamlib drives both from `k3.c`, not `k2.c`. They had

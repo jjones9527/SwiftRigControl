@@ -38,7 +38,16 @@ extension RadioCapabilitiesDatabase.Xiegu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsSWRMeter: true,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10]
     )
     /// Xiegu X6100 - Portable HF/6m 10W SDR transceiver with ATU
     public static let x6100 = RigCapabilities(
@@ -75,7 +84,17 @@ extension RadioCapabilitiesDatabase.Xiegu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .voiceSquelch, .vox],
+        preampLevels: [10]
     )
 
     /// Xiegu X6200 - Portable HF/6m 8W SDR transceiver with VHF air band RX
@@ -116,7 +135,17 @@ extension RadioCapabilitiesDatabase.Xiegu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .voiceSquelch, .vox],
+        preampLevels: [10]
     )
 
 

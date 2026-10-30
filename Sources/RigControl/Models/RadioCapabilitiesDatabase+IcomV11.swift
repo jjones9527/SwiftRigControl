@@ -52,9 +52,23 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
         // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7300Funcs
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .scope, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 20]
     )
 
     // MARK: - Icom IC-7300MK2
@@ -145,10 +159,23 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
         // VFO ops — IC-7300MK2 inherits the IC-7300 family set
         // (Hamlib `IC7300_VFO_OPS` is shared between both models).
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: .icomIC7300Funcs
+        supportedFunctions: .icomIC7300Funcs,
+        preampLevels: [1, 2]
     )
 
     // MARK: - D-STAR Handhelds (v1.1 parity additions)
@@ -322,6 +349,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
         // Hamlib ic92d.c:43 — FROM_VFO/TO_VFO/MCL.
         supportedVFOOperations: [.vfoToMemory, .memoryToVFO, .memoryClear],
         // Hamlib ic92d.c:35 — MUTE/MON/TONE/TSQL/LOCK/AFC.

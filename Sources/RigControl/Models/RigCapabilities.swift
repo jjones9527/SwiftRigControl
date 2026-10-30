@@ -311,6 +311,22 @@ public struct RigCapabilities: Sendable, Codable {
     /// exposes via ``RigFunction``).
     public let supportedFunctions: Set<RigFunction>
 
+    // MARK: - Preamp (v1.4)
+
+    /// The preamp settings the radio offers, in Hamlib's units, in stage
+    /// order: `preampLevels[0]` is ``RigController/setPreamp(_:)`` stage
+    /// 1, `preampLevels[1]` stage 2. Empty means unknown.
+    ///
+    /// Mirrors Hamlib's per-model `.preamp` list. Hamlib clients send
+    /// these values over rigctld (`L PREAMP 10` on an IC-7600), and
+    /// Hamlib maps them to a stage by position (`icom.c:3650-3675`). Icom
+    /// HF radios list dB (IC-7600 `[10, 16]`). Radios whose preamps have
+    /// no dB rating list `[1, 2]` (IC-7300).
+    public var preampLevels: [Int] { preampLevelStorage ?? [] }
+
+    /// Optional so `RigCapabilities` encoded before v1.4 still decodes.
+    private let preampLevelStorage: [Int]?
+
     /// Creates a capability set. Every parameter has a sensible
     /// default — the defaults describe a typical full-featured HF
     /// transceiver. Override only the fields that differ for the
@@ -360,7 +376,8 @@ public struct RigCapabilities: Sendable, Codable {
         supportsDeltaFScan: Bool = false,
         antennaCount: Int = 1,
         supportedVFOOperations: Set<VFOOperation> = [],
-        supportedFunctions: Set<RigFunction> = []
+        supportedFunctions: Set<RigFunction> = [],
+        preampLevels: [Int] = []
     ) {
         self.hasVFOB = hasVFOB
         self.hasSplit = hasSplit
@@ -400,6 +417,7 @@ public struct RigCapabilities: Sendable, Codable {
         self.antennaCount = max(1, antennaCount)
         self.supportedVFOOperations = supportedVFOOperations
         self.supportedFunctions = supportedFunctions
+        self.preampLevelStorage = preampLevels.isEmpty ? nil : preampLevels
     }
 
     /// Full-featured radio capabilities (for high-end transceivers)

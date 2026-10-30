@@ -39,7 +39,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
-        antennaCount: 1
+        antennaCount: 1,
+        supportedFunctions: [.ctcssSquelch, .voiceSquelch]
     )
 
     /// Icom IC-R20 dual-VFO handheld wideband receiver (~2004).
@@ -103,7 +104,10 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
-        antennaCount: 1
+        supportsMemoryScan: true,
+        antennaCount: 1,
+        supportedVFOOperations: [.memoryClear, .vfoToMemory],
+        supportedFunctions: [.voiceSquelch]
     )
 
     /// Icom IC-F8101 HF SSB transceiver (2010).
@@ -138,7 +142,10 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
-        antennaCount: 1
+        supportsMemoryScan: true,
+        antennaCount: 1,
+        supportedFunctions: [.autoFrequencyControl, .autoNotch, .compressor, .ctcssTone, .scanResume, .vox],
+        preampLevels: [20]
     )
 
     /// Icom ID-1 first-generation 1.2 GHz D-STAR mobile (2004).
@@ -168,7 +175,11 @@ extension RadioCapabilitiesDatabase.Icom {
         powerUnits: .percentage,
         supportsCTCSS: true,
         supportsDCS: true,
-        antennaCount: 1
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        antennaCount: 1,
+        supportedVFOOperations: [.memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoFrequencyControl, .ctcssSquelch, .ctcssTone, .lock, .monitor, .mute]
     )
 
     /// Icom IC-RX7 compact handheld wideband receiver (2007).

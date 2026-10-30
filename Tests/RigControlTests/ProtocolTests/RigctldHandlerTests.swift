@@ -240,10 +240,25 @@ import Testing
 
     @Test func sendMorseDeliversToController() async throws {
         let (rig, handler) = try await makeHandler()
+        try await rig.setMode(.cw)
         let response = await handler.handle(.sendMorse(text: "CQ DE VA3ZTF"))
         #expect(response.returnCode == .ok)
         let proto = await rig.rawProtocol as! DummyCATProtocol
         #expect(await proto.lastSentCW == "CQ DE VA3ZTF")
+    }
+
+    @Test func sendMorseOutsideCWModeIsRefused() async throws {
+        // Hamlib rig_send_morse (rig.c:7536-7545): -RIG_EINVAL unless
+        // the radio is in CW or CW-R.
+        let (rig, handler) = try await makeHandler()
+        try await rig.setMode(.usb)
+        let response = await handler.handle(.sendMorse(text: "CQ"))
+        #expect(response.returnCode == .invalidParam)
+        let proto = await rig.rawProtocol as! DummyCATProtocol
+        #expect(await proto.lastSentCW.isEmpty)
+
+        try await rig.setMode(.cwR)
+        #expect(await handler.handle(.sendMorse(text: "CQ")).returnCode == .ok)
     }
 
     @Test func stopMorseCallsController() async throws {

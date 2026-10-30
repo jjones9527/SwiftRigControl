@@ -36,7 +36,9 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        preampLevels: [10]
     )
 
     /// Icom IC-706MKII - HF/6m/2m mobile transceiver (enhanced)
@@ -71,7 +73,9 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        preampLevels: [10]
     )
 
     /// Icom IC-706MKIIG - HF/VHF/UHF mobile transceiver (adds UHF)
@@ -113,7 +117,11 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: false,  // IC-706MKIIG supports CTCSS but not DCS
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000],
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.compressor, .ctcssSquelch, .ctcssTone, .vox],
+        preampLevels: [10]
     )
 
     /// Icom IC-756 - HF/6m base station transceiver (original model)
@@ -144,7 +152,15 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,  // IC-756 requires filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.dualWatch],
+        preampLevels: [10]
     )
 
     /// Icom IC-7851 - HF/6m flagship transceiver with spectrum scope
@@ -175,7 +191,23 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .lock, .manualNotch, .monitor, .scope, .tuner, .voiceSquelch, .vox],
+        preampLevels: [12, 20]
     )
 
     /// Icom IC-7850 HF/6m 200W flagship (50th Anniversary Limited Edition)
@@ -206,7 +238,23 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .lock, .manualNotch, .monitor, .scope, .tuner, .voiceSquelch, .vox],
+        preampLevels: [12, 20]
     )
 
     /// Icom IC-910H - VHF/UHF satellite transceiver
@@ -234,7 +282,12 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: false,  // IC-910H CTCSS only (no DCS)
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 10000, 12500, 25000, 50000, 100000],
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoFrequencyControl, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .satelliteMode, .scanResume, .vox],
+        preampLevels: [20]
     )
 
     /// Icom IC-970 VHF/UHF all-mode transceiver with satellite mode
@@ -262,7 +315,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
     /// Icom IC-820H VHF/UHF dual-band satellite transceiver
@@ -284,7 +338,9 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.copyVFO, .memoryClear, .memoryToVFO, .vfoToMemory]
     )
 
     /// Icom IC-2730 - VHF/UHF dual-band mobile transceiver
@@ -312,7 +368,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000],
+        supportedFunctions: [.ctcssSquelch, .ctcssTone, .vox]
     )
 
     // MARK: - Icom D-STAR Mobiles
@@ -344,7 +401,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000],
+        supportedFunctions: [.ctcssSquelch, .ctcssTone, .dualWatch, .vox]
     )
 
     /// Icom ID-4100 - VHF/UHF D-STAR mobile transceiver
@@ -374,7 +432,8 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000]
+        availableTuningSteps: [5000, 6250, 10000, 12500, 15000, 20000, 25000, 30000, 50000, 100000],
+        supportedFunctions: [.ctcssSquelch, .ctcssTone, .vox]
     )
 
     // MARK: - Icom Receivers
@@ -396,7 +455,15 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoFrequencyControl, .autoNotch, .ctcssSquelch, .lock, .manualNotch, .scanResume, .scope, .voiceSquelch],
+        preampLevels: [20]
     )
 
     /// Icom IC-R75 - HF communications receiver
@@ -416,7 +483,12 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // Single VFO
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportedVFOOperations: [.memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-R9500 - Professional communications receiver
@@ -436,7 +508,14 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportedVFOOperations: [.memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .ctcssSquelch, .lock, .manualNotch, .voiceSquelch],
+        preampLevels: [10, 20]
     )
 
 }

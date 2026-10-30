@@ -31,7 +31,23 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-7700 can target VFO directly
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-7800 - HF/6m 200W flagship transceiver
@@ -61,7 +77,23 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,  // IC-7800 can target VFO directly
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsVoltageMeter: true,
+        supportsCurrentMeter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 16]
     )
 
     // MARK: - Legacy Icom HF Transceivers
@@ -91,7 +123,19 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: false,  // IC-7000 operates on current VFO
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsCWKeyer: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .voiceSquelch, .vox],
+        preampLevels: [10]
     )
 
     /// Icom IC-756PRO - HF/6m transceiver
@@ -119,7 +163,16 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .manualNotch, .monitor, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-756PROII - HF/6m transceiver
@@ -147,7 +200,16 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .manualNotch, .monitor, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-756PROIII - HF/6m transceiver
@@ -175,7 +237,20 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: true,
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsPriorityScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .dualWatch, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-746 - HF/6m/2m receive base station transceiver
@@ -208,7 +283,19 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .manualNotch, .monitor, .scanResume, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Icom IC-746PRO - HF/6m/2m receive base station transceiver (enhanced)
@@ -241,7 +328,19 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSignalStrength: true,
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
-        powerUnits: .percentage
+        powerUnits: .percentage,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCWKeyer: true,
+        supportsVFOScan: true,
+        supportsMemoryScan: true,
+        supportsSelectedMemoryScan: true,
+        supportsProgrammedScan: true,
+        supportsDeltaFScan: true,
+        supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .tune, .vfoToMemory],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .manualNotch, .monitor, .scanResume, .tuner, .voiceSquelch, .vox],
+        preampLevels: [10, 20]
     )
 
 

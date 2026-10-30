@@ -124,7 +124,25 @@ class AckRadio(threading.Thread):
                 pass
 
 
-def ours(name, commands, framing):
+def tx_frames(exchanges, framing):
+    """Every distinct frame written, in order, whatever the reply. For
+    reads and read-modify-write sets, which fail against the ACK radio
+    after writing."""
+    seen = []
+    for frame in audit.frames(exchanges, framing):
+        if frame not in seen and frame != "ID;":
+            seen.append(frame)
+    return seen
+
+
+def cell(result, framing, tx):
+    if tx:
+        return tx_frames(result["exchanges"], framing) or [f"ERROR {(result['error'] or '')[:40]}"]
+    sets, _, _ = audit.classify(result["exchanges"], framing)
+    return sets if not result["error"] else [f"ERROR {result['error'][:40]}"]
+
+
+def ours(name, commands, framing, tx=False):
     """Set frames SwiftRigControl sends for each command, against AckRadio."""
     radio = AckRadio(framing)
     radio.start()
@@ -134,8 +152,7 @@ def ours(name, commands, framing):
         try:
             for index, command in enumerate(commands):
                 result = client.run(command, f"{index}:{command}")
-                sets, _, _ = audit.classify(result["exchanges"], framing)
-                row[command] = sets if not result["error"] else [f"ERROR {result['error'][:40]}"]
+                row[command] = cell(result, framing, tx)
         finally:
             client.stop()
     finally:
@@ -166,6 +183,8 @@ def main():
     parser.add_argument("--commands-file")
     parser.add_argument("--framing", default="text", choices=["text", "civ", "cr"])
     parser.add_argument("--json", help="write {label: {command: [frames]}}")
+    parser.add_argument("--tx", action="store_true",
+                        help="compare every frame written, not just set frames (for reads)")
     parser.add_argument("commands", nargs="*")
     args = parser.parse_args()
 
@@ -191,8 +210,7 @@ def main():
         try:
             for command in commands:
                 result = audit.run_hamlib(model, relay.port, command)
-                sets, _, _ = audit.classify(result["exchanges"], args.framing)
-                row[command] = sets if not result["error"] else [f"ERROR {result['error'][:40]}"]
+                row[command] = cell(result, args.framing, args.tx)
                 print(f"{label:<12} {command:<22} {' '.join(row[command])}", flush=True)
         finally:
             relay.stop()
@@ -200,7 +218,7 @@ def main():
                 sim.stop()
         table[label] = row
         if catalog:
-            mine = ours(catalog, commands, args.framing)
+            mine = ours(catalog, commands, args.framing, args.tx)
             table[label + " (ours)"] = mine
             for command in commands:
                 verdict = "same" if mine[command] == row[command] else "DIFF"

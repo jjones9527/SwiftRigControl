@@ -47,11 +47,17 @@ extension RigctldCommandHandler {
             return .ok(command: command)
 
         case "PREAMP":
-            // Preamp: integer stage number (0=off, 1=preamp1, 2=preamp2)
-            guard let stage = Int(value) else {
+            // Hamlib RIG_LEVEL_PREAMP is a value from the model's preamp
+            // list (dB on Icom HF: `L PREAMP 10` on an IC-7600). 0 is off;
+            // anything else selects stage = 1-based position in the list,
+            // and a value not in the list is RIG_EINVAL (icom.c:3650-3675,
+            // kenwood.c:3591-3613, newcat.c:4457-4474). Through v1.3.1 we
+            // read it as the stage number, so `L PREAMP 10` failed.
+            // Radios with no preampLevels keep the stage reading.
+            guard let requested = Int(value) else {
                 throw RigError.invalidParameter("Invalid PREAMP value: \(value)")
             }
-            try await rigController.setPreamp(stage)
+            try await rigController.setPreamp(try preampStage(forHamlibValue: requested))
             return .ok(command: command)
 
         case "ATT":
@@ -221,9 +227,12 @@ extension RigctldCommandHandler {
             return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
 
         case "PREAMP":
-            // Preamp: return integer stage (0, 1, 2)
+            // The list value for the current stage (0 = off), as Hamlib
+            // reports it; the bare stage on radios without preampLevels.
             let stage = try await rigController.preamp()
-            return RigctldResponse(value: String(stage), command: command)
+            let levels = await rigController.capabilities.preampLevels
+            let reported = stage > 0 && stage <= levels.count ? levels[stage - 1] : stage
+            return RigctldResponse(value: String(reported), command: command)
 
         case "ATT":
             // Attenuator: return dB value
@@ -380,6 +389,18 @@ extension RigctldCommandHandler {
     /// Formats an Int in [0, 100] as the Hamlib 0.0-1.0 float.
     func floatResponse(_ value: Int, command: RigctldCommand) -> RigctldResponse {
         RigctldResponse(value: String(format: "%.6f", Double(value) / 100.0), command: command)
+    }
+
+    /// The preamp stage for a Hamlib `L PREAMP` value: 0 is off, otherwise
+    /// the value's 1-based position in ``RigCapabilities/preampLevels``.
+    /// Without a list, the value is taken as the stage.
+    func preampStage(forHamlibValue value: Int) async throws -> Int {
+        let levels = await rigController.capabilities.preampLevels
+        guard value != 0, !levels.isEmpty else { return value }
+        guard let index = levels.firstIndex(of: value) else {
+            throw RigError.invalidParameter("PREAMP \(value) is not one of \(levels)")
+        }
+        return index + 1
     }
 
 }

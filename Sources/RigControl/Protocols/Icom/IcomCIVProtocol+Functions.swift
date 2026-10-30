@@ -16,9 +16,14 @@ import Foundation
 //     0x46 — S_FUNC_VOX    voice-operated TX
 //     0x48 — S_FUNC_MN     manual notch
 //     0x4A — S_FUNC_AFC    auto frequency control
+//     0x4C — S_FUNC_VSC    voice squelch control
 //     0x50 — S_FUNC_DIAL_LK lock
-//     0x5A — S_MEM_SATMODE satellite mode (non-IC-910H)
+//     0x5A — S_MEM_SATMODE satellite mode (not the IC-910H)
 //     0x59 — S_MEM_DUALMODE dual watch (IC-9100/9700/ID-5100)
+//
+//   0x1A 0x07 — S_MEM_SATMODE910, satellite mode on the IC-910H.
+//   0x07 0xC0 / 0xC1 / 0xC2 — dual watch off / on / read on the other
+//     dual-receiver radios (S_DUAL_OFF / S_DUAL_ON / S_DUAL).
 //
 //   0x1C 0x01 — antenna tuner enable (data byte 0x00/0x01;
 //     0x02 starts a tune cycle — that's `VFOOperation.tune`).
@@ -96,21 +101,28 @@ extension IcomCIVProtocol {
         case .autoFrequencyControl:
             return ([0x16, 0x4A], payloadBytes)
         case .satelliteMode:
-            // Most modern radios use 0x16 0x5A. The IC-910H uses
-            // 0x1A 0x07 — we'd need a radioModel switch here for
-            // that legacy case. Modeling the IC-910H quirk is
-            // deferred until we ship a definition for it.
+            // icom.c:7312-7323: the IC-910H uses 1A 07, the rest 16 5A.
+            if radioModel == .ic910h {
+                return ([0x1A, 0x07], payloadBytes)
+            }
             return ([0x16, 0x5A], payloadBytes)
         case .dualWatch:
-            // IC-9100/IC-9700/ID-5100 use 0x16 0x59. Older
-            // dual-VFO Icoms use 0x07 0xC0/0xC1/0xC2 — same
-            // deferral note as satelliteMode applies.
-            return ([0x16, 0x59], payloadBytes)
+            // icom.c:7290-7303: 16 59 on the IC-9100/9700/ID-5100; every
+            // other radio uses 07 C1 (on) / 07 C0 (off), read with 07 C2.
+            // Through v1.3.1 all radios got 16 59.
+            switch radioModel {
+            case .ic9100, .ic9700, .id5100:
+                return ([0x16, 0x59], payloadBytes)
+            default:
+                guard write else { return ([0x07, 0xC2], []) }
+                return ([0x07, payload == 0x01 ? 0xC1 : 0xC0], [])
+            }
         case .audioPeakFilter:
             return ([0x16, 0x32], payloadBytes)
         case .voiceSquelch:
-            // Hamlib RIG_FUNC_VSC — Icom S_FUNC_VSC 0x4D.
-            return ([0x16, 0x4D], payloadBytes)
+            // Hamlib RIG_FUNC_VSC is S_FUNC_VSC 0x4C (icom_defs.h:334).
+            // Through v1.3.1 this sent 0x4D.
+            return ([0x16, 0x4C], payloadBytes)
         case .scope:
             return ([0x27, 0x10], payloadBytes)
         case .scanResume:
