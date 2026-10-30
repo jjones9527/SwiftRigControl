@@ -139,6 +139,8 @@ import Testing
         #expect(q.requiresMemoryModeEscape == false)
         #expect(q.filterCommandStyle == .doubleZero)
         #expect(q.hasTargetableMode == true)
+        // ft710.c:281-284: RIT/XIT via the CF clarifier commands.
+        #expect(q.usesFTX1ClarifierCommands == true)
     }
 
     // MARK: - FT-450 / FT-450D

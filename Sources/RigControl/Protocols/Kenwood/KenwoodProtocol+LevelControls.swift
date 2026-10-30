@@ -55,13 +55,16 @@ extension KenwoodProtocol {
 
     /// Sets the RF gain.
     ///
-    /// Command: `RGnnn;` where nnn is 000–255.
+    /// Command: `RGnnn;`, the 0–255 level scaled to
+    /// ``KenwoodLevelProfile/rfGainMax`` (0–100 on the TS-480, Hamlib
+    /// `ts480.c`).
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
-        let command = String(format: "RG%03d", clamped)
+        let maximum = levelProfile.rfGainMax
+        let command = String(format: "RG%03d", (clamped * maximum + 127) / 255)
         try await sendSetCommand(command)
     }
 
@@ -81,21 +84,24 @@ extension KenwoodProtocol {
         let start = response.index(response.startIndex, offsetBy: 2)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        let maximum = levelProfile.rfGainMax
+        return (min(max(value, 0), maximum) * 255 + maximum / 2) / maximum
     }
 
     // MARK: - Squelch
 
     /// Sets the squelch level.
     ///
-    /// Command: `SQ0nnn;` where nnn is 000–255.
+    /// Command: `SQ0nnn;`, or `SQnnn;` on the TS-890S
+    /// (``KenwoodLevelProfile/squelchHasReceiverDigit``, Hamlib
+    /// `ts890s.c:92-93`).
     ///
     /// - Parameter level: Squelch threshold 0 (open) – 255 (closed)
     /// - Throws: `RigError` if the command fails
     public func setSquelch(_ level: Int) async throws {
         let clamped = min(max(level, 0), 255)
-        let command = String(format: "SQ0%03d", clamped)
-        try await sendSetCommand(command)
+        let prefix = levelProfile.squelchHasReceiverDigit ? "SQ0" : "SQ"
+        try await sendSetCommand(prefix + String(format: "%03d", clamped))
     }
 
     /// Gets the current squelch level.
@@ -105,15 +111,13 @@ extension KenwoodProtocol {
     /// - Returns: Squelch level 0–255
     /// - Throws: `RigError` if the command fails
     public func getSquelch() async throws -> Int {
-        try await sendCommand("SQ0")
+        let prefix = levelProfile.squelchHasReceiverDigit ? "SQ0" : "SQ"
+        try await sendCommand(prefix)
         let response = try await receiveResponse()
-        // Response: SQ0nnn
-        guard response.hasPrefix("SQ0"), response.count >= 6 else {
+        guard response.hasPrefix(prefix),
+              let value = Int(response.dropFirst(prefix.count).prefix(3)) else {
             throw RigError.invalidResponse
         }
-        let start = response.index(response.startIndex, offsetBy: 3)
-        let end = response.index(start, offsetBy: 3)
-        guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
         return value
     }
 
@@ -156,182 +160,6 @@ extension KenwoodProtocol {
         let idx = response.index(response.startIndex, offsetBy: 2)
         guard let value = Int(String(response[idx])) else { throw RigError.invalidResponse }
         return value
-    }
-
-    // MARK: - Attenuator
-
-    /// Sets the front-end attenuator.
-    ///
-    /// Command: `RAnn;` — Kenwood attenuator step codes:
-    /// - 00 = off
-    /// - 01 = 6 dB
-    /// - 02 = 12 dB
-    /// - 03 = 18 dB (where supported)
-    ///
-    /// Available steps vary by model.
-    ///
-    /// - Parameter dB: Attenuation in dB — 0, 6, 12, or 18
-    /// - Throws: `RigError.invalidParameter` for unsupported values
-    public func setAttenuator(_ dB: Int) async throws {
-        let code: Int
-        switch dB {
-        case 0:  code = 0
-        case 6:  code = 1
-        case 12: code = 2
-        case 18: code = 3
-        default: throw RigError.invalidParameter("Unsupported attenuator level: \(dB) dB (valid: 0, 6, 12, 18)")
-        }
-        let command = String(format: "RA%02d", code)
-        try await sendSetCommand(command)
-    }
-
-    /// Gets the current attenuator level in dB.
-    ///
-    /// Command: `RA;` — Response: `RAnn;`
-    ///
-    /// - Returns: Attenuation in dB (0, 6, 12, or 18)
-    /// - Throws: `RigError` if the command fails
-    public func getAttenuator() async throws -> Int {
-        try await sendCommand("RA")
-        let response = try await receiveResponse()
-        // Response: RAnn
-        guard response.hasPrefix("RA"), response.count >= 4 else {
-            throw RigError.invalidResponse
-        }
-        let start = response.index(response.startIndex, offsetBy: 2)
-        let end = response.index(start, offsetBy: 2)
-        guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        switch code {
-        case 0: return 0
-        case 1: return 6
-        case 2: return 12
-        case 3: return 18
-        default: return 0
-        }
-    }
-
-    // MARK: - AGC
-
-    /// Sets the AGC speed.
-    ///
-    /// Command: `GTnnn;` — Kenwood AGC speed codes:
-    /// - 000 = Off (manual gain — not available on all models)
-    /// - 001 = Fast
-    /// - 002 = Mid (medium)
-    /// - 003 = Slow
-    ///
-    /// - Parameter speed: The desired AGC speed
-    /// - Throws: `RigError` if the command fails
-    public func setAGC(_ speed: AGCSpeed) async throws {
-        let code: Int
-        switch speed {
-        case .off:    code = 0
-        case .fast:   code = 1
-        case .medium: code = 2
-        case .slow:   code = 3
-        case .auto:   code = 2  // Map auto → mid as closest equivalent
-        }
-        let command = String(format: "GT%03d", code)
-        try await sendSetCommand(command)
-    }
-
-    /// Gets the current AGC speed.
-    ///
-    /// Command: `GT;` — Response: `GTnnn;`
-    ///
-    /// - Returns: The current AGC speed
-    /// - Throws: `RigError` if the command fails
-    public func getAGC() async throws -> AGCSpeed {
-        try await sendCommand("GT")
-        let response = try await receiveResponse()
-        // Response: GTnnn
-        guard response.hasPrefix("GT"), response.count >= 5 else {
-            throw RigError.invalidResponse
-        }
-        let start = response.index(response.startIndex, offsetBy: 2)
-        let end = response.index(start, offsetBy: 3)
-        guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        switch code {
-        case 0:  return .off
-        case 1:  return .fast
-        case 2:  return .medium
-        default: return .slow
-        }
-    }
-
-    // MARK: - Noise Blanker
-
-    /// Sets the noise blanker state.
-    ///
-    /// Command: `NBn;` — 0 = off, 1 = on.
-    ///
-    /// - Parameter config: Noise blanker configuration
-    /// - Throws: `RigError` if the command fails
-    public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
-        switch config {
-        case .off:
-            try await sendSetCommand("NB0")
-        case .enabled:
-            try await sendSetCommand("NB1")
-        }
-    }
-
-    /// Gets the current noise blanker state.
-    ///
-    /// Command: `NB;` — Response: `NBn;`
-    ///
-    /// - Returns: Current noise blanker configuration
-    /// - Throws: `RigError` if the command fails
-    public func getNoiseBlanker() async throws -> NoiseBlanker {
-        try await sendCommand("NB")
-        let response = try await receiveResponse()
-        // Response: NBn
-        guard response.hasPrefix("NB"), response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-        let idx = response.index(response.startIndex, offsetBy: 2)
-        return response[idx] == "1" ? .enabled(level: 5) : .off
-    }
-
-    // MARK: - Noise Reduction
-
-    /// Sets the noise reduction state.
-    ///
-    /// Command: `NRn;` — 0 = off, 1 = NR1, 2 = NR2 (where supported).
-    ///
-    /// - Parameter config: Noise reduction configuration; `enabled(level:)` maps
-    ///   level ≤ 5 → NR1, level > 5 → NR2 on models that support it.
-    /// - Throws: `RigError` if the command fails
-    public func setNoiseReduction(_ config: NoiseReduction) async throws {
-        switch config {
-        case .off:
-            try await sendSetCommand("NR0")
-        case .enabled(let level):
-            let code = level > 5 ? 2 : 1
-            try await sendSetCommand("NR\(code)")
-        }
-    }
-
-    /// Gets the current noise reduction state.
-    ///
-    /// Command: `NR;` — Response: `NRn;`
-    ///
-    /// - Returns: Current noise reduction configuration
-    /// - Throws: `RigError` if the command fails
-    public func getNoiseReduction() async throws -> NoiseReduction {
-        try await sendCommand("NR")
-        let response = try await receiveResponse()
-        // Response: NRn
-        guard response.hasPrefix("NR"), response.count >= 3 else {
-            throw RigError.invalidResponse
-        }
-        let idx = response.index(response.startIndex, offsetBy: 2)
-        switch response[idx] {
-        case "0": return .off
-        case "1": return .enabled(level: 3)   // NR1 — mid-scale
-        case "2": return .enabled(level: 8)   // NR2 — upper-scale
-        default:  return .off
-        }
     }
 
     // MARK: - IF Filter

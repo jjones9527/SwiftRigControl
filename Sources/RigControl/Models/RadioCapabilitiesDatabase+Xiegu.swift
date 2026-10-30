@@ -136,6 +136,7 @@ extension RadioCapabilitiesDatabase.Xiegu {
         ],
         hasDualReceiver: false,
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        powerUnits: .percentage
     )
 }

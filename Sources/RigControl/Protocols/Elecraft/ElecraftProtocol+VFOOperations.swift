@@ -13,10 +13,10 @@ import Foundation
 //   K4     "SWH40"
 //
 // SwiftRigControl doesn't currently model which K-variant the
-// connected radio is at the protocol level (the `isK2` flag is
-// the only discriminator), so we expose only the Kenwood-shared
+// connected radio is at the protocol level (`family` only splits the
+// K2 from the K3 family), so we expose only the Kenwood-shared
 // ops here. The model-specific TUNE codes are a follow-on once
-// `ElecraftProtocol` carries a richer model identity.
+// `ElecraftProtocol` carries a per-model identity.
 
 extension ElecraftProtocol {
 

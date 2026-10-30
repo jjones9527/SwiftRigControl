@@ -12,7 +12,8 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts890S,
-                modeStyle: .setFrequencyAndMode
+                modeStyle: .setFrequencyAndMode,
+                levelProfile: .ts890S
             )
         }
     )
@@ -28,7 +29,8 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts990S,
-                modeStyle: .operatingMode
+                modeStyle: .operatingMode,
+                levelProfile: .ts990S
             )
         }
     )
@@ -44,7 +46,8 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts590SG,
-                modeStyle: .dataSubMode
+                modeStyle: .dataSubMode,
+                levelProfile: .ts590SG
             )
         }
     )
@@ -67,7 +70,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480SAT
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480SAT,
+                levelProfile: .ts480
             )
         }
     )
@@ -82,7 +86,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts2000
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts2000,
+                levelProfile: .ts2000
             )
         }
     )
@@ -98,7 +103,8 @@ extension RadioDefinition.Kenwood {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Kenwood.ts590S,
-                modeStyle: .dataSubMode
+                modeStyle: .dataSubMode,
+                levelProfile: .ts590S
             )
         }
     )
@@ -126,7 +132,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480HX
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts480HX,
+                levelProfile: .ts480
             )
         }
     )
@@ -233,7 +240,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts850S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts850S,
+                levelProfile: .noAttenuator
             )
         }
     )
@@ -250,7 +258,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570D
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570D,
+                levelProfile: .ts570
             )
         }
     )
@@ -267,7 +276,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts570S,
+                levelProfile: .ts570
             )
         }
     )
@@ -288,7 +298,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts450S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts450S,
+                levelProfile: .noAttenuator
             )
         }
     )
@@ -307,7 +318,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts690S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts690S,
+                levelProfile: .noAttenuator
             )
         }
     )
@@ -327,7 +339,8 @@ extension RadioDefinition.Kenwood {
         protocolFactory: { transport in
             KenwoodProtocol(
                 transport: transport,
-                capabilities: RadioCapabilitiesDatabase.Kenwood.ts940S
+                capabilities: RadioCapabilitiesDatabase.Kenwood.ts940S,
+                levelProfile: .noAttenuator
             )
         }
     )

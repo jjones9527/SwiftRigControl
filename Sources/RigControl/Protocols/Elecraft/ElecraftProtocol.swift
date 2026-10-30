@@ -62,24 +62,73 @@ public actor ElecraftProtocol:
     /// dropped bytes on the K2's UART.
     let k2CommandDelay: UInt64 = 100_000_000  // 100ms — per Hamlib
 
-    /// Whether this is a K2 radio (requires command delays)
-    let isK2: Bool
+    /// The two Elecraft command families.
+    ///
+    /// Hamlib drives the K2 from `rigs/kenwood/k2.c` and every later
+    /// Elecraft (K3, K3S, K4, KX2, KX3) from `rigs/kenwood/k3.c`. The
+    /// families differ in timing, set-command verification, the mode
+    /// table and several level commands.
+    public enum Family: Sendable, Equatable {
+        /// The K2: 2 s timeout, 100 ms between commands, its own mode
+        /// table, `FW` filter width (Hamlib `k2.c`).
+        case k2
+        /// K3, K3S and K4: 1 s timeout, `ID;`-verified sets, `DT` data
+        /// sub-modes, `BW` filter width (Hamlib `k3.c`).
+        case k3
+        /// KX2 and KX3: the K3 command set, but with their own AF, RF
+        /// and mic-gain scales (Hamlib `kx3_set_level` / `kx3_get_level`,
+        /// `k3.c:2386-2460`).
+        case kx
+    }
+
+    /// Which command family this radio uses.
+    public nonisolated let family: Family
+
+    /// Whether this is a K2 radio (requires command delays).
+    ///
+    /// Through v1.3.1 this was `capabilities.maxPower <= 15`, which also
+    /// matched the 12 W KX2 and 15 W KX3. They then got the K2's 2 s
+    /// timeout, 100 ms command delay, unverified sets, AGC codes and
+    /// `RA02` attenuator step, none of which Hamlib `k3.c` uses for them.
+    var isK2: Bool { family == .k2 }
 
     /// Command terminator (semicolon)
     static let terminator: UInt8 = 0x3B  // ';'
 
     /// Initializes a new Elecraft protocol instance.
     ///
+    /// ```swift
+    /// let kx3 = ElecraftProtocol(
+    ///     transport: transport,
+    ///     capabilities: RadioCapabilitiesDatabase.Elecraft.kx3,
+    ///     family: .k3
+    /// )
+    /// ```
+    ///
     /// - Parameters:
     ///   - transport: The serial transport to use
     ///   - capabilities: The capabilities of this radio model
-    public init(transport: any SerialTransport, capabilities: RigCapabilities) {
+    ///   - family: The command family. When `nil` it is inferred from
+    ///     `capabilities` with ``inferredFamily(for:)``. The
+    ///     `RadioDefinition.Elecraft` factories always pass it.
+    public init(transport: any SerialTransport, capabilities: RigCapabilities, family: Family? = nil) {
         self.transport = transport
         self.capabilities = capabilities
-        // Detect K2 by checking max power (K2 = 15W, others >= 100W)
-        self.isK2 = capabilities.maxPower <= 15
-        // K2 needs 2s per Hamlib k2.c:139; K3 and later are fine at 1s.
-        self.responseTimeout = self.isK2 ? 2.0 : 1.0
+        self.family = family ?? Self.inferredFamily(for: capabilities)
+        // K2 needs 2s per Hamlib k2.c:139; K3 and later, including the
+        // KX2 and KX3, use 1s (k3.c:718, 877).
+        self.responseTimeout = self.family == .k2 ? 2.0 : 1.0
+    }
+
+    /// Guesses the family from capabilities, for callers that don't pass
+    /// one: a radio of 15 W or less without AM is the K2, one of 15 W or
+    /// less with AM is a KX2 (12 W) or KX3 (15 W), anything else K3/K4.
+    ///
+    /// - Parameter capabilities: The radio's capabilities.
+    /// - Returns: `.k2`, `.kx` or `.k3`.
+    public static func inferredFamily(for capabilities: RigCapabilities) -> Family {
+        guard capabilities.maxPower <= 15 else { return .k3 }
+        return capabilities.supportedModes.contains(.am) ? .kx : .k2
     }
 
     // MARK: - Connection
@@ -214,17 +263,16 @@ public actor ElecraftProtocol:
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Elecraft radios use PowerUnits.watts; `level` is interpreted
-        // as watts and translated per K-series quirks.
+        // Every Elecraft takes `PCnnn;` in watts. K2: KIO2 Pgmrs Ref rev E
+        // (000-015 QRP, 000-150 with the K2/100). K3 family: Hamlib
+        // `k3_set_level` RIG_LEVEL_RFPOWER (k3.c:2023-2027). Through v1.3.1
+        // the K3 family sent a percentage of maxPower, which is the same
+        // number on the 100 W K3/K3S/K4 but not on the KX2 or KX3.
         let command: String
         if isK2 {
-            // K2: Use direct watts (000-015 for QRP, 000-150 for K2/100 with QRO)
-            // Per KIO2 Pgmrs Ref rev E: PCnnn; where nnn is watts, not percentage
             command = String(format: "PC%03d", level)
         } else {
-            // K3/K4: Use percentage (000-100)
-            let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
-            command = String(format: "PC%03d", percentage)
+            command = String(format: "PC%03d", min(max(level, 0), capabilities.maxPower))
         }
 
         try await sendSetCommand(command)
@@ -252,14 +300,8 @@ public actor ElecraftProtocol:
             throw RigError.invalidResponse
         }
 
-        if isK2 {
-            // K2: Response is direct watts (000-015 for QRP, 000-150 for K2/100 with QRO)
-            // Per KIO2 Pgmrs Ref rev E: PCnnn; where nnn is watts, not percentage
-            return value
-        } else {
-            // K3/K4: Response is percentage (000-100), convert to watts
-            return (value * capabilities.maxPower) / 100
-        }
+        // Watts on every Elecraft (k3.c:2325-2345 for the K3 family).
+        return value
     }
 
     // MARK: - Split Operation
@@ -293,16 +335,13 @@ public actor ElecraftProtocol:
     // MARK: - Signal Strength
 
     public func getSignalStrength() async throws -> SignalStrength {
-        // The K2 uses `SM;` (no main/sub digit), the K3/K3S/K4
-        // and other Kenwood-derived radios use `SM0;` for the
-        // main receiver. Per Hamlib `kenwood_get_level` switch
-        // on RIG_LEVEL_STRENGTH (kenwood.c) — only TS-590/480/
-        // 2000 use SM0; everything else uses plain `SM`.
-        //
-        // The reply matches: K2 returns `SMnnnn;`, K3 returns
-        // `SM0nnnn;`. Parse both shapes — strip the response
-        // prefix dynamically and read the trailing 4-digit value.
-        let cmd = isK2 ? "SM" : "SM0"
+        // Every Elecraft reads the main S-meter with `SM;` and answers
+        // `SMnnnn;`: the K2 through `kenwood_get_level` (only the
+        // TS-590/480/2000 use `SM0`), the K3 family through
+        // `k3_get_level` RIG_LEVEL_STRENGTH (k3.c:2059-2080). Through
+        // v1.3.1 the K3 family sent `SM0;`. Hamlib uses the higher-
+        // resolution `SMH;` on K3 firmware 4.37+; not adopted here.
+        let cmd = "SM"
         try await sendCommand(cmd)
         let response = try await receiveResponse()
 

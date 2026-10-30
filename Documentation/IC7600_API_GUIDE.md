@@ -139,8 +139,8 @@ try await icomProtocol.setDataModeIC7600(dataMode: 0x00, filter: 0x00)
 ### Power Control
 
 ```swift
-// Set transmit power (0-100 watts for IC-7600)
-try await rig.setPower(50)  // 50 watts
+// Set transmit power: Icom takes 0-100 percent of rated output
+try await rig.setPower(50)  // 50%, i.e. 50 W on the 100 W IC-7600
 
 // Read current power
 let power = try await rig.power()

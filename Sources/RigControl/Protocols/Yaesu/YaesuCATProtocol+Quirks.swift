@@ -101,7 +101,7 @@ extension YaesuCATProtocol {
         /// Cross-checked against `.targetable_vfo` in each Hamlib
         /// backend (`rigs/yaesu/*.c`); see `newcat.c:1797-1800`
         /// (set) and `newcat.c:1879-1882` (get) for the dispatch.
-        public let hasTargetableMode: Bool
+        public internal(set) var hasTargetableMode: Bool
 
         /// Query sent after a set command to find out whether the
         /// radio rejected it (a `?;` arrives before the query's reply).
@@ -109,11 +109,11 @@ extension YaesuCATProtocol {
         /// `"ID"` everywhere except the FTDX-9000, which Hamlib
         /// verifies with `"AI"` (`newcat.c:10806-10807`, `10926-10927`).
         /// See ``YaesuCATProtocol`` `sendSetCommand(_:)`.
-        public let verifyCommand: String
+        public internal(set) var verifyCommand: String
 
-        /// Uses the FTX-1 `CF` command family for independent RX/TX
-        /// clarifiers instead of the shared newcat `RC`/`RU`/`RD`/`RT`/`XT`
-        /// commands.
+        /// Uses the `CF` command family (FTX-1, FT-710) for independent
+        /// RX/TX clarifiers instead of the shared newcat
+        /// `RC`/`RU`/`RD`/`RT`/`XT` commands.
         public let usesFTX1ClarifierCommands: Bool
 
         /// `SH` command wire format.
@@ -144,6 +144,35 @@ extension YaesuCATProtocol {
             /// Hamlib `newcat.c:9205-9207`.
             case vfoAndNarrow(narrowAlwaysOn: Bool)
         }
+
+        /// Full scale of the `SQ` squelch level on the wire: 100 on the
+        /// FT-991/991A, FT-891, FT-710, FTDX-10 and FTDX-101D/MP, 255
+        /// elsewhere. Hamlib scales by each model's `level_gran` SQL step
+        /// (`newcat_set_level` RIG_LEVEL_SQL, `newcat.c:4703-4716`).
+        /// Through v1.3.1 every radio got 0-255, so 30% squelch reached a
+        /// 0-100 radio as 76%.
+        public internal(set) var squelchMax: Int = 255
+
+        /// Full scale of the `RG` RF gain level: 30 on the FT-891, 255
+        /// elsewhere (Hamlib `level_gran` RF step).
+        public internal(set) var rfGainMax: Int = 255
+
+        /// Full scale of the `RL` noise-reduction level: 11 on the
+        /// FT-450/450D, 15 elsewhere (Hamlib `newcat_set_level`
+        /// RIG_LEVEL_NR, `newcat.c:4549-4590`).
+        public internal(set) var noiseReductionLevelMax: Int = 15
+
+        /// The radio's attenuator steps in dB. `RA0n` selects step n
+        /// (1-based) of this list; `RA00` is off. Hamlib indexes the
+        /// model's `.attenuator` caps list the same way
+        /// (`newcat_set_level` RIG_LEVEL_ATT, `newcat.c:4492-4533`).
+        /// Through v1.3.1 the codes were fixed at 6/12/18 dB, wrong on
+        /// radios with another list (FT-991A: `RA01` is 12 dB).
+        public internal(set) var attenuatorSteps: [Int] = [6, 12, 18]
+
+        /// S-meter calibration from the model's Hamlib `.str_cal`; see
+        /// ``YaesuCATProtocol/getSignalStrength()``.
+        public internal(set) var sMeterCalibration: CalibrationTable = YaesuCATProtocol.defaultSMeterCalibration
 
         /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
@@ -255,7 +284,13 @@ extension YaesuCATProtocol {
             usesFT23ForVFOSelection: false,
             supportsFTVFOSelection: true,
             filterCommandStyle: .doubleZero,
-            hasTargetableMode: true
+            hasTargetableMode: true,
+            // Hamlib drives FT-710 RIT/XIT with the CF clarifier commands
+            // (ft710.c:281-284 newcat_set_clarifier_frequency, CF%c01%+05d;
+            // newcat_set_clarifier, CF%c00%d%d000, newcat.c:11236-11290),
+            // the same scheme as the FTX-1. Through v1.3.1 it used
+            // RC / RU / RT / XT.
+            usesFTX1ClarifierCommands: true
         )
 
         /// FT-450 / FT-450D — `ST` means Step, not Split, on this
@@ -287,17 +322,11 @@ extension YaesuCATProtocol {
         /// mode gating (e.g. `.ft2000Family` is shared by FT-2000
         /// which is targetable and FTDX-3000 which is not).
         public func withTargetableMode(_ enabled: Bool = true) -> Quirks {
-            Quirks(
-                supportsSTSplit: supportsSTSplit,
-                usesFT23ForVFOSelection: usesFT23ForVFOSelection,
-                supportsFTVFOSelection: supportsFTVFOSelection,
-                frequencyDigits: frequencyDigits,
-                modeCodeTable: modeCodeTable,
-                requiresMemoryModeEscape: requiresMemoryModeEscape,
-                filterCommandStyle: filterCommandStyle,
-                hasTargetableMode: enabled,
-                verifyCommand: verifyCommand
-            )
+            // Copy-and-mutate: the previous field-by-field rebuild
+            // silently dropped usesFTX1ClarifierCommands.
+            var copy = self
+            copy.hasTargetableMode = enabled
+            return copy
         }
 
         /// Returns a copy with ``verifyCommand`` replaced.
@@ -306,18 +335,40 @@ extension YaesuCATProtocol {
         ///   `;` terminator (`"AI"` for the FTDX-9000).
         /// - Returns: The adjusted quirks.
         public func withVerifyCommand(_ command: String) -> Quirks {
-            Quirks(
-                supportsSTSplit: supportsSTSplit,
-                usesFT23ForVFOSelection: usesFT23ForVFOSelection,
-                supportsFTVFOSelection: supportsFTVFOSelection,
-                frequencyDigits: frequencyDigits,
-                modeCodeTable: modeCodeTable,
-                requiresMemoryModeEscape: requiresMemoryModeEscape,
-                filterCommandStyle: filterCommandStyle,
-                hasTargetableMode: hasTargetableMode,
-                verifyCommand: command,
-                usesFTX1ClarifierCommands: usesFTX1ClarifierCommands
-            )
+            var copy = self
+            copy.verifyCommand = command
+            return copy
+        }
+
+        /// Returns a copy with per-model level scales replaced.
+        ///
+        /// Values come from the model's Hamlib caps (`rigctl -m <model> -u`).
+        ///
+        /// ```swift
+        /// let quirks = Quirks.newcatNoST.withLevelScales(squelchMax: 100, attenuatorSteps: [12])
+        /// ```
+        ///
+        /// - Parameters:
+        ///   - squelchMax: ``squelchMax``, or `nil` to keep it.
+        ///   - rfGainMax: ``rfGainMax``, or `nil` to keep it.
+        ///   - noiseReductionLevelMax: ``noiseReductionLevelMax``, or `nil` to keep it.
+        ///   - attenuatorSteps: ``attenuatorSteps``, or `nil` to keep it.
+        ///   - sMeterCalibration: ``sMeterCalibration``, or `nil` to keep it.
+        /// - Returns: The adjusted quirks.
+        public func withLevelScales(
+            squelchMax: Int? = nil,
+            rfGainMax: Int? = nil,
+            noiseReductionLevelMax: Int? = nil,
+            attenuatorSteps: [Int]? = nil,
+            sMeterCalibration: CalibrationTable? = nil
+        ) -> Quirks {
+            var copy = self
+            if let sMeterCalibration { copy.sMeterCalibration = sMeterCalibration }
+            if let squelchMax { copy.squelchMax = squelchMax }
+            if let rfGainMax { copy.rfGainMax = rfGainMax }
+            if let noiseReductionLevelMax { copy.noiseReductionLevelMax = noiseReductionLevelMax }
+            if let attenuatorSteps { copy.attenuatorSteps = attenuatorSteps }
+            return copy
         }
 
         /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO

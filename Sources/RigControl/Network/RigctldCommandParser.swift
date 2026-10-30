@@ -106,7 +106,7 @@ public struct RigctldCommandParser {
     /// dump/power/probe families are `ARG_NOVFO`.
     private static let shortFormsAcceptingLeadingVFO: Set<Character> = [
         "F", "f", "M", "m", "I", "i", "X", "x", "S", "s",
-        "L", "l", "U", "u", "T", "t", "Y", "y",
+        "L", "l", "U", "u", "T", "t", "Y", "y", "J", "j", "Z", "z",
     ]
 
     /// Long-form command names whose Hamlib command-table entry
@@ -123,7 +123,15 @@ public struct RigctldCommandParser {
         "set_func", "get_func",
         "set_ptt", "get_ptt",
         "set_ant", "get_ant",
+        "set_rit", "get_rit", "set_xit", "get_xit",
     ]
+
+    /// Parses a signed RIT/XIT offset in Hz.
+    private static func parseOffset(_ value: String?, name: String) throws -> Int {
+        guard let value else { throw ParseError.missingParameter(name) }
+        guard let hz = Int(value) else { throw ParseError.invalidParameter(name, value: value) }
+        return hz
+    }
 
     /// If `args.first` matches a canonical Hamlib VFO name, pop it
     /// off and return the token; otherwise leave `args` untouched
@@ -253,6 +261,19 @@ public struct RigctldCommandParser {
 
         case "s":
             return .getSplitVFO
+
+        // RIT / XIT (Hamlib `set_rit` / `set_xit`: signed Hz, 0 resets)
+        case "J":
+            return .setRIT(hz: try Self.parseOffset(args.first, name: "RIT"))
+
+        case "j":
+            return .getRIT
+
+        case "Z":
+            return .setXIT(hz: try Self.parseOffset(args.first, name: "XIT"))
+
+        case "z":
+            return .getXIT
 
         case "I":
             guard let freqStr = args.first else {
@@ -456,6 +477,18 @@ public struct RigctldCommandParser {
             }
             let txVFO = args.count > 1 ? args[1] : nil
             return .setSplitVFO(enabled: split != 0, txVFO: txVFO)
+
+        case "set_rit":
+            return .setRIT(hz: try Self.parseOffset(args.first, name: "RIT"))
+
+        case "get_rit":
+            return .getRIT
+
+        case "set_xit":
+            return .setXIT(hz: try Self.parseOffset(args.first, name: "XIT"))
+
+        case "get_xit":
+            return .getXIT
 
         case "get_split_vfo":
             return .getSplitVFO

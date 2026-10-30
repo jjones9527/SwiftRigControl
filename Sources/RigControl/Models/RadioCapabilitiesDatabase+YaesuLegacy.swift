@@ -81,8 +81,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: true,
-    powerUnits: .percentage
+    requiresModeFilter: true
   )
 
   /// Yaesu FT-2000 - HF/6m 100W transceiver
@@ -152,8 +151,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: true,
-    powerUnits: .percentage
+    requiresModeFilter: true
   )
 
   /// Shared FT-1000MP-family capabilities. The CAT surface is identical;
@@ -220,7 +218,6 @@ extension RadioCapabilitiesDatabase.Yaesu {
       supportsSignalStrength: true,
       requiresVFOSelection: false,
       requiresModeFilter: false,
-      powerUnits: .percentage,
       supportsRFPowerMeter: true,
       supportsSWRMeter: true,
       supportsALCMeter: true,
@@ -313,8 +310,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: false,
-    powerUnits: .percentage
+    requiresModeFilter: false
   )
 
   /// Yaesu FT-897 - HF/VHF/UHF 100W base/portable transceiver
@@ -393,8 +389,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: true,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: false,
-    powerUnits: .percentage
+    requiresModeFilter: false
   )
 
   /// Yaesu FT-450 - HF/6m 100W transceiver with optional ATU
@@ -465,8 +460,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: true,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: false,
-    powerUnits: .percentage
+    requiresModeFilter: false
   )
 
   /// Yaesu FTDX-3000 - HF/6m 100W transceiver
@@ -536,8 +530,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: true,
-    powerUnits: .percentage
+    requiresModeFilter: true
   )
 
 }

@@ -27,15 +27,16 @@ extension ElecraftProtocol {
 
     /// Sets the AF (audio) output gain.
     ///
-    /// Command: `AGnnn;` where nnn is 000–255.
-    ///
-    /// Note: On the K2 the AF gain range is 000–060; values are clamped automatically.
+    /// Command: `AGnnn;`. The 0–255 API level is scaled to the family's
+    /// wire range (`afGainRange`): 0–250 on the K3/K4 (Hamlib
+    /// `k3_set_level`, `k3.c:2008`), 0–60 on the KX2/KX3 (`kx3_set_level`,
+    /// `k3.c:2402`). Through v1.3.1 it was sent unscaled, so half volume
+    /// on a KX3 (`AG127`) was over twice the radio's maximum.
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setAFGain(_ level: Int) async throws {
-        let clamped = min(max(level, 0), 255)
-        let command = String(format: "AG%03d", clamped)
+        let command = String(format: "AG%03d", Self.toWire(level, afGainRange))
         try await sendSetCommand(command)
     }
 
@@ -55,20 +56,21 @@ extension ElecraftProtocol {
         let start = response.index(response.startIndex, offsetBy: 2)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        return Self.fromWire(value, afGainRange)
     }
 
     // MARK: - RF Gain
 
     /// Sets the RF gain.
     ///
-    /// Command: `RGnnn;` where nnn is 000–255.
+    /// Command: `RGnnn;`. The 0–255 API level is scaled to
+    /// `rfGainRange`: 0–250 on the K3/K4 (`k3.c:2012`), 190–250 on the
+    /// KX2/KX3 (`kx3_set_level`, `k3.c:2397`).
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
-        let clamped = min(max(level, 0), 255)
-        let command = String(format: "RG%03d", clamped)
+        let command = String(format: "RG%03d", Self.toWire(level, rfGainRange))
         try await sendSetCommand(command)
     }
 
@@ -88,22 +90,23 @@ extension ElecraftProtocol {
         let start = response.index(response.startIndex, offsetBy: 2)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        return Self.fromWire(value, rfGainRange)
     }
 
     // MARK: - Squelch
 
     /// Sets the squelch level.
     ///
-    /// Command: `SQnnn;` where nnn is 000–255.
-    ///
-    /// Note: On the K2 squelch has a narrower effective range (000–029 typically).
+    /// Command: `SQnnn;`. The 0–255 API level is scaled to
+    /// `squelchRange`: 0–29 on the K3 family and KX2/KX3 (Hamlib
+    /// `k3_set_level` / `k3_get_level` RIG_LEVEL_SQL, `k3.c:2004`, `2274`).
+    /// Through v1.3.1 it was sent unscaled, so 30% squelch went out as
+    /// `SQ076`, past the radio's maximum.
     ///
     /// - Parameter level: Squelch threshold 0 (open) – 255 (closed)
     /// - Throws: `RigError` if the command fails
     public func setSquelch(_ level: Int) async throws {
-        let clamped = min(max(level, 0), 255)
-        let command = String(format: "SQ%03d", clamped)
+        let command = String(format: "SQ%03d", Self.toWire(level, squelchRange))
         try await sendSetCommand(command)
     }
 
@@ -123,7 +126,7 @@ extension ElecraftProtocol {
         let start = response.index(response.startIndex, offsetBy: 2)
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
-        return value
+        return Self.fromWire(value, squelchRange)
     }
 
     // MARK: - Preamp
@@ -169,14 +172,14 @@ extension ElecraftProtocol {
     ///
     /// Command: `RAnn;` — Elecraft attenuator step codes:
     /// - 00 = off
-    /// - 01 = 10 dB (K2) or 6 dB (K3/K4)
-    /// - 02 = 20 dB (K2) — K3/K4 may not support this step
+    /// - 01 = 10 dB (K2, and the K3 family per Hamlib `k3.c:1964-1972`)
+    /// - 02 = 20 dB (K2 only)
     ///
     /// This method accepts values in dB and maps them to the closest available step.
-    /// Pass 0 to disable, 6 for the first attenuation step, 10 or 12 for the second
-    /// (the mapping is applied based on `isK2`).
+    /// Pass 0 to disable, 1–10 for the first step, 11–20 for the K2's
+    /// second step (K3 family: the first step).
     ///
-    /// - Parameter dB: Attenuation in dB — 0, 6, 10, 12, or 20
+    /// - Parameter dB: Attenuation in dB, 0–20
     /// - Throws: `RigError.invalidParameter` for unsupported values
     public func setAttenuator(_ dB: Int) async throws {
         let code: Int
@@ -184,7 +187,7 @@ extension ElecraftProtocol {
         case 0:
             code = 0
         case 1...10:
-            code = 1   // K3/K4: 6dB step; K2: 10dB step
+            code = 1   // 10 dB on every Elecraft
         case 11...20:
             code = isK2 ? 2 : 1   // K2: 20dB step; K3/K4 has only one step
         default:
@@ -198,9 +201,10 @@ extension ElecraftProtocol {
     ///
     /// Command: `RA;` — Response: `RAnn;`
     ///
-    /// Returns the closest standard dB value: 0, 6/10, or 12/20 depending on model.
+    /// `RA01` is 10 dB on every Elecraft (Hamlib `k3_get_level`,
+    /// k3.c:2209-2226). Through v1.3.1 the K3 family reported 6 dB.
     ///
-    /// - Returns: Attenuation in dB (0, 6, or 10)
+    /// - Returns: Attenuation in dB (0, 10, or 20 on the K2)
     /// - Throws: `RigError` if the command fails
     public func getAttenuator() async throws -> Int {
         try await sendCommand("RA")
@@ -214,8 +218,10 @@ extension ElecraftProtocol {
         guard let code = Int(response[start..<end]) else { throw RigError.invalidResponse }
         switch code {
         case 0:  return 0
-        case 1:  return isK2 ? 10 : 6
-        default: return isK2 ? 20 : 6
+        case 1:  return 10
+        default:
+            guard isK2 else { throw RigError.invalidResponse }
+            return 20
         }
     }
 
@@ -229,13 +235,19 @@ extension ElecraftProtocol {
     /// - 000 = Fast
     /// - 001 = Slow
     ///
-    /// K3/K4 AGC codes:
-    /// - 000 = Fast
-    /// - 001 = Mid
-    /// - 002 = Slow
+    /// K3 family (K3, K3S, K4, KX2, KX3) AGC codes, per Hamlib
+    /// `k3_set_level` / `k3_get_level` (k3.c:1939-1962, 2180-2207):
+    /// - 000 = Off
+    /// - 002 = Fast
+    /// - 004 = Slow (`.medium` maps here too; there is no medium)
+    ///
+    /// Through v1.3.1 the K3 family sent `000`/`001`/`002`, so "fast"
+    /// turned AGC off and "slow" selected fast.
     ///
     /// - Parameter speed: The desired AGC speed
-    /// - Throws: `RigError` if the command fails
+    /// - Throws: `RigError.unsupportedOperation` for `.auto` on the K3
+    ///   family (Hamlib returns `-RIG_EINVAL`), or `RigError` if the
+    ///   command fails
     public func setAGC(_ speed: AGCSpeed) async throws {
         let code: Int
         if isK2 {
@@ -245,9 +257,11 @@ extension ElecraftProtocol {
             }
         } else {
             switch speed {
-            case .fast:           code = 0
-            case .medium, .auto:  code = 1
-            case .slow, .off:     code = 2
+            case .off:             code = 0
+            case .fast:            code = 2
+            case .medium, .slow:   code = 4
+            case .auto:
+                throw RigError.unsupportedOperation("Elecraft K3-family radios have no automatic AGC")
             }
         }
         let command = String(format: "GT%03d", code)
@@ -274,9 +288,10 @@ extension ElecraftProtocol {
             return code == 0 ? .fast : .slow
         } else {
             switch code {
-            case 0:  return .fast
-            case 1:  return .medium
-            default: return .slow
+            case 0:  return .off
+            case 2:  return .fast
+            case 4:  return .slow
+            default: throw RigError.invalidResponse
             }
         }
     }

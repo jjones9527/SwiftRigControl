@@ -70,8 +70,18 @@ extension RigctldCommandHandler {
             let caps = await rigController.capabilities
             // Hamlib enforces a 0.05 minimum — radios reject 0W
             let normalized = max(0.05, min(1.0, floatVal))
-            let watts = Int(normalized * Double(caps.maxPower))
-            try await rigController.setPower(min(max(watts, 0), caps.maxPower))
+            // Convert to the radio's own unit. Through v1.3.1 this always
+            // sent watts, which CI-V radios read as a percentage: 0.5 on a
+            // 200 W IC-7851 asked for "100%", full power, and 1.0 on a
+            // 10 W IC-705 asked for 10%. Hamlib sends fraction × 255 on
+            // every Icom (icom.c:3558).
+            switch caps.powerUnits {
+            case .percentage:
+                try await rigController.setPower(Int((normalized * 100).rounded()))
+            case .watts:
+                let watts = Int(normalized * Double(caps.maxPower))
+                try await rigController.setPower(min(max(watts, 0), caps.maxPower))
+            }
             return .ok(command: command)
 
         case "AGC":
@@ -97,42 +107,37 @@ extension RigctldCommandHandler {
             return .ok(command: command)
 
         case "NB":
-            // Parse NB value - 0=OFF, 1-255=enabled with level
-            guard let nbValue = Int(value) else {
+            // Hamlib RIG_LEVEL_NB is a float 0.0-1.0 (rig.h). Through
+            // v1.3.1 this parsed an integer 0-255, so a Hamlib client's
+            // `L NB 0.5` failed. 0 turns the blanker off; our API can't
+            // set the level without enabling it.
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid NB value: \(value)")
             }
-
-            let nbConfig: NoiseBlanker
-            if nbValue == 0 {
-                nbConfig = .off
-            } else if nbValue >= 1 && nbValue <= 255 {
-                nbConfig = .enabled(level: nbValue)
-            } else {
-                throw RigError.invalidParameter("NB value must be 0-255, got \(nbValue)")
-            }
-
-            try await rigController.setNoiseBlanker(nbConfig)
+            let level = Int((floatVal * 255.0).rounded())
+            try await rigController.setNoiseBlanker(level == 0 ? .off : .enabled(level: level))
             return .ok(command: command)
 
         case "NR":
-            // Parse NR value - 0=OFF, 1-255=enabled with level
-            guard let nrValue = Int(value) else {
+            // Hamlib RIG_LEVEL_NR is a float 0.0-1.0 (rig.h); same
+            // history and caveat as NB.
+            guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid NR value: \(value)")
             }
-
-            let nrConfig: NoiseReduction
-            if nrValue == 0 {
-                nrConfig = .off
-            } else if nrValue >= 1 && nrValue <= 255 {
-                nrConfig = .enabled(level: nrValue)
-            } else {
-                throw RigError.invalidParameter("NR value must be 0-255, got \(nrValue)")
-            }
-
-            try await rigController.setNoiseReduction(nrConfig)
+            let level = Int((floatVal * 255.0).rounded())
+            try await rigController.setNoiseReduction(level == 0 ? .off : .enabled(level: level))
             return .ok(command: command)
 
-        case "IF", "IFFILTER":
+        case "IF", "VOXDELAY":
+            // Hamlib RIG_LEVEL_IF is IF shift in +/-Hz and VOXDELAY is
+            // tenths of a second (rig.h). Our setIFShift / setVOXDelay
+            // take a per-radio-scaled 0-100, and we don't model each
+            // radio's physical range, so we can't honor Hamlib's units.
+            // Through v1.3.1 "IF" set the IF *filter* and VOXDELAY
+            // expected 0.0-1.0; both misread real Hamlib clients.
+            return .error(.notSupported, command: command)
+
+        case "IFFILTER":
             // Parse IF filter value - 1=FIL1, 2=FIL2, 3=FIL3
             guard let filterNum = Int(value) else {
                 throw RigError.invalidParameter("Invalid IF filter value: \(value)")
@@ -181,11 +186,6 @@ extension RigctldCommandHandler {
             try await rigController.setVOXGain(v)
             return .ok(command: command)
 
-        case "VOXDELAY":
-            let v = try parseFloatLevel(value, name: "VOXDELAY")
-            try await rigController.setVOXDelay(v)
-            return .ok(command: command)
-
         case "IF_SHIFT":
             // Note: Hamlib's RIG_LEVEL_IF token "IF" is already
             // claimed above for IF filter selection. We expose
@@ -232,9 +232,14 @@ extension RigctldCommandHandler {
 
         case "RFPOWER":
             // RF output power: return 0.0-1.0 normalized float, minimum 0.05
-            let watts = try await rigController.power()
+            let level = try await rigController.power()
             let caps = await rigController.capabilities
-            let normalized = Double(watts) / Double(caps.maxPower)
+            let fullScale: Int
+            switch caps.powerUnits {
+            case .percentage: fullScale = 100
+            case .watts: fullScale = caps.maxPower
+            }
+            let normalized = Double(level) / Double(fullScale)
             return RigctldResponse(value: String(format: "%.6f", min(max(normalized, 0.05), 1.0)), command: command)
 
         case "AGC":
@@ -251,30 +256,42 @@ extension RigctldCommandHandler {
             return RigctldResponse(value: value, command: command)
 
         case "NB":
-            let nb = try await rigController.noiseBlanker()
-            // Map NoiseBlanker to numeric value: 0=OFF, 1-255=level
-            let value: String
-            switch nb {
-            case .off:
-                value = "0"
-            case .enabled(let level):
-                value = String(level ?? 1)  // Default to 1 if no level
+            // Hamlib float 0.0-1.0; an enabled blanker without a level
+            // reads as full scale.
+            let level: Int
+            switch try await rigController.noiseBlanker() {
+            case .off: level = 0
+            case .enabled(let value): level = value ?? 255
             }
-            return RigctldResponse(value: value, command: command)
+            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
 
         case "NR":
-            let nr = try await rigController.noiseReduction()
-            // Map NoiseReduction to numeric value: 0=OFF, 1-255=level
-            let value: String
-            switch nr {
-            case .off:
-                value = "0"
-            case .enabled(let level):
-                value = String(level)
+            let level: Int
+            switch try await rigController.noiseReduction() {
+            case .off: level = 0
+            case .enabled(let value): level = value
             }
-            return RigctldResponse(value: value, command: command)
+            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
 
-        case "IF", "IFFILTER":
+        // Hamlib RIG_LEVEL_STRENGTH: calibrated dB relative to S9
+        // (S9 = 0, S0 = -54). RAWSTR: the radio's raw reading. Through
+        // v1.3.1 neither was implemented, so WSJT-X / fldigi S-meter
+        // polls got `RPRT -4`.
+        case "STRENGTH":
+            let strength = try await rigController.signalStrength(cached: false)
+            let dB = strength.calibratedDBRelativeToS9 ?? (strength.decibels - 54)
+            return RigctldResponse(value: String(dB), command: command)
+
+        case "RAWSTR":
+            let strength = try await rigController.signalStrength(cached: false)
+            return RigctldResponse(value: String(strength.raw), command: command)
+
+        case "IF", "VOXDELAY":
+            // See setLevel: Hamlib's Hz / tenths-of-a-second units can't
+            // be honored.
+            return .error(.notSupported, command: command)
+
+        case "IFFILTER":
             let filter = try await rigController.ifFilter()
             // Map IFFilter to numeric value: 1=FIL1, 2=FIL2, 3=FIL3
             let value = String(filter.rawValue)
@@ -341,8 +358,6 @@ extension RigctldCommandHandler {
             return floatResponse(try await rigController.monitorGain(), command: command)
         case "VOXGAIN":
             return floatResponse(try await rigController.voxGain(), command: command)
-        case "VOXDELAY":
-            return floatResponse(try await rigController.voxDelay(), command: command)
         case "IF_SHIFT":
             return floatResponse(try await rigController.ifShift(), command: command)
 

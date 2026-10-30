@@ -115,7 +115,7 @@ import Testing
         await mock.reset()
         await mock.setResponse(for: Self.ascii("AI;"), response: Self.ascii("AI0;"))
         try await proto.setPower(200)
-        #expect(await sent(mock) == ["PC050;", "AI;"])
+        #expect(await sent(mock) == ["PC200;", "AI;"])   // watts, not % of 400
         #expect(YaesuCATProtocol.Quirks.newcatNoST.verifyCommand == "ID")
     }
 

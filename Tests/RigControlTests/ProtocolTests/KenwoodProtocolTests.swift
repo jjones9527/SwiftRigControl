@@ -260,14 +260,15 @@ import Testing
             )
         )
 
-        // Set 100W on 200W radio = 50%
+        // PC is watts (kenwood.c:3459): 100 W on a 200 W radio is PC100,
+        // not the PC050 (50%) sent through v1.3.1.
         await stubIDReply()
 
         try await protocol200W.setPower(100)
 
         let writes = await mockTransport.recordedWrites
         let command = String(data: writes[0], encoding: .ascii)
-        #expect(command == "PC050;")
+        #expect(command == "PC100;")
     }
 
     // MARK: - Split Operation Tests

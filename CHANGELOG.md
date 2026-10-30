@@ -34,6 +34,229 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   throw `unsupportedOperation` for the Sub side without touching the
   wire. The unqualified `setRIT`/`getRIT`/`setXIT`/`getXIT` still target
   Main. Mock-tested only. Test count 1001 → 1009.
+- **FlexRadio SmartSDR network discovery.** `FlexRadioDiscovery`
+  listens for the VITA-49 discovery packets SmartSDR radios broadcast
+  to UDP port 4992 (stream ID `0x800`, packet class `0xFFFF`, ASCII
+  `key=value` payload) and returns `FlexRadioAnnouncement` values:
+  model, serial, firmware version, nickname, callsign, address, API
+  port, status and free client / slice counts. `discover(timeout:)`
+  returns each radio once, by serial; `announcements()` streams every
+  packet. `announcement.connection` and `radioDefinition(slice:)` plug
+  straight into `RigController` with the native SmartSDR slice
+  definitions. Listen-only, `SO_REUSEPORT`, so it coexists with
+  SmartSDR for Mac. Hamlib has no equivalent. Tested with loopback and
+  broadcast datagrams; not yet checked against a real radio.
+- **`RigControlServer(rigController:maxClients:)`**: limits concurrent
+  rigctld clients (default 32, `RigControlServer.defaultMaxClients`).
+  Connections past the limit are closed immediately and the open ones
+  are not disturbed, as Hamlib `rigctld -N` / `--max-clients` (upstream
+  `2870074`). Before this the server had no limit.
+- **rigctld RIT/XIT, `STRENGTH` and `RAWSTR`.** `J` / `j` / `Z` / `z`
+  (`\set_rit`, `\get_rit`, `\set_xit`, `\get_xit`) map to the RIT/XIT
+  API as new `RigctldCommand` cases `setRIT` / `getRIT` / `setXIT` /
+  `getXIT`. `l STRENGTH` reports dB relative to S9, `l RAWSTR` the raw
+  meter value, per Hamlib `rig.h`. **Migration:** the new
+  `RigctldCommand` cases break exhaustive `switch`es over it.
+- **Calibrated S-meter readings.** `SignalStrength` gains
+  `calibratedDBRelativeToS9` and `init(dBRelativeToS9:raw:)`, filled in
+  when the protocol knows the radio's calibration (Yaesu newcat, see
+  Fixed). `CalibrationTable` does the piecewise-linear conversion, as
+  Hamlib `rig_raw2val`. Decoding older `SignalStrength` JSON still works.
+- **`KenwoodLevelProfile`**, a per-model description of how a Kenwood
+  radio encodes AGC, the attenuator, squelch and the secondary levels.
+  `KenwoodProtocol.init` takes `levelProfile:` (default `.generic`);
+  every catalog Kenwood, Flex-family and Lab599 definition passes its own.
+- **`YaesuCATProtocol.Quirks` level scales**: `squelchMax`, `rfGainMax`,
+  `noiseReductionLevelMax`, `attenuatorSteps` and `sMeterCalibration`,
+  set with `withLevelScales(...)`. The `with…` modifiers now copy every
+  field; `withTargetableMode` used to drop `usesFTX1ClarifierCommands`.
+- **`ElecraftProtocol.Family.kx`** for the KX2 and KX3, which scale AF,
+  RF and squelch differently from the K3 (see Fixed).
+- **`BCDEncoding.decodeLevel`**, which decodes a CI-V level reply and
+  clamps it to 0–255.
+- **Developer tooling** (not shipped to library consumers):
+  `Scripts/hamlib-diff-audit.py` runs Hamlib's `rigctl` and
+  SwiftRigControl against the same Hamlib simulator and compares the
+  frames and values, command by command. `Scripts/hamlib-set-matrix.py`
+  tabulates the set frames Hamlib sends per model, and can now put ours
+  next to them (with a built-in ACK radio for CI-V).
+  `Scripts/hamlib-wire-capture.py` captures Hamlib's bytes, and
+  `Tools/SwiftRigControlTools` `HamlibDiffClient` is the Swift side. Most
+  of the fixes below were found with these.
+
+### Fixed
+
+- **Elecraft KX2 and KX3 were driven as a K2.** `ElecraftProtocol`
+  decided "K2" from `maxPower <= 15`, which also matched the 12 W KX2
+  and 15 W KX3. Hamlib drives both from `k3.c`, not `k2.c`. They had
+  the K2's 2 s timeout and 100 ms delay after every command, sets
+  that were never checked with `ID;`, K2 AGC codes and the K2-only
+  `RA02` attenuator step. The family is now explicit:
+  `ElecraftProtocol.Family` (`.k2` / `.k3`), passed by every
+  `RadioDefinition.Elecraft` factory. `init(transport:capabilities:family:)`
+  infers it when omitted (≤ 15 W *and* no AM → K2). The K2 path is
+  unchanged.
+- **Elecraft K3-family level commands now match Hamlib `k3.c`.**
+  These apply to the K3, K3S, K4, KX2 and KX3. They had to be fixed
+  together, or the KX2 and KX3 would have regressed when they moved
+  off the K2 path:
+  - **AGC** is `GT000` off, `GT002` fast, `GT004` slow
+    (`k3.c:1939-1962`, `2180-2207`). It used to be `000`/`001`/`002`,
+    so `.fast` turned AGC off and `.slow` selected fast. `.medium`
+    maps to slow. `.auto` now throws `unsupportedOperation` (Hamlib
+    `-RIG_EINVAL`). Other `GT` replies throw `invalidResponse`.
+  - **S-meter** reads `SM;`, not `SM0;` (`k3.c:2059-2080`).
+  - **Attenuator**: `RA01` reads back as 10 dB, not 6 dB
+    (`k3.c:2209-2226`).
+  - **Power** `PC` is watts on every Elecraft (`k3.c:2023-2027`,
+    `2325-2345`), clamped to the radio's maximum. The wire bytes are
+    unchanged on the 100 W K3/K3S/K4. The KX2/KX3 keep the watts they
+    already sent.
+
+  Mock-tested only.
+- **SmartSDR status lines with empty values** (`mode=`, `state=`,
+  `RF_frequency=`) no longer wipe the slice's known mode, PTT state or
+  frequency; they're ignored, as Hamlib does since `780da9c`
+  (`smartsdr_parse_status_value`). Narrow FM stays `NFM`, the token in
+  SmartSDR's `mode_list`. Hamlib sends `FMN`, which isn't in that list,
+  so this is a deliberate difference, now documented in the code.
+- **RF power was scaled wrongly on every radio that isn't 100 W.** On
+  a 200 W Icom (IC-7700, IC-7760, IC-7800, IC-7850/7851), rigctld
+  `L RFPOWER 0.5` keyed **full power**. rigctld turned the fraction
+  into watts, and `IcomCIVProtocol.setPower` reads its argument as a
+  percentage, so 100 W became "100%". On a 10 W IC-703, IC-705,
+  IC-905 or X6100, `L RFPOWER 1.0` gave 10%. Hamlib sends
+  `fraction × 255` on every Icom (`icom.c:3558`); ours now matches it
+  byte for byte on all 11 non-100 W CI-V radios (checked with
+  `Scripts/hamlib-set-matrix.py` against Hamlib `91e7b97`). Related
+  fixes:
+  - **`RigCapabilities.powerUnits`** said `.percentage` for every
+    catalog radio except the FTX-1. It is now `.percentage` on
+    `IcomCIVProtocol` radios (Icom, Xiegu) and `.watts(max: maxPower)`
+    on all others. The `RigCapabilities.init` default is now
+    `.watts(max: maxPower)`, not `.percentage`. **Migration:** a custom
+    CI-V `RigCapabilities` that relied on the default must pass
+    `powerUnits: .percentage`.
+  - **`RigController.setPower`** checked every radio against
+    `0...maxPower`, so a 10 W IC-705 refused anything above 10%.
+    Percentage radios now accept `0...100`. The doc comment said
+    percentage radios take 0–255; they take 0–100, as the command set
+    always did.
+  - **Kenwood and Yaesu newcat `PC` is watts** (`kenwood.c:3459`;
+    newcat RFPOWER step `1/200` on the FTDX-101MP, `ftdx101mp.c:121`).
+    Both used to send a percentage of `maxPower`. Same bytes on
+    100 W radios. On the 200 W TS-990S, TS-480HX, FTDX-101MP and
+    FTDX-5000, and the 400 W FTDX-9000, that was half or a quarter of
+    the power asked for. On the 10 W Lab599 TX-500, `setPower(5)` sent
+    `PC050`. `getPower` reads watts. Divergences: Hamlib caps the TS-480
+    at 100 W (`kenwood.c:3179`), and gives the FTDX-5000 / FTDX-9000
+    the generic 1/255 step; ours follows the CAT manuals. Both are
+    commented in the code.
+
+  Mock-tested only.
+- **Icom level replies above 255 crashed the host app.** Level and
+  meter replies went through `UInt8(_:)`, which traps on values over
+  255. A G90 AF reply of `14 01 55 00` did that. All 26 call sites now
+  use `BCDEncoding.decodeLevel`, which clamps to 0–255.
+- **rigctld levels follow Hamlib's units** (`rig.h`, `rigctl.1`):
+  - `L` / `l NB` and `NR` take 0.0–1.0 floats. They used to parse an
+    integer 0–255, so a Hamlib client's `L NB 0.5` failed.
+  - `U` / `u NB` and `NR` switch the noise blanker and NR. They used
+    to return `RPRT -4`.
+  - `L` / `l IF` (IF shift in Hz) and `VOXDELAY` (tenths of a second)
+    return `RPRT -11`. They used to misread Hamlib's units, and `IF`
+    selected the IF filter; `IFFILTER` still does.
+  - `s` reports VFOA as the TX VFO when split is off.
+- **Yaesu newcat levels** (all 16 `YaesuCATProtocol` radios):
+  - **AGC and attenuator reads** sent `GT;` / `RA;`. Real radios reject
+    those; Hamlib sends `GT0;` / `RA0;` (`newcat.c:5061`, `5189`).
+  - **NB and NR "off" never worked.** Sets sent `NB0;` / `NR0;`, which
+    are reads. They are now `NB0n;` / `NR0n;`, with the NR level on
+    `RL0nn` (1–15; 1–11 on the FT-450), per `newcat.c:6258-6330`,
+    `4549-4590`.
+  - **Attenuator codes** are an index into each radio's dB list
+    (`RA0n`), as Hamlib does with the model's `.attenuator` caps
+    (`newcat.c:4492-4533`): `RA01` is 12 dB on the FT-991A, FT-891 and
+    FTX-1, and 20 dB on the FT-450. The FTDX-9000 has none.
+  - **Squelch** is 0–100 on the FT-991/991A, FT-891, FT-710, FTDX-10
+    and FTDX-101D/MP. **FT-891 RF gain** is 0–30. Both follow Hamlib's
+    `level_gran` steps.
+  - **Frequency replies** of any digit width parse, as in
+    `newcat_get_freq`.
+- **Yaesu newcat S-meter read the power meter.** `getSignalStrength`
+  sent `RM5;`, which on the FT-991A and FTDX-101 selects the power-output
+  meter. It now sends `SM0;` (`newcat.c:5304-5316`) and converts the
+  0–255 reading with the model's Hamlib `.str_cal` table
+  (`newcat.c:5818-5845`): the 16-point `FT710_STR_CAL` family,
+  `FT450_STR_CAL`, `FTDX101D_STR_CAL`, or `yaesu_default_str_cal` on the
+  FTDX-10/1200/3000/5000. rigctld `l STRENGTH` reports the calibrated
+  value.
+- **FT-710 RIT/XIT** sent `RC` / `RU` / `RT` / `XT`. Hamlib drives the
+  FT-710 clarifier with `CF` (`ft710.c:281-284`,
+  `newcat.c:11236-11290`), as on the FTX-1, and so do we now.
+- **Elecraft AF, RF and squelch** went out unscaled. They are now scaled
+  per family: K3/K4 `AG` / `RG` 0–250; KX2/KX3 `AG` 0–60 and `RG`
+  190–250; `SQ` 0–29 (`k3.c:2004-2014`, `kx3_set_level` `2397-2405`).
+  The K2 path is unchanged.
+- **Kenwood levels use each model's own encoding.** One table served 22
+  radios. The bytes now come from what Hamlib sends for each model:
+  - **AGC**: TS-590S/SG `GT00/05/10/20` (`ts590.c`); TS-2000 and
+    SDR-Console `GT000/005/010/020`; TS-480 `GT001` fast, `GT002` slow;
+    TS-890S `GC0`–`GC3` (`ts890s.c`). All of them used to get
+    `GT000`–`GT003`. Reads map back as in `ts590_get_level`. The
+    TS-570, TS-870S, TS-990S and TX-500 keep their old codes; Hamlib's
+    generic path for them sends `GT420` for "medium", which isn't a
+    usable reference.
+  - **Attenuator**: `RA` carries the index into each model's dB list
+    (`kenwood.c:3560`). 12 dB only on the TS-590/2000/480, 18 dB on the
+    TS-570, 20 dB on the TX-500 and PiHPSDR, a 1-digit `RA` on the
+    TS-890S, and none on the TS-450S/690S/850S/940S, Flex, PowerSDR and
+    Thetis.
+  - **TS-890S** squelch is `SQnnn` (no receiver digit); NB is `NB1n`.
+  - **TS-480** RF gain is 0–100.
+  - **Monitor** `ML` is 0–20 on the TS-590SG and 0–9 on the TS-590S,
+    TS-2000 and TS-480. **VOX gain** `VG` is 0–9 on all of them.
+    **Speech processor** `PL` is two 3-digit values (0–255 on the
+    TS-990S).
+  - **NR level** is set on `RLnn` (0–9). It used to switch to NR2
+    instead.
+
+  Mock-tested only. These commits took the test count from 1040 to 1082.
+
+### Hamlib upstream review (2026-10-30, `075b78c` → `91e7b97`)
+
+32 new commits, mostly rigctld daemon hardening. Nothing needed
+porting:
+
+- **Already matched:** `58af5b2` / `6e67889` (`rig_set_split_freq`
+  always sends the TX frequency). Our `I` / `\set_split_freq` never had
+  the skip. `6e67889` adds the skip back only while transmitting, to
+  protect Hamlib's band check in `rig_set_freq`, which we don't have.
+- **Not applicable:** rigctld password authorization (`e4a12d3`,
+  `04aedf3`, `2e49bb4`), per-client VFO mode (`72a2003`), long-command
+  parsing (`479dce7`, `add899a`), lock scope and power refresh
+  (`af176c3`, `06cb759`), state output (`e2b67bc`), spectrum events
+  (`0147d62`), Meade and build changes. We have no password, `chk_vfo`
+  state, spectrum or rotator support. Our parser works line by line
+  and doesn't end the session on a bad command.
+- **Not ported:** `22406fa` (FTX-1 Field-head ATAS tuner type; we only
+  switch the tuner on and off with `AC`), `ed69537` (opt-in G90 AF
+  readback decoder; off by default in Hamlib and confirmed on only one
+  radio), and `14c618f` (new truSDX backend; candidate radio for a
+  minor release, ROADMAP 5.10.4).
+
+Test count 1082 → 1089.
+
+### Hamlib upstream review (2026-10-26, `06335264` → `075b78c`)
+
+Nine new commits. Ported: `2870074` (rigctld client cap) and `780da9c`
+(SmartSDR status values). Already matched: `d269f30` (FTX-1 reads the
+`CF` flags before every write, as we already did). Not applicable:
+`a96343d` (FTX-1 `IF` layout; our FTX-1 path never parses `IF`),
+`dcd9013` (FTX-1 `SH` to Sub; our IF-filter API has no VFO argument),
+`69b2aa1`, `1391875`, `ca55bcf` (netrigctl string parms, `send_raw`,
+`send_cmd_rx`; we expose none of these), `2b5608a` (Windows build).
+Test count 1009 → 1025; the Elecraft family fix takes it to 1040.
 
 ## [1.3.1] - 2026-10-22
 

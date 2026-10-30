@@ -1531,9 +1531,20 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] Hardware: FT-710 `setMode(.dataUSB)` shows DATA-U; K2 DATA-USB on
       the K2 hardware validator, checked on the radio's display rather
       than by reading the mode back.
-- [ ] `ElecraftProtocol.isK2` (max power ≤ 15 W) also matches the KX2
-      and KX3, which then get the K2 timeouts, `SM` and set-command path.
-      The mode table no longer depends on it; the rest needs fixing.
+- [x] `ElecraftProtocol.isK2` (max power ≤ 15 W) also matched the KX2
+      and KX3. Replaced by an explicit `ElecraftProtocol.Family`; the
+      K3-family AGC (`GT000/002/004`), S-meter (`SM`), attenuator
+      readback (`RA01` = 10 dB) and power (watts) now follow Hamlib
+      `k3.c` (CHANGELOG `[Unreleased]`).
+- [ ] Hardware: KX2 / KX3 / K3 AGC, S-meter and attenuator after the
+      family fix.
+- [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
+      (`kx3_set_level`, k3.c:2386-2414: `RG` 190–250, `AG` 0–60,
+      `MG` 0–80); ours use the K3 scales.
+- [ ] K4 attenuator steps 5/10/15 dB (`k3.c` K4 caps `.attenuator`);
+      ours treat it like the K3 (one 10 dB step).
+- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter (k3.c:2066-2095)
+      and the K3 `SM` 0–21 bar scale in `getSignalStrength`.
 
 ### 5.10.4 Next minor (unreleased, mock-tested)
 
@@ -1541,6 +1552,46 @@ jjones9527/SwiftRigControl#46–#51.
       on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
       independently.
 - [ ] Hardware check of FTX-1 Sub-side clarifier.
+- [x] Hamlib review `06335264` → `075b78c` (2026-10-26): rigctld client
+      cap (`2870074`, `RigControlServer.maxClients`, default 32) and
+      SmartSDR empty status values (`780da9c`) ported; the rest already
+      matched or don't apply (CHANGELOG `[Unreleased]`).
+- [x] SmartSDR UDP discovery (`FlexRadioDiscovery`), see 6.4.
+- [ ] Field check of `FlexRadioDiscovery` against a real FLEX-6000 /
+      8000 / Aurora.
+- [ ] Optional: `setIFFilter(_:vfo:)` so the FTX-1 Sub receiver's width
+      can be set (`SH1…`, Hamlib `dcd9013`).
+- [x] Hamlib differential audit harness (`Scripts/hamlib-diff-audit.py`,
+      `hamlib-set-matrix.py`, `HamlibDiffClient`), first run on 19 Tier 1
+      radios. Fixes from it: Icom level-reply crash, rigctld level units
+      and RIT/XIT, Yaesu newcat AGC / ATT / NB / NR / squelch / S-meter,
+      FT-710 `CF` clarifier, Elecraft per-family level scales, Kenwood
+      per-model `KenwoodLevelProfile` (CHANGELOG `[Unreleased]`).
+- [ ] Hardware: Yaesu newcat S-meter (`SM0` + calibration) and NB/NR off
+      on an FT-991A / FT-710; Kenwood AGC on a TS-590SG / TS-890S.
+- [x] Hamlib review `075b78c` → `91e7b97` (2026-10-30): nothing to port
+      (CHANGELOG `[Unreleased]`).
+- [x] RF power units: CI-V `L RFPOWER` is `fraction × 255` on every
+      Icom / Xiegu (200 W Icoms used to key full power at 0.5);
+      `powerUnits` follows the protocol; Kenwood / Yaesu newcat `PC` in
+      watts. Checked against Hamlib with `Scripts/hamlib-set-matrix.py`.
+- [ ] Hardware: `setPower` / `L RFPOWER` on IC-7100 / IC-7600 / IC-9700
+      (100 W, wire unchanged) and any non-100 W radio a tester has.
+- [ ] Icom set-frame differences found by the same run (IC-7100,
+      IC-7300/MK2, IC-705, IC-7600, IC-7610, IC-9700, G90):
+  - [ ] `L KEYSPD` / `L CWPITCH` return `RPRT -11` on IC-7300/MK2,
+        IC-705, IC-7610 and G90; Hamlib sends `14 0C` / `14 09`.
+  - [ ] `L NR` sends NR-on before the level, and rounds 0.5 to 128
+        (Hamlib: level only, 127).
+  - [ ] IC-7610 `L PREAMP 20` fails; Hamlib sends `16 02 02`.
+  - [ ] G90 functions and levels against `xiegu.c` `G90_LEVELS` /
+        functions (no NR, MICGAIN, COMP level; has TUNER `1C 01`, COMP
+        func).
+- [ ] KX2 / KX3 power in the extended `PCnnnx` form (0.1 W steps up to
+      15 W, `k3.c:2023-2027`); ours sends whole watts.
+- [ ] FTX-1 power uses `PC1nnn` / `PC2nnn` by head type in Hamlib
+      (`ftx1_audio.c:332-393`); ours sends `PCnnn`.
+- [ ] Candidate radio: truSDX (Hamlib `trusdx.c`, `14c618f`).
 
 ### 5.10.5 Deferred
 
@@ -1604,8 +1655,10 @@ every adapter.
       wrong-radio rejection, and the Kenwood `ID###;` parser.
 - [ ] Ten-Tec identify probe (no standard query across the
       Orion/Legacy split; left as `.noResponse` for now).
-- [ ] Flex 6000 SmartSDR UDP discovery (separate from serial
-      port discovery; tracked under Phase 6 follow-ups).
+- [x] Flex SmartSDR UDP discovery: `FlexRadioDiscovery` listens
+      for the radios' VITA-49 broadcasts on UDP 4992 and returns
+      `FlexRadioAnnouncement` values that map to the native slice
+      definitions. Separate from serial-port discovery.
 - [ ] Baud-rate fallback when `defaultBaudRate` doesn't answer
       (deferred — most users keep the documented default).
 

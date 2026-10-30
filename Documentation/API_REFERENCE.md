@@ -228,22 +228,27 @@ if transmitting {
 ##### setPower(_:)
 
 ```swift
-public func setPower(_ watts: Int) async throws
+public func setPower(_ level: Int) async throws
 ```
 
-Sets the RF power level.
+Sets the RF power level, in the unit given by `capabilities.powerUnits`.
 
 **Parameters:**
-- `watts`: Power level in watts
+- `level`: 0–100 percent of rated output on `.percentage` radios (Icom,
+  Xiegu); watts, 0–`maxPower`, on `.watts(max:)` radios (everything else)
 
 **Throws:**
 - `RigError.unsupportedOperation` - If radio doesn't support power control
+- `RigError.invalidParameter` - If `level` is out of range for the unit
 - `RigError` if operation fails
 
 **Example:**
 ```swift
 if rig.capabilities.powerControl {
-    try await rig.setPower(50)  // 50 watts
+    switch rig.capabilities.powerUnits {
+    case .percentage:     try await rig.setPower(50)       // 50% (5 W on an IC-705)
+    case .watts(let max): try await rig.setPower(max / 2)  // watts
+    }
 }
 ```
 

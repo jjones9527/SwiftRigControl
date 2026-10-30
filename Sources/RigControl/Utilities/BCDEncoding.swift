@@ -98,6 +98,22 @@ public enum BCDEncoding {
         return hundreds * 100 + tens * 10 + ones
     }
 
+    /// Decodes a 2-byte BCD level reply into the 0–255 CI-V level scale.
+    ///
+    /// Icom levels and meters are `0000`–`0255`, but ``decodePower(_:)``
+    /// reads three digits (0–999). A reply above 255 (a misframed or
+    /// corrupted frame, or the out-of-range values Hamlib's simulators
+    /// send) used to reach `UInt8(_:)` and trap, taking down the host
+    /// app. It is clamped instead, as v1.2.20 already did for power
+    /// readback (Hamlib `b61dd14d`). Hamlib itself never traps here:
+    /// `icom_get_level` divides the raw value by 255 (`icom.c`).
+    ///
+    /// - Parameter bcd: The level bytes from the reply.
+    /// - Returns: The level, clamped to 0–255.
+    public static func decodeLevel(_ bcd: [UInt8]) -> UInt8 {
+        UInt8(clamping: decodePower(bcd))
+    }
+
     /// Encodes a RIT/XIT offset to BCD format.
     ///
     /// Icom radios use 3-byte BCD encoding for RIT/XIT offsets (±9999 Hz):

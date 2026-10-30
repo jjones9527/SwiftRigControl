@@ -167,6 +167,20 @@ public enum RigctldCommand: Sendable, Equatable {
     /// Get split VFO (s or \get_split_vfo)
     case getSplitVFO
 
+    // MARK: - RIT / XIT
+
+    /// Set the RIT offset in Hz (J or \set_rit). `0` resets RIT.
+    case setRIT(hz: Int)
+
+    /// Get the RIT offset in Hz (j or \get_rit)
+    case getRIT
+
+    /// Set the XIT offset in Hz (Z or \set_xit). `0` resets XIT.
+    case setXIT(hz: Int)
+
+    /// Get the XIT offset in Hz (z or \get_xit)
+    case getXIT
+
     /// Set split frequency (I or \set_split_freq)
     case setSplitFrequency(hz: UInt64)
 
@@ -289,6 +303,10 @@ public enum RigctldCommand: Sendable, Equatable {
         case .getPTT: return "get_ptt"
         case .setSplitVFO: return "set_split_vfo"
         case .getSplitVFO: return "get_split_vfo"
+        case .setRIT: return "set_rit"
+        case .getRIT: return "get_rit"
+        case .setXIT: return "set_xit"
+        case .getXIT: return "get_xit"
         case .setSplitFrequency: return "set_split_freq"
         case .getSplitFrequency: return "get_split_freq"
         case .setSplitMode: return "set_split_mode"

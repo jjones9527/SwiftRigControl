@@ -9,7 +9,7 @@ import Network
 ///
 /// ## Features
 /// - TCP server on configurable port (default: 4532)
-/// - Multiple simultaneous clients
+/// - Multiple simultaneous clients, up to ``maxClients`` (default 32)
 /// - Hamlib rigctld protocol compatibility
 /// - Both Default and Extended response modes
 /// - Thread-safe actor-based concurrency
@@ -61,6 +61,15 @@ public actor RigControlServer {
     /// Active client sessions
     private var sessions: [ClientSession] = []
 
+    /// Hamlib `rigctld`'s default for `-N` / `--max-clients`
+    /// (upstream `2870074`, `doc/man1/rigctld.1`).
+    public static let defaultMaxClients = 32
+
+    /// Most clients served at once. A connection that arrives while
+    /// this many are open is closed immediately; the open ones are not
+    /// disturbed. Matches Hamlib `rigctld -N`.
+    public nonisolated let maxClients: Int
+
     /// Server state
     private var state: State = .stopped
 
@@ -69,9 +78,19 @@ public actor RigControlServer {
 
     /// Initialize with a rig controller
     ///
-    /// - Parameter rigController: The rig controller to serve
-    public init(rigController: RigController) {
+    /// ```swift
+    /// // Serve at most four clients, e.g. WSJT-X, fldigi and two loggers.
+    /// let server = RigControlServer(rigController: rig, maxClients: 4)
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - rigController: The rig controller to serve
+    ///   - maxClients: Most clients served at once (default 32, as
+    ///     Hamlib `rigctld`). Must be at least 1.
+    public init(rigController: RigController, maxClients: Int = RigControlServer.defaultMaxClients) {
+        precondition(maxClients > 0, "maxClients must be at least 1")
         self.rigController = rigController
+        self.maxClients = maxClients
     }
 
     /// Start the server
@@ -145,6 +164,16 @@ public actor RigControlServer {
     // MARK: - Connection Handling
 
     private func handleNewConnection(_ connection: NWConnection) {
+        // Hamlib `rigctld` closes connections past its client limit
+        // straight after `accept()` (upstream `2870074`). Without a
+        // limit every connection got a session, so a misbehaving
+        // client could open sessions without bound.
+        guard state == .running, sessions.count < maxClients else {
+            connection.start(queue: .main)
+            connection.cancel()
+            return
+        }
+
         let session = ClientSession(
             connection: connection,
             rigController: rigController

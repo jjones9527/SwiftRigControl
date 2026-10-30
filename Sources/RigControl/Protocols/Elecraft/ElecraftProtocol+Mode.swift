@@ -51,11 +51,8 @@ extension ElecraftProtocol {
     // MARK: - Wire helpers
 
     /// True for the K2, which has its own mode table and no `DT`.
-    ///
-    /// `isK2` (max power ≤ 15 W) also matches the KX2 and KX3, so this
-    /// check adds the one thing only the K2 lacks: AM.
     var usesK2ModeTable: Bool {
-        isK2 && !capabilities.supportedModes.contains(.am)
+        isK2
     }
 
     /// Sends `query` and reads the single digit after it (`MD2;` → 2).

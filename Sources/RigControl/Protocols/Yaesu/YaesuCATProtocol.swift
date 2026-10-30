@@ -136,21 +136,19 @@ public actor YaesuCATProtocol:
         try await sendCommand(prefix)
         let response = try await receiveResponse()
 
-        // Response format: FA<N-digit hex>; where N = quirks.frequencyDigits
-        // (9 for modern newcat, 8 for older). Prior to v1.2.0 this
-        // was hard-coded to 11 — no real Yaesu response matches
-        // that. See CHANGELOG for the fix.
-        let digits = quirks.frequencyDigits
-        guard response.hasPrefix(prefix),
-              response.count >= prefix.count + digits else {
+        // Response format: FA<digits>;. Radios send
+        // quirks.frequencyDigits digits (9 on modern newcat, 8 on
+        // older), but the reply is parsed like Hamlib newcat_get_freq,
+        // which reads every digit after the prefix (`sscanf "%lf"`),
+        // so another width still decodes. Through v1.3.1 a reply of
+        // any other width threw invalidResponse.
+        guard response.hasPrefix(prefix) else {
             throw RigError.invalidResponse
         }
-
-        let startIndex = response.index(response.startIndex, offsetBy: prefix.count)
-        let endIndex = response.index(startIndex, offsetBy: digits)
-        let freqString = String(response[startIndex..<endIndex])
-
-        guard let freq = UInt64(freqString) else {
+        let freqString = response.dropFirst(prefix.count)
+        guard !freqString.isEmpty,
+              freqString.allSatisfy({ $0.isASCII && $0.isNumber }),
+              let freq = UInt64(freqString) else {
             throw RigError.invalidResponse
         }
 
@@ -337,12 +335,16 @@ public actor YaesuCATProtocol:
             throw RigError.unsupportedOperation("Power control not supported")
         }
 
-        // Yaesu radios use PowerUnits.watts; `level` is interpreted
-        // as watts and converted to the radio's 000–100 percentage protocol.
-        let percentage = min(max((level * 100) / capabilities.maxPower, 0), 100)
-        let command = String(format: "PC%03d", percentage)
-
-        try await sendSetCommand(command)
+        // Newcat `PC` is watts: Hamlib's RFPOWER step is 1/maxWatts
+        // (1/200 on the FTDX-101MP, ftdx101mp.c:121), so 0.5 sends PC100.
+        // Through v1.3.1 this sent a percentage of maxPower, half power on
+        // the 200 W FTDX-101MP / FTDX-5000 and a quarter on the 400 W
+        // FTDX-9000MP. Divergence: Hamlib's FTDX-5000 / FTDX-9000 caps use
+        // the generic 1/255 step (level_gran_yaesu.h:47) although its own
+        // newcat_power2mW treats them as 200 W (newcat.c:3586-3597); ours
+        // follows the CAT manuals (PC 005-200 watts).
+        let watts = min(max(level, 0), capabilities.maxPower)
+        try await sendSetCommand(String(format: "PC%03d", watts))
     }
 
     public func getPower() async throws -> Int {
@@ -353,7 +355,7 @@ public actor YaesuCATProtocol:
         try await sendCommand("PC")
         let response = try await receiveResponse()
 
-        // Response format: PCxxx; where xxx is 000-100
+        // Response format: PCnnn; where nnn is watts
         guard response.hasPrefix("PC"),
               response.count >= 5 else {
             throw RigError.invalidResponse
@@ -361,45 +363,15 @@ public actor YaesuCATProtocol:
 
         let startIndex = response.index(response.startIndex, offsetBy: 2)
         let endIndex = response.index(startIndex, offsetBy: 3)
-        let percentString = String(response[startIndex..<endIndex])
 
-        guard let percentage = Int(percentString) else {
+        guard let watts = Int(response[startIndex..<endIndex]) else {
             throw RigError.invalidResponse
         }
 
-        return (percentage * capabilities.maxPower) / 100
+        return watts
     }
 
-    // MARK: - Signal Strength
-
-    public func getSignalStrength() async throws -> SignalStrength {
-        // Yaesu FT-991A and similar use RM5; to read main S-meter
-        // Note: Command may vary by model (RM1-RM9 for different meters)
-        try await sendCommand("RM5")
-        let response = try await receiveResponse()
-
-        // Response format: "RM5nnn" where nnn is 000-255
-        guard response.hasPrefix("RM5"),
-              response.count >= 6 else {
-            throw RigError.invalidResponse
-        }
-
-        let startIndex = response.index(response.startIndex, offsetBy: 3)
-        let endIndex = response.index(startIndex, offsetBy: 3)
-        let valueString = String(response[startIndex..<endIndex])
-
-        guard let rawValue = Int(valueString) else {
-            throw RigError.invalidResponse
-        }
-
-        // Yaesu: 0-255 scale
-        // Roughly: 0-120 = S0-S9 (about 13 units per S-unit)
-        // 121-255 = S9+1 to S9+60 (about 2 units per dB)
-        let sUnits = min(rawValue / 13, 9)
-        let overS9 = sUnits >= 9 ? max((rawValue - 117) / 2, 0) : 0
-
-        return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
-    }
+    // Signal strength: YaesuCATProtocol+SMeter.swift.
 
     // MARK: - Split Operation
 

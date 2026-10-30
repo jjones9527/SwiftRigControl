@@ -46,7 +46,6 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: false,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage,
         supportedVFOOperations: .yaesuStandard,
         supportedFunctions: .yaesuHFStandard
     )
@@ -91,8 +90,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
     /// Yaesu FTDX-5000 HF/6m 200W flagship transceiver with dual receiver
@@ -133,8 +131,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
     /// Yaesu FTDX-1200 HF/6m 100W transceiver
@@ -175,8 +172,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
     /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
@@ -223,8 +219,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: false,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
     /// Yaesu FTDX-9000 series HF/6m flagship transceiver (200W/400W)
@@ -263,8 +258,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
     /// Yaesu FT-847 HF/VHF/UHF all-band transceiver
@@ -316,7 +310,6 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
-        powerUnits: .percentage,
         supportsALCMeter: true
     )
 
@@ -356,8 +349,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: false,
         requiresVFOSelection: false,
-        requiresModeFilter: true,
-        powerUnits: .percentage
+        requiresModeFilter: true
     )
 
 

@@ -125,10 +125,11 @@ import Testing
         #expect(await sent(mock) == ["MD2;", "ID;"])
     }
 
-    /// The KX3's 15 W max power trips the `isK2` heuristic; it must still
-    /// get the K3 mode table.
+    /// The KX3 is 15 W, which the `isK2` heuristic used through v1.3.1 took for a
+    /// K2; it is K3 family and gets the K3 mode table.
     @Test func kx3UsesK3ModeTable() async throws {
         let (mock, proto) = try await connect(RadioDefinition.Elecraft.kx3)
+        await mock.setResponse(for: Self.ascii("ID;"), response: Self.ascii("ID017;"))
         try await proto.setMode(.dataUSB, vfo: .a)
         #expect(await sent(mock).filter { $0.hasPrefix("MD") || $0.hasPrefix("DT") }
                 == ["MD6;", "DT0;"])
