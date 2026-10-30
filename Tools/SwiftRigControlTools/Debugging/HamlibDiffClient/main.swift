@@ -80,6 +80,34 @@ func traitNames(_ proto: any CATProtocol) -> [String] {
     return names
 }
 
+if CommandLine.arguments.contains("--list"), CommandLine.arguments.contains("--caps") {
+    // One JSON object per line with the capability fields
+    // Scripts/hamlib-caps-sync.py compares against Hamlib.
+    for radio in RadioDefinition.allSupportedRadios {
+        let c = radio.capabilities
+        let fields: [String: Any] = [
+            "name": radio.fullName,
+            "supportsRIT": c.supportsRIT, "supportsXIT": c.supportsXIT,
+            "supportsCWKeyer": c.supportsCWKeyer, "supportsSendCW": c.supportsSendCW,
+            "supportsRFPowerMeter": c.supportsRFPowerMeter, "supportsSWRMeter": c.supportsSWRMeter,
+            "supportsALCMeter": c.supportsALCMeter, "supportsCompMeter": c.supportsCompMeter,
+            "supportsVoltageMeter": c.supportsVoltageMeter, "supportsCurrentMeter": c.supportsCurrentMeter,
+            "supportsVFOScan": c.supportsVFOScan, "supportsMemoryScan": c.supportsMemoryScan,
+            "supportsSelectedMemoryScan": c.supportsSelectedMemoryScan,
+            "supportsPriorityScan": c.supportsPriorityScan,
+            "supportsProgrammedScan": c.supportsProgrammedScan, "supportsDeltaFScan": c.supportsDeltaFScan,
+            "antennaCount": c.antennaCount,
+            "preampLevels": c.preampLevels,
+            "supportedVFOOperations": c.supportedVFOOperations.map { $0.rawValue }.sorted(),
+            "supportedFunctions": c.supportedFunctions.map { $0.rawValue }.sorted(),
+            "verification": "\(radio.verificationStatus)",
+        ]
+        let data = try JSONSerialization.data(withJSONObject: fields, options: [.sortedKeys])
+        emit(String(decoding: data, as: UTF8.self))
+    }
+    exit(0)
+}
+
 if CommandLine.arguments.contains("--list"), CommandLine.arguments.contains("--traits") {
     // "<name>\t<protocol>\t<trait,trait,...>"
     let transport = UnopenedTransport()
