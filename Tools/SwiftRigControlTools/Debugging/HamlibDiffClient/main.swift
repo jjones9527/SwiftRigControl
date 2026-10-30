@@ -44,6 +44,52 @@ actor UnopenedTransport: SerialTransport {
     func setRTS(_ enabled: Bool) async throws {}
 }
 
+/// The capability traits a protocol conforms to, for `--list --traits`.
+func traitNames(_ proto: any CATProtocol) -> [String] {
+    var names: [String] = []
+    func add(_ conforms: Bool, _ name: String) { if conforms { names.append(name) } }
+    add(proto is any SupportsPower, "Power")
+    add(proto is any SupportsSplit, "Split")
+    add(proto is any SupportsSignalStrength, "SignalStrength")
+    add(proto is any SupportsRIT, "RIT")
+    add(proto is any SupportsXIT, "XIT")
+    add(proto is any SupportsAGC, "AGC")
+    add(proto is any SupportsNoiseBlanker, "NoiseBlanker")
+    add(proto is any SupportsNoiseReduction, "NoiseReduction")
+    add(proto is any SupportsIFFilter, "IFFilter")
+    add(proto is any SupportsAFGain, "AFGain")
+    add(proto is any SupportsRFGain, "RFGain")
+    add(proto is any SupportsSquelch, "Squelch")
+    add(proto is any SupportsPreamp, "Preamp")
+    add(proto is any SupportsAttenuator, "Attenuator")
+    add(proto is any SupportsRemotePowerState, "RemotePowerState")
+    add(proto is any SupportsMemoryChannels, "MemoryChannels")
+    add(proto is any SupportsTXMeters, "TXMeters")
+    add(proto is any SupportsCWKeyer, "CWKeyer")
+    add(proto is any SupportsSendCW, "SendCW")
+    add(proto is any SupportsScanning, "Scanning")
+    add(proto is any SupportsAntenna, "Antenna")
+    add(proto is any SupportsVFOOperations, "VFOOperations")
+    add(proto is any SupportsFunctions, "Functions")
+    add(proto is any SupportsMicGain, "MicGain")
+    add(proto is any SupportsCompressorLevel, "CompressorLevel")
+    add(proto is any SupportsMonitorGain, "MonitorGain")
+    add(proto is any SupportsVOXGain, "VOXGain")
+    add(proto is any SupportsVOXDelay, "VOXDelay")
+    add(proto is any SupportsIFShift, "IFShift")
+    return names
+}
+
+if CommandLine.arguments.contains("--list"), CommandLine.arguments.contains("--traits") {
+    // "<name>\t<protocol>\t<trait,trait,...>"
+    let transport = UnopenedTransport()
+    for radio in RadioDefinition.allSupportedRadios {
+        let proto = radio.createProtocol(transport: transport)
+        emit("\(radio.fullName)\t\(type(of: proto))\t\(traitNames(proto).joined(separator: ","))")
+    }
+    exit(0)
+}
+
 if CommandLine.arguments.contains("--list") {
     // `--list --power` adds "<TAB>protocol<TAB>maxPower<TAB>units<TAB>powerControl",
     // for picking out the radios whose RFPOWER scaling depends on max power.
