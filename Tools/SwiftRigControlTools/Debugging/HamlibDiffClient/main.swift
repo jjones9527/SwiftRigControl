@@ -30,9 +30,38 @@ func emit(_ line: String) {
     FileHandle.standardOutput.write(Data((line + "\n").utf8))
 }
 
+/// A transport that is never opened; it only lets `--list --power` build
+/// each radio's protocol to report its type.
+actor UnopenedTransport: SerialTransport {
+    func open() async throws {}
+    func close() async {}
+    func write(_ data: Data) async throws {}
+    func read(timeout: TimeInterval) async throws -> Data { Data() }
+    func readUntil(terminator: UInt8, timeout: TimeInterval) async throws -> Data { Data() }
+    var isOpen: Bool { false }
+    func flush() async throws {}
+    func setDTR(_ enabled: Bool) async throws {}
+    func setRTS(_ enabled: Bool) async throws {}
+}
+
 if CommandLine.arguments.contains("--list") {
+    // `--list --power` adds "<TAB>protocol<TAB>maxPower<TAB>units<TAB>powerControl",
+    // for picking out the radios whose RFPOWER scaling depends on max power.
+    let showPower = CommandLine.arguments.contains("--power")
+    let transport = UnopenedTransport()
     for radio in RadioDefinition.allSupportedRadios {
-        emit(radio.fullName)
+        guard showPower else {
+            emit(radio.fullName)
+            continue
+        }
+        let caps = radio.capabilities
+        let units: String
+        switch caps.powerUnits {
+        case .percentage: units = "percentage"
+        case .watts(let max): units = "watts(\(max))"
+        }
+        let proto = type(of: radio.createProtocol(transport: transport))
+        emit("\(radio.fullName)\t\(proto)\t\(caps.maxPower)\t\(units)\t\(caps.powerControl)")
     }
     exit(0)
 }
