@@ -1561,6 +1561,14 @@ jjones9527/SwiftRigControl#46–#51.
       8000 / Aurora.
 - [ ] Optional: `setIFFilter(_:vfo:)` so the FTX-1 Sub receiver's width
       can be set (`SH1…`, Hamlib `dcd9013`).
+- [x] Hamlib differential audit harness (`Scripts/hamlib-diff-audit.py`,
+      `hamlib-set-matrix.py`, `HamlibDiffClient`), first run on 19 Tier 1
+      radios. Fixes from it: Icom level-reply crash, rigctld level units
+      and RIT/XIT, Yaesu newcat AGC / ATT / NB / NR / squelch / S-meter,
+      FT-710 `CF` clarifier, Elecraft per-family level scales, Kenwood
+      per-model `KenwoodLevelProfile` (CHANGELOG `[Unreleased]`).
+- [ ] Hardware: Yaesu newcat S-meter (`SM0` + calibration) and NB/NR off
+      on an FT-991A / FT-710; Kenwood AGC on a TS-590SG / TS-890S.
 - [x] Hamlib review `075b78c` → `91e7b97` (2026-10-30): nothing to port
       (CHANGELOG `[Unreleased]`).
 - [x] RF power units: CI-V `L RFPOWER` is `fraction × 255` on every

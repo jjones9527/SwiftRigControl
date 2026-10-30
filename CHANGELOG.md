@@ -51,6 +51,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Connections past the limit are closed immediately and the open ones
   are not disturbed, as Hamlib `rigctld -N` / `--max-clients` (upstream
   `2870074`). Before this the server had no limit.
+- **rigctld RIT/XIT, `STRENGTH` and `RAWSTR`.** `J` / `j` / `Z` / `z`
+  (`\set_rit`, `\get_rit`, `\set_xit`, `\get_xit`) map to the RIT/XIT
+  API as new `RigctldCommand` cases `setRIT` / `getRIT` / `setXIT` /
+  `getXIT`. `l STRENGTH` reports dB relative to S9, `l RAWSTR` the raw
+  meter value, per Hamlib `rig.h`. **Migration:** the new
+  `RigctldCommand` cases break exhaustive `switch`es over it.
+- **Calibrated S-meter readings.** `SignalStrength` gains
+  `calibratedDBRelativeToS9` and `init(dBRelativeToS9:raw:)`, filled in
+  when the protocol knows the radio's calibration (Yaesu newcat, see
+  Fixed). `CalibrationTable` does the piecewise-linear conversion, as
+  Hamlib `rig_raw2val`. Decoding older `SignalStrength` JSON still works.
+- **`KenwoodLevelProfile`**, a per-model description of how a Kenwood
+  radio encodes AGC, the attenuator, squelch and the secondary levels.
+  `KenwoodProtocol.init` takes `levelProfile:` (default `.generic`);
+  every catalog Kenwood, Flex-family and Lab599 definition passes its own.
+- **`YaesuCATProtocol.Quirks` level scales**: `squelchMax`, `rfGainMax`,
+  `noiseReductionLevelMax`, `attenuatorSteps` and `sMeterCalibration`,
+  set with `withLevelScales(...)`. The `with…` modifiers now copy every
+  field; `withTargetableMode` used to drop `usesFTX1ClarifierCommands`.
+- **`ElecraftProtocol.Family.kx`** for the KX2 and KX3, which scale AF,
+  RF and squelch differently from the K3 (see Fixed).
+- **`BCDEncoding.decodeLevel`**, which decodes a CI-V level reply and
+  clamps it to 0–255.
+- **Developer tooling** (not shipped to library consumers):
+  `Scripts/hamlib-diff-audit.py` runs Hamlib's `rigctl` and
+  SwiftRigControl against the same Hamlib simulator and compares the
+  frames and values, command by command. `Scripts/hamlib-set-matrix.py`
+  tabulates the set frames Hamlib sends per model, and can now put ours
+  next to them (with a built-in ACK radio for CI-V).
+  `Scripts/hamlib-wire-capture.py` captures Hamlib's bytes, and
+  `Tools/SwiftRigControlTools` `HamlibDiffClient` is the Swift side. Most
+  of the fixes below were found with these.
 
 ### Fixed
 
@@ -122,6 +154,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     commented in the code.
 
   Mock-tested only.
+- **Icom level replies above 255 crashed the host app.** Level and
+  meter replies went through `UInt8(_:)`, which traps on values over
+  255. A G90 AF reply of `14 01 55 00` did that. All 26 call sites now
+  use `BCDEncoding.decodeLevel`, which clamps to 0–255.
+- **rigctld levels follow Hamlib's units** (`rig.h`, `rigctl.1`):
+  - `L` / `l NB` and `NR` take 0.0–1.0 floats. They used to parse an
+    integer 0–255, so a Hamlib client's `L NB 0.5` failed.
+  - `U` / `u NB` and `NR` switch the noise blanker and NR. They used
+    to return `RPRT -4`.
+  - `L` / `l IF` (IF shift in Hz) and `VOXDELAY` (tenths of a second)
+    return `RPRT -11`. They used to misread Hamlib's units, and `IF`
+    selected the IF filter; `IFFILTER` still does.
+  - `s` reports VFOA as the TX VFO when split is off.
+- **Yaesu newcat levels** (all 16 `YaesuCATProtocol` radios):
+  - **AGC and attenuator reads** sent `GT;` / `RA;`. Real radios reject
+    those; Hamlib sends `GT0;` / `RA0;` (`newcat.c:5061`, `5189`).
+  - **NB and NR "off" never worked.** Sets sent `NB0;` / `NR0;`, which
+    are reads. They are now `NB0n;` / `NR0n;`, with the NR level on
+    `RL0nn` (1–15; 1–11 on the FT-450), per `newcat.c:6258-6330`,
+    `4549-4590`.
+  - **Attenuator codes** are an index into each radio's dB list
+    (`RA0n`), as Hamlib does with the model's `.attenuator` caps
+    (`newcat.c:4492-4533`): `RA01` is 12 dB on the FT-991A, FT-891 and
+    FTX-1, and 20 dB on the FT-450. The FTDX-9000 has none.
+  - **Squelch** is 0–100 on the FT-991/991A, FT-891, FT-710, FTDX-10
+    and FTDX-101D/MP. **FT-891 RF gain** is 0–30. Both follow Hamlib's
+    `level_gran` steps.
+  - **Frequency replies** of any digit width parse, as in
+    `newcat_get_freq`.
+- **Yaesu newcat S-meter read the power meter.** `getSignalStrength`
+  sent `RM5;`, which on the FT-991A and FTDX-101 selects the power-output
+  meter. It now sends `SM0;` (`newcat.c:5304-5316`) and converts the
+  0–255 reading with the model's Hamlib `.str_cal` table
+  (`newcat.c:5818-5845`): the 16-point `FT710_STR_CAL` family,
+  `FT450_STR_CAL`, `FTDX101D_STR_CAL`, or `yaesu_default_str_cal` on the
+  FTDX-10/1200/3000/5000. rigctld `l STRENGTH` reports the calibrated
+  value.
+- **FT-710 RIT/XIT** sent `RC` / `RU` / `RT` / `XT`. Hamlib drives the
+  FT-710 clarifier with `CF` (`ft710.c:281-284`,
+  `newcat.c:11236-11290`), as on the FTX-1, and so do we now.
+- **Elecraft AF, RF and squelch** went out unscaled. They are now scaled
+  per family: K3/K4 `AG` / `RG` 0–250; KX2/KX3 `AG` 0–60 and `RG`
+  190–250; `SQ` 0–29 (`k3.c:2004-2014`, `kx3_set_level` `2397-2405`).
+  The K2 path is unchanged.
+- **Kenwood levels use each model's own encoding.** One table served 22
+  radios. The bytes now come from what Hamlib sends for each model:
+  - **AGC**: TS-590S/SG `GT00/05/10/20` (`ts590.c`); TS-2000 and
+    SDR-Console `GT000/005/010/020`; TS-480 `GT001` fast, `GT002` slow;
+    TS-890S `GC0`–`GC3` (`ts890s.c`). All of them used to get
+    `GT000`–`GT003`. Reads map back as in `ts590_get_level`. The
+    TS-570, TS-870S, TS-990S and TX-500 keep their old codes; Hamlib's
+    generic path for them sends `GT420` for "medium", which isn't a
+    usable reference.
+  - **Attenuator**: `RA` carries the index into each model's dB list
+    (`kenwood.c:3560`). 12 dB only on the TS-590/2000/480, 18 dB on the
+    TS-570, 20 dB on the TX-500 and PiHPSDR, a 1-digit `RA` on the
+    TS-890S, and none on the TS-450S/690S/850S/940S, Flex, PowerSDR and
+    Thetis.
+  - **TS-890S** squelch is `SQnnn` (no receiver digit); NB is `NB1n`.
+  - **TS-480** RF gain is 0–100.
+  - **Monitor** `ML` is 0–20 on the TS-590SG and 0–9 on the TS-590S,
+    TS-2000 and TS-480. **VOX gain** `VG` is 0–9 on all of them.
+    **Speech processor** `PL` is two 3-digit values (0–255 on the
+    TS-990S).
+  - **NR level** is set on `RLnn` (0–9). It used to switch to NR2
+    instead.
+
+  Mock-tested only. These commits took the test count from 1040 to 1082.
 
 ### Hamlib upstream review (2026-10-30, `075b78c` → `91e7b97`)
 
