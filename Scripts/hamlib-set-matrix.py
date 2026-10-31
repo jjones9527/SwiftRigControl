@@ -142,9 +142,16 @@ def cell(result, framing, tx):
     return sets if not result["error"] else [f"ERROR {result['error'][:40]}"]
 
 
-def ours(name, commands, framing, tx=False):
-    """Set frames SwiftRigControl sends for each command, against AckRadio."""
-    radio = AckRadio(framing)
+def ours(name, commands, framing, tx=False, sim_name="ack"):
+    """Frames SwiftRigControl sends for each command, against the same
+    kind of radio Hamlib got: the ACK radio, or a fresh instance of the
+    Hamlib simulator (text protocols, whose reads need real replies)."""
+    sim = None
+    if sim_name == "ack":
+        radio = AckRadio(framing)
+    else:
+        sim = audit.Simulator(sim_name)
+        radio = audit.Relay(sim.port, civ=(framing == "civ"))
     radio.start()
     row = {}
     try:
@@ -157,6 +164,8 @@ def ours(name, commands, framing, tx=False):
             client.stop()
     finally:
         radio.stop()
+        if sim:
+            sim.stop()
     return row
 
 
@@ -218,7 +227,7 @@ def main():
                 sim.stop()
         table[label] = row
         if catalog:
-            mine = ours(catalog, commands, args.framing, args.tx)
+            mine = ours(catalog, commands, args.framing, args.tx, sim_name)
             table[label + " (ours)"] = mine
             for command in commands:
                 verdict = "same" if mine[command] == row[command] else "DIFF"
