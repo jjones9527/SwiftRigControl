@@ -16,6 +16,45 @@ rigctld bridge against a fake radio that ACKs everything.
   Kenwood and Yaesu level tables, and RF power on all non-100 W radios
   (`hamlib-set-matrix.py`).
 
+## Second update — Yaesu newcat, Kenwood and Elecraft
+
+The same sync for the text protocols (branch `hamlib-coverage-text`).
+Here the byte check ran both sides against the same Hamlib simulator,
+because text-protocol reads need real replies:
+
+- **Functions, VFO ops and preamp lists** were synced, limited to what
+  each protocol implements. Some models' Hamlib caps list something its
+  backend refuses; those are excluded (`EXCLUDE` in the script).
+- **New CW keyer** on all three: speed, model-specific pitch, break-in.
+- **New CW text** on all three: Yaesu `KM1` / `KY6`, Kenwood and
+  Elecraft `KY` in 24-character chunks.
+- **New Yaesu TX meters**, with each model's Hamlib calibration tables.
+- **Wrong bytes fixed:**
+  - Yaesu `MN`, `COMP`, `LOCK`, FT-710 tune and FT-450 CPY forms.
+  - Kenwood tuner. On/off sent the tune-start command and Hamlib's
+    "on" respectively.
+  - Kenwood lock forms on the TS-590 / TS-480 / TS-2000.
+  - PowerSDR/Thetis `ZZ` VOX and tuner.
+
+| | First run | After Icom | After this |
+| --- | ---: | ---: | ---: |
+| All 129 radios | 49.4% | 63.8% | 71.9% |
+| Yaesu newcat (16) | 42% | 46% | 78% |
+| Kenwood / Flex / Lab599 (22) | 62% | 65% | 74% |
+| Elecraft (6) | 72% | 77% | 80% |
+| Icom / Xiegu (55) | 49% | 77% | 77% |
+
+By category now: modes 92%, VFO ops 87%, scan 84%, functions 79%,
+meters 77%, levels 63%, core 52%.
+
+**Not done yet:**
+
+- **Kenwood and Elecraft TX meters.** Each model has its own Hamlib path:
+  TS-590 `RM;` returns three meters at once, power is `SM0` while
+  transmitting, and the TS-480 / 2000 / 890S / 990S, K3 / K4 / KX and
+  Flex each differ.
+- **No library API** for the "no API" list below.
+
 ## Update — same day, after the Icom sync
 
 The first run found that a quarter of the gap was code we already had.
@@ -133,23 +172,23 @@ what that code already does.
 `IcomCIVProtocol` has 29 traits, `YaesuCATProtocol` 25 and
 `KenwoodProtocol` 24.
 
-## Per radio (after the Icom sync)
+## Per radio (after the text-protocol sync)
 
-Covered / Hamlib items. "Core" excludes items with no rigctld command. "Before" is the first run.
+Covered / Hamlib items. "Core" excludes items with no rigctld command.
 
-| Radio | Protocol | Core | Modes | Levels | Meters | Functions | VFO ops | Scan | Overall | Before |
+| Radio | Protocol | Core | Modes | Levels | Meters | Functions | VFO ops | Scan | Overall | First run |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Elecraft K2 (hardware) | `ElecraftProtocol` | 10/11 | 6/6 | 4/6 | 1/1 | 2/2 | 2/3 | – | 86% | 83% |
-| Elecraft K3 | `ElecraftProtocol` | 10/13 | 10/10 | 8/12 | 2/6 | 8/9 | 2/3 | – | 75% | 70% |
-| Elecraft K3S | `ElecraftProtocol` | 10/13 | 10/10 | 8/12 | 2/6 | 8/9 | 2/3 | – | 75% | 70% |
-| Elecraft K4 | `ElecraftProtocol` | 10/13 | 10/10 | 7/12 | 2/6 | 8/10 | 2/3 | – | 72% | 67% |
-| Elecraft KX2 | `ElecraftProtocol` | 10/12 | 10/10 | 8/12 | 2/5 | 7/7 | 2/3 | – | 80% | 73% |
-| Elecraft KX3 | `ElecraftProtocol` | 10/13 | 10/10 | 8/12 | 2/5 | 7/7 | 2/3 | – | 78% | 72% |
-| FlexRadio 6000-series | `KenwoodProtocol` | 9/9 | 7/7 | 1/4 | – | – | – | – | 85% | 80% |
-| FlexRadio PiHPSDR | `KenwoodProtocol` | 10/16 | 6/6 | 9/16 | 2/2 | 4/7 | 4/4 | 0/1 | 67% | 65% |
-| FlexRadio PowerSDR | `KenwoodProtocol` | 8/8 | 7/8 | 7/11 | 1/4 | 6/8 | 4/4 | – | 77% | 70% |
-| FlexRadio SDR-Console | `KenwoodProtocol` | 3/6 | 8/8 | 11/20 | 1/5 | 4/15 | 0/6 | 0/1 | 44% | 41% |
-| FlexRadio Thetis | `KenwoodProtocol` | 8/8 | 7/8 | 7/11 | 1/4 | 6/8 | 4/4 | – | 77% | 70% |
+| Elecraft K2 (hardware) | `ElecraftProtocol` | 10/11 | 6/6 | 6/6 | 1/1 | 2/2 | 2/3 | – | 93% | 83% |
+| Elecraft K3 | `ElecraftProtocol` | 10/13 | 10/10 | 9/12 | 2/6 | 8/9 | 2/3 | – | 77% | 70% |
+| Elecraft K3S | `ElecraftProtocol` | 10/13 | 10/10 | 9/12 | 2/6 | 8/9 | 2/3 | – | 77% | 70% |
+| Elecraft K4 | `ElecraftProtocol` | 10/13 | 10/10 | 9/12 | 2/6 | 8/10 | 2/3 | – | 76% | 67% |
+| Elecraft KX2 | `ElecraftProtocol` | 10/12 | 10/10 | 9/12 | 2/5 | 7/7 | 2/3 | – | 82% | 73% |
+| Elecraft KX3 | `ElecraftProtocol` | 10/13 | 10/10 | 9/12 | 2/5 | 7/7 | 2/3 | – | 80% | 72% |
+| FlexRadio 6000-series | `KenwoodProtocol` | 9/9 | 7/7 | 2/4 | – | – | – | – | 90% | 80% |
+| FlexRadio PiHPSDR | `KenwoodProtocol` | 10/16 | 6/6 | 11/16 | 2/2 | 7/7 | 4/4 | 0/1 | 77% | 65% |
+| FlexRadio PowerSDR | `KenwoodProtocol` | 8/8 | 7/8 | 8/11 | 1/4 | 6/8 | 4/4 | – | 79% | 70% |
+| FlexRadio SDR-Console | `KenwoodProtocol` | 3/6 | 8/8 | 14/20 | 1/5 | 4/15 | 0/6 | 0/1 | 49% | 41% |
+| FlexRadio Thetis | `KenwoodProtocol` | 8/8 | 7/8 | 8/11 | 1/4 | 6/8 | 4/4 | – | 79% | 70% |
 | Hamgeek uSDX | `HamgeekUSDXProtocol` | 2/3 | 8/8 | – | – | – | – | – | 91% | 91% |
 | Icom IC ID-1 | `IcomCIVProtocol` | 3/9 | 1/1 | 5/5 | 1/1 | 5/6 | 3/3 | 2/2 | 74% | 37% |
 | Icom IC-2730 | `IcomCIVProtocol` | 4/13 | 2/2 | 5/5 | – | 3/3 | – | – | 61% | 48% |
@@ -211,23 +250,23 @@ Covered / Hamlib items. "Core" excludes items with no rigctld command. "Before" 
 | Kenwood TH-F7E | `THFamilyCAT` | 3/7 | 6/6 | 0/6 | – | 0/4 | 0/2 | – | 36% | 36% |
 | Kenwood TM-D710(G) | `TMFamilyCAT` | 3/15 | 3/3 | 0/2 | – | 0/8 | 0/2 | – | 20% | 20% |
 | Kenwood TM-V71(A) | `TMFamilyCAT` | 3/12 | 3/3 | 0/2 | – | 0/8 | 0/2 | – | 22% | 22% |
-| Kenwood TS-2000 | `KenwoodProtocol` | 10/17 | 8/8 | 12/20 | 1/5 | 12/15 | 5/6 | 0/1 | 67% | 62% |
-| Kenwood TS-450S | `KenwoodProtocol` | 9/12 | 8/8 | 0/2 | 2/4 | 0/3 | 0/2 | 0/1 | 59% | 59% |
-| Kenwood TS-480HX | `KenwoodProtocol` | 10/13 | 8/8 | 12/20 | 1/5 | 4/12 | 0/6 | – | 55% | 50% |
-| Kenwood TS-480SAT | `KenwoodProtocol` | 10/13 | 8/8 | 12/20 | 1/5 | 9/12 | 5/6 | – | 70% | 66% |
-| Kenwood TS-570D | `KenwoodProtocol` | 10/15 | 6/6 | 7/11 | 1/1 | 2/10 | 0/2 | 0/1 | 57% | 54% |
-| Kenwood TS-570S | `KenwoodProtocol` | 10/15 | 6/6 | 7/11 | 1/1 | 2/10 | 0/2 | 0/1 | 57% | 54% |
-| Kenwood TS-590S | `KenwoodProtocol` | 10/16 | 11/12 | 12/20 | 1/6 | 9/12 | 3/4 | 0/1 | 65% | 59% |
-| Kenwood TS-590SG | `KenwoodProtocol` | 10/16 | 11/12 | 12/20 | 1/6 | 9/12 | 3/4 | 0/1 | 65% | 59% |
-| Kenwood TS-690S | `KenwoodProtocol` | 9/12 | 8/8 | 0/1 | 1/3 | 0/3 | 0/2 | 0/1 | 60% | 60% |
-| Kenwood TS-850S | `KenwoodProtocol` | 8/11 | 8/8 | 0/3 | 3/5 | 0/2 | 0/2 | – | 61% | 61% |
-| Kenwood TS-870S | `KenwoodProtocol` | 10/14 | 8/8 | 8/8 | 2/4 | 2/7 | – | – | 73% | 71% |
-| Kenwood TS-890S | `KenwoodProtocol` | 10/15 | 11/14 | 6/8 | 2/9 | 10/13 | 5/6 | – | 68% | 62% |
-| Kenwood TS-940S | `KenwoodProtocol` | 8/10 | 6/6 | – | – | 0/1 | 0/2 | 0/1 | 70% | 70% |
+| Kenwood TS-2000 | `KenwoodProtocol` | 10/17 | 8/8 | 15/20 | 1/5 | 13/15 | 5/6 | 0/1 | 72% | 62% |
+| Kenwood TS-450S | `KenwoodProtocol` | 9/12 | 8/8 | 0/2 | 2/4 | 1/3 | 2/2 | 0/1 | 69% | 59% |
+| Kenwood TS-480HX | `KenwoodProtocol` | 10/13 | 8/8 | 15/20 | 1/5 | 10/12 | 5/6 | – | 77% | 50% |
+| Kenwood TS-480SAT | `KenwoodProtocol` | 10/13 | 8/8 | 15/20 | 1/5 | 10/12 | 5/6 | – | 77% | 66% |
+| Kenwood TS-570D | `KenwoodProtocol` | 10/15 | 6/6 | 9/11 | 1/1 | 9/10 | 2/2 | 0/1 | 80% | 54% |
+| Kenwood TS-570S | `KenwoodProtocol` | 10/15 | 6/6 | 9/11 | 1/1 | 9/10 | 2/2 | 0/1 | 80% | 54% |
+| Kenwood TS-590S | `KenwoodProtocol` | 10/16 | 11/12 | 15/20 | 1/6 | 10/12 | 3/4 | 0/1 | 70% | 59% |
+| Kenwood TS-590SG | `KenwoodProtocol` | 10/16 | 11/12 | 15/20 | 1/6 | 10/12 | 3/4 | 0/1 | 70% | 59% |
+| Kenwood TS-690S | `KenwoodProtocol` | 9/12 | 8/8 | 0/1 | 1/3 | 1/3 | 2/2 | 0/1 | 70% | 60% |
+| Kenwood TS-850S | `KenwoodProtocol` | 8/11 | 8/8 | 0/3 | 3/5 | 1/2 | 2/2 | – | 71% | 61% |
+| Kenwood TS-870S | `KenwoodProtocol` | 10/14 | 8/8 | 8/8 | 2/4 | 7/7 | – | – | 85% | 71% |
+| Kenwood TS-890S | `KenwoodProtocol` | 10/15 | 11/14 | 8/8 | 2/9 | 11/13 | 5/6 | – | 72% | 62% |
+| Kenwood TS-940S | `KenwoodProtocol` | 8/10 | 6/6 | – | – | 1/1 | 2/2 | 0/1 | 85% | 70% |
 | Kenwood TS-950S | `KenwoodProtocol` | 5/8 | 6/6 | – | 1/1 | – | – | – | 80% | 80% |
 | Kenwood TS-950SDX | `KenwoodProtocol` | 5/8 | 6/6 | – | 1/1 | – | – | – | 80% | 80% |
-| Kenwood TS-990S | `KenwoodProtocol` | 10/16 | 10/17 | 9/16 | 2/3 | 7/7 | 3/3 | 0/1 | 65% | 63% |
-| Lab599 TX-500 | `KenwoodProtocol` | 9/15 | 6/6 | 9/16 | 2/2 | 9/9 | 4/4 | 0/1 | 74% | 68% |
+| Kenwood TS-990S | `KenwoodProtocol` | 10/16 | 10/17 | 12/16 | 2/3 | 7/7 | 3/3 | 0/1 | 70% | 63% |
+| Lab599 TX-500 | `KenwoodProtocol` | 9/15 | 6/6 | 12/16 | 2/2 | 9/9 | 4/4 | 0/1 | 79% | 68% |
 | QRP Labs QMX | `QRPLabsQMXProtocol` | 6/6 | 2/4 | – | 3/3 | – | – | – | 85% | 85% |
 | Ten-Tec Eagle | `TenTecOrionProtocol` | 6/8 | 6/6 | 0/5 | 1/3 | 0/1 | 0/2 | – | 52% | 52% |
 | Ten-Tec Jupiter (TT-538) | `TenTecLegacyProtocol` | 2/6 | 5/5 | 0/6 | 1/2 | 0/3 | – | – | 36% | 36% |
@@ -242,31 +281,31 @@ Covered / Hamlib items. "Core" excludes items with no rigctld command. "Before" 
 | Yaesu FT-1000MP | `YaesuFT1000MPCAT` | 8/8 | 6/6 | 0/1 | 3/7 | 2/11 | 0/5 | – | 50% | 45% |
 | Yaesu FT-1000MP MARK-V | `YaesuFT1000MPCAT` | 8/8 | 6/6 | 0/1 | 3/7 | 2/11 | 0/5 | – | 50% | 45% |
 | Yaesu FT-1000MP MARK-V Field | `YaesuFT1000MPCAT` | 8/8 | 6/6 | 0/1 | 3/7 | 2/11 | 0/5 | – | 50% | 45% |
-| Yaesu FT-2000 | `YaesuCATProtocol` | 9/18 | 13/13 | 11/21 | 2/9 | 4/16 | 0/10 | 0/1 | 44% | 40% |
-| Yaesu FT-450 | `YaesuCATProtocol` | 8/16 | 10/10 | 9/18 | 2/5 | 4/12 | 0/8 | 0/1 | 47% | 41% |
-| Yaesu FT-450D | `YaesuCATProtocol` | 8/16 | 10/10 | 9/18 | 2/5 | 4/12 | 0/8 | 0/1 | 47% | 41% |
-| Yaesu FT-710 | `YaesuCATProtocol` | 10/18 | 14/14 | 12/22 | 2/9 | 4/15 | 0/10 | 0/1 | 47% | 43% |
+| Yaesu FT-2000 | `YaesuCATProtocol` | 9/18 | 13/13 | 14/21 | 9/9 | 15/16 | 10/10 | 0/1 | 80% | 40% |
+| Yaesu FT-450 | `YaesuCATProtocol` | 8/16 | 10/10 | 12/18 | 5/5 | 12/12 | 8/8 | 0/1 | 79% | 41% |
+| Yaesu FT-450D | `YaesuCATProtocol` | 8/16 | 10/10 | 12/18 | 5/5 | 12/12 | 8/8 | 0/1 | 79% | 41% |
+| Yaesu FT-710 | `YaesuCATProtocol` | 10/18 | 14/14 | 15/22 | 9/9 | 14/15 | 10/10 | 0/1 | 81% | 43% |
 | Yaesu FT-817 | `YaesuPortableCAT` | 3/15 | 9/13 | 0/1 | 2/6 | 0/5 | 0/1 | – | 34% | 32% |
 | Yaesu FT-818 | `YaesuPortableCAT` | 5/15 | 9/13 | 0/1 | 2/5 | 0/4 | 0/1 | – | 41% | 38% |
 | Yaesu FT-847 | `YaesuFT847CAT` | 5/11 | 6/6 | 0/1 | 3/3 | 0/2 | – | – | 61% | 61% |
 | Yaesu FT-847UNI | `YaesuFT847CAT` | 5/11 | 6/6 | 0/1 | 0/3 | 0/2 | – | – | 48% | 48% |
 | Yaesu FT-857 | `YaesuPortableCAT` | 5/15 | 9/11 | 0/3 | 1/3 | 0/5 | 0/1 | – | 39% | 37% |
 | Yaesu FT-857D | `YaesuPortableCAT` | 5/15 | 9/11 | 0/3 | 1/3 | 0/5 | 0/1 | – | 39% | 37% |
-| Yaesu FT-891 | `YaesuCATProtocol` | 6/16 | 11/11 | 12/22 | 2/8 | 2/13 | 0/9 | 0/1 | 41% | 40% |
+| Yaesu FT-891 | `YaesuCATProtocol` | 6/16 | 11/11 | 15/22 | 8/8 | 12/13 | 9/9 | 0/1 | 76% | 40% |
 | Yaesu FT-897 | `YaesuPortableCAT` | 4/14 | 7/9 | 0/1 | 2/5 | 0/5 | 0/1 | – | 37% | 37% |
 | Yaesu FT-897D | `YaesuPortableCAT` | 5/15 | 7/9 | 0/1 | 2/5 | 0/3 | 0/1 | – | 41% | 41% |
 | Yaesu FT-920 | `YaesuFT1000MPCAT` | 8/8 | 8/9 | 0/1 | – | 0/1 | – | – | 84% | 79% |
-| Yaesu FT-950 | `YaesuCATProtocol` | 9/18 | 11/11 | 10/20 | 1/3 | 4/15 | 0/10 | 0/1 | 45% | 40% |
-| Yaesu FT-991 | `YaesuCATProtocol` | 9/20 | 14/14 | 12/23 | 2/9 | 13/16 | 9/9 | 0/1 | 64% | 60% |
-| Yaesu FT-991A | `YaesuCATProtocol` | 9/20 | 14/14 | 12/23 | 2/9 | 4/16 | 0/9 | 0/1 | 45% | 40% |
-| Yaesu FTDX-10 | `YaesuCATProtocol` | 10/18 | 14/14 | 12/22 | 2/9 | 4/15 | 0/10 | 0/1 | 47% | 43% |
-| Yaesu FTDX-101D | `YaesuCATProtocol` | 10/19 | 14/14 | 12/22 | 2/10 | 4/16 | 0/10 | 0/1 | 46% | 41% |
-| Yaesu FTDX-101MP | `YaesuCATProtocol` | 10/19 | 14/14 | 12/22 | 2/10 | 4/16 | 0/10 | 0/1 | 46% | 41% |
-| Yaesu FTDX-1200 | `YaesuCATProtocol` | 9/18 | 12/12 | 11/21 | 2/9 | 2/13 | 0/10 | 0/1 | 43% | 40% |
-| Yaesu FTDX-3000 | `YaesuCATProtocol` | 9/18 | 13/13 | 11/21 | 2/9 | 4/16 | 0/10 | 0/1 | 44% | 40% |
-| Yaesu FTDX-5000 | `YaesuCATProtocol` | 9/18 | 13/13 | 11/21 | 2/9 | 4/16 | 0/10 | 0/1 | 44% | 40% |
-| Yaesu FTDX-9000 | `YaesuCATProtocol` | 8/17 | 10/10 | 11/21 | 1/3 | 3/12 | 0/10 | 0/1 | 45% | 41% |
-| Yaesu FTX-1 | `YaesuCATProtocol` | 10/21 | 15/16 | 12/24 | 2/9 | 4/18 | 0/10 | – | 44% | 41% |
+| Yaesu FT-950 | `YaesuCATProtocol` | 9/18 | 11/11 | 13/20 | 3/3 | 15/15 | 10/10 | 0/1 | 78% | 40% |
+| Yaesu FT-991 | `YaesuCATProtocol` | 9/20 | 14/14 | 15/23 | 9/9 | 14/16 | 9/9 | 0/1 | 76% | 60% |
+| Yaesu FT-991A | `YaesuCATProtocol` | 9/20 | 14/14 | 15/23 | 9/9 | 14/16 | 9/9 | 0/1 | 76% | 40% |
+| Yaesu FTDX-10 | `YaesuCATProtocol` | 10/18 | 14/14 | 15/22 | 9/9 | 14/15 | 10/10 | 0/1 | 81% | 43% |
+| Yaesu FTDX-101D | `YaesuCATProtocol` | 10/19 | 14/14 | 15/22 | 9/10 | 14/16 | 10/10 | 0/1 | 78% | 41% |
+| Yaesu FTDX-101MP | `YaesuCATProtocol` | 10/19 | 14/14 | 15/22 | 9/10 | 14/16 | 10/10 | 0/1 | 78% | 41% |
+| Yaesu FTDX-1200 | `YaesuCATProtocol` | 9/18 | 12/12 | 14/21 | 9/9 | 13/13 | 10/10 | 0/1 | 80% | 40% |
+| Yaesu FTDX-3000 | `YaesuCATProtocol` | 9/18 | 13/13 | 14/21 | 9/9 | 15/16 | 10/10 | 0/1 | 80% | 40% |
+| Yaesu FTDX-5000 | `YaesuCATProtocol` | 9/18 | 13/13 | 14/21 | 9/9 | 15/16 | 10/10 | 0/1 | 80% | 40% |
+| Yaesu FTDX-9000 | `YaesuCATProtocol` | 8/17 | 10/10 | 14/21 | 3/3 | 11/12 | 10/10 | 0/1 | 76% | 41% |
+| Yaesu FTX-1 | `YaesuCATProtocol` | 10/21 | 15/16 | 15/24 | 9/9 | 12/18 | 6/10 | – | 68% | 41% |
 | Yaesu mcHF QRP | `YaesuFT847CAT` | 5/11 | 6/6 | 0/1 | 3/3 | 0/2 | – | – | 61% | 61% |
 
 To refresh: `Scripts/hamlib-coverage.py --json out.json --markdown out.md`

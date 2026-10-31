@@ -1605,9 +1605,18 @@ jjones9527/SwiftRigControl#46–#51.
       `L PREAMP 10` / `16` on the IC-7600.
 - [ ] Review the over-claims in the coverage report (RIT/XIT on 41 Icom
       records, IC-7100 / IC-7760 scope, IC-92D functions).
-- [ ] Same sync for Yaesu newcat, Kenwood and Elecraft. Needs the Hamlib
-      simulators for the byte check (text protocols don't work against
-      the ACK radio).
+- [x] Same sync for Yaesu newcat, Kenwood and Elecraft, byte-checked on
+      the Hamlib simulators: functions / VFO ops / preamp lists, new CW
+      keyer and CW text on all three, Yaesu TX meters; wrong-byte fixes
+      (Yaesu MN / COMP / LOCK / tune / CPY, Kenwood tuner and lock,
+      PowerSDR ZZ VOX and tuner). Catalog 63.8% → 71.9%.
+- [ ] Kenwood and Elecraft TX meters (TS-590 `RM;` triple + `SM0` power,
+      TS-480, TS-2000, TS-890S, TS-990S, K3 / K4 / KX, Flex), per model
+      from Hamlib.
+- [ ] FTDX-3000/5000 SWR on `RM2` when the tuner is on (Hamlib reads the
+      tuner and meter selection first).
+- [ ] Hardware: Kenwood tuner on/off (`AC110` / `AC100`) on a TS-590SG or
+      TS-890S; a Yaesu meter read and CW text on an FT-991A or FT-710.
 - [ ] New library APIs from the coverage report's "no API" list: CTCSS /
       DCS tone values, repeater shift / offset, tuning step, memory via
       rigctld (`E` / `\set_channel`), DCD.
