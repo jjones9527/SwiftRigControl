@@ -196,6 +196,37 @@ extension YaesuCATProtocol {
         /// (`newcat.c:7575-7583`).
         public internal(set) var copyVFOCommand: String = "AB"
 
+        /// TX-meter calibration from the model's Hamlib caps; see
+        /// ``YaesuCATProtocol/MeterCalibration``.
+        public internal(set) var meterCalibration: MeterCalibration = .default
+
+        /// The FTDX-9000 numbers its meters `RM06`-`RM11`; the rest
+        /// `RM3`-`RM8` (`newcat_get_level`, `newcat.c:5317-5432`).
+        public internal(set) var usesTwoDigitMeterNumbers: Bool = false
+
+        /// The FT-2000 reads its power meter on the 200 W FT-2000D table
+        /// and halves the result (`newcat.c:5685-5690`).
+        public internal(set) var halvesRFPowerMeter: Bool = false
+
+        /// Returns a copy with the TX-meter settings replaced.
+        ///
+        /// - Parameters:
+        ///   - calibration: ``meterCalibration``.
+        ///   - twoDigitNumbers: ``usesTwoDigitMeterNumbers``.
+        ///   - halvesRFPower: ``halvesRFPowerMeter``.
+        /// - Returns: The adjusted quirks.
+        public func withMeters(
+            _ calibration: MeterCalibration,
+            twoDigitNumbers: Bool = false,
+            halvesRFPower: Bool = false
+        ) -> Quirks {
+            var copy = self
+            copy.meterCalibration = calibration
+            copy.usesTwoDigitMeterNumbers = twoDigitNumbers
+            copy.halvesRFPowerMeter = halvesRFPower
+            return copy
+        }
+
         /// How CW text is sent through the keyer memories.
         public enum CWMessageStyle: Sendable, Equatable {
             /// `KM1<text>;` then `KY6;` (Hamlib `newcat_send_morse`,

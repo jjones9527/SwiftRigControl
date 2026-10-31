@@ -98,7 +98,8 @@ SUPPORTED = {
         "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock", "tuner",
                       "autoNotch", "manualNotch", "monitor", "noiseBlanker2"},
         "vfoOps": ALL_OPS - {"memoryClear"},   # MC: throws, needs a memory rewrite
-        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW",
+                  *METERS.values()},   # YaesuCATProtocol+TXMeters.swift
     },
     "ElecraftProtocol": {
         "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock",
