@@ -79,6 +79,76 @@ SETS = {"supportedVFOOperations": "VFOOperation", "supportedFunctions": "RigFunc
 
 INIT_FILE = os.path.join(ROOT, "Sources/RigControl/Models/RigCapabilities.swift")
 
+# What each protocol's code implements, so the sync never advertises a
+# feature that would just throw unsupportedOperation. None = everything.
+# Read from the protocols' setFunction / performVFOOperation switches and
+# trait conformances; update these when a protocol gains a feature. The
+# text protocols' keyers (KS / KP / PT / EX / BI / SD) are in
+# *+CWKeyer.swift.
+ALL_OPS = set(VFO_OPS.values())
+SUPPORTED = {
+    "IcomCIVProtocol": None,
+    "KenwoodProtocol": {
+        "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock", "tuner",
+                      "autoNotch", "beatCancel", "noiseBlanker2"},
+        "vfoOps": {"stepUp", "stepDown", "bandUp", "bandDown", "memoryClear", "memoryToVFO", "tune"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
+    },
+    "YaesuCATProtocol": {
+        "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock", "tuner",
+                      "autoNotch", "manualNotch", "monitor", "noiseBlanker2"},
+        "vfoOps": ALL_OPS - {"memoryClear"},   # MC: throws, needs a memory rewrite
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW",
+                  *METERS.values()},   # YaesuCATProtocol+TXMeters.swift
+    },
+    "ElecraftProtocol": {
+        "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock",
+                      "audioPeakFilter", "dualWatch", "diversity"},
+        "vfoOps": {"stepUp", "stepDown", "bandUp", "bandDown", "memoryToVFO"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
+    },
+}
+
+
+# Radios whose Hamlib backend lists a capability that it then refuses or
+# handles with model-specific commands the shared protocol doesn't send.
+EXCLUDE = {
+    # sdrconsole: caps list functions, but set_func returns ENAVAIL.
+    "FlexRadio SDR-Console": {"functions": "all", "vfoOps": "all"},
+    # ftx1_vfo_op rejects UP/DOWN; TUNE and the tuner go through
+    # ftx1-specific EX/AC1 commands; tone uses CT0 + PS reads.
+    "Yaesu FTX-1": {"functions": {"tuner", "ctcssTone", "ctcssSquelch"},
+                    "vfoOps": {"stepUp", "stepDown", "tune", "memoryClear"}},
+    # Listed in caps, but kenwood_set_func returns ENAVAIL for TONE.
+    "Kenwood TS-450S": {"functions": {"ctcssTone"}},
+    "Kenwood TS-690S": {"functions": {"ctcssTone"}},
+}
+
+
+def exclude(derived, name):
+    rules = EXCLUDE.get(name)
+    if not rules:
+        return derived
+    out = dict(derived)
+    for key, field in (("functions", "supportedFunctions"), ("vfoOps", "supportedVFOOperations")):
+        drop = rules.get(key, set())
+        out[field] = [] if drop == "all" else sorted(set(out[field]) - drop)
+    return out
+
+
+def restrict(derived, protocol):
+    """Drop what the protocol can't do from Hamlib-derived values."""
+    allowed = SUPPORTED.get(protocol, {"functions": set(), "vfoOps": set(), "bools": set()})
+    if allowed is None:
+        return derived
+    out = dict(derived)
+    out["supportedFunctions"] = sorted(set(derived["supportedFunctions"]) & allowed["functions"])
+    out["supportedVFOOperations"] = sorted(set(derived["supportedVFOOperations"]) & allowed["vfoOps"])
+    for field in BOOLS:
+        if field not in allowed["bools"]:
+            out[field] = False
+    return out
+
 
 def hamlib_derived(model):
     caps = coverage.hamlib_caps(model)
@@ -166,7 +236,8 @@ def enclosing_namespace(text, offset):
 def radio_records():
     """{radio full name: (namespace, identifier)} from the RadioDefinition factories."""
     mapping = {}
-    manufacturer_names = {"icom": "Icom", "xiegu": "Xiegu"}
+    enum = open(os.path.join(ROOT, "Sources/RigControl/Core/RadioDefinition.swift")).read()
+    manufacturer_names = dict(re.findall(r'case (\w+) = "([^"]+)"', enum))
     for path in glob.glob(os.path.join(ROOT, "Sources/RigControl/Protocols/**/*.swift"), recursive=True):
         text = open(path).read()
         for m in re.finditer(r"RadioDefinition\(\s*manufacturer: \.(\w+),\s*model: \"([^\"]+)\"(.*?)"
@@ -294,7 +365,7 @@ def main():
 
     report = {}
     for record, names in sorted(by_record.items()):
-        derived = [hamlib_derived(coverage.MODEL_MAP[n]) for n in names]
+        derived = [exclude(restrict(hamlib_derived(coverage.MODEL_MAP[n]), protos[n]), n) for n in names]
         mine = current[names[0]]
         hardware = any(current[n]["verification"] == "hardware" for n in names)
         target = merge(derived, mine, args.allow_removals and not hardware)

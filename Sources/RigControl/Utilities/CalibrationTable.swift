@@ -62,3 +62,50 @@ public struct CalibrationTable: Sendable, Equatable {
         return Int((Double(low.value) + fraction * Double(high.value - low.value)).rounded())
     }
 }
+
+/// A piecewise-linear map from a raw meter reading to a calibrated
+/// floating-point value (SWR ratio, watts, volts, …).
+///
+/// Mirrors Hamlib's `cal_table_float_t` and `rig_raw2val_float`
+/// (`src/cal.c`): readings between two points are interpolated, readings
+/// outside the table take the nearest end point's value, and an empty
+/// table returns the raw reading. Tables come from each model's Hamlib
+/// caps (`.swr_cal`, `.rfpower_meter_cal`, …).
+///
+/// ```swift
+/// let swr = FloatCalibrationTable([(0, 1.0), (26, 1.2), (52, 1.5)])
+/// swr.value(forRaw: 39)   // 1.35
+/// ```
+public struct FloatCalibrationTable: Sendable, Equatable {
+    /// One calibration point.
+    public struct Point: Sendable, Equatable {
+        /// Raw reading from the radio.
+        public let raw: Int
+        /// Calibrated value at that reading.
+        public let value: Double
+    }
+
+    /// Points in ascending order of raw reading.
+    public let points: [Point]
+
+    /// Creates a table from `(raw, value)` pairs, sorted by raw reading.
+    ///
+    /// - Parameter pairs: The calibration points.
+    public init(_ pairs: [(raw: Int, value: Double)]) {
+        points = pairs.map { Point(raw: $0.raw, value: $0.value) }.sorted { $0.raw < $1.raw }
+    }
+
+    /// The calibrated value for a raw reading.
+    ///
+    /// - Parameter raw: The raw reading.
+    /// - Returns: The interpolated value, or `raw` if the table is empty.
+    public func value(forRaw raw: Int) -> Double {
+        guard let first = points.first, let last = points.last else { return Double(raw) }
+        guard let upper = points.firstIndex(where: { raw < $0.raw }) else { return last.value }
+        guard upper > 0 else { return first.value }
+        let high = points[upper], low = points[upper - 1]
+        guard high.raw != low.raw else { return high.value }
+        let fraction = Double(raw - low.raw) / Double(high.raw - low.raw)
+        return low.value + fraction * (high.value - low.value)
+    }
+}

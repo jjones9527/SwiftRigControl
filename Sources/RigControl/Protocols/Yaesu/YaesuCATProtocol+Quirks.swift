@@ -174,6 +174,83 @@ extension YaesuCATProtocol {
         /// ``YaesuCATProtocol/getSignalStrength()``.
         public internal(set) var sMeterCalibration: CalibrationTable = YaesuCATProtocol.defaultSMeterCalibration
 
+        // MARK: Per-model function forms (newcat_set_func / newcat_vfo_op)
+
+        /// `PR0n` (receiver digit) or `PRn` for the speech compressor.
+        /// Hamlib sends `PR0n` on the FT-891/991/710, FTDX-1200/3000 and
+        /// FTDX-101D/MP and `PRn` on the rest (`newcat.c:6354-6366`).
+        public internal(set) var compressorHasReceiverDigit: Bool = true
+
+        /// The `LK` values for lock on and off: `7` / `4` on the
+        /// FTDX-1200/3000/5000/101D/101MP, `1` / `0` elsewhere
+        /// (`newcat.c:6227-6243`).
+        public internal(set) var lockOnCode: String = "1"
+        /// See ``lockOnCode``.
+        public internal(set) var lockOffCode: String = "0"
+
+        /// Starts an ATU tune: `AC003` on the FT-710, `AC002` elsewhere
+        /// (`newcat_vfo_op` RIG_OP_TUNE, `newcat.c:7563-7571`).
+        public internal(set) var tuneCommand: String = "AC002"
+
+        /// Copies VFO A to B: `VV` on the FT-450, `AB` elsewhere
+        /// (`newcat.c:7575-7583`).
+        public internal(set) var copyVFOCommand: String = "AB"
+
+        /// TX-meter calibration from the model's Hamlib caps; see
+        /// ``YaesuCATProtocol/MeterCalibration``.
+        public internal(set) var meterCalibration: MeterCalibration = .default
+
+        /// The FTDX-9000 numbers its meters `RM06`-`RM11`; the rest
+        /// `RM3`-`RM8` (`newcat_get_level`, `newcat.c:5317-5432`).
+        public internal(set) var usesTwoDigitMeterNumbers: Bool = false
+
+        /// The FT-2000 reads its power meter on the 200 W FT-2000D table
+        /// and halves the result (`newcat.c:5685-5690`).
+        public internal(set) var halvesRFPowerMeter: Bool = false
+
+        /// Returns a copy with the TX-meter settings replaced.
+        ///
+        /// - Parameters:
+        ///   - calibration: ``meterCalibration``.
+        ///   - twoDigitNumbers: ``usesTwoDigitMeterNumbers``.
+        ///   - halvesRFPower: ``halvesRFPowerMeter``.
+        /// - Returns: The adjusted quirks.
+        public func withMeters(
+            _ calibration: MeterCalibration,
+            twoDigitNumbers: Bool = false,
+            halvesRFPower: Bool = false
+        ) -> Quirks {
+            var copy = self
+            copy.meterCalibration = calibration
+            copy.usesTwoDigitMeterNumbers = twoDigitNumbers
+            copy.halvesRFPowerMeter = halvesRFPower
+            return copy
+        }
+
+        /// How CW text is sent through the keyer memories.
+        public enum CWMessageStyle: Sendable, Equatable {
+            /// `KM1<text>;` then `KY6;` (Hamlib `newcat_send_morse`,
+            /// `newcat.c:7304-7387`). A single digit plays a stored
+            /// message, 1-`storedMessages` (3 on the FT-450, 5 elsewhere):
+            /// `KY6`-`KYA`, or `KY1`-`KY5` on the FT-710.
+            case newcat(storedMessages: Int, playsSlotsDirectly: Bool)
+            /// FTX-1: `KM5<text>;` then `KY05;`, stop with `KY00;`
+            /// (Hamlib `ftx1_cw.c`).
+            case ftx1
+        }
+
+        /// CW message style.
+        public internal(set) var cwMessageStyle: CWMessageStyle = .newcat(storedMessages: 5, playsSlotsDirectly: false)
+
+        /// `KP` pitch scale: `KP%02d` is `(hz - min + step/2) / step`
+        /// (`newcat_set_level` RIG_LEVEL_CWPITCH, `newcat.c:4310-4323`).
+        /// 300 Hz + 10 Hz steps on most radios; 400 + 100 on the
+        /// FT-450/450D; 300 + 50 on the FT-950 / FT-2000 / FTDX-9000
+        /// (Hamlib `level_gran`).
+        public internal(set) var cwPitchMinHz: Int = 300
+        /// See ``cwPitchMinHz``.
+        public internal(set) var cwPitchStepHz: Int = 10
+
         /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
@@ -371,56 +448,42 @@ extension YaesuCATProtocol {
             return copy
         }
 
-        /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO
-        /// selection, plus FTX-1-specific mode codes and a memory-
-        /// mode escape prelude requirement.
+        /// Returns a copy with per-model function command forms replaced.
         ///
-        /// Mode codes per `rigs/yaesu/ftx1/ftx1_mode.c` differ from
-        /// the shared newcat table on codes 3 and 7:
-        /// - Shared newcat: 3 = CW, 7 = CW-R
-        /// - FTX-1:         3 = CW-USB, 7 = CW-LSB
+        /// ```swift
+        /// let quirks = Quirks.newcatNoST.withFunctionForms(compressorHasReceiverDigit: false)
+        /// ```
         ///
-        /// The current Hamlib newcat conversion table also exposes
-        /// `A` (DATA-FM), `D` (AM-N), `E` (C4FM), and `F`
-        /// (DATA-FM-N). Although an older comment in `ftx1_mode.c`
-        /// labels `E` as PSK, Hamlib's executable table and the
-        /// FTX-1 capability mask both identify it as C4FM; this
-        /// implementation follows that authoritative behavior.
-        ///
-        /// Memory-mode escape: the FTX-1's `MD` set is silently
-        /// treated as a transient overlay when Main is in Memory
-        /// mode. Setting `requiresMemoryModeEscape = true` triggers
-        /// an `SV0;` prelude (VFO mode restore) before each `MD` /
-        /// `FA` / `FB` set — matches Hamlib's `ftx1_ensure_vfo_mode()`
-        /// behavior in `ftx1_mode.c` and `ftx1_freq.c`.
-        public static let ftx1 = Quirks(
-            supportsSTSplit: true,
-            usesFT23ForVFOSelection: true,
-            supportsFTVFOSelection: true,
-            frequencyDigits: 9,
-            modeCodeTable: [
-                .lsb:      "1",
-                .usb:      "2",
-                .cw:       "3",   // CW-USB on FTX-1
-                .fm:       "4",
-                .am:       "5",
-                .rtty:     "6",   // RTTY-LSB
-                .cwR:      "7",   // CW-LSB on FTX-1
-                .dataLSB:  "8",
-                .rttyR:    "9",   // RTTY-USB
-                .dataFM:   "A",
-                .fmN:      "B",
-                .dataUSB:  "C",
-                .amN:      "D",
-                .c4fm:     "E",
-                .dataFMN:  "F",
-            ],
-            requiresMemoryModeEscape: true,
-            filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
-            // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
-            // which includes RIG_TARGETABLE_MODE.
-            hasTargetableMode: true,
-            usesFTX1ClarifierCommands: true
-        )
+        /// - Parameters:
+        ///   - compressorHasReceiverDigit: ``compressorHasReceiverDigit``, or `nil` to keep it.
+        ///   - lockCodes: ``lockOnCode`` and ``lockOffCode``, or `nil` to keep them.
+        ///   - tuneCommand: ``tuneCommand``, or `nil` to keep it.
+        ///   - copyVFOCommand: ``copyVFOCommand``, or `nil` to keep it.
+        ///   - cwPitch: ``cwPitchMinHz`` and ``cwPitchStepHz``, or `nil` to keep them.
+        ///   - cwMessageStyle: ``cwMessageStyle``, or `nil` to keep it.
+        /// - Returns: The adjusted quirks.
+        public func withFunctionForms(
+            compressorHasReceiverDigit: Bool? = nil,
+            lockCodes: (on: String, off: String)? = nil,
+            tuneCommand: String? = nil,
+            copyVFOCommand: String? = nil,
+            cwPitch: (minHz: Int, stepHz: Int)? = nil,
+            cwMessageStyle: CWMessageStyle? = nil
+        ) -> Quirks {
+            var copy = self
+            if let compressorHasReceiverDigit { copy.compressorHasReceiverDigit = compressorHasReceiverDigit }
+            if let lockCodes {
+                copy.lockOnCode = lockCodes.on
+                copy.lockOffCode = lockCodes.off
+            }
+            if let tuneCommand { copy.tuneCommand = tuneCommand }
+            if let copyVFOCommand { copy.copyVFOCommand = copyVFOCommand }
+            if let cwMessageStyle { copy.cwMessageStyle = cwMessageStyle }
+            if let cwPitch {
+                copy.cwPitchMinHz = cwPitch.minHz
+                copy.cwPitchStepHz = cwPitch.stepHz
+            }
+            return copy
+        }
     }
 }

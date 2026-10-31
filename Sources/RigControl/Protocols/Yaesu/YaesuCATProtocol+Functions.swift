@@ -42,6 +42,11 @@ extension YaesuCATProtocol {
         guard let lastDigit = response.last else {
             throw RigError.invalidResponse
         }
+        // LK4 is "unlocked" on the FTDX-1200/3000/5000/101; Hamlib reads
+        // 0 or 4 as off (newcat_get_func RIG_FUNC_LOCK, newcat.c:6834).
+        if function == .lock {
+            return lastDigit != "0" && String(lastDigit) != quirks.lockOffCode
+        }
         return lastDigit != "0"
     }
 
@@ -54,7 +59,9 @@ extension YaesuCATProtocol {
 
         switch function {
         case .compressor:
-            return set ? "PR0\(digit)" : "PR0"
+            // PR0n or PRn by model (newcat.c:6354-6366).
+            let prefix = quirks.compressorHasReceiverDigit ? "PR0" : "PR"
+            return set ? "\(prefix)\(digit)" : prefix
         case .vox:
             return set ? "VX\(digit)" : "VX"
         case .ctcssTone:
@@ -65,13 +72,16 @@ extension YaesuCATProtocol {
             // CT0 + 1/0 (1 = encode+decode).
             return set ? "CT0\(digit)" : "CT0"
         case .lock:
-            return set ? "LK\(digit)" : "LK"
+            // LK7 / LK4 on the FTDX-1200/3000/5000/101 (newcat.c:6227-6243).
+            return set ? "LK\(enabled ? quirks.lockOnCode : quirks.lockOffCode)" : "LK"
         case .tuner:
             return set ? "AC00\(digit)" : "AC00"
         case .autoNotch:
             return set ? "BC0\(digit)" : "BC0"
         case .manualNotch:
-            return set ? "BP00\(digit)" : "BP00"
+            // BP00 + 3 digits (newcat.c:6148, "BP00%03d"). Through v1.3.1
+            // this sent BP001, two digits short.
+            return set ? "BP0000\(digit)" : "BP00"
         case .monitor:
             // ML0 + 3 digits (newcat.c:6254). Pre-v1.2.20 code sent
             // ML01 / ML00, two digits short.

@@ -135,16 +135,26 @@ def tx_frames(exchanges, framing):
     return seen
 
 
-def cell(result, framing, tx):
+def cell(result, framing, tx, values=False):
+    if values:
+        shown = [audit.normalize_value(v) for v in result["values"]]
+        return cell(result, framing, tx) + ["= " + " ".join(shown)]
     if tx:
         return tx_frames(result["exchanges"], framing) or [f"ERROR {(result['error'] or '')[:40]}"]
     sets, _, _ = audit.classify(result["exchanges"], framing)
     return sets if not result["error"] else [f"ERROR {result['error'][:40]}"]
 
 
-def ours(name, commands, framing, tx=False):
-    """Set frames SwiftRigControl sends for each command, against AckRadio."""
-    radio = AckRadio(framing)
+def ours(name, commands, framing, tx=False, sim_name="ack", values=False):
+    """Frames SwiftRigControl sends for each command, against the same
+    kind of radio Hamlib got: the ACK radio, or a fresh instance of the
+    Hamlib simulator (text protocols, whose reads need real replies)."""
+    sim = None
+    if sim_name == "ack":
+        radio = AckRadio(framing)
+    else:
+        sim = audit.Simulator(sim_name)
+        radio = audit.Relay(sim.port, civ=(framing == "civ"))
     radio.start()
     row = {}
     try:
@@ -152,11 +162,13 @@ def ours(name, commands, framing, tx=False):
         try:
             for index, command in enumerate(commands):
                 result = client.run(command, f"{index}:{command}")
-                row[command] = cell(result, framing, tx)
+                row[command] = cell(result, framing, tx, values)
         finally:
             client.stop()
     finally:
         radio.stop()
+        if sim:
+            sim.stop()
     return row
 
 
@@ -183,6 +195,8 @@ def main():
     parser.add_argument("--commands-file")
     parser.add_argument("--framing", default="text", choices=["text", "civ", "cr"])
     parser.add_argument("--json", help="write {label: {command: [frames]}}")
+    parser.add_argument("--values", action="store_true",
+                        help="also compare the value each side printed (for reads)")
     parser.add_argument("--tx", action="store_true",
                         help="compare every frame written, not just set frames (for reads)")
     parser.add_argument("commands", nargs="*")
@@ -210,7 +224,7 @@ def main():
         try:
             for command in commands:
                 result = audit.run_hamlib(model, relay.port, command)
-                row[command] = cell(result, args.framing, args.tx)
+                row[command] = cell(result, args.framing, args.tx, args.values)
                 print(f"{label:<12} {command:<22} {' '.join(row[command])}", flush=True)
         finally:
             relay.stop()
@@ -218,7 +232,7 @@ def main():
                 sim.stop()
         table[label] = row
         if catalog:
-            mine = ours(catalog, commands, args.framing, args.tx)
+            mine = ours(catalog, commands, args.framing, args.tx, sim_name, args.values)
             table[label + " (ours)"] = mine
             for command in commands:
                 verdict = "same" if mine[command] == row[command] else "DIFF"

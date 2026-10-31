@@ -84,6 +84,21 @@ public actor ElecraftProtocol:
     /// Which command family this radio uses.
     public nonisolated let family: Family
 
+    /// How CW text goes out with `KY` (Hamlib `kenwood_send_morse`).
+    public enum CWMessageForm: Sendable, Equatable {
+        /// `KY <text>;`, variable length (K3, K3S, KX2, KX3); stop with
+        /// `KY \u{04};` (`k3_stop_morse`, `k3.c:3053-3059`).
+        case k3
+        /// `KY <text padded to 24>;` (Hamlib's default form); stop with
+        /// `KY @;` (`k4_stop_morse`, `k3.c:3047-3051`).
+        case k4
+        /// `KY <text padded to 24>;` with no stop command (K2, `k2.c:249`).
+        case k2
+    }
+
+    /// CW message form; see ``CWMessageForm``.
+    public nonisolated let cwMessageForm: CWMessageForm
+
     /// Whether this is a K2 radio (requires command delays).
     ///
     /// Through v1.3.1 this was `capabilities.maxPower <= 15`, which also
@@ -111,10 +126,18 @@ public actor ElecraftProtocol:
     ///   - family: The command family. When `nil` it is inferred from
     ///     `capabilities` with ``inferredFamily(for:)``. The
     ///     `RadioDefinition.Elecraft` factories always pass it.
-    public init(transport: any SerialTransport, capabilities: RigCapabilities, family: Family? = nil) {
+    ///   - cwMessageForm: The `KY` form. When `nil`, `.k2` for the K2
+    ///     family and `.k3` otherwise; the K4 factory passes `.k4`.
+    public init(
+        transport: any SerialTransport,
+        capabilities: RigCapabilities,
+        family: Family? = nil,
+        cwMessageForm: CWMessageForm? = nil
+    ) {
         self.transport = transport
         self.capabilities = capabilities
         self.family = family ?? Self.inferredFamily(for: capabilities)
+        self.cwMessageForm = cwMessageForm ?? (self.family == .k2 ? .k2 : .k3)
         // K2 needs 2s per Hamlib k2.c:139; K3 and later, including the
         // KX2 and KX3, use 1s (k3.c:718, 877).
         self.responseTimeout = self.family == .k2 ? 2.0 : 1.0

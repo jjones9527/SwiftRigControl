@@ -105,21 +105,25 @@ public struct MeterReading: Sendable, Equatable {
     }
 
     /// Speech compressor activity in dB, if this is a `.comp`
-    /// reading. Returns `nil` otherwise.
+    /// reading. Returns `nil` otherwise. Uses a protocol-supplied
+    /// physical value when available, otherwise the Icom default curve.
     public var dB: Double? {
-        kind == .comp ? Self.compCurve.interpolate(rawDouble) : nil
+        kind == .comp ? (physicalValue ?? Self.compCurve.interpolate(rawDouble)) : nil
     }
 
     /// Drain / supply voltage in volts, if this is a `.voltage`
-    /// reading. Returns `nil` otherwise.
+    /// reading. Returns `nil` otherwise. Uses a protocol-supplied
+    /// physical value when available, otherwise the Icom default curve.
     public var volts: Double? {
-        kind == .voltage ? Self.voltageCurve.interpolate(rawDouble) : nil
+        kind == .voltage ? (physicalValue ?? Self.voltageCurve.interpolate(rawDouble)) : nil
     }
 
     /// Drain / collector current in amperes, if this is a
-    /// `.current` reading. Returns `nil` otherwise.
+    /// `.current` reading. Returns `nil` otherwise. Uses a
+    /// protocol-supplied physical value when available, otherwise the
+    /// Icom default curve.
     public var amps: Double? {
-        kind == .current ? Self.currentCurve.interpolate(rawDouble) : nil
+        kind == .current ? (physicalValue ?? Self.currentCurve.interpolate(rawDouble)) : nil
     }
 
     /// Human-readable description, e.g. "50.0 W", "1.5:1", "12.4 V",

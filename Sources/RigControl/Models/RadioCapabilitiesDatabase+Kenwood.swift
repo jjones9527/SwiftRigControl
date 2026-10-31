@@ -55,8 +55,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: .kenwoodHFStandard,
+        preampLevels: [12]
     )
 
     /// Kenwood TS-890S - HF/6m transceiver with dual receiver
@@ -92,8 +95,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: [.autoNotch, .beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .noiseBlanker2, .tuner, .vox],
+        preampLevels: [12]
     )
 
     /// Kenwood TS-990S - HF/6m flagship transceiver with dual receiver
@@ -129,8 +135,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: .kenwoodHFStandard,
+        preampLevels: [20]
     )
 
     // MARK: - Removed in v1.1.0
@@ -173,8 +182,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: .kenwoodHFStandard,
+        preampLevels: [12]
     )
 
     /// Kenwood TS-2000 - HF/VHF/UHF all-mode transceiver
@@ -226,8 +238,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         supportsDCS: true,
         supportsDuplex: true,
         availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: .kenwoodHFStandard,
+        preampLevels: [12]
     )
 
     /// Kenwood TS-590S - HF/6m transceiver (earlier version of TS-590SG)
@@ -262,8 +277,11 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
-        supportedFunctions: .kenwoodHFStandard
+        supportedFunctions: .kenwoodHFStandard,
+        preampLevels: [12]
     )
 
     /// Kenwood TS-870S - HF/6m 100W transceiver (classic flagship)
@@ -297,7 +315,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsSendCW: true,
+        supportedFunctions: [.autoNotch, .beatCancel, .compressor, .lock, .vox]
     )
 
     /// Kenwood TS-480HX - HF/6m 200W transceiver (high power version of TS-480)
@@ -331,7 +351,12 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .stepDown, .stepUp, .tune],
+        supportedFunctions: [.beatCancel, .compressor, .lock, .tuner, .vox],
+        preampLevels: [12]
     )
 
     /// Kenwood TH-D75A — tri-band D-STAR/APRS handheld (announced
