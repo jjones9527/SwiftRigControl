@@ -82,7 +82,9 @@ INIT_FILE = os.path.join(ROOT, "Sources/RigControl/Models/RigCapabilities.swift"
 # What each protocol's code implements, so the sync never advertises a
 # feature that would just throw unsupportedOperation. None = everything.
 # Read from the protocols' setFunction / performVFOOperation switches and
-# trait conformances; update these when a protocol gains a feature.
+# trait conformances; update these when a protocol gains a feature. The
+# text protocols' keyers (KS / KP / PT / EX / BI / SD) are in
+# *+CWKeyer.swift.
 ALL_OPS = set(VFO_OPS.values())
 SUPPORTED = {
     "IcomCIVProtocol": None,
@@ -90,19 +92,19 @@ SUPPORTED = {
         "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock", "tuner",
                       "autoNotch", "beatCancel", "noiseBlanker2"},
         "vfoOps": {"stepUp", "stepDown", "bandUp", "bandDown", "memoryClear", "memoryToVFO", "tune"},
-        "bools": {"supportsRIT", "supportsXIT"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
     },
     "YaesuCATProtocol": {
         "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock", "tuner",
                       "autoNotch", "manualNotch", "monitor", "noiseBlanker2"},
         "vfoOps": ALL_OPS - {"memoryClear"},   # MC: throws, needs a memory rewrite
-        "bools": {"supportsRIT", "supportsXIT"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
     },
     "ElecraftProtocol": {
         "functions": {"compressor", "vox", "ctcssTone", "ctcssSquelch", "lock",
                       "audioPeakFilter", "dualWatch", "diversity"},
         "vfoOps": {"stepUp", "stepDown", "bandUp", "bandDown", "memoryToVFO"},
-        "bools": {"supportsRIT", "supportsXIT"},
+        "bools": {"supportsRIT", "supportsXIT", "supportsCWKeyer", "supportsSendCW"},
     },
 }
 

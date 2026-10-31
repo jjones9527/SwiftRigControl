@@ -98,6 +98,41 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         case powerSDR
     }
 
+    /// How the CW pitch is set (Hamlib `kenwood_set_level` RIG_LEVEL_CWPITCH).
+    public enum CWPitchForm: Sendable, Equatable {
+        /// No CAT pitch control.
+        case none
+        /// `PT` + step index, `(hz - min + step/2) / step`, `digits` wide:
+        /// 3 on the TS-890S / TS-990S, 2 elsewhere (`kenwood.c:3658-3668`).
+        case pt(minHz: Int, stepHz: Int, digits: Int)
+        /// An `EX` menu item, `EXnnn0000` + 2-digit `(hz - min) / step`
+        /// (TS-590 menu 040 `ts590.c:673-679`, TS-480 034 `ts480.c:431-437`,
+        /// TS-2000 031 `ts2000.c:508-514`).
+        case exMenu(number: Int, minHz: Int, stepHz: Int)
+    }
+
+    /// CW pitch form.
+    public internal(set) var cwPitch: CWPitchForm = .none
+
+    /// Full break-in is set through the break-in delay, `SD0000` (full) /
+    /// `SD0050` (Hamlib RIG_FUNC_FBKIN, `kenwood.c`); TS-590 / TS-480 /
+    /// TS-2000. Elsewhere break-in has no CAT control.
+    public internal(set) var breakInViaDelay: Bool = false
+
+    /// How CW text goes out with `KY`, 24 characters at a time (Hamlib
+    /// `kenwood_send_morse`).
+    public enum CWMessageForm: Sendable, Equatable {
+        /// `KY <text left-aligned in 24>;`, Hamlib's default.
+        case leftPadded
+        /// `KY <text right-aligned in 24>;` (TS-590S, Hamlib issue 1634).
+        case rightPadded
+        /// `KY2<text>;`, variable length (TS-890S).
+        case variable
+    }
+
+    /// CW message form.
+    public internal(set) var cwMessageForm: CWMessageForm = .leftPadded
+
     /// `LK` lock form.
     public internal(set) var lockForm: LockForm = .single
 
@@ -140,17 +175,29 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     ).with {
         $0.lockForm = .trailingZero
         $0.tunerForm = .receiveAndTransmit
+        $0.cwPitch = .exMenu(number: 40, minHz: 300, stepHz: 50)
+        $0.breakInViaDelay = true
+        $0.cwMessageForm = .rightPadded
     }
 
     /// TS-590SG: as the TS-590S, with monitor gain 0–20.
-    public static let ts590SG = ts590S.with { $0.monitorGainMax = 20 }
+    public static let ts590SG = ts590S.with {
+        $0.monitorGainMax = 20
+        $0.cwMessageForm = .leftPadded   // Hamlib pads right-aligned on the S only
+    }
 
     /// TS-2000 and SDR-Console (Hamlib `ts2000.c`): `GT` 3 digits.
     public static let ts2000 = ts590S.with {
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 5, .medium: 10, .slow: 20])
         $0.lockForm = .doubled
         $0.tunerForm = .standard
+        $0.cwPitch = .exMenu(number: 31, minHz: 400, stepHz: 50)
+        $0.cwMessageForm = .leftPadded
     }
+
+    /// SDR-Console's TS-2000 emulation: as ``ts2000``, without the
+    /// break-in delay (Hamlib `sdrconsole` returns ENAVAIL for FBKIN).
+    public static let sdrConsole = ts2000.with { $0.breakInViaDelay = false }
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.
     public static let ts480 = ts590S.with {
@@ -158,6 +205,8 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         $0.rfGainMax = 100
         $0.lockForm = .doubled
         $0.tunerForm = .standard
+        $0.cwPitch = .exMenu(number: 34, minHz: 400, stepHz: 50)
+        $0.cwMessageForm = .leftPadded
     }
 
     /// TS-890S (Hamlib `ts890s.c`): `GC`, 1-digit `RA`, `SQnnn`, `NB1n`.
@@ -166,12 +215,15 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         $0.attenuatorDigits = 1
         $0.squelchHasReceiverDigit = false
         $0.noiseBlankerPrefix = "NB1"
+        $0.cwPitch = .pt(minHz: 300, stepHz: 5, digits: 3)
+        $0.cwMessageForm = .variable
     }
 
     /// TS-990S: 6 / 12 / 18 dB, `PL` two values on a 0–255 scale.
     public static let ts990S = generic.with {
         $0.compressorHasTwoValues = true
         $0.compressorMax = 255
+        $0.cwPitch = .pt(minHz: 300, stepHz: 10, digits: 3)
     }
 
     /// TS-570D / TS-570S: a single 18 dB attenuator.
@@ -184,6 +236,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     public static let tx500 = generic.with {
         $0.attenuatorSteps = [20]
         $0.compressorHasTwoValues = true
+        $0.cwPitch = .pt(minHz: 300, stepHz: 50, digits: 2)
     }
 
     /// OpenHPSDR PiHPSDR: a single 20 dB attenuator (Hamlib caps).

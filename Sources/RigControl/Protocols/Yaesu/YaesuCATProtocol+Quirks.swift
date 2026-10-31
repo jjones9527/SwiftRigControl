@@ -196,6 +196,30 @@ extension YaesuCATProtocol {
         /// (`newcat.c:7575-7583`).
         public internal(set) var copyVFOCommand: String = "AB"
 
+        /// How CW text is sent through the keyer memories.
+        public enum CWMessageStyle: Sendable, Equatable {
+            /// `KM1<text>;` then `KY6;` (Hamlib `newcat_send_morse`,
+            /// `newcat.c:7304-7387`). A single digit plays a stored
+            /// message, 1-`storedMessages` (3 on the FT-450, 5 elsewhere):
+            /// `KY6`-`KYA`, or `KY1`-`KY5` on the FT-710.
+            case newcat(storedMessages: Int, playsSlotsDirectly: Bool)
+            /// FTX-1: `KM5<text>;` then `KY05;`, stop with `KY00;`
+            /// (Hamlib `ftx1_cw.c`).
+            case ftx1
+        }
+
+        /// CW message style.
+        public internal(set) var cwMessageStyle: CWMessageStyle = .newcat(storedMessages: 5, playsSlotsDirectly: false)
+
+        /// `KP` pitch scale: `KP%02d` is `(hz - min + step/2) / step`
+        /// (`newcat_set_level` RIG_LEVEL_CWPITCH, `newcat.c:4310-4323`).
+        /// 300 Hz + 10 Hz steps on most radios; 400 + 100 on the
+        /// FT-450/450D; 300 + 50 on the FT-950 / FT-2000 / FTDX-9000
+        /// (Hamlib `level_gran`).
+        public internal(set) var cwPitchMinHz: Int = 300
+        /// See ``cwPitchMinHz``.
+        public internal(set) var cwPitchStepHz: Int = 10
+
         /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
@@ -404,12 +428,16 @@ extension YaesuCATProtocol {
         ///   - lockCodes: ``lockOnCode`` and ``lockOffCode``, or `nil` to keep them.
         ///   - tuneCommand: ``tuneCommand``, or `nil` to keep it.
         ///   - copyVFOCommand: ``copyVFOCommand``, or `nil` to keep it.
+        ///   - cwPitch: ``cwPitchMinHz`` and ``cwPitchStepHz``, or `nil` to keep them.
+        ///   - cwMessageStyle: ``cwMessageStyle``, or `nil` to keep it.
         /// - Returns: The adjusted quirks.
         public func withFunctionForms(
             compressorHasReceiverDigit: Bool? = nil,
             lockCodes: (on: String, off: String)? = nil,
             tuneCommand: String? = nil,
-            copyVFOCommand: String? = nil
+            copyVFOCommand: String? = nil,
+            cwPitch: (minHz: Int, stepHz: Int)? = nil,
+            cwMessageStyle: CWMessageStyle? = nil
         ) -> Quirks {
             var copy = self
             if let compressorHasReceiverDigit { copy.compressorHasReceiverDigit = compressorHasReceiverDigit }
@@ -419,59 +447,12 @@ extension YaesuCATProtocol {
             }
             if let tuneCommand { copy.tuneCommand = tuneCommand }
             if let copyVFOCommand { copy.copyVFOCommand = copyVFOCommand }
+            if let cwMessageStyle { copy.cwMessageStyle = cwMessageStyle }
+            if let cwPitch {
+                copy.cwPitchMinHz = cwPitch.minHz
+                copy.cwPitchStepHz = cwPitch.stepHz
+            }
             return copy
         }
-
-        /// FTX-1 (2025) — full `ST` support, `FT2;` / `FT3;` VFO
-        /// selection, plus FTX-1-specific mode codes and a memory-
-        /// mode escape prelude requirement.
-        ///
-        /// Mode codes per `rigs/yaesu/ftx1/ftx1_mode.c` differ from
-        /// the shared newcat table on codes 3 and 7:
-        /// - Shared newcat: 3 = CW, 7 = CW-R
-        /// - FTX-1:         3 = CW-USB, 7 = CW-LSB
-        ///
-        /// The current Hamlib newcat conversion table also exposes
-        /// `A` (DATA-FM), `D` (AM-N), `E` (C4FM), and `F`
-        /// (DATA-FM-N). Although an older comment in `ftx1_mode.c`
-        /// labels `E` as PSK, Hamlib's executable table and the
-        /// FTX-1 capability mask both identify it as C4FM; this
-        /// implementation follows that authoritative behavior.
-        ///
-        /// Memory-mode escape: the FTX-1's `MD` set is silently
-        /// treated as a transient overlay when Main is in Memory
-        /// mode. Setting `requiresMemoryModeEscape = true` triggers
-        /// an `SV0;` prelude (VFO mode restore) before each `MD` /
-        /// `FA` / `FB` set — matches Hamlib's `ftx1_ensure_vfo_mode()`
-        /// behavior in `ftx1_mode.c` and `ftx1_freq.c`.
-        public static let ftx1 = Quirks(
-            supportsSTSplit: true,
-            usesFT23ForVFOSelection: true,
-            supportsFTVFOSelection: true,
-            frequencyDigits: 9,
-            modeCodeTable: [
-                .lsb:      "1",
-                .usb:      "2",
-                .cw:       "3",   // CW-USB on FTX-1
-                .fm:       "4",
-                .am:       "5",
-                .rtty:     "6",   // RTTY-LSB
-                .cwR:      "7",   // CW-LSB on FTX-1
-                .dataLSB:  "8",
-                .rttyR:    "9",   // RTTY-USB
-                .dataFM:   "A",
-                .fmN:      "B",
-                .dataUSB:  "C",
-                .amN:      "D",
-                .c4fm:     "E",
-                .dataFMN:  "F",
-            ],
-            requiresMemoryModeEscape: true,
-            filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
-            // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
-            // which includes RIG_TARGETABLE_MODE.
-            hasTargetableMode: true,
-            usesFTX1ClarifierCommands: true
-        )
     }
 }

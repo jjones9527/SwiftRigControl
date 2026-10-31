@@ -88,8 +88,10 @@ extension KenwoodProtocol {
         case .powerSDR:
             try await sendCommand("ZZMD")
             let reply = try await receiveResponse()
-            guard reply.hasPrefix("ZZMD"), reply.count >= 6,
-                  let code = Int(reply.dropFirst(4).prefix(2)) else {
+            // Hamlib reads the code with %d (flex6xxx.c:269), so ZZMD4 and
+            // ZZMD04 both parse; we used to require two digits.
+            guard reply.hasPrefix("ZZMD"),
+                  let code = Int(reply.dropFirst(4).prefix(while: \.isNumber)) else {
                 throw RigError.invalidResponse
             }
             return try Self.mode(forCode: code, style: modeStyle)

@@ -55,6 +55,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: .kenwoodHFStandard,
         preampLevels: [12]
@@ -93,6 +95,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: [.autoNotch, .beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .noiseBlanker2, .tuner, .vox],
         preampLevels: [12]
@@ -131,6 +135,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: .kenwoodHFStandard,
         preampLevels: [20]
@@ -176,6 +182,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: .kenwoodHFStandard,
         preampLevels: [12]
@@ -230,6 +238,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         supportsDCS: true,
         supportsDuplex: true,
         availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: .kenwoodHFStandard,
         preampLevels: [12]
@@ -267,6 +277,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .kenwoodStandard,
         supportedFunctions: .kenwoodHFStandard,
         preampLevels: [12]
@@ -304,6 +316,7 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsSendCW: true,
         supportedFunctions: [.autoNotch, .beatCancel, .compressor, .lock, .vox]
     )
 
@@ -339,6 +352,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .stepDown, .stepUp, .tune],
         supportedFunctions: [.beatCancel, .compressor, .lock, .tuner, .vox],
         preampLevels: [12]

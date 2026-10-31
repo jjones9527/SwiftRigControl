@@ -81,6 +81,8 @@ extension RadioCapabilitiesDatabase.Lab599 {
         hasDualReceiver: false,
         hasATU: false,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         // Two antenna ports per Hamlib tx500.c:43 (RIG_ANT_1 | RIG_ANT_2).
         antennaCount: 2,
         // Hamlib tx500.c:41 — UP/DOWN/BAND_UP/BAND_DOWN.

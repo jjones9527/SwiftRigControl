@@ -68,7 +68,8 @@ extension RadioDefinition.Elecraft {
             ElecraftProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Elecraft.k4,
-                family: .k3
+                family: .k3,
+                cwMessageForm: .k4
             )
         }
     )

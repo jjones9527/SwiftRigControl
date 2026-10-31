@@ -195,7 +195,7 @@ extension RadioDefinition.Flex {
             KenwoodProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.sdrConsole,
-                levelProfile: .ts2000
+                levelProfile: .sdrConsole
             )
         },
         hostRequirement: .windowsCompanion(app: "SDR-Console")

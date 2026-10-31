@@ -46,6 +46,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: false,
         requiresVFOSelection: false,
         requiresModeFilter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: .yaesuStandard,
         supportedFunctions: .yaesuHFStandard,
         preampLevels: [10, 20]
@@ -92,6 +94,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
         preampLevels: [10, 17]
@@ -136,6 +140,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
         preampLevels: [10, 20]
@@ -180,6 +186,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
         preampLevels: [10, 20]
@@ -269,6 +277,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsSignalStrength: true,
         requiresVFOSelection: false,
         requiresModeFilter: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .noiseBlanker2, .vox],
         preampLevels: [10]

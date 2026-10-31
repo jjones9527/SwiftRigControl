@@ -142,6 +142,7 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsSignalStrength: true,
         availableTuningSteps: [1, 10, 100, 1000, 5000, 10000, 100000],
         supportsCWKeyer: true,    // KS / KEYSPD
+        supportsSendCW: true,
         antennaCount: 3           // RIG_ANT_1 | RIG_ANT_2 | RIG_ANT_3
     )
 
@@ -169,6 +170,7 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsCWKeyer: true,
+        supportsSendCW: true,
         antennaCount: 3,
         // Hamlib `POWERSDR_VFO_OP` — band step + tuning step.
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown],
@@ -199,6 +201,7 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsCWKeyer: true,
+        supportsSendCW: true,
         antennaCount: 3,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown],
         supportedFunctions: [.vox, .autoNotch, .mute, .tuner]
@@ -231,6 +234,7 @@ extension RadioCapabilitiesDatabase.Flex {
         detailedFrequencyRanges: flexFrequencyRanges,
         hasATU: false,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
         // SDRCONSOLE_LEVEL_GET includes AGC, STRENGTH, METER,
         // SLOPE_HIGH, SLOPE_LOW; SET is NONE per Hamlib ts2000.c.
         antennaCount: 1,
@@ -265,6 +269,7 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsRFPowerMeter: true,
         supportsCompMeter: true,
         supportsCWKeyer: true,
+        supportsSendCW: true,
         antennaCount: 2,       // PIHPSDR_ANTS = ANT_1 | ANT_2
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown],
         // PIHPSDR_FUNC_ALL: TONE, TSQL, BC (beat cancel), NB, NR,

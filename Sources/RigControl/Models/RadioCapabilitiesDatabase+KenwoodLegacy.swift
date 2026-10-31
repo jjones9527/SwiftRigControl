@@ -88,6 +88,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepDown, .stepUp],
         supportedFunctions: [.beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .tuner, .vox],
         preampLevels: [12]
@@ -128,6 +130,8 @@ extension RadioCapabilitiesDatabase.Kenwood {
         hasDualReceiver: false,
         hasATU: false,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepDown, .stepUp],
         supportedFunctions: [.beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .tuner, .vox],
         preampLevels: [12]

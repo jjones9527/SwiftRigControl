@@ -42,7 +42,18 @@ extension RigctldCommandHandler {
             return .ok(command: command)
 
         case "FBKIN":
-            try await rigController.setBreakIn(enabled ? .full : .off)
+            if enabled {
+                try await rigController.setBreakIn(.full)
+            } else {
+                // "Full break-in off". Kenwood can't switch break-in off
+                // over CAT, and Hamlib sends the semi-break-in delay
+                // (SD0050) there, so fall back to .semi.
+                do {
+                    try await rigController.setBreakIn(.off)
+                } catch RigError.unsupportedOperation {
+                    try await rigController.setBreakIn(.semi)
+                }
+            }
             return .ok(command: command)
 
         // Hamlib RIG_FUNC_NB / RIG_FUNC_NR are on/off switches; the levels

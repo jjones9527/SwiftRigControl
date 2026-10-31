@@ -53,6 +53,7 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
+        supportsCWKeyer: true,
         supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .lock, .manualNotch, .monitor, .vox],
@@ -117,6 +118,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10, 20]
@@ -189,6 +192,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsDCS: true,
         supportsDuplex: true,
         availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10, 20]
@@ -229,6 +234,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10, 20]
@@ -273,6 +280,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10]
@@ -358,6 +367,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: true,  // FTDX-101D has dual receiver
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10, 20]
@@ -397,6 +408,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
         supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10, 20]
@@ -532,6 +545,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasDualReceiver: false,
         hasATU: true,  // Built-in ATU
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .stepDown, .stepUp, .toggle, .tune],
         supportedFunctions: [.ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
         preampLevels: [10]

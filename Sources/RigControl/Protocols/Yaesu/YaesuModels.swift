@@ -77,7 +77,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft710,
-                quirks: .ft710.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(tuneCommand: "AC003")
+                quirks: .ft710.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(tuneCommand: "AC003", cwMessageStyle: .newcat(storedMessages: 5, playsSlotsDirectly: true))
             )
         }
     )
@@ -196,7 +196,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (400, 100))
             )
         }
     )
@@ -235,7 +235,7 @@ extension RadioDefinition.Yaesu {
                 // `rigs/yaesu/ft2000.c` — FTDX-3000 does not, so
                 // override on this factory rather than baking the
                 // flag into the shared `.ft2000Family` preset.
-                quirks: .ft2000Family.withTargetableMode().withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
+                quirks: .ft2000Family.withTargetableMode().withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (300, 50))
             )
         }
     )
@@ -283,7 +283,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft950,
-                quirks: .newcatNoST.withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
+                quirks: .newcatNoST.withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (300, 50))
             )
         }
     )
@@ -356,7 +356,7 @@ extension RadioDefinition.Yaesu {
                 // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft9000.c`, and Hamlib verifies its set
                 // commands with `AI;` instead of `ID;` (newcat.c:10926).
-                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
+                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (300, 50))
             )
         }
     )
@@ -558,7 +558,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, copyVFOCommand: "VV")
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, copyVFOCommand: "VV", cwPitch: (400, 100), cwMessageStyle: .newcat(storedMessages: 3, playsSlotsDirectly: false))
             )
         }
     )

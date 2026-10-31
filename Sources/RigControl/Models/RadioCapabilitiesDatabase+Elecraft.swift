@@ -68,6 +68,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
         supportedFunctions: .elecraftKStandard,
         preampLevels: [1]
@@ -113,6 +115,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         // Antennas — K2 supports ANT 1/2 when the KAT-2 internal
         // tuner is installed; K2/100 with the external KAT100 also
         // exposes multiple antenna ports through the radio's CAT.
@@ -169,6 +173,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
         supportedFunctions: .elecraftKStandard,
         preampLevels: [1]
@@ -211,6 +217,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
         supportedFunctions: .elecraftKStandard,
         preampLevels: [10, 20, 30]
@@ -256,6 +264,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: false,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
         supportedFunctions: .elecraftKStandard,
         preampLevels: [1]
@@ -298,6 +308,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasDualReceiver: true,
         hasATU: true,
         supportsSignalStrength: true,
+        supportsCWKeyer: true,
+        supportsSendCW: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
         supportedFunctions: .elecraftKStandard,
         preampLevels: [1]
