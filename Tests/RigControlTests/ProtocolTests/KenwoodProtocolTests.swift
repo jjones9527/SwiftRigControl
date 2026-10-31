@@ -442,6 +442,18 @@ import Testing
         await stubIDReply()
         try await kenwoodProtocol.setFunction(.tuner, enabled: false)
 
+        // Hamlib kenwood_set_func RIG_FUNC_TUNER: "AC1%c0". Through v1.3.1
+        // off sent AC110, which is Hamlib's "on", and on sent AC111,
+        // which starts a tune cycle.
+        #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "AC100;")
+    }
+
+    @Test func setFunctionTunerOnDoesNotStartATune() async throws {
+        try await kenwoodProtocol.connect()
+        await mockTransport.reset()
+        await stubIDReply()
+        try await kenwoodProtocol.setFunction(.tuner, enabled: true)
+
         #expect(String(data: await mockTransport.recordedWrites[0], encoding: .ascii) == "AC110;")
     }
 

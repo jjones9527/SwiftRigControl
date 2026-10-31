@@ -75,6 +75,39 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// radio has no level and `NR` is on/off only (`ts590.c`: 0-9).
     public internal(set) var noiseReductionLevelMax: Int?
 
+    /// How the `LK` lock command carries its on/off value.
+    public enum LockForm: Sendable, Equatable {
+        /// `LK0` / `LK1` (Hamlib `kenwood_set_func`).
+        case single
+        /// `LK00` / `LK10` (TS-590S/SG, `ts590.c:486`).
+        case trailingZero
+        /// `LK00` / `LK11` (TS-480, TS-2000; `ts480.c:271`, `ts2000.c:340`).
+        case doubled
+    }
+
+    /// How the antenna tuner is switched on and off (not a tune cycle,
+    /// which is `AC111`).
+    public enum TunerForm: Sendable, Equatable {
+        /// `AC100` / `AC110`: TX tuner on, no tune (Hamlib `kenwood.c` RIG_FUNC_TUNER).
+        case standard
+        /// `AC000` / `AC110`: RX and TX tuner together (TS-590, `ts590.c:490`).
+        case receiveAndTransmit
+        /// `AC 00` / `AC 10` (TS-570, `ts570.c:266`).
+        case ts570
+        /// `ZZTU0` / `ZZTU1` (PowerSDR / Thetis, `flex6xxx.c:1170`).
+        case powerSDR
+    }
+
+    /// `LK` lock form.
+    public internal(set) var lockForm: LockForm = .single
+
+    /// Antenna tuner on/off form.
+    public internal(set) var tunerForm: TunerForm = .standard
+
+    /// VOX on/off command: `VX`, or `ZZVE` on PowerSDR / Thetis
+    /// (`flex6xxx.c:1162`).
+    public internal(set) var voxPrefix: String = "VX"
+
     /// Behavior before the Hamlib command audit; used for radios without
     /// a credible Hamlib reference.
     public static let generic = KenwoodLevelProfile(
@@ -104,7 +137,10 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         compressorHasTwoValues: true,
         compressorMax: 100,
         noiseReductionLevelMax: 9
-    )
+    ).with {
+        $0.lockForm = .trailingZero
+        $0.tunerForm = .receiveAndTransmit
+    }
 
     /// TS-590SG: as the TS-590S, with monitor gain 0–20.
     public static let ts590SG = ts590S.with { $0.monitorGainMax = 20 }
@@ -112,12 +148,16 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// TS-2000 and SDR-Console (Hamlib `ts2000.c`): `GT` 3 digits.
     public static let ts2000 = ts590S.with {
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 5, .medium: 10, .slow: 20])
+        $0.lockForm = .doubled
+        $0.tunerForm = .standard
     }
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.
     public static let ts480 = ts590S.with {
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 1, .slow: 2])
         $0.rfGainMax = 100
+        $0.lockForm = .doubled
+        $0.tunerForm = .standard
     }
 
     /// TS-890S (Hamlib `ts890s.c`): `GC`, 1-digit `RA`, `SQnnn`, `NB1n`.
@@ -135,7 +175,10 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     }
 
     /// TS-570D / TS-570S: a single 18 dB attenuator.
-    public static let ts570 = generic.with { $0.attenuatorSteps = [18] }
+    public static let ts570 = generic.with {
+        $0.attenuatorSteps = [18]
+        $0.tunerForm = .ts570
+    }
 
     /// Lab599 TX-500: a single 20 dB attenuator, `PL` two values.
     public static let tx500 = generic.with {
@@ -149,6 +192,13 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// Radios with no CAT attenuator in Hamlib (TS-450S, TS-690S,
     /// TS-850S, TS-940S, Flex 6000, PowerSDR, Thetis).
     public static let noAttenuator = generic.with { $0.attenuatorSteps = [] }
+
+    /// PowerSDR and Thetis: no attenuator; VOX and tuner on the `ZZ`
+    /// command set (Hamlib `flex6xxx.c:1162-1170`).
+    public static let powerSDR = noAttenuator.with {
+        $0.voxPrefix = "ZZVE"
+        $0.tunerForm = .powerSDR
+    }
 
     /// Memberwise initializer.
     ///

@@ -13,7 +13,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx10,
-                quirks: .ftdx10Family.withLevelScales(squelchMax: 100)
+                quirks: .ftdx10Family.withLevelScales(squelchMax: 100).withFunctionForms(compressorHasReceiverDigit: false)
             )
         }
     )
@@ -77,7 +77,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft710,
-                quirks: .ft710.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
+                quirks: .ft710.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(tuneCommand: "AC003")
             )
         }
     )
@@ -128,7 +128,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101D,
-                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration)
+                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration).withFunctionForms(lockCodes: ("7", "4"))
             )
         }
     )
@@ -144,7 +144,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx101MP,
-                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration)
+                quirks: .ftdx101Family.withLevelScales(squelchMax: 100, sMeterCalibration: YaesuCATProtocol.ftdx101SMeterCalibration).withFunctionForms(lockCodes: ("7", "4"))
             )
         }
     )
@@ -196,7 +196,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450D,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration)
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
             )
         }
     )
@@ -235,7 +235,7 @@ extension RadioDefinition.Yaesu {
                 // `rigs/yaesu/ft2000.c` — FTDX-3000 does not, so
                 // override on this factory rather than baking the
                 // flag into the shared `.ft2000Family` preset.
-                quirks: .ft2000Family.withTargetableMode().withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
+                quirks: .ft2000Family.withTargetableMode().withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
             )
         }
     )
@@ -251,7 +251,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000,
-                quirks: .ft2000Family
+                quirks: .ft2000Family.withFunctionForms(lockCodes: ("7", "4"))
             )
         }
     )
@@ -283,7 +283,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft950,
-                quirks: .newcatNoST.withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
+                quirks: .newcatNoST.withLevelScales(sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
             )
         }
     )
@@ -301,7 +301,7 @@ extension RadioDefinition.Yaesu {
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000,
                 // FTDX-5000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft5000.c`.
-                quirks: .newcatNoST.withTargetableMode()
+                quirks: .newcatNoST.withTargetableMode().withFunctionForms(compressorHasReceiverDigit: false, lockCodes: ("7", "4"))
             )
         }
     )
@@ -317,7 +317,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx1200,
-                quirks: .newcatNoST
+                quirks: .newcatNoST.withFunctionForms(lockCodes: ("7", "4"))
             )
         }
     )
@@ -356,7 +356,7 @@ extension RadioDefinition.Yaesu {
                 // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft9000.c`, and Hamlib verifies its set
                 // commands with `AI;` instead of `ID;` (newcat.c:10926).
-                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration)
+                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false)
             )
         }
     )
@@ -558,7 +558,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ft450,
-                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration)
+                quirks: .ft450.withLevelScales(noiseReductionLevelMax: 11, attenuatorSteps: [20], sMeterCalibration: YaesuCATProtocol.ft450SMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, copyVFOCommand: "VV")
             )
         }
     )

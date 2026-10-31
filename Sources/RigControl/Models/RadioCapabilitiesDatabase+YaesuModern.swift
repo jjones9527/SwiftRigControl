@@ -47,7 +47,8 @@ extension RadioCapabilitiesDatabase.Yaesu {
         requiresVFOSelection: false,
         requiresModeFilter: true,
         supportedVFOOperations: .yaesuStandard,
-        supportedFunctions: .yaesuHFStandard
+        supportedFunctions: .yaesuHFStandard,
+        preampLevels: [10, 20]
     )
 
     // MARK: - Yaesu FT-950
@@ -90,7 +91,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true
+        requiresModeFilter: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
+        preampLevels: [10, 17]
     )
 
     /// Yaesu FTDX-5000 HF/6m 200W flagship transceiver with dual receiver
@@ -131,7 +135,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true
+        requiresModeFilter: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FTDX-1200 HF/6m 100W transceiver
@@ -172,7 +179,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true
+        requiresModeFilter: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FT-100 HF/VHF/UHF mobile transceiver
@@ -258,7 +268,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         hasATU: true,
         supportsSignalStrength: true,
         requiresVFOSelection: false,
-        requiresModeFilter: true
+        requiresModeFilter: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .noiseBlanker2, .vox],
+        preampLevels: [10]
     )
 
     /// Yaesu FT-847 HF/VHF/UHF all-band transceiver

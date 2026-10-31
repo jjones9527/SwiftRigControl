@@ -91,6 +91,7 @@ extension RadioCapabilitiesDatabase.Lab599 {
         // pure on/off bits.)
         supportedFunctions: [
             .ctcssTone, .ctcssSquelch, .beatCancel, .autoNotch, .compressor,
-        ]
+        ],
+        preampLevels: [20]
     )
 }

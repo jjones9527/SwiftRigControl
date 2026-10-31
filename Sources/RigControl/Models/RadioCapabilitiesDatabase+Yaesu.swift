@@ -53,7 +53,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        supportsSendCW: true
+        supportsSendCW: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .lock, .manualNotch, .monitor, .vox],
+        preampLevels: [10, 20]
     )
 
 
@@ -113,7 +116,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FT-991A - HF/VHF/UHF all-mode transceiver
@@ -182,7 +188,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
-        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000]
+        availableTuningSteps: [1, 5, 10, 100, 500, 1000, 5000, 6250, 10000, 12500, 20000, 25000, 50000, 100000],
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FT-710 AESS - HF/6m transceiver
@@ -219,7 +228,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FT-891 - HF/6m all-mode transceiver
@@ -260,7 +272,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10]
     )
 
     /// Yaesu FT-817 - Portable QRP HF/VHF/UHF transceiver
@@ -342,7 +357,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: true,  // FTDX-101D has dual receiver
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FTDX-101MP - HF/6m 200W flagship transceiver
@@ -378,7 +396,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: true,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+        supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10, 20]
     )
 
     /// Yaesu FT-857D - HF/VHF/UHF 100W mobile transceiver
@@ -510,7 +531,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
         ],
         hasDualReceiver: false,
         hasATU: true,  // Built-in ATU
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .stepDown, .stepUp, .toggle, .tune],
+        supportedFunctions: [.ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+        preampLevels: [10]
     )
 
 }

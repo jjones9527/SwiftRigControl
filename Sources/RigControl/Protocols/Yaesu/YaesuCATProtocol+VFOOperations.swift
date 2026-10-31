@@ -28,7 +28,7 @@ extension YaesuCATProtocol {
 
         switch op {
         case .copyVFO:
-            command = "AB"
+            command = quirks.copyVFOCommand   // VV on the FT-450
         case .exchange, .toggle:
             command = "SV"
         case .vfoToMemory:
@@ -44,7 +44,7 @@ extension YaesuCATProtocol {
         case .bandDown:
             command = "BD0"
         case .tune:
-            command = "AC002"
+            command = quirks.tuneCommand      // AC003 on the FT-710
         case .memoryClear:
             throw RigError.unsupportedOperation(
                 "VFO operation '\(op.rawValue)' is not a single Yaesu CAT command"

@@ -141,8 +141,11 @@ extension ElecraftProtocol {
     /// - Parameter level: 0 = off, 1 = Preamp 1, 2 = Preamp 2 (K3/K4 only)
     /// - Throws: `RigError.invalidParameter` for out-of-range values
     public func setPreamp(_ level: Int) async throws {
-        guard (0...2).contains(level) else {
-            throw RigError.invalidParameter("Preamp level must be 0 (off), 1 (Preamp 1), or 2 (Preamp 2)")
+        // The K4 has three stages (10/20/30 dB, PA1-PA3; Hamlib K4 caps),
+        // so the limit follows the radio's preamp list.
+        let stages = max(2, capabilities.preampLevels.count)
+        guard (0...stages).contains(level) else {
+            throw RigError.invalidParameter("Preamp level must be 0 (off) through \(stages)")
         }
         let command = "PA\(level)"
         try await sendSetCommand(command)

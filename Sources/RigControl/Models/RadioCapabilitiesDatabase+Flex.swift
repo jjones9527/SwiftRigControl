@@ -233,7 +233,8 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsSignalStrength: true,
         // SDRCONSOLE_LEVEL_GET includes AGC, STRENGTH, METER,
         // SLOPE_HIGH, SLOPE_LOW; SET is NONE per Hamlib ts2000.c.
-        antennaCount: 1
+        antennaCount: 1,
+        preampLevels: [12]
     )
 
     /// PiHPSDR (OpenHPSDR) — open-source software SDR client
@@ -270,6 +271,7 @@ extension RadioCapabilitiesDatabase.Flex {
         // ANF, COMP. CTCSS lives on `SupportsCTCSS`; NB/NR/ANF
         // live on dedicated traits; only the pure on/off bits
         // land here.
-        supportedFunctions: [.autoNotch, .beatCancel]
+        supportedFunctions: [.autoNotch, .beatCancel, .compressor, .ctcssSquelch, .ctcssTone],
+        preampLevels: [20]
     )
 }

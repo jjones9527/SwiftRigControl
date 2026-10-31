@@ -174,6 +174,28 @@ extension YaesuCATProtocol {
         /// ``YaesuCATProtocol/getSignalStrength()``.
         public internal(set) var sMeterCalibration: CalibrationTable = YaesuCATProtocol.defaultSMeterCalibration
 
+        // MARK: Per-model function forms (newcat_set_func / newcat_vfo_op)
+
+        /// `PR0n` (receiver digit) or `PRn` for the speech compressor.
+        /// Hamlib sends `PR0n` on the FT-891/991/710, FTDX-1200/3000 and
+        /// FTDX-101D/MP and `PRn` on the rest (`newcat.c:6354-6366`).
+        public internal(set) var compressorHasReceiverDigit: Bool = true
+
+        /// The `LK` values for lock on and off: `7` / `4` on the
+        /// FTDX-1200/3000/5000/101D/101MP, `1` / `0` elsewhere
+        /// (`newcat.c:6227-6243`).
+        public internal(set) var lockOnCode: String = "1"
+        /// See ``lockOnCode``.
+        public internal(set) var lockOffCode: String = "0"
+
+        /// Starts an ATU tune: `AC003` on the FT-710, `AC002` elsewhere
+        /// (`newcat_vfo_op` RIG_OP_TUNE, `newcat.c:7563-7571`).
+        public internal(set) var tuneCommand: String = "AC002"
+
+        /// Copies VFO A to B: `VV` on the FT-450, `AB` elsewhere
+        /// (`newcat.c:7575-7583`).
+        public internal(set) var copyVFOCommand: String = "AB"
+
         /// Creates a quirks preset; every parameter defaults to modern-newcat behavior.
         public init(
             supportsSTSplit: Bool = false,
@@ -368,6 +390,35 @@ extension YaesuCATProtocol {
             if let rfGainMax { copy.rfGainMax = rfGainMax }
             if let noiseReductionLevelMax { copy.noiseReductionLevelMax = noiseReductionLevelMax }
             if let attenuatorSteps { copy.attenuatorSteps = attenuatorSteps }
+            return copy
+        }
+
+        /// Returns a copy with per-model function command forms replaced.
+        ///
+        /// ```swift
+        /// let quirks = Quirks.newcatNoST.withFunctionForms(compressorHasReceiverDigit: false)
+        /// ```
+        ///
+        /// - Parameters:
+        ///   - compressorHasReceiverDigit: ``compressorHasReceiverDigit``, or `nil` to keep it.
+        ///   - lockCodes: ``lockOnCode`` and ``lockOffCode``, or `nil` to keep them.
+        ///   - tuneCommand: ``tuneCommand``, or `nil` to keep it.
+        ///   - copyVFOCommand: ``copyVFOCommand``, or `nil` to keep it.
+        /// - Returns: The adjusted quirks.
+        public func withFunctionForms(
+            compressorHasReceiverDigit: Bool? = nil,
+            lockCodes: (on: String, off: String)? = nil,
+            tuneCommand: String? = nil,
+            copyVFOCommand: String? = nil
+        ) -> Quirks {
+            var copy = self
+            if let compressorHasReceiverDigit { copy.compressorHasReceiverDigit = compressorHasReceiverDigit }
+            if let lockCodes {
+                copy.lockOnCode = lockCodes.on
+                copy.lockOffCode = lockCodes.off
+            }
+            if let tuneCommand { copy.tuneCommand = tuneCommand }
+            if let copyVFOCommand { copy.copyVFOCommand = copyVFOCommand }
             return copy
         }
 

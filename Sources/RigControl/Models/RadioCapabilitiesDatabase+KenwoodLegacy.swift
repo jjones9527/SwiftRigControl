@@ -45,7 +45,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.lock]
     )
 
     /// Kenwood TS-570D - HF/6m 100W transceiver with internal ATU and DSP
@@ -85,7 +87,10 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .tuner, .vox],
+        preampLevels: [12]
     )
 
     /// Kenwood TS-570S - HF-only 100W transceiver with DSP (no 6m, no ATU)
@@ -122,7 +127,10 @@ extension RadioCapabilitiesDatabase.Kenwood {
         ],
         hasDualReceiver: false,
         hasATU: false,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.beatCancel, .compressor, .ctcssSquelch, .ctcssTone, .lock, .tuner, .vox],
+        preampLevels: [12]
     )
 
     /// Kenwood TH-D72A / TH-D72 - Dual-band handheld with APRS and GPS
@@ -203,7 +211,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
             DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .am], canTransmit: false),
         ],
         hasATU: true,   // Optional AT-450 internal ATU
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.lock]
     )
 
     /// Kenwood TS-690S — HF + 6m 100W transceiver (1992)
@@ -242,7 +252,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
             DetailedFrequencyRange(min: 50_000_000, max: 54_000_000, modes: [.lsb, .usb, .cw, .cwR, .fm, .am, .rtty, .rttyR], canTransmit: true, bandName: "6m"),
         ],
         hasATU: true,
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.lock]
     )
 
     /// Kenwood TS-940S — HF 100W flagship transceiver (1985)
@@ -283,7 +295,9 @@ extension RadioCapabilitiesDatabase.Kenwood {
             DetailedFrequencyRange(min: 29_700_001, max: 30_000_000, modes: [.usb, .am], canTransmit: false),
         ],
         hasATU: false,  // No factory ATU; external AT-940 was optional
-        supportsSignalStrength: true
+        supportsSignalStrength: true,
+        supportedVFOOperations: [.stepDown, .stepUp],
+        supportedFunctions: [.lock]
     )
 
     /// Kenwood TS-950S — HF 150W flagship transceiver (1988)

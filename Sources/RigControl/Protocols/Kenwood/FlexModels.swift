@@ -112,7 +112,7 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.powerSDR,
                 modeStyle: .powerSDR,
-                levelProfile: .noAttenuator
+                levelProfile: .powerSDR
             )
         },
         hostRequirement: .windowsCompanion(app: "PowerSDR")
@@ -150,7 +150,7 @@ extension RadioDefinition.Flex {
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Flex.thetis,
                 modeStyle: .powerSDR,
-                levelProfile: .noAttenuator
+                levelProfile: .powerSDR
             )
         },
         hostRequirement: .windowsCompanion(app: "Thetis")

@@ -69,7 +69,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasATU: true,
         supportsSignalStrength: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [1]
     )
     // MARK: - Remaining Elecraft Radios
 
@@ -126,7 +127,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         // model-specific (`SWT19` on K3, `SWT44` on KX3, etc.)
         // and not yet plumbed through ElecraftProtocol.
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [14]
     )
 
     /// Elecraft K3S - HF/6m transceiver (enhanced K3)
@@ -168,7 +170,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasATU: true,
         supportsSignalStrength: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [1]
     )
 
     /// Elecraft K4 - HF/6m SDR transceiver
@@ -209,7 +212,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasATU: true,
         supportsSignalStrength: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [10, 20, 30]
     )
 
     /// Elecraft KX2 - Portable HF transceiver
@@ -253,7 +257,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasATU: true,
         supportsSignalStrength: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [1]
     )
 
     /// Elecraft KX3 - Portable HF/6m transceiver
@@ -294,7 +299,8 @@ extension RadioCapabilitiesDatabase.Elecraft {
         hasATU: true,
         supportsSignalStrength: true,
         supportedVFOOperations: [.stepUp, .stepDown, .bandUp, .bandDown, .memoryToVFO],
-        supportedFunctions: .elecraftKStandard
+        supportedFunctions: .elecraftKStandard,
+        preampLevels: [1]
     )
 
 }

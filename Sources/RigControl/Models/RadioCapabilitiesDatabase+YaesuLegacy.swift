@@ -151,7 +151,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: true
+    requiresModeFilter: true,
+    supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+    supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
+    preampLevels: [10, 17]
   )
 
   /// Shared FT-1000MP-family capabilities. The CAT surface is identical;
@@ -460,7 +463,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: true,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: false
+    requiresModeFilter: false,
+    supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .stepDown, .stepUp, .toggle, .tune],
+    supportedFunctions: [.ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .vox],
+    preampLevels: [10]
   )
 
   /// Yaesu FTDX-3000 - HF/6m 100W transceiver
@@ -530,7 +536,10 @@ extension RadioCapabilitiesDatabase.Yaesu {
     hasATU: false,
     supportsSignalStrength: true,
     requiresVFOSelection: false,
-    requiresModeFilter: true
+    requiresModeFilter: true,
+    supportedVFOOperations: [.bandDown, .bandUp, .copyVFO, .exchange, .memoryToVFO, .stepDown, .stepUp, .toggle, .tune, .vfoToMemory],
+    supportedFunctions: [.autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .noiseBlanker2, .tuner, .vox],
+    preampLevels: [10, 17]
   )
 
 }
