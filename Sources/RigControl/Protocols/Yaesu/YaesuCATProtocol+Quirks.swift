@@ -28,15 +28,16 @@ extension YaesuCATProtocol {
         /// FT-450's `ST` means Step, not Split, so Hamlib excludes
         /// it there. See `newcat.c:578` and the exclusion at
         /// `newcat.c:8327`.
-        public let supportsSTSplit: Bool
+        public internal(set) var supportsSTSplit: Bool
 
         /// `true` when the radio's `FT` command uses the `FT2;` /
         /// `FT3;` numeric encoding for VFO A/B (with `FT0;`/`FT1;`
         /// reserved for toggling the TX function). Applies to
         /// FT-950, FT-2000, FT-DX3000/5000/1200, FT-991(A),
         /// FTDX-10, FT-DX101(D/MP). Other radios use the classic
-        /// `FT0;`/`FT1;` for A/B. See `newcat.c:8216-8222`.
-        public let usesFT23ForVFOSelection: Bool
+        /// `FT0;`/`FT1;` for A/B, the FTDX-9000 and FT-450 among them.
+        /// See `newcat.c:8301-8307`.
+        public internal(set) var usesFT23ForVFOSelection: Bool
 
         /// `true` when the radio's `FT` command exists at all. The
         /// FT-891 is the only known modern Yaesu HF radio that has
@@ -402,11 +403,25 @@ extension YaesuCATProtocol {
         /// uses `SH%c%d%02d;` with the narrow flag always `1`
         /// per Hamlib `newcat.c:9207`.
         public static let ft891 = Quirks(
-            supportsSTSplit: false,
+            // Hamlib's FT-891 has its own split: `ST1;` / `ST0;`
+            // (ft891.c:377-420), although the shared newcat table
+            // lists no ST for it.
+            supportsSTSplit: true,
             usesFT23ForVFOSelection: false,
             supportsFTVFOSelection: false,
             filterCommandStyle: .vfoAndNarrow(narrowAlwaysOn: true)
         )
+
+        /// Returns a copy with ``usesFT23ForVFOSelection`` replaced.
+        ///
+        /// - Parameter enabled: `true` for `FT2;` / `FT3;`, `false` for
+        ///   `FT0;` / `FT1;`.
+        /// - Returns: The adjusted quirks.
+        public func withFT23VFOSelection(_ enabled: Bool) -> Quirks {
+            var copy = self
+            copy.usesFT23ForVFOSelection = enabled
+            return copy
+        }
 
         /// Returns a copy of this preset with `hasTargetableMode`
         /// overridden. Convenience for factory sites where a

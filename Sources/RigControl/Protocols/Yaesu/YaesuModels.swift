@@ -356,7 +356,9 @@ extension RadioDefinition.Yaesu {
                 // FTDX-9000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft9000.c`, and Hamlib verifies its set
                 // commands with `AI;` instead of `ID;` (newcat.c:10926).
-                quirks: .newcatNoST.withTargetableMode().withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (300, 50)).withMeters(.ftdx9000, twoDigitNumbers: true)
+                // Its FT is FT0 / FT1: it isn't in Hamlib's FT2 / FT3
+                // list (newcat.c:8301-8307).
+                quirks: .newcatNoST.withTargetableMode().withFT23VFOSelection(false).withVerifyCommand("AI").withLevelScales(attenuatorSteps: [], sMeterCalibration: YaesuCATProtocol.newcatSMeterCalibration).withFunctionForms(compressorHasReceiverDigit: false, cwPitch: (300, 50)).withMeters(.ftdx9000, twoDigitNumbers: true)
             )
         }
     )

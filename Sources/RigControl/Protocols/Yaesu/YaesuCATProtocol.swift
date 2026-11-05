@@ -384,54 +384,56 @@ public actor YaesuCATProtocol:
     // MARK: - Split Operation
 
     public func setSplit(_ enabled: Bool) async throws {
-        // Yaesu's canonical split command is `ST0;` (off) / `ST1;`
-        // (on), *not* `FT0;`/`FT1;` — the pre-fix code used `FT`,
-        // which is TX-VFO selection. On FT-950/FT-2000/FT-991(A)/
-        // FT-DX3000/5000/1200/9000, sending `FT1;` where split was
-        // intended would silently reassign the TX VFO instead of
-        // enabling split, and could TX on the wrong frequency.
-        //
-        // Reference: Hamlib `newcat_set_split` (newcat.c:8317).
+        // Hamlib `newcat_set_split_vfo` (newcat.c:2770-2905): `ST1;` /
+        // `ST0;` where the radio has ST (and on the FT-891, ft891.c:377),
+        // otherwise split is the TX VFO: `FT` to VFO B for on, VFO A for
+        // off (`newcat_set_tx_vfo`, newcat.c:8248-8320; the FT-991 and
+        // FTDX-10 force exactly that pair). `ST` is not `FT`: on the
+        // FT-950 / FT-2000 / FT-991(A) / FTDX-3000/5000/1200 `FT0;` /
+        // `FT1;` toggle the TX function, so the FT path uses
+        // ``selectVFO(_:)``'s per-family digits. Through v1.3.1 these
+        // radios threw here.
         guard capabilities.hasSplit else {
             throw RigError.unsupportedOperation("Split operation not supported")
         }
 
-        guard quirks.supportsSTSplit else {
-            // On radios without `ST` (FT-950/891/991/2000/DX3000
-            // etc.), Hamlib establishes split by explicitly
-            // selecting the TX VFO via `FT`. That is a semantically
-            // different operation (which VFO transmits, rather
-            // than an on/off toggle), so surface it explicitly
-            // rather than silently doing the wrong thing.
-            throw RigError.unsupportedOperation(
-                "Split cannot be toggled as a state on this Yaesu radio; use selectVFO() to set the TX VFO explicitly"
-            )
+        if quirks.supportsSTSplit {
+            try await sendSetCommand(enabled ? "ST1" : "ST0")
+        } else if quirks.supportsFTVFOSelection {
+            try await selectVFO(enabled ? .b : .a)
+        } else {
+            throw RigError.unsupportedOperation("Split is not available over CAT on this Yaesu radio")
         }
-
-        let command = enabled ? "ST1" : "ST0"
-        try await sendSetCommand(command)
     }
 
     public func getSplit() async throws -> Bool {
-        guard quirks.supportsSTSplit else {
-            throw RigError.unsupportedOperation(
-                "Split state cannot be read on this Yaesu radio (ST command unavailable)"
-            )
+        if quirks.supportsSTSplit {
+            try await sendCommand("ST")
+            let response = try await receiveResponse()
+            // STx; 0 is off; 1 is on, and 2 on the FT-891 is split +5 kHz
+            // (ft891.c:466).
+            guard response.hasPrefix("ST"), let code = response.dropFirst(2).first else {
+                throw RigError.invalidResponse
+            }
+            return code != "0"
         }
-
-        try await sendCommand("ST")
+        guard quirks.supportsFTVFOSelection else {
+            throw RigError.unsupportedOperation("Split is not available over CAT on this Yaesu radio")
+        }
+        // Without ST, Hamlib reports split when the TX VFO (`FT;`) is not
+        // the receive VFO (newcat.c:2908-2950). We receive on VFO A, as
+        // setSplit leaves it, so split is TX on VFO B. Hamlib reads `0` /
+        // `1` (newcat.c:8345-8370); `2` / `3` are accepted as well.
+        try await sendCommand("FT")
         let response = try await receiveResponse()
-
-        // Response format: STx; where x is 0 (off) or 1 (on)
-        guard response.hasPrefix("ST"),
-              response.count >= 3 else {
+        guard response.hasPrefix("FT"), let code = response.dropFirst(2).first else {
             throw RigError.invalidResponse
         }
-
-        let codeIndex = response.index(response.startIndex, offsetBy: 2)
-        let codeChar = response[codeIndex]
-
-        return codeChar == "1"
+        switch code {
+        case "0", "2": return false
+        case "1", "3": return true
+        default: throw RigError.invalidResponse
+        }
     }
 
     // MARK: - Private Methods

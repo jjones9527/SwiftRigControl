@@ -163,12 +163,13 @@ import Testing
     // MARK: - FT-891
 
     @Test func ft891Preset() {
-        // Per Hamlib newcat.c:516 the FT-891 has no `FT` command
-        // (both split and TX VFO selection unsupported). SH uses
+        // Per Hamlib newcat.c:516 the FT-891 has no `FT` command (no
+        // TX VFO selection), but its own split uses `ST`
+        // (ft891.c:377-420). SH uses
         // the VFO-plus-narrow form with the narrow flag ALWAYS `1`
         // per Hamlib newcat.c:9207.
         let q = YaesuCATProtocol.Quirks.ft891
-        #expect(q.supportsSTSplit == false)
+        #expect(q.supportsSTSplit == true)
         #expect(q.usesFT23ForVFOSelection == false)
         #expect(q.supportsFTVFOSelection == false)
         #expect(q.frequencyDigits == 9)
