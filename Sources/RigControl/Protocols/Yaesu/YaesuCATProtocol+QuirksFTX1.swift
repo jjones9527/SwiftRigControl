@@ -26,33 +26,37 @@ extension YaesuCATProtocol.Quirks {
     /// an `SV0;` prelude (VFO mode restore) before each `MD` /
     /// `FA` / `FB` set — matches Hamlib's `ftx1_ensure_vfo_mode()`
     /// behavior in `ftx1_mode.c` and `ftx1_freq.c`.
-    public static let ftx1 = YaesuCATProtocol.Quirks(
-        supportsSTSplit: true,
-        usesFT23ForVFOSelection: true,
-        supportsFTVFOSelection: true,
-        frequencyDigits: 9,
-        modeCodeTable: [
-            .lsb:      "1",
-            .usb:      "2",
-            .cw:       "3",   // CW-USB on FTX-1
-            .fm:       "4",
-            .am:       "5",
-            .rtty:     "6",   // RTTY-LSB
-            .cwR:      "7",   // CW-LSB on FTX-1
-            .dataLSB:  "8",
-            .rttyR:    "9",   // RTTY-USB
-            .dataFM:   "A",
-            .fmN:      "B",
-            .dataUSB:  "C",
-            .amN:      "D",
-            .c4fm:     "E",
-            .dataFMN:  "F",
-        ],
-        requiresMemoryModeEscape: true,
-        filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
-        // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
-        // which includes RIG_TARGETABLE_MODE.
-        hasTargetableMode: true,
-        usesFTX1ClarifierCommands: true
-    ).withFunctionForms(cwMessageStyle: .ftx1)
+    public static let ftx1: YaesuCATProtocol.Quirks = {
+        var quirks = YaesuCATProtocol.Quirks(
+            supportsSTSplit: true,
+            usesFT23ForVFOSelection: true,
+            supportsFTVFOSelection: true,
+            frequencyDigits: 9,
+            modeCodeTable: [
+                .lsb:      "1",
+                .usb:      "2",
+                .cw:       "3",   // CW-USB on FTX-1
+                .fm:       "4",
+                .am:       "5",
+                .rtty:     "6",   // RTTY-LSB
+                .cwR:      "7",   // CW-LSB on FTX-1
+                .dataLSB:  "8",
+                .rttyR:    "9",   // RTTY-USB
+                .dataFM:   "A",
+                .fmN:      "B",
+                .dataUSB:  "C",
+                .amN:      "D",
+                .c4fm:     "E",
+                .dataFMN:  "F",
+            ],
+            requiresMemoryModeEscape: true,
+            filterCommandStyle: .doubleZero,  // Hamlib newcat.c:9214
+            // FTX-1 exposes RIG_TARGETABLE_ALL per rigs/yaesu/ftx1/ftx1.c,
+            // which includes RIG_TARGETABLE_MODE.
+            hasTargetableMode: true,
+            usesFTX1ClarifierCommands: true
+        ).withFunctionForms(cwMessageStyle: .ftx1)
+        quirks.usesFTX1PowerCommands = true
+        return quirks
+    }()
 }

@@ -17,8 +17,7 @@ import Foundation
 //   current   RM7 (RM10)       amps
 //
 // The FTDX-3000/5000 read SWR on RM2 when the tuner is on and the meter
-// is set to SWR (newcat.c:5327-5345); we always use RM6, Hamlib's
-// choice otherwise.
+// is set to SWR (newcat.c:5327-5345, Quirks.readsTunerSWROnRM2).
 
 extension YaesuCATProtocol: SupportsTXMeters {
 
@@ -32,7 +31,7 @@ extension YaesuCATProtocol: SupportsTXMeters {
 
     public func getSWR() async throws -> MeterReading {
         try requireMeter(capabilities.supportsSWRMeter, "SWR")
-        let raw = try await readMeter(single: 6, ftdx9000: 9)
+        let raw = try await readMeter(single: try await swrMeterNumber(), ftdx9000: 9)
         let ratio = quirks.meterCalibration.swr.value(forRaw: raw)
         return MeterReading(kind: .swr, raw: raw, normalized: min(max((ratio - 1) / 9, 0), 1), physicalValue: ratio)
     }
@@ -63,6 +62,30 @@ extension YaesuCATProtocol: SupportsTXMeters {
         let raw = try await readMeter(single: 7, ftdx9000: 10)
         let amps = quirks.meterCalibration.current.value(forRaw: raw)
         return MeterReading(kind: .current, raw: raw, normalized: min(amps / 25, 1), physicalValue: amps)
+    }
+
+    /// `RM6`, or on the FTDX-3000/5000 with the tuner on, `RM2`. With
+    /// the tuner on and the meter (`MS`) on something other than SWR
+    /// (`3`) the radio has no SWR reading, so this throws, as Hamlib's
+    /// `-RIG_ENAVAIL` (`newcat.c:5329-5345`, `6009-6024`).
+    private func swrMeterNumber() async throws -> Int {
+        guard quirks.readsTunerSWROnRM2 else { return 6 }
+        // `AC p1 p2 p3`: p3 is the tuner (newcat.c:6870-6872).
+        try await sendCommand("AC")
+        let tuner = try await receiveResponse()
+        guard tuner.hasPrefix("AC"), tuner.count >= 5 else {
+            throw RigError.invalidResponse
+        }
+        guard tuner.dropFirst(4).first == "1" else { return 6 }
+        try await sendCommand("MS")
+        let meter = try await receiveResponse()
+        guard meter.hasPrefix("MS"), let selection = meter.dropFirst(2).first else {
+            throw RigError.invalidResponse
+        }
+        guard selection == "3" else {
+            throw RigError.unsupportedOperation("SWR needs the meter set to SWR while the tuner is on")
+        }
+        return 2
     }
 
     private func requireMeter(_ supported: Bool, _ name: String) throws {

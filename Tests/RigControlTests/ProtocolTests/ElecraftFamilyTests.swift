@@ -100,6 +100,17 @@ import Testing
         #expect(try await k3.getPower() == 50)
     }
 
+    /// A radio left in K22 extended mode replies `PCnnnx` (k3.c:2333-2352).
+    @Test func extendedPowerRepliesAreRead() async throws {
+        let (mock, kx3) = try await connect(.Elecraft.kx3)
+        await mock.setResponse(for: Self.ascii("PC;"), response: Self.ascii("PC0500;"))
+        #expect(try await kx3.getPower() == 5)
+        await mock.setResponse(for: Self.ascii("PC;"), response: Self.ascii("PC1001;"))
+        #expect(try await kx3.getPower() == 100)
+        await mock.setResponse(for: Self.ascii("PC;"), response: Self.ascii("PC0502;"))
+        await #expect(throws: RigError.self) { _ = try await kx3.getPower() }
+    }
+
     // MARK: - S-meter
 
     @Test(arguments: ["K3", "K3S", "K4", "KX2", "KX3"])

@@ -39,6 +39,27 @@ import Testing
         #expect(await mock.recordedWrites == [Self.ascii("RM6;")])
     }
 
+    // MARK: - FTDX-3000/5000 SWR with the tuner on (newcat.c:5327-5345)
+
+    @Test(arguments: [RadioDefinition.Yaesu.ftdx3000, .Yaesu.ftdx5000])
+    func tunerOnWithSWRMeterReadsRM2(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await meters(radio, replies: ["AC;": "AC001;", "MS;": "MS3;", "RM2;": "RM2052;"])
+        _ = try await proto.getSWR()
+        #expect(await mock.recordedWrites == ["AC;", "MS;", "RM2;"].map(Self.ascii), "\(radio.fullName)")
+    }
+
+    @Test func tunerOffReadsRM6() async throws {
+        let (proto, mock) = try await meters(.Yaesu.ftdx3000, replies: ["AC;": "AC000;", "RM6;": "RM6052;"])
+        _ = try await proto.getSWR()
+        #expect(await mock.recordedWrites == ["AC;", "RM6;"].map(Self.ascii))
+    }
+
+    @Test func tunerOnWithAnotherMeterHasNoSWR() async throws {
+        let (proto, mock) = try await meters(.Yaesu.ftdx5000, replies: ["AC;": "AC001;", "MS;": "MS1;"])
+        await #expect(throws: RigError.self) { _ = try await proto.getSWR() }
+        #expect(await mock.recordedWrites == ["AC;", "MS;"].map(Self.ascii))
+    }
+
     @Test func ft991CompressionVoltageAndCurrent() async throws {
         // FT991_COMP_CAL 85 -> 7.5 dB, FT991_VD_CAL 192 -> 13.8 V, FT991_ID_CAL 100 -> 10 A.
         let (proto, _) = try await meters(.Yaesu.ft991A, replies: [

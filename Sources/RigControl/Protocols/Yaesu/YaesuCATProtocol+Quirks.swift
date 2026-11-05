@@ -162,6 +162,13 @@ extension YaesuCATProtocol {
         /// RIG_LEVEL_NR, `newcat.c:4549-4590`).
         public internal(set) var noiseReductionLevelMax: Int = 15
 
+        /// FTX-1 `PC`: a head digit then the watts, `PC1nnn;` on the
+        /// field head (0.5-10 W, `PC10.5;` below 1 W) and `PC2nnn;` with
+        /// the Optima / SPA-1 amplifier (5-100 W), per Hamlib
+        /// `ftx1_set_power` / `ftx1_get_power` (`ftx1_audio.c:310-455`).
+        /// Other newcat radios take `PCnnn;`.
+        public internal(set) var usesFTX1PowerCommands: Bool = false
+
         /// The radio's attenuator steps in dB. `RA0n` selects step n
         /// (1-based) of this list; `RA00` is off. Hamlib indexes the
         /// model's `.attenuator` caps list the same way
@@ -208,22 +215,30 @@ extension YaesuCATProtocol {
         /// and halves the result (`newcat.c:5685-5690`).
         public internal(set) var halvesRFPowerMeter: Bool = false
 
+        /// The FTDX-3000 / FTDX-5000 read SWR on `RM2` while the tuner is
+        /// on, which needs the front-panel meter set to SWR; with the
+        /// tuner off they use `RM6` like the rest (`newcat.c:5327-5345`).
+        public internal(set) var readsTunerSWROnRM2: Bool = false
+
         /// Returns a copy with the TX-meter settings replaced.
         ///
         /// - Parameters:
         ///   - calibration: ``meterCalibration``.
         ///   - twoDigitNumbers: ``usesTwoDigitMeterNumbers``.
         ///   - halvesRFPower: ``halvesRFPowerMeter``.
+        ///   - tunerSWROnRM2: ``readsTunerSWROnRM2``.
         /// - Returns: The adjusted quirks.
         public func withMeters(
             _ calibration: MeterCalibration,
             twoDigitNumbers: Bool = false,
-            halvesRFPower: Bool = false
+            halvesRFPower: Bool = false,
+            tunerSWROnRM2: Bool = false
         ) -> Quirks {
             var copy = self
             copy.meterCalibration = calibration
             copy.usesTwoDigitMeterNumbers = twoDigitNumbers
             copy.halvesRFPowerMeter = halvesRFPower
+            copy.readsTunerSWROnRM2 = tunerSWROnRM2
             return copy
         }
 

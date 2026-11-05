@@ -251,7 +251,7 @@ extension RadioDefinition.Yaesu {
             YaesuCATProtocol(
                 transport: transport,
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx3000,
-                quirks: .ft2000Family.withFunctionForms(lockCodes: ("7", "4")).withMeters(.ftdx3000)
+                quirks: .ft2000Family.withFunctionForms(lockCodes: ("7", "4")).withMeters(.ftdx3000, tunerSWROnRM2: true)
             )
         }
     )
@@ -301,7 +301,7 @@ extension RadioDefinition.Yaesu {
                 capabilities: RadioCapabilitiesDatabase.Yaesu.ftdx5000,
                 // FTDX-5000 has RIG_TARGETABLE_MODE per Hamlib
                 // `rigs/yaesu/ft5000.c`.
-                quirks: .newcatNoST.withTargetableMode().withFunctionForms(compressorHasReceiverDigit: false, lockCodes: ("7", "4")).withMeters(.ftdx5000)
+                quirks: .newcatNoST.withTargetableMode().withFunctionForms(compressorHasReceiverDigit: false, lockCodes: ("7", "4")).withMeters(.ftdx5000, tunerSWROnRM2: true)
             )
         }
     )

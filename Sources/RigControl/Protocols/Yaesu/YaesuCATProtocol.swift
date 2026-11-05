@@ -20,6 +20,7 @@ public actor YaesuCATProtocol:
     SupportsAGC,
     SupportsNoiseBlanker,
     SupportsNoiseReduction,
+    SupportsNoiseReductionLevel,
     SupportsIFFilter,
     SupportsAFGain,
     SupportsRFGain,
@@ -343,6 +344,10 @@ public actor YaesuCATProtocol:
         // the generic 1/255 step (level_gran_yaesu.h:47) although its own
         // newcat_power2mW treats them as 200 W (newcat.c:3586-3597); ours
         // follows the CAT manuals (PC 005-200 watts).
+        if quirks.usesFTX1PowerCommands {
+            try await setFTX1Power(level)
+            return
+        }
         let watts = min(max(level, 0), capabilities.maxPower)
         try await sendSetCommand(String(format: "PC%03d", watts))
     }
@@ -354,6 +359,9 @@ public actor YaesuCATProtocol:
 
         try await sendCommand("PC")
         let response = try await receiveResponse()
+        if quirks.usesFTX1PowerCommands {
+            return try Self.parseFTX1Power(response).watts
+        }
 
         // Response format: PCnnn; where nnn is watts
         guard response.hasPrefix("PC"),

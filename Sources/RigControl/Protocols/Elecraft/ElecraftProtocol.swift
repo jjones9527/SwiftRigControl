@@ -324,6 +324,16 @@ public actor ElecraftProtocol:
         }
 
         // Watts on every Elecraft (k3.c:2325-2345 for the K3 family).
+        // A radio left in K22 extended mode replies `PCnnnx`, where x = 0
+        // means tenths of a watt (k3.c:2345-2348): `PC0500` is 5.0 W.
+        // We don't send K22, but another program may have.
+        if response.count == 6 {
+            switch response.last {
+            case "0": return (value + 5) / 10
+            case "1": return value
+            default: throw RigError.invalidResponse
+            }
+        }
         return value
     }
 
