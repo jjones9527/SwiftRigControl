@@ -104,6 +104,14 @@ values (branch `hamlib-coverage-icom`):
 - **`PREAMP` on the IC-706 / 756 / 706MKII**, where Hamlib has a preamp
   list but no set path.
 
+**Resolved after the report (branch `hamlib-wire-fixes-v1.4`):** RIT on
+40 and XIT on 41 Icom / Xiegu records and the IC-7760 `scope` were
+removed with `hamlib-caps-sync.py --allow-removals`. The IC-7100 (RIT,
+XIT, `scope`) and the IC-9700 (XIT) are hardware-verified and kept until
+checked. The IC-92D items no longer show up. The PREAMP item is a
+different problem: Icom levels and preamp aren't gated per radio at all,
+so it waits for a `supportedLevels` capability (ROADMAP 5.10.4).
+
 ## Summary (first run)
 
 6,473 Hamlib capability items across 129 radios:

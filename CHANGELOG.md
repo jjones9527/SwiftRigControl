@@ -144,6 +144,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hamlib's units (IC-7600 `[10, 16]`, IC-7300 `[1, 2]`), set for every
   Icom and Xiegu radio from Hamlib. `RigCapabilities` encoded before
   this still decodes.
+- **`Mode.dataAM`** (`"DATA-AM"`): AM with the DATA input, Hamlib
+  `RIG_MODE_PKTAM`. On Icom it is AM plus the DATA flag, in the `0x26`
+  frame or as `0x06` then `0x1A 0x06` (`icom.c:2508-2511`). On the
+  TS-590S/SG it is `MD5;` + `DA1;`. rigctld parses `PKTAM` / `AM-D` and
+  prints `PKTAM` (`misc.c:463`, `490`). Advertised on the radios whose
+  Hamlib caps list PKTAM: IC-705, IC-7100, IC-7300, IC-7300MK2, IC-7600,
+  IC-7610, IC-7700, IC-7760, IC-7800, IC-7850, IC-7851, IC-905 and
+  TS-590S/SG. Hamlib only reads AM + `DA1` on the TS-590
+  (`kenwood.c:3012`), and its set path doesn't map PKTAM there
+  (`kenwood.c:2537-2558`); we write the pair we read. **Migration:** the
+  new case breaks exhaustive `switch`es over `Mode`. Mock-tested only.
+- **`SupportsNoiseReductionLevel`** and
+  `RigController.setNoiseReductionLevel(_:)` / `noiseReductionLevel()`
+  set and read the NR level without switching NR on or off, as Hamlib
+  `RIG_LEVEL_NR` does. The level is Hamlib's 0.0–1.0 fraction, so each
+  protocol scales it exactly as Hamlib does. Implemented by
+  `IcomCIVProtocol` (`14 06`), `YaesuCATProtocol` (`RL0`) and
+  `KenwoodProtocol` (`RL`, on radios with an NR level).
 - **Developer tooling:** `Scripts/hamlib-coverage.py` measures, per
   radio, how much of Hamlib's capability list we implement.
   `Scripts/hamlib-caps-sync.py` compares capability records with Hamlib
@@ -153,6 +171,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **rigctld `L NR` sent NR-on, then a rounded level.** Hamlib writes
+  the level alone, scaled per protocol: Icom truncates `f × 255`
+  (`icom.c:3555-3557`, so `0.5` is `14 06 01 27`, not `01 28`), Kenwood
+  truncates `f × 9` (`ts590.c:649-653`), and Yaesu newcat rounds
+  `f × 15` (`newcat.c:4555`). `L NR 0` used to switch NR off and now
+  sets level 0. `l NR` reads the level whether or not NR is on. Radios
+  without `SupportsNoiseReductionLevel` keep the old behavior. The
+  IC-R75's NR level is 0–240 (`icom.c:3566-3572`, `4778-4784`); we sent
+  0–255.
+- **FTX-1 power** is `PC1nnn;` on the field head and `PC2nnn;` with the
+  Optima / SPA-1 (`ftx1_audio.c:310-455`). We sent `PCnnn;` and read the
+  head digit as part of the watts, so `PC1005` (5 W) read as 100 W.
+  `setPower` reads `PC;` first to find the head, clamps to 5–100 W
+  (SPA-1) or 0.5–10 W (field head; `0` sends `PC10.5;`), and `getPower`
+  parses `PC10.5`. Hamlib's open also tells battery from 12 V by setting
+  8 W; we don't change the power on connect, so a field head on battery
+  rejects anything above 6 W. rigctld `L RFPOWER` still scales by the
+  catalog's 100 W, not the head's maximum.
+- **FTDX-3000 / FTDX-5000 SWR with the tuner on** reads `RM2`, after
+  checking the tuner (`AC;`) and that the meter is set to SWR (`MS;`).
+  With the tuner on and another meter selected it throws
+  `unsupportedOperation`, as Hamlib returns `-RIG_ENAVAIL`
+  (`newcat.c:5327-5345`). It always read `RM6`.
+- **Elecraft `getPower` reads K22 extended replies.** A radio left in
+  K22 mode by another program replies `PCnnnx`, where `x = 0` means
+  tenths of a watt (`k3.c:2333-2352`): `PC0500` is 5 W, and we read it
+  as 50 W. We still don't send `K22;`, so our sets stay in whole watts
+  (`PCnnn`). Hamlib turns K22 on at open (`elecraft.c:190-197`) and
+  sends `PCnnnx`.
+- **Capabilities Hamlib doesn't list, removed** with
+  `Scripts/hamlib-caps-sync.py --allow-removals` (hardware-verified
+  radios excluded):
+  - **RIT** on 40 and **XIT** on 41 Icom / Xiegu records. Among them were
+    receivers advertising XIT and HTs with no `0x21` clarifier.
+  - **`scope`** on the IC-7760.
+
+  The IC-7100's RIT, XIT and `scope` and the IC-9700's XIT are also
+  missing from Hamlib's caps, but stay until they are checked on the
+  hardware.
+- **Icom AM with the DATA flag read as plain AM.** `getMode` now
+  returns `.dataAM`, as Hamlib returns PKTAM (`icom.c:2976`).
+
+  Mock-tested only. Test count 1135 → 1156.
 - **Yaesu newcat function bytes that differed from Hamlib**,
   compared on the Hamlib simulators:
   - **Manual notch** is `BP00` + 3 digits, `BP00001` (`newcat.c:6148`);

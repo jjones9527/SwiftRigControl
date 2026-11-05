@@ -1582,18 +1582,30 @@ jjones9527/SwiftRigControl#46–#51.
   - [x] `L KEYSPD` / `L CWPITCH` return `RPRT -11` on IC-7300/MK2,
         IC-705, IC-7610 and G90; Hamlib sends `14 0C` / `14 09`.
         (Fixed by the capability sync.)
-  - [ ] `L NR` sends NR-on before the level, and rounds 0.5 to 128
-        (Hamlib: level only, 127).
+  - [x] `L NR` sends NR-on before the level, and rounds 0.5 to 128
+        (Hamlib: level only, 127). Fixed with the level-only
+        `SupportsNoiseReductionLevel` on Icom, Yaesu newcat and Kenwood;
+        IC-R75 0-240 scale.
   - [x] IC-7610 `L PREAMP 20` fails; Hamlib sends `16 02 02`.
         (Fixed: `preampLevels` `[12, 20]`.)
   - [ ] G90 functions and levels against `xiegu.c` `G90_LEVELS` /
         functions (no NR, MICGAIN, COMP level; has TUNER `1C 01`, COMP
         func). Additions done by the capability sync; the levels we
         claim beyond Hamlib remain.
-- [ ] KX2 / KX3 power in the extended `PCnnnx` form (0.1 W steps up to
-      15 W, `k3.c:2023-2027`); ours sends whole watts.
-- [ ] FTX-1 power uses `PC1nnn` / `PC2nnn` by head type in Hamlib
-      (`ftx1_audio.c:332-393`); ours sends `PCnnn`.
+- [x] KX2 / KX3 power in the extended `PCnnnx` form (0.1 W steps up to
+      15 W, `k3.c:2023-2027`). Hamlib sends it because its open turns on
+      K22 (`elecraft.c:190-197`); we don't, so `PCnnn` whole watts is
+      right for us. `getPower` now reads `PCnnnx` replies from a radio
+      left in K22 mode.
+- [ ] Optional: send `K22;` at connect (and restore the old level on
+      disconnect, `elecraft.c:405`) for 0.1 W power on the KX2 / KX3.
+      Needs a fractional-watt `setPower` and a K2 hardware re-check.
+- [x] FTX-1 power uses `PC1nnn` / `PC2nnn` by head type in Hamlib
+      (`ftx1_audio.c:332-393`); ours sent `PCnnn`. Fixed; head read from
+      `PC;` before each set.
+- [ ] FTX-1 rigctld `L RFPOWER` scales by the catalog's 100 W, not the
+      head's maximum (10 W field head). Hardware: FTX-1 `setPower` on a
+      field head and with the SPA-1.
 - [ ] Candidate radio: truSDX (Hamlib `trusdx.c`, `14c618f`).
 - [x] Hamlib capability coverage measured for all 129 serial radios
       (`Documentation/HAMLIB_COVERAGE_2026-10-30.md`): 49% at first.
@@ -1603,8 +1615,16 @@ jjones9527/SwiftRigControl#46–#51.
       aliases, U RIT/XIT, send_morse CW check. Catalog 49% → 64%.
 - [ ] Hardware: IC-7600 CPY (`07 B1`) and dual watch (`07 C1`);
       `L PREAMP 10` / `16` on the IC-7600.
-- [ ] Review the over-claims in the coverage report (RIT/XIT on 41 Icom
-      records, IC-7100 / IC-7760 scope, IC-92D functions).
+- [x] Review the over-claims in the coverage report: RIT on 40 and XIT
+      on 41 Icom / Xiegu records and IC-7760 `scope` removed
+      (`hamlib-caps-sync.py --allow-removals`). The IC-92D functions and
+      the IC-706 PREAMP no longer show up as over-claims.
+- [ ] Hardware: IC-7100 RIT / XIT / `scope` and IC-9700 XIT. Hamlib
+      doesn't list them; kept because the radios are hardware-verified.
+- [ ] Per-radio level gating (`RigCapabilities.supportedLevels`): Icom
+      levels and preamp are not gated per radio, so the G90's NR /
+      MICGAIN / COMP level and the IC-706 PREAMP (Hamlib
+      `has_set_level = RIG_LEVEL_NONE`) reach the wire and fail there.
 - [x] Same sync for Yaesu newcat, Kenwood and Elecraft, byte-checked on
       the Hamlib simulators: functions / VFO ops / preamp lists, new CW
       keyer and CW text on all three, Yaesu TX meters; wrong-byte fixes
@@ -1613,14 +1633,16 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] Kenwood and Elecraft TX meters (TS-590 `RM;` triple + `SM0` power,
       TS-480, TS-2000, TS-890S, TS-990S, K3 / K4 / KX, Flex), per model
       from Hamlib.
-- [ ] FTDX-3000/5000 SWR on `RM2` when the tuner is on (Hamlib reads the
+- [x] FTDX-3000/5000 SWR on `RM2` when the tuner is on (Hamlib reads the
       tuner and meter selection first).
 - [ ] Hardware: Kenwood tuner on/off (`AC110` / `AC100`) on a TS-590SG or
       TS-890S; a Yaesu meter read and CW text on an FT-991A or FT-710.
 - [ ] New library APIs from the coverage report's "no API" list: CTCSS /
       DCS tone values, repeater shift / offset, tuning step, memory via
       rigctld (`E` / `\set_channel`), DCD.
-- [ ] Hamlib `AM-D` / PKTAM: needs a `Mode` case (minor release).
+- [x] Hamlib `AM-D` / PKTAM: `Mode.dataAM`, on Icom (AM + DATA flag)
+      and TS-590S/SG (`MD5` + `DA1`).
+- [ ] Hardware: `.dataAM` on an IC-7100 / IC-7600 (verified radios).
 
 ### 5.10.5 Deferred
 
