@@ -170,6 +170,45 @@ extension KenwoodProtocol {
         }
     }
 
+    /// Sets the NR level with `RLnn;` alone, leaving NR on or off.
+    ///
+    /// This is Hamlib's `RIG_LEVEL_NR`: `fraction × max`, truncated
+    /// (`ts590.c:649-653`, `ts2000.c:463-466`, `ts480.c:386-389`), on
+    /// radios with a ``KenwoodLevelProfile/noiseReductionLevelMax``.
+    ///
+    /// - Parameter fraction: NR level, 0.0–1.0
+    /// - Throws: `RigError.unsupportedOperation` if the radio has no NR
+    ///   level, or `RigError` if the command fails
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        guard let maximum = levelProfile.noiseReductionLevelMax, maximum > 0 else {
+            throw RigError.unsupportedOperation("This radio has no noise-reduction level")
+        }
+        let wire = Int(min(max(fraction, 0), 1) * Double(maximum))
+        try await sendSetCommand(String(format: "RL%02d", wire))
+    }
+
+    /// Reads the NR level with `RL;`, whether or not NR is on.
+    ///
+    /// - Returns: NR level, 0.0–1.0 (`ts590.c:944-959`)
+    /// - Throws: `RigError.unsupportedOperation` if the radio has no NR
+    ///   level, or `RigError` if the command fails
+    public func getNoiseReductionLevel() async throws -> Double {
+        guard let maximum = levelProfile.noiseReductionLevelMax, maximum > 0 else {
+            throw RigError.unsupportedOperation("This radio has no noise-reduction level")
+        }
+        return Double(min(max(try await readNoiseReductionWire(), 0), maximum)) / Double(maximum)
+    }
+
+    /// Sends `RL;` and returns the raw level.
+    private func readNoiseReductionWire() async throws -> Int {
+        try await sendCommand("RL")
+        let reply = try await receiveResponse()
+        guard reply.hasPrefix("RL"), let wire = Int(reply.dropFirst(2)) else {
+            throw RigError.invalidResponse
+        }
+        return wire
+    }
+
     /// Gets noise reduction.
     ///
     /// Sends `NR;` and, when NR is on and the radio has a level, `RL;`.
@@ -187,11 +226,7 @@ extension KenwoodProtocol {
         guard let maximum = levelProfile.noiseReductionLevelMax, maximum > 0 else {
             return .enabled(level: 128)
         }
-        try await sendCommand("RL")
-        let reply = try await receiveResponse()
-        guard reply.hasPrefix("RL"), let wire = Int(reply.dropFirst(2)) else {
-            throw RigError.invalidResponse
-        }
-        return .enabled(level: (min(max(wire, 0), maximum) * 255 + maximum / 2) / maximum)
+        let wire = min(max(try await readNoiseReductionWire(), 0), maximum)
+        return .enabled(level: (wire * 255 + maximum / 2) / maximum)
     }
 }

@@ -70,7 +70,7 @@ import Testing
     @Test func noiseBlankerAndReductionLevelsAreFloats() async throws {
         let (parser, handler, _) = try await session()
         #expect(try await run("L NR 0.5", parser, handler) == ["RPRT 0"])
-        #expect(try await run("l NR", parser, handler) == ["0.501961", "RPRT 0"])
+        #expect(try await run("l NR", parser, handler) == ["0.498039", "RPRT 0"])
         #expect(try await run("L NR 0", parser, handler) == ["RPRT 0"])
         #expect(try await run("l NR", parser, handler) == ["0.000000", "RPRT 0"])
         #expect(try await run("L NB 0.25", parser, handler) == ["RPRT 0"])

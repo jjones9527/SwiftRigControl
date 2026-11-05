@@ -125,13 +125,20 @@ extension RigctldCommandHandler {
             return .ok(command: command)
 
         case "NR":
-            // Hamlib RIG_LEVEL_NR is a float 0.0-1.0 (rig.h); same
-            // history and caveat as NB.
+            // Hamlib RIG_LEVEL_NR is a float 0.0-1.0 (rig.h) and Hamlib
+            // writes the level alone, scaled per radio (Icom truncates
+            // f x 255, icom.c:3555; so 0.5 is 127). Through v1.3.1 we
+            // rounded, sent NR-on before the level, and turned NR off for
+            // 0. Radios that can't set the level on its own keep that.
             guard let floatVal = RigctldDecimal.parseUnitInterval(value) else {
                 throw RigError.invalidParameter("Invalid NR value: \(value)")
             }
-            let level = Int((floatVal * 255.0).rounded())
-            try await rigController.setNoiseReduction(level == 0 ? .off : .enabled(level: level))
+            do {
+                try await rigController.setNoiseReductionLevel(floatVal)
+            } catch RigError.unsupportedOperation {
+                let level = min(max(Int(floatVal * 255.0), 0), 255)
+                try await rigController.setNoiseReduction(level == 0 ? .off : .enabled(level: level))
+            }
             return .ok(command: command)
 
         case "IF", "VOXDELAY":
@@ -275,12 +282,17 @@ extension RigctldCommandHandler {
             return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
 
         case "NR":
-            let level: Int
-            switch try await rigController.noiseReduction() {
-            case .off: level = 0
-            case .enabled(let value): level = value
+            // Hamlib reads the level whether or not NR is on.
+            let fraction: Double
+            do {
+                fraction = try await rigController.noiseReductionLevel()
+            } catch RigError.unsupportedOperation {
+                switch try await rigController.noiseReduction() {
+                case .off: fraction = 0
+                case .enabled(let value): fraction = Double(value) / 255.0
+                }
             }
-            return RigctldResponse(value: String(format: "%.6f", Double(level) / 255.0), command: command)
+            return RigctldResponse(value: String(format: "%.6f", fraction), command: command)
 
         // Hamlib RIG_LEVEL_STRENGTH: calibrated dB relative to S9
         // (S9 = 0, S0 = -54). RAWSTR: the radio's raw reading. Through

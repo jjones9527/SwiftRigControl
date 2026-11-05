@@ -223,6 +223,56 @@ extension RigController {
         return value
     }
 
+    /// Sets the noise-reduction level without switching NR on or off.
+    ///
+    /// ``setNoiseReduction(_:)`` with `.enabled(level:)` also switches NR
+    /// on. This sets only the level, as Hamlib's `RIG_LEVEL_NR` does, so
+    /// the value takes effect whenever NR is next on.
+    ///
+    /// The level is Hamlib's 0.0–1.0 fraction rather than the 0–255 of
+    /// ``NoiseReduction``, so it reaches each radio's wire scale exactly
+    /// as Hamlib would send it.
+    ///
+    /// - Parameter fraction: NR level, 0.0–1.0
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if the radio can't set the
+    ///     level on its own
+    ///   - `RigError.invalidParameter` if `fraction` is out of range
+    ///
+    /// # Example
+    /// ```swift
+    /// try await rig.setNoiseReductionLevel(0.5)
+    /// ```
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        let p = try requireTrait((any SupportsNoiseReductionLevel).self, named: "Noise reduction level")
+        try await p.setNoiseReductionLevel(fraction)
+        await stateCache.invalidate("noise_reduction")
+    }
+
+    /// Reads the noise-reduction level, whether or not NR is on.
+    ///
+    /// - Returns: NR level, 0.0–1.0
+    /// - Throws:
+    ///   - `RigError.notConnected` if not connected
+    ///   - `RigError.unsupportedOperation` if the radio can't read the
+    ///     level on its own
+    ///
+    /// # Example
+    /// ```swift
+    /// let level = try await rig.noiseReductionLevel()
+    /// ```
+    public func noiseReductionLevel() async throws -> Double {
+        guard connected else {
+            throw RigError.notConnected
+        }
+        let p = try requireTrait((any SupportsNoiseReductionLevel).self, named: "Noise reduction level")
+        return try await p.getNoiseReductionLevel()
+    }
+
     /// Sets the IF (Intermediate Frequency) filter selection.
     ///
     /// Selects which of the radio's preset IF filters to use (FIL1/FIL2/FIL3).

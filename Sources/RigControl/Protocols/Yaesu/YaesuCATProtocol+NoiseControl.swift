@@ -71,6 +71,41 @@ extension YaesuCATProtocol {
         }
     }
 
+    /// Sets the NR level with `RL0nn;` alone, leaving NR on or off.
+    ///
+    /// This is Hamlib's `RIG_LEVEL_NR`: `fraction / step + 0.5` on the
+    /// radio's 1–``YaesuCATProtocol/Quirks/noiseReductionLevelMax`` scale
+    /// (`newcat.c:4549-4590`, `level_gran_yaesu.h:37`). Hamlib clamps to
+    /// 1 only on the FT-450 and FT-991 and sends `RL000` elsewhere; we
+    /// always send at least 1.
+    ///
+    /// - Parameter fraction: NR level, 0.0–1.0
+    /// - Throws: `RigError` if the command fails
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        let maximum = quirks.noiseReductionLevelMax
+        let wire = min(max(1, Int(min(max(fraction, 0), 1) * Double(maximum) + 0.5)), maximum)
+        try await sendSetCommand(String(format: "RL0%02d", wire))
+    }
+
+    /// Reads the NR level with `RL0;`, whether or not NR is on.
+    ///
+    /// - Returns: NR level, 0.0–1.0 (`newcat.c:5761-5770`)
+    /// - Throws: `RigError` if the command fails
+    public func getNoiseReductionLevel() async throws -> Double {
+        let maximum = quirks.noiseReductionLevelMax
+        return Double(min(max(try await readNoiseReductionWire(), 0), maximum)) / Double(maximum)
+    }
+
+    /// Sends `RL0;` and returns the raw level.
+    private func readNoiseReductionWire() async throws -> Int {
+        try await sendCommand("RL0")
+        let reply = try await receiveResponse()
+        guard reply.hasPrefix("RL0"), let wire = Int(reply.dropFirst(3)) else {
+            throw RigError.invalidResponse
+        }
+        return wire
+    }
+
     /// Gets noise reduction.
     ///
     /// Sends `NR0;` and, when NR is on, `RL0;` for the level, scaled back
@@ -82,12 +117,7 @@ extension YaesuCATProtocol {
         try await sendCommand("NR0")
         let state = try await receiveResponse()
         guard try Self.parseOnOff(state, prefix: "NR0") else { return .off }
-
-        try await sendCommand("RL0")
-        let reply = try await receiveResponse()
-        guard reply.hasPrefix("RL0"), let wire = Int(reply.dropFirst(3)) else {
-            throw RigError.invalidResponse
-        }
+        let wire = try await readNoiseReductionWire()
         return .enabled(level: Self.scale(wire, from: quirks.noiseReductionLevelMax, to: 255))
     }
 

@@ -18,6 +18,7 @@ public actor IcomCIVProtocol:
     SupportsAGC,
     SupportsNoiseBlanker,
     SupportsNoiseReduction,
+    SupportsNoiseReductionLevel,
     SupportsIFFilter,
     SupportsAFGain,
     SupportsRFGain,
