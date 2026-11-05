@@ -171,6 +171,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Split on Yaesu newcat radios without `ST`.** `setSplit` threw on
+  the FT-991/991A, FT-950, FT-450/450D, FT-2000 and FTDX-1200/3000/5000/
+  9000, so rigctld `S 1 VFOB` (WSJT-X "Split Operation: Rig") failed.
+  Hamlib does split there by choosing the TX VFO
+  (`newcat_set_split_vfo` / `newcat_set_tx_vfo`, `newcat.c:2770-2950`,
+  `8248-8370`): on is `FT` to VFO B, off is VFO A, using the family's
+  `FT2` / `FT3` or `FT0` / `FT1` digits; `getSplit` reads `FT;`. The
+  FT-891 has its own `ST1;` / `ST0;` split in Hamlib (`ft891.c:377-466`),
+  so `hasSplit` is now `true` there and `ST2` (split + 5 kHz) reads as
+  on. The FTDX-9000 is not in Hamlib's `FT2` / `FT3` list
+  (`newcat.c:8301-8307`), so its `selectVFO` now sends `FT0` / `FT1`
+  (it sent `FT2` / `FT3`). New `Quirks.withFT23VFOSelection(_:)`.
+- **Icom AGC on the IC-746, IC-746PRO, IC-7400, IC-756, IC-756PRO/II/III,
+  IC-R8600 and IC-7850** threw `unsupportedOperation`: they had no AGC
+  table. They now use their Hamlib `agc_levels` (`ic746.c`, `ic756.c`,
+  `icr8600.c`, `ic785x.c`). The IC-746 family is reversed (SLOW 1,
+  FAST 3). Radios without a Hamlib table (IC-703, IC-706MKIIG, IC-905,
+  IC-9100, IC-R75, IC-R9500, X6100, X6200) stay unsupported: Hamlib
+  falls back to generic bytes (`icom_defs.h:235-241`) that don't match
+  their CI-V manuals.
+- **rigctld integer levels** (`CWPITCH`, `KEYSPD`, `PREAMP`, `ATT`) are
+  read like Hamlib's `sscanf("%d")` (`rigctl_parse.c:4317-4324`), so
+  `L CWPITCH 600.000000` works. It used to return `RPRT -1`.
 - **rigctld `L NR` sent NR-on, then a rounded level.** Hamlib writes
   the level alone, scaled per protocol: Icom truncates `f × 255`
   (`icom.c:3555-3557`, so `0.5` is `14 06 01 27`, not `01 28`), Kenwood
@@ -213,7 +236,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Icom AM with the DATA flag read as plain AM.** `getMode` now
   returns `.dataAM`, as Hamlib returns PKTAM (`icom.c:2976`).
 
-  Mock-tested only. Test count 1135 → 1156.
+  Mock-tested only. Test count 1135 → 1167. Hamlib capability coverage
+  70.9% after the over-claim removals, 71.3% with the split and AGC
+  fixes.
 - **Yaesu newcat function bytes that differed from Hamlib**,
   compared on the Hamlib simulators:
   - **Manual notch** is `BP00` + 3 digits, `BP00001` (`newcat.c:6148`);

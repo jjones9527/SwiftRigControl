@@ -1637,6 +1637,17 @@ jjones9527/SwiftRigControl#46–#51.
       tuner and meter selection first).
 - [ ] Hardware: Kenwood tuner on/off (`AC110` / `AC100`) on a TS-590SG or
       TS-890S; a Yaesu meter read and CW text on an FT-991A or FT-710.
+- [x] Yaesu newcat split on the radios without `ST` (FT TX VFO,
+      `newcat.c:2770-2950`) and the FT-891's own `ST` split.
+- [ ] Hardware: split on an FT-991A / FT-891 from WSJT-X.
+- [x] Icom AGC tables for the IC-746 / 746PRO / 7400 / 756 family /
+      R8600 / 7850 from Hamlib `agc_levels`.
+- [ ] AGC on the IC-703, IC-706MKIIG, IC-905, IC-9100, IC-R75, IC-R9500,
+      X6100, X6200: Hamlib has no table (generic `D_AGC_*` bytes); needs
+      the CI-V manuals.
+- [ ] Antenna selection (`Y`) on 25 Icom radios and most Kenwood HF:
+      `antennaCount` isn't synced (Hamlib's lists name connectors per
+      band); check each model.
 - [ ] New library APIs from the coverage report's "no API" list: CTCSS /
       DCS tone values, repeater shift / offset, tuning step, memory via
       rigctld (`E` / `\set_channel`), DCD.

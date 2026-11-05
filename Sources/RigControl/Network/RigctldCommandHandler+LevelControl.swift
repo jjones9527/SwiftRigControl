@@ -54,7 +54,7 @@ extension RigctldCommandHandler {
             // kenwood.c:3591-3613, newcat.c:4457-4474). Through v1.3.1 we
             // read it as the stage number, so `L PREAMP 10` failed.
             // Radios with no preampLevels keep the stage reading.
-            guard let requested = Int(value) else {
+            guard let requested = RigctldDecimal.parseLevelInteger(value) else {
                 throw RigError.invalidParameter("Invalid PREAMP value: \(value)")
             }
             try await rigController.setPreamp(try preampStage(forHamlibValue: requested))
@@ -62,7 +62,7 @@ extension RigctldCommandHandler {
 
         case "ATT":
             // Attenuator: dB value (0=off, 6=6dB, 10=10dB, etc.)
-            guard let dB = Int(value) else {
+            guard let dB = RigctldDecimal.parseLevelInteger(value) else {
                 throw RigError.invalidParameter("Invalid ATT value: \(value)")
             }
             try await rigController.setAttenuator(dB)
@@ -165,14 +165,14 @@ extension RigctldCommandHandler {
 
         // CW levels (Phase 4.5)
         case "KEYSPD":
-            guard let wpm = Int(value) else {
+            guard let wpm = RigctldDecimal.parseLevelInteger(value) else {
                 throw RigError.invalidParameter("Invalid KEYSPD value: \(value)")
             }
             try await rigController.setCWSpeed(CWSpeed(wpm: wpm))
             return .ok(command: command)
 
         case "CWPITCH":
-            guard let hz = Int(value) else {
+            guard let hz = RigctldDecimal.parseLevelInteger(value) else {
                 throw RigError.invalidParameter("Invalid CWPITCH value: \(value)")
             }
             try await rigController.setCWPitch(CWPitch(hz: hz))
