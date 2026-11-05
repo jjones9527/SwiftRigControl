@@ -45,6 +45,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,
@@ -96,6 +98,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
@@ -135,6 +139,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
@@ -204,6 +210,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,  // IC-9100 requires VFO selection (no_xchg flag in Hamlib)
         requiresModeFilter: true,  // IC-9100 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -277,6 +285,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-7200 doesn't require VFO selection
         requiresModeFilter: true,  // IC-7200 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,
@@ -344,6 +354,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-718 doesn't require VFO selection
         requiresModeFilter: true,  // IC-718 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCWKeyer: true,
         supportsMemoryScan: true,
         supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
@@ -409,6 +421,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-7410 doesn't require VFO selection
         requiresModeFilter: true,  // IC-7410 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,

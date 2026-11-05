@@ -39,6 +39,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         antennaCount: 1,
         supportedFunctions: [.ctcssSquelch, .voiceSquelch]
     )
@@ -74,6 +76,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         antennaCount: 1
     )
 
@@ -104,6 +108,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsMemoryScan: true,
         antennaCount: 1,
         supportedVFOOperations: [.memoryClear, .vfoToMemory],
@@ -142,6 +148,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsMemoryScan: true,
         antennaCount: 1,
         supportedFunctions: [.autoFrequencyControl, .autoNotch, .compressor, .ctcssTone, .scanResume, .vox],
@@ -173,6 +181,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsVFOScan: true,
@@ -213,6 +223,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         antennaCount: 1
     )
 }

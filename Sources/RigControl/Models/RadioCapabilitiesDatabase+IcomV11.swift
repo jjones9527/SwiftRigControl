@@ -67,7 +67,7 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsDeltaFScan: true,
         // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .scope, .tuner, .voiceSquelch, .vox],
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
         preampLevels: [10, 20]
     )
 
@@ -211,6 +211,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -257,6 +259,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -302,6 +306,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -346,6 +352,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -392,6 +400,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         // 2 antenna ports per Hamlib icr30.c:122 (.ant_count = 2).
         antennaCount: 2,
         // Hamlib icr30.c:43 — FROM_VFO/TO_VFO/MCL.

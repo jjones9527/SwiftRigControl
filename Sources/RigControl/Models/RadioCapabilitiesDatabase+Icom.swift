@@ -557,6 +557,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-703 doesn't require VFO selection
         requiresModeFilter: true,  // IC-703 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsSWRMeter: true,
         supportsALCMeter: true,
         supportsVFOScan: true,

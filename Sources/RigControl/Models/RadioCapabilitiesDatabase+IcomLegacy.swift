@@ -37,6 +37,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
         preampLevels: [10]
     )
@@ -74,6 +76,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportedVFOOperations: [.copyVFO, .exchange, .memoryClear, .memoryToVFO, .vfoToMemory],
         preampLevels: [10]
     )
@@ -114,6 +118,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: false,  // IC-706MKIIG supports CTCSS but not DCS
         supportsDuplex: true,
@@ -153,6 +159,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,  // IC-756 requires filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsVFOScan: true,
         supportsMemoryScan: true,
         supportsPriorityScan: true,
@@ -279,6 +287,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: false,  // IC-910H CTCSS only (no DCS)
         supportsDuplex: true,
@@ -316,6 +326,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportedVFOOperations: [.memoryToVFO, .vfoToMemory]
     )
 
@@ -339,6 +351,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsMemoryScan: true,
         supportedVFOOperations: [.copyVFO, .memoryClear, .memoryToVFO, .vfoToMemory]
     )
@@ -365,6 +379,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // FM only, no mode filter
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -398,6 +414,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -429,6 +447,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -456,6 +476,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsVFOScan: true,
         supportsMemoryScan: true,
         supportsSelectedMemoryScan: true,
@@ -484,6 +506,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // Single VFO
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsVFOScan: true,
         supportsMemoryScan: true,
         supportedVFOOperations: [.memoryClear, .memoryToVFO, .vfoToMemory],
@@ -509,6 +533,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsVFOScan: true,
         supportsMemoryScan: true,
         supportsSelectedMemoryScan: true,
