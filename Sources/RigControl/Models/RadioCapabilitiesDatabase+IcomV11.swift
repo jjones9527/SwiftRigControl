@@ -21,7 +21,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN,
                          .dataLSB, .dataUSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 54_000_000),
         detailedFrequencyRanges: [
@@ -96,7 +96,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN,
                          .dataLSB, .dataUSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [

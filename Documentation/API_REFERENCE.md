@@ -1140,6 +1140,7 @@ public enum Mode: String, Sendable, CaseIterable {
     case dataUSB    // Digital modes (USB)
     case dataFM     // Digital modes (FM)
     case dataFMN    // Digital modes (narrow FM)
+    case dataAM     // Digital modes (AM; Hamlib PKTAM / AM-D)
     case c4fm       // Yaesu System Fusion digital voice
     case dstar      // D-STAR digital voice
 }

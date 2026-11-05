@@ -102,11 +102,12 @@ extension IcomCIVProtocol {
         guard usesDataModeFlagFrame else {
             // Radios without DATA sub-modes: keep the pre-v1.2.19
             // reading, where filter byte 0x00 marks the legacy
-            // `0x06 [mode, 0x00]` DATA shorthand.
+            // `0x06 [mode, 0x00]` DATA shorthand. AM is left out: that
+            // shorthand never covered AM, and DATA-AM is newer.
             return try icomCodeToMode(
                 modeCode,
                 filter: filter,
-                isData: filter == CIVFrame.FilterCode.data
+                isData: filter == CIVFrame.FilterCode.data && modeCode != CIVFrame.ModeCode.am
             )
         }
 
@@ -234,6 +235,7 @@ extension IcomCIVProtocol {
         case .dataLSB: return CIVFrame.ModeCode.lsb  // DATA flag sent separately (0x26 or 0x1A 0x06)
         case .dataUSB: return CIVFrame.ModeCode.usb  // DATA flag sent separately (0x26 or 0x1A 0x06)
         case .dataFM:  return CIVFrame.ModeCode.fm   // DATA flag sent separately (0x26 or 0x1A 0x06)
+        case .dataAM:  return CIVFrame.ModeCode.am   // icom.c:2508-2511: AM + DATA flag
         case .dstar:   return CIVFrame.ModeCode.dstar
         case .amN:     return CIVFrame.ModeCode.am
         case .dataFMN, .c4fm:
@@ -241,10 +243,10 @@ extension IcomCIVProtocol {
         }
     }
 
-    /// Returns true for DATA-USB, DATA-LSB and DATA-FM.
+    /// Returns true for DATA-USB, DATA-LSB, DATA-FM and DATA-AM.
     internal func isDataMode(_ mode: Mode) -> Bool {
         switch mode {
-        case .dataLSB, .dataUSB, .dataFM: return true
+        case .dataLSB, .dataUSB, .dataFM, .dataAM: return true
         default: return false
         }
     }
@@ -275,6 +277,9 @@ extension IcomCIVProtocol {
         case CIVFrame.ModeCode.usb:
             return isData ? .dataUSB : .usb
         case CIVFrame.ModeCode.am:
+            // AM with the DATA flag is Hamlib PKTAM (icom.c:2976). Through
+            // v1.3.1 we dropped the flag and reported plain AM.
+            if isData { return .dataAM }
             return filter == CIVFrame.FilterCode.fil2 ? .amN : .am
         case CIVFrame.ModeCode.cw:
             return .cw

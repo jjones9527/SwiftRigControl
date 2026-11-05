@@ -10,7 +10,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // Standard HF bands with general coverage receive
@@ -56,7 +56,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // Standard HF bands with general coverage receive

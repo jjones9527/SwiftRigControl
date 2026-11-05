@@ -270,8 +270,8 @@ public actor RigctldCommandHandler {
         // Hamlib's mode_str[] (misc.c:460-480) also accepts the dashed
         // spellings: CW-R, RTTY-R, LSB-D, USB-D and FM-D. It prints PKTFM
         // as FM-D, so newer clients echo that back. We still print PKTFM,
-        // which every Hamlib version parses. AM-D / PKTAM (packet AM) has
-        // no Mode case and stays an error.
+        // which every Hamlib version parses. AM-D / PKTAM is .dataAM
+        // (misc.c:463, 490).
         switch normalized {
         case "LSB": return .lsb
         case "USB": return .usb
@@ -288,6 +288,7 @@ public actor RigctldCommandHandler {
         case "PKTUSB", "USB-D", "DATA-USB", "DATAUSB": return .dataUSB
         case "PKTFM", "FM-D", "DATA-FM", "DATAFM": return .dataFM
         case "PKTFMN", "DATA-FMN", "DATA-FM-N", "DATAFMN": return .dataFMN
+        case "PKTAM", "AM-D", "DATA-AM", "DATAAM": return .dataAM
         case "C4FM": return .c4fm
         case "D-STAR", "DSTAR", "DV": return .dstar
         default:
@@ -312,6 +313,7 @@ public actor RigctldCommandHandler {
         case .dataUSB: return "PKTUSB"
         case .dataFM: return "PKTFM"
         case .dataFMN: return "PKTFMN"
+        case .dataAM: return "PKTAM"
         case .c4fm: return "C4FM"
         case .dstar: return "D-STAR"
         }
@@ -331,6 +333,7 @@ public actor RigctldCommandHandler {
         case .dataLSB, .dataUSB: return 2400
         case .dataFM: return 15000
         case .dataFMN: return 10000
+        case .dataAM: return 6000
         case .c4fm: return 12500
         case .dstar: return 6000
         }
