@@ -5,7 +5,24 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.3.1
+**Current release:** v1.4.0
+
+## What's new in v1.4.0
+
+- **Hamlib parity pass** — our commands were compared byte for byte with
+  Hamlib's on its simulators, and every mapped radio's capabilities were
+  measured against Hamlib's caps (coverage 49% → 71%).
+- **Fixes that affect common setups** — Yaesu FT-991A / FT-891 /
+  FTDX-series split now works from WSJT-X; RF power is sent in each
+  radio's own units (a 200 W Icom no longer keys full power at 50%);
+  Icom VOX delay no longer changes VOX gain; Elecraft split mode sets
+  VFO B; rigctld levels use Hamlib's units.
+- **New** — CW keyer and CW text on Yaesu, Kenwood and Elecraft; Yaesu
+  TX meters and calibrated S-meter; `Mode.dataAM` (AM-D); FTX-1 Main/Sub
+  clarifier; `FlexRadioDiscovery` for SmartSDR radios on the network.
+- **Upgrading:** `Mode` and `RigctldCommand` gained cases, and several
+  rigctld levels changed units — see the Migration section of the
+  [1.4.0 CHANGELOG entry](CHANGELOG.md). Mock-tested only.
 
 ## What's new in v1.3.1
 

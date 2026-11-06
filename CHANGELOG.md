@@ -21,6 +21,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-06
+
+Hamlib parity release. A differential audit harness compared our wire
+bytes with Hamlib's on the Hamlib simulators. A capability-coverage
+measurement against every mapped radio's Hamlib caps drove the
+capability syncs for Icom, Xiegu, Yaesu newcat, Kenwood and Elecraft.
+Highlights: CW keyer and CW text on Yaesu / Kenwood / Elecraft,
+calibrated Yaesu TX meters and S-meter, RF power in each radio's own
+units, Yaesu newcat split without `ST`, rigctld values in Hamlib's
+units, `Mode.dataAM`, FTX-1 Main/Sub clarifier and
+`FlexRadioDiscovery`. Includes the Hamlib upstream reviews through
+`9199f8a`. Shipped in jjones9527/SwiftRigControl#53, #55, #56, #59, #60,
+#61 and #63. Test count 1001 → 1178 (`swift test`). Hamlib capability
+coverage 49% → 71.3%.
+
+This is a minor release because it adds public API and new cases on
+two public enums, and changes how rigctld reads and reports several
+levels. See **Migration** below.
+
+**Verification status:** mock-tested only. No change in this release
+has been run on a radio. `Documentation/HARDWARE_CHECK_v1.2.19.md` and
+the ROADMAP 5.10.4 hardware items are still outstanding.
+
+### Migration
+
+- **New enum cases.** SwiftRigControl is built without library
+  evolution, so a `switch` that lists every case of these enums and has
+  no `default` arm will stop compiling:
+
+  | Enum | New cases |
+  | --- | --- |
+  | `Mode` | `.dataAM` |
+  | `RigctldCommand` | `.setRIT(hz:)`, `.getRIT`, `.setXIT(hz:)`, `.getXIT` |
+
+- **RF power units.** `RigCapabilities.init` now defaults `powerUnits`
+  to `.watts(max: maxPower)`. A custom CI-V `RigCapabilities` that
+  relied on the old `.percentage` default must pass it explicitly.
+- **rigctld level semantics follow Hamlib.** `L` / `l RFPOWER`, `NR`,
+  `NB`, `PREAMP`, `STRENGTH` and `RAWSTR` now use Hamlib's units (see
+  Fixed). Clients that worked around the old values need re-checking.
+- **Capabilities removed.** RIT / XIT on 40 / 41 Icom and Xiegu records
+  and IC-7760 `scope` are no longer advertised, because Hamlib's caps
+  don't list them.
+
 ### Added
 
 - **FTX-1 Main/Sub clarifier control.** `YaesuCATProtocol` gains
