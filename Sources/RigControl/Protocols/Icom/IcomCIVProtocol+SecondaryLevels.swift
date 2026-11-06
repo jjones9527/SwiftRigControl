@@ -53,18 +53,7 @@ extension IcomCIVProtocol {
         try await getLevel(subCmd: 0x16, label: "VOX gain")
     }
 
-    public func setVOXDelay(_ level: Int) async throws {
-        // Hamlib has per-radio quirks here; pending a user
-        // request we use a raw set with sub-cmd 0x1A 0x05 0x06
-        // (the typical S_LVL_VOXDLY layout on the IC-7300 family).
-        // Until exercised against hardware, treat this as the
-        // generic 0x14 sub-cmd path matching VOXGAIN.
-        try await setLevel(subCmd: 0x16, level: level, label: "VOX delay")
-    }
-
-    public func getVOXDelay() async throws -> Int {
-        try await getLevel(subCmd: 0x16, label: "VOX delay")
-    }
+    // VOX delay: IcomCIVProtocol+VOXDelay.swift.
 
     public func setIFShift(_ level: Int) async throws {
         try await setLevel(subCmd: 0x04, level: level, label: "IF shift")

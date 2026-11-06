@@ -62,13 +62,14 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSendCW: true,
         supportsVFOScan: true,
         supportsMemoryScan: true,
-        supportsPriorityScan: true,
         supportsProgrammedScan: true,
         supportsDeltaFScan: true,
         // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
         supportedVFOOperations: .icomStandard,
         supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
-        preampLevels: [10, 20]
+        // P.AMP 1 is 12 dB (Hamlib dae8f61); no priority scan
+        // (Hamlib 4197119).
+        preampLevels: [12, 20]
     )
 
     // MARK: - Icom IC-7300MK2

@@ -71,16 +71,17 @@ extension IcomCIVProtocol {
     ///   has no table we have cross-checked.
     static func agcTable(for model: IcomRadioModel) -> [(speed: AGCSpeed, code: UInt8)]? {
         switch model {
-        case .ic7600, .ic7610, .ic7100, .ic7000:
+        case .ic7600, .ic7610, .ic7100, .ic7000, .ic7760:
             // ic7600.c:161-167, ic7610.c:167-173, ic7100.c:199-205,
-            // ic7000.c:192+ — FAST/MID/SLOW only, no OFF.
+            // ic7000.c:192+ — FAST/MID/SLOW only, no OFF. The IC-7760
+            // rejects OFF (Hamlib 04f897d dropped it from ic7760.c).
             return [(.fast, 0x01), (.medium, 0x02), (.slow, 0x03)]
 
         case .ic7300, .ic7300mk2, .ic9700, .ic705,
-             .ic7700, .ic7760, .ic7800, .ic7851, .ic7850:
+             .ic7700, .ic7800, .ic7851, .ic7850:
             // ic7300.c:454-460 (IC-7300), :563-569 (MK2), :670-676
             // (IC-9700), :726-732 (IC-705); ic7700.c:125+,
-            // ic7760.c:124+, ic7800.c:137+, ic785x.c:156-162 (the
+            // ic7800.c:137+, ic785x.c:156-162 (the
             // IC-7850 and IC-7851 share it; the IC-7850 was missing).
             // Hamlib notes that on the IC-7300 family OFF is really
             // driven by the AGC time constant, but still maps it to

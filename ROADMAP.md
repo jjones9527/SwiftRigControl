@@ -1640,6 +1640,15 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] Yaesu newcat split on the radios without `ST` (FT TX VFO,
       `newcat.c:2770-2950`) and the FT-891's own `ST` split.
 - [ ] Hardware: split on an FT-991A / FT-891 from WSJT-X.
+- [x] Hamlib review `91e7b97` → `9199f8a` (2026-11-05): select memory
+      scan `0E 23`, IC-7760 caps / AGC / VOX delay, Elecraft VFO B mode
+      (`MD$` / `DT$`), Icom VOX delay was VOX gain. Watch workflow keeps
+      its watermark in the digest issue (main is protected).
+- [ ] Split mode (`X`) on radios whose `setMode` can't address VFO B
+      (Kenwood `MD`, non-targetable Yaesu): Hamlib's frontend switches
+      VFO around the mode set; we set the current VFO.
+- [ ] Hardware: K3 / K4 split mode from WSJT-X; IC-7100 / IC-7600 VOX
+      delay.
 - [x] Icom AGC tables for the IC-746 / 746PRO / 7400 / 756 family /
       R8600 / 7850 from Hamlib `agc_levels`.
 - [ ] AGC on the IC-703, IC-706MKIIG, IC-905, IC-9100, IC-R75, IC-R9500,

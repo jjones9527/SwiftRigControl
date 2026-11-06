@@ -236,7 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Icom AM with the DATA flag read as plain AM.** `getMode` now
   returns `.dataAM`, as Hamlib returns PKTAM (`icom.c:2976`).
 
-  Mock-tested only. Test count 1135 → 1167. Hamlib capability coverage
+  Mock-tested only. Test count 1135 → 1178. Hamlib capability coverage
   70.9% after the over-claim removals, 71.3% with the split and AGC
   fixes.
 - **Yaesu newcat function bytes that differed from Hamlib**,
@@ -434,6 +434,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     instead.
 
   Mock-tested only. These commits took the test count from 1040 to 1082.
+
+### Hamlib upstream review (2026-11-05, `91e7b97` → `9199f8a`)
+
+68 new commits, most of them an IC-7760 cleanup series checked on real
+hardware. Ported:
+
+- **`bba61a9` select memory scan:** `.selectedMemory` sends `0E 23`
+  (`S_SCAN_SLCTN`), not `0E 01`, which scans every channel. Applies to
+  every Icom / Xiegu radio with `supportsSelectedMemoryScan`.
+- **IC-7760:** no AGC OFF (`04f897d`), no priority scan (`4197119`),
+  P.AMP 1 is 12 dB (`dae8f61`, `preampLevels` `[12, 20]`), VOX delay is
+  `1A 05 03 65` (`720268f`).
+- **Elecraft VFO B mode** (`0b58218` / `1246091` led here): `setMode`
+  and `getMode` ignored `vfo`, so rigctld `X` (split mode) changed VFO A.
+  VFO B is now `MD$` on the K3 family and `DT$` on the K4
+  (`k3.c:1219-1291`); reads use `MD$` on the K3, K3S and K4 and `MD` on
+  the KX2 / KX3, as `kenwood.c:2945-2948` does.
+- **Icom VOX delay sent VOX gain.** While checking `720268f`: our
+  `setVOXDelay` sent `14 16`, the VOX *gain* command. It now writes each
+  model's `1A 05` menu item (from the Hamlib backends' `extcmds`; IC-7200
+  `1A 03 55`), 0.0–2.0 s in tenths. Models without a known item throw
+  `unsupportedOperation`.
+
+- **Already matched:** `0e3c8d9` (IC-7760 power state by reading a
+  frequency; we do this on every Icom since v1.2.10), `45390a1` (antenna
+  selection sent once; ours always was), `eb4f48f` / `ea260ab` (IC-7760
+  Main/Sub in `25` / `26`; we don't send those to the IC-7760).
+- **Not applicable:** scope and spectrum (`3150a92`, `f27ddc8`,
+  `c2c6053`, `21f27ea`, `986585b`), Morse queue threading (`547ab82`,
+  `c75e0dc`, `96331d9`), rigctld stream and clock (`67e01ff`, `93b9061`),
+  `rig_open` settling (`316d514`), `get_vfo` gating (`5fb1ef9`), PRM80
+  (not in the catalog), CI and tests.
+- **Not ported:** IC-7760 tuning step, attenuator list, CI-V baud range,
+  OVF / backlight / extra switches; we have no API for them.
 
 ### Hamlib upstream review (2026-10-30, `075b78c` → `91e7b97`)
 
