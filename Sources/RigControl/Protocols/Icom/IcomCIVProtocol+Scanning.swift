@@ -10,6 +10,9 @@ import Foundation
 //     S_SCAN_START  0x01   start (interpreted by current VFO/MEM state)
 //     S_SCAN_PROG   0x02   programmed scan
 //     S_SCAN_DELTA  0x03   delta-f scan
+//     S_SCAN_SLCTN  0x23   select memory scan (only channels marked
+//                          SELECT). Hamlib sent 0x01 for it until
+//                          upstream bba61a9 (icom.c:8917).
 //
 // Note on VFO/MEM state: Hamlib's icom_scan changes the radio's
 // VFO/MEM selection before issuing the scan, so that 0x0E 0x01
@@ -26,13 +29,16 @@ extension IcomCIVProtocol {
     public func startScan(_ kind: ScanKind) async throws {
         try requireScanSupported(kind)
 
-        // S_SCAN_START (0x01) handles VFO, MEM, SLCT, and PRIO —
-        // the radio interprets the bit based on its current
-        // VFO/MEM/PRIO mode. PROG and DELTA have dedicated bytes.
+        // S_SCAN_START (0x01) handles VFO, MEM and PRIO — the radio
+        // interprets it from its current VFO/MEM/PRIO mode. SLCT, PROG
+        // and DELTA have dedicated bytes. Through v1.3.1 `.selectedMemory`
+        // sent 0x01, which scans every channel (Hamlib bba61a9).
         let subCmd: UInt8
         switch kind {
-        case .vfo, .memory, .selectedMemory, .priority:
+        case .vfo, .memory, .priority:
             subCmd = 0x01  // S_SCAN_START
+        case .selectedMemory:
+            subCmd = 0x23  // S_SCAN_SLCTN
         case .programmed:
             subCmd = 0x02  // S_SCAN_PROG
         case .deltaF:

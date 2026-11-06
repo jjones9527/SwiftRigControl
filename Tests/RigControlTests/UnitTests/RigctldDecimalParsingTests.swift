@@ -158,4 +158,23 @@ import Testing
         let get = await handler.handle(.getLevel(name: "MICGAIN"))
         #expect(get.data.first == "0.500000")
     }
+
+    // MARK: - Integer levels (sscanf "%d", rigctl_parse.c:4317-4324)
+
+    @Test func integerLevelsTakeTheLeadingInteger() {
+        #expect(RigctldDecimal.parseLevelInteger("600") == 600)
+        #expect(RigctldDecimal.parseLevelInteger("600.0") == 600)
+        #expect(RigctldDecimal.parseLevelInteger("0.5") == 0)
+        #expect(RigctldDecimal.parseLevelInteger(" -12") == -12)
+        #expect(RigctldDecimal.parseLevelInteger("+7x") == 7)
+        #expect(RigctldDecimal.parseLevelInteger("abc") == nil)
+        #expect(RigctldDecimal.parseLevelInteger("") == nil)
+        #expect(RigctldDecimal.parseLevelInteger("99999999999") == nil)
+    }
+
+    @Test func setLevelCWPitchAcceptsAFractionalToken() async throws {
+        let handler = try await makeHandler()
+        let response = await handler.handle(.setLevel(name: "CWPITCH", value: "600.000000"))
+        #expect(response.returnCode == .ok)
+    }
 }

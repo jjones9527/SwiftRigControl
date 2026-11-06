@@ -20,6 +20,7 @@ public actor KenwoodProtocol:
     SupportsAGC,
     SupportsNoiseBlanker,
     SupportsNoiseReduction,
+    SupportsNoiseReductionLevel,
     SupportsIFFilter,
     SupportsAFGain,
     SupportsRFGain,

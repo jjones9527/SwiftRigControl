@@ -10,7 +10,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // Standard HF bands with general coverage receive
@@ -56,7 +56,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // Standard HF bands with general coverage receive
@@ -124,6 +124,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-7000 operates on current VFO
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,
@@ -164,6 +166,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCWKeyer: true,
         supportsVFOScan: true,
         supportsMemoryScan: true,
@@ -201,6 +205,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCWKeyer: true,
         supportsVFOScan: true,
         supportsMemoryScan: true,
@@ -238,6 +244,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,
@@ -284,6 +292,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,
@@ -329,6 +339,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,  // Legacy mode commands, no filter byte
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsRFPowerMeter: true,
         supportsSWRMeter: true,
         supportsALCMeter: true,

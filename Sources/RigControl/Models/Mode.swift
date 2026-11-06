@@ -56,6 +56,10 @@ public enum Mode: String, Sendable, Codable, CaseIterable {
     /// Narrow digital FM
     case dataFMN = "DATA-FM-N"
 
+    /// Digital AM: AM with the radio's DATA (packet) input selected.
+    /// Hamlib `RIG_MODE_PKTAM`, named `AM-D` / `PKTAM` by rigctld.
+    case dataAM = "DATA-AM"
+
     /// Yaesu System Fusion C4FM digital voice
     case c4fm = "C4FM"
 

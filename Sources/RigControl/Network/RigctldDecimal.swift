@@ -98,4 +98,24 @@ enum RigctldDecimal {
         guard let value = parseDouble(token) else { return nil }
         return min(max(value, 0.0), 1.0)
     }
+
+    /// Parses an integer level the way Hamlib's `set_level` does for
+    /// non-float levels: `sscanf("%d")` (`tests/rigctl_parse.c:4317-4324`),
+    /// which skips leading spaces, takes an optional sign and the leading
+    /// digits, and ignores the rest, so `600.0` is 600 and `0.5` is 0.
+    ///
+    /// - Parameter token: The value token.
+    /// - Returns: The integer, or `nil` if there are no leading digits or
+    ///   it doesn't fit in 32 bits (`%d` into an `int`).
+    static func parseLevelInteger(_ token: String) -> Int? {
+        var rest = Substring(token).drop { $0 == " " || $0 == "\t" }
+        var sign = ""
+        if let first = rest.first, first == "-" || first == "+" {
+            sign = first == "-" ? "-" : ""
+            rest = rest.dropFirst()
+        }
+        let digits = rest.prefix { $0.isASCII && $0.isNumber }
+        guard !digits.isEmpty, let value = Int32(sign + digits) else { return nil }
+        return Int(value)
+    }
 }

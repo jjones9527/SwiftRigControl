@@ -71,16 +71,18 @@ extension IcomCIVProtocol {
     ///   has no table we have cross-checked.
     static func agcTable(for model: IcomRadioModel) -> [(speed: AGCSpeed, code: UInt8)]? {
         switch model {
-        case .ic7600, .ic7610, .ic7100, .ic7000:
+        case .ic7600, .ic7610, .ic7100, .ic7000, .ic7760:
             // ic7600.c:161-167, ic7610.c:167-173, ic7100.c:199-205,
-            // ic7000.c:192+ — FAST/MID/SLOW only, no OFF.
+            // ic7000.c:192+ — FAST/MID/SLOW only, no OFF. The IC-7760
+            // rejects OFF (Hamlib 04f897d dropped it from ic7760.c).
             return [(.fast, 0x01), (.medium, 0x02), (.slow, 0x03)]
 
         case .ic7300, .ic7300mk2, .ic9700, .ic705,
-             .ic7700, .ic7760, .ic7800, .ic7851:
+             .ic7700, .ic7800, .ic7851, .ic7850:
             // ic7300.c:454-460 (IC-7300), :563-569 (MK2), :670-676
             // (IC-9700), :726-732 (IC-705); ic7700.c:125+,
-            // ic7760.c:124+, ic7800.c:137+, ic785x.c:156-162.
+            // ic7800.c:137+, ic785x.c:156-162 (the
+            // IC-7850 and IC-7851 share it; the IC-7850 was missing).
             // Hamlib notes that on the IC-7300 family OFF is really
             // driven by the AGC time constant, but still maps it to
             // 0x00 here — we match that for parity.
@@ -94,12 +96,27 @@ extension IcomCIVProtocol {
             // ic7410.c:102+ — order is reversed: SLOW=1, MID=2, FAST=3.
             return [(.off, 0x00), (.slow, 0x01), (.medium, 0x02), (.fast, 0x03)]
 
+        case .ic746, .ic746pro, .ic7400:
+            // ic746.c ic746_priv_caps / ic746pro_priv_caps (the IC-7400
+            // is the European IC-746PRO): SLOW=1, MID=2, FAST=3.
+            return [(.off, 0x00), (.slow, 0x01), (.medium, 0x02), (.fast, 0x03)]
+
+        case .ic756, .ic756pro, .ic756proII, .ic756proIII, .icr8600:
+            // ic756.c ic756/pro/pro2/pro3_priv_caps, icr8600.c
+            // icr8600_priv_caps: FAST/MID/SLOW, no OFF.
+            return [(.fast, 0x01), (.medium, 0x02), (.slow, 0x03)]
+
         case .xieguG90:
             // xiegu.c g90_priv_caps (upstream 5ac54e5b): OFF/FAST/SLOW/AUTO,
             // no MID.
             return [(.off, 0x00), (.fast, 0x01), (.slow, 0x02), (.auto, 0x03)]
 
         default:
+            // The remaining models have no `agc_levels` in Hamlib, which
+            // then sends the generic D_AGC_* bytes (icom_defs.h:235-241:
+            // FAST 0x02, MID 0x05). Those don't match the CI-V manuals we
+            // have (IC-9100: FAST 01, MID 02, SLOW 03), so we don't copy
+            // them.
             return nil
         }
     }

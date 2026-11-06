@@ -118,6 +118,31 @@ import Testing
         #expect(table.first { $0.speed == .slow }?.code == 0x02)
     }
 
+    @Test(arguments: [IcomRadioModel.ic746, .ic746pro, .ic7400])
+    func ic746FamilyTableIsReversed(model: IcomRadioModel) throws {
+        // ic746.c ic746_priv_caps / ic746pro_priv_caps: SLOW=1, FAST=3.
+        let table = try #require(IcomCIVProtocol.agcTable(for: model))
+        #expect(table.map(\.code) == [0x00, 0x01, 0x02, 0x03])
+        #expect(table.first { $0.speed == .slow }?.code == 0x01)
+        #expect(table.first { $0.speed == .fast }?.code == 0x03)
+    }
+
+    @Test(arguments: [IcomRadioModel.ic756, .ic756pro, .ic756proII, .ic756proIII, .icr8600])
+    func ic756FamilyTableHasNoOff(model: IcomRadioModel) throws {
+        // ic756.c priv caps, icr8600.c: FAST=1, MID=2, SLOW=3.
+        let table = try #require(IcomCIVProtocol.agcTable(for: model))
+        #expect(table.first { $0.speed == .off } == nil)
+        #expect(table.first { $0.speed == .fast }?.code == 0x01)
+        #expect(table.first { $0.speed == .slow }?.code == 0x03)
+    }
+
+    @Test func ic7850SharesTheIC7851Table() throws {
+        // ic785x.c: one priv caps for both.
+        let a = try #require(IcomCIVProtocol.agcTable(for: .ic7850))
+        let b = try #require(IcomCIVProtocol.agcTable(for: .ic7851))
+        #expect(a.map(\.code) == b.map(\.code))
+    }
+
     @Test func noTableEverEmitsRigAGCEnumValues() {
         // 0x05 (RIG_AGC_MEDIUM) and 0x06 (RIG_AGC_AUTO) are Hamlib
         // API enum values, never Icom wire bytes for these models.

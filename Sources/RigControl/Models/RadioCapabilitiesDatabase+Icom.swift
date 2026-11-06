@@ -67,7 +67,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -149,7 +149,7 @@ extension RadioCapabilitiesDatabase.Icom {
         maxPower: 100,
         // DATA-FM added in v1.2.19: Hamlib IC7300_ALL_RX_MODES includes
         // RIG_MODE_PKTFM (ic7300.c:43), and the MK2 already listed it.
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -227,7 +227,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .dataUSB, .dataLSB],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .dataUSB, .dataLSB],
         frequencyRange: FrequencyRange(min: 30_000, max: 60_000_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -315,7 +315,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -416,7 +416,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 10,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN, .wfm, .dataUSB, .dataLSB, .dataFM, .dstar],
         frequencyRange: FrequencyRange(min: 30_000, max: 470_000_000),
         detailedFrequencyRanges: [
             // MW/LW receive only
@@ -557,6 +557,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,  // IC-703 doesn't require VFO selection
         requiresModeFilter: true,  // IC-703 requires filter byte in mode commands
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsSWRMeter: true,
         supportsALCMeter: true,
         supportsVFOScan: true,
@@ -572,7 +574,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 10,  // 10W 144/430/1200MHz, 2W 2400/5600MHz, 0.5W 10GHz
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN, .dataUSB, .dataFM],
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN, .dataUSB, .dataFM],
         frequencyRange: FrequencyRange(min: 144_000_000, max: 10_500_000_000),
         detailedFrequencyRanges: [
             DetailedFrequencyRange(min: 144_000_000, max: 148_000_000, modes: [.lsb, .usb, .cw, .cwR, .fm, .fmN, .dataUSB, .dataFM], canTransmit: true, bandName: "2m"),

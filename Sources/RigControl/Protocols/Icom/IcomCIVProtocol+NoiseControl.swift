@@ -98,8 +98,9 @@ extension IcomCIVProtocol {
             // First enable NR
             try await setNoiseReduction(true)
 
-            // Then set the level
-            try await setNRLevel(UInt8(level))
+            // Then set the level (0-240 on the IC-R75, icom.c:3566-3572)
+            let wire = radioModel == .icr75 ? (level * 240 + 127) / 255 : level
+            try await setNRLevel(UInt8(wire))
         }
     }
 
@@ -116,8 +117,38 @@ extension IcomCIVProtocol {
         }
 
         // If enabled, read the level
-        let level = try await getNRLevel()
-        return .enabled(level: Int(level))
+        let wire = Int(try await getNRLevel())
+        return .enabled(level: radioModel == .icr75 ? min((wire * 255 + 120) / 240, 255) : wire)
+    }
+
+    /// Sets the NR level with `0x14 0x06` alone, leaving NR on or off.
+    ///
+    /// This is Hamlib's `RIG_LEVEL_NR`: `fraction × 255`, truncated
+    /// (`icom.c:3555-3557`, `3711-3714`), or `× 240` on the IC-R75
+    /// (`icom.c:3566-3572`).
+    ///
+    /// - Parameter fraction: NR level, 0.0–1.0
+    /// - Throws: `RigError.invalidParameter` if `fraction` is out of
+    ///   range, `RigError.commandFailed` if the radio rejects it
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        guard fraction >= 0, fraction <= 1 else {
+            throw RigError.invalidParameter("NR level must be 0.0-1.0, got \(fraction)")
+        }
+        try await setNRLevel(UInt8(fraction * nrWireMaximum))
+    }
+
+    /// Reads the NR level with `0x14 0x06`, whether or not NR is on.
+    ///
+    /// - Returns: NR level, 0.0–1.0 (`icom.c:4778-4784` on the IC-R75)
+    /// - Throws: `RigError.invalidResponse` if the reply is malformed
+    public func getNoiseReductionLevel() async throws -> Double {
+        min(Double(try await getNRLevel()) / nrWireMaximum, 1)
+    }
+
+    /// Full scale of the `0x14 0x06` NR level: 240 on the IC-R75, 255
+    /// elsewhere.
+    private var nrWireMaximum: Double {
+        radioModel == .icr75 ? 240 : 255
     }
 
     // MARK: - Private Helpers

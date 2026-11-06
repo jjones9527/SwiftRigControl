@@ -73,6 +73,7 @@ extension KenwoodProtocol {
             case .usb: return .dataUSB
             case .lsb: return .dataLSB
             case .fm: return .dataFM
+            case .am: return .dataAM
             default: return base
             }
 
@@ -153,6 +154,10 @@ extension KenwoodProtocol {
         case .dataUSB: return (.usb, true)
         case .dataLSB: return (.lsb, true)
         case .dataFM: return (.fm, true)
+        // AM + DA1. Hamlib reads it as PKTAM (kenwood.c:3012) but its
+        // TS-590 set path maps only PKTUSB / PKTLSB / PKTFM to DA1
+        // (kenwood.c:2537-2558); we write the pair we read.
+        case .dataAM: return (.am, true)
         default: return (mode, false)
         }
     }

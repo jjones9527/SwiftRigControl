@@ -3,12 +3,20 @@ name: Hamlib upstream watch
 # Weekly Monday 12:00 UTC — polls the Hamlib upstream repository for
 # new tags, published security advisories, and commits touching any
 # file listed in HAMLIB_WATCH.md. If any signal is found, opens (or
-# updates) a single issue titled "Hamlib upstream digest — <date>"
-# and advances the watermark in .hamlib-watermark on main.
+# updates) a single issue titled "Hamlib upstream digest — <date>".
+#
+# Watermark: the last Hamlib commit reviewed is kept as a hidden
+# `<!-- hamlib-watermark: <sha> -->` line at the end of each digest
+# issue, and read back from the newest `hamlib-upstream` issue (open or
+# closed) on the next run. It used to be committed to .hamlib-watermark
+# on main, but main is a protected branch, so the push failed every
+# week from 2026-10-26 and the watermark never moved.
+# .hamlib-watermark in the repo is only the fallback when no digest
+# issue carries a marker.
 #
 # Manual trigger via workflow_dispatch is supported for testing —
-# a `dry-run` input skips the issue creation and watermark commit
-# so you can inspect the digest output in the run log.
+# a `dry-run` input skips the issue creation so you can inspect the
+# digest output in the run log.
 
 on:
   schedule:
@@ -25,8 +33,8 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write   # commit updated watermark
-  issues: write     # open the digest issue
+  contents: read    # nothing is pushed
+  issues: write     # open the digest issue and read the watermark
 
 jobs:
   digest:
@@ -38,16 +46,29 @@ jobs:
       - name: Check out SwiftRigControl
         uses: actions/checkout@v4
         with:
-          # Need push access for the watermark commit; the default
-          # GITHUB_TOKEN with `contents: write` above is sufficient.
           fetch-depth: 1
 
       - name: Clone Hamlib (last 500 commits)
         run: |
           git clone --depth=500 https://github.com/Hamlib/Hamlib.git /tmp/hamlib
-        # 500 commits is well beyond Hamlib's weekly change volume
-        # (~1-5 commits/week). The script deepens further only if
-        # the stored watermark falls outside this window.
+        # 500 commits is well beyond Hamlib's weekly change volume.
+        # The script deepens further only if the watermark falls
+        # outside this window.
+
+      - name: Restore watermark from the latest digest issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="$(gh issue list --label hamlib-upstream --state all --limit 20 \
+                   --json number,body --jq 'sort_by(.number) | reverse | .[].body' \
+                 | grep -oE '<!-- hamlib-watermark: [0-9a-f]{40} -->' \
+                 | head -n1 | grep -oE '[0-9a-f]{40}' || true)"
+          if [[ -n "$SHA" ]]; then
+            echo "$SHA" > .hamlib-watermark
+            echo "Watermark from digest issue: $SHA"
+          else
+            echo "No watermark marker in digest issues; using .hamlib-watermark ($(cat .hamlib-watermark))"
+          fi
 
       - name: Run diff script
         id: diff
@@ -67,8 +88,14 @@ jobs:
         if: steps.diff.outputs.digest_empty == 'false' && inputs.dry-run != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_SHA: ${{ steps.diff.outputs.new_head_sha }}
         run: |
           TITLE="Hamlib upstream digest — $(date -u +%Y-%m-%d)"
+
+          # The next run starts from this issue's marker.
+          if [[ -n "$NEW_SHA" ]]; then
+            printf '\n<!-- hamlib-watermark: %s -->\n' "$NEW_SHA" >> /tmp/digest.md
+          fi
 
           # If an open issue with the same title already exists this
           # week (rerun scenario), edit it instead of opening a
@@ -83,20 +110,4 @@ jobs:
               --title "$TITLE" \
               --body-file /tmp/digest.md \
               --label "hamlib-upstream"
-          fi
-
-      - name: Advance watermark
-        if: steps.diff.outputs.digest_empty == 'false' && inputs.dry-run != true && steps.diff.outputs.new_head_sha != ''
-        env:
-          NEW_SHA: ${{ steps.diff.outputs.new_head_sha }}
-        run: |
-          echo "$NEW_SHA" > .hamlib-watermark
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .hamlib-watermark
-          if git diff --cached --quiet; then
-            echo "Watermark unchanged — nothing to commit"
-          else
-            git commit -m "chore(hamlib-watch): Advance watermark to ${NEW_SHA:0:12}"
-            git push
           fi

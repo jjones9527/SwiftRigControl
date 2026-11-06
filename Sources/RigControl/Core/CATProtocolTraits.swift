@@ -97,6 +97,18 @@ public protocol SupportsNoiseReduction: CATProtocol {
     func getNoiseReduction() async throws -> NoiseReduction
 }
 
+/// Conforming radios set and read the noise-reduction level on its own,
+/// without switching NR on or off, as Hamlib `RIG_LEVEL_NR` does.
+///
+/// The level is Hamlib's 0.0–1.0 fraction, so each protocol can scale it
+/// to its own wire range exactly as Hamlib does.
+public protocol SupportsNoiseReductionLevel: CATProtocol {
+    /// Sets the NR level (0.0–1.0) and leaves NR on or off as it was.
+    func setNoiseReductionLevel(_ fraction: Double) async throws
+    /// Reads the NR level (0.0–1.0), whether or not NR is on.
+    func getNoiseReductionLevel() async throws -> Double
+}
+
 /// Conforming radios expose IF filter selection.
 public protocol SupportsIFFilter: CATProtocol {
     func setIFFilter(_ filter: IFFilter) async throws

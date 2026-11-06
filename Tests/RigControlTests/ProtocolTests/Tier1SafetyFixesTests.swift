@@ -184,10 +184,10 @@ import Testing
     }
 
     /// On FT-950/991/2000/DX3000/DX5000/DX1200/DX9000 the `ST`
-    /// command is not supported per Hamlib newcat.c:578. Rather
-    /// than silently sending the wrong bytes, `setSplit` must fail
-    /// loudly so callers know to use TX-VFO selection instead.
-    @Test func yaesuSetSplitOnNoSTRadioThrowsUnsupported() async throws {
+    /// command is not supported per Hamlib newcat.c:578. Split is
+    /// the TX VFO there (`newcat_set_tx_vfo`, newcat.c:8248-8320),
+    /// with the family's `FT2;` / `FT3;` digits, never `ST`.
+    @Test func yaesuSetSplitOnNoSTRadioSelectsTheTXVFO() async throws {
         let mock = MockTransport()
         let yaesu = YaesuCATProtocol(
             transport: mock,
@@ -196,13 +196,13 @@ import Testing
         )
         try await yaesu.connect()
         await mock.reset()
+        await mock.setResponse(for: Data("ID;".utf8), response: Data("ID0670;".utf8))
 
-        await #expect(throws: RigError.self) {
-            try await yaesu.setSplit(true)
-        }
+        try await yaesu.setSplit(true)
 
-        let writes = await mock.recordedWrites
-        #expect(writes.isEmpty, "no bytes should be written when split is unsupported")
+        let writes = await mock.recordedWrites.map { String(decoding: $0, as: UTF8.self) }
+        #expect(writes.first == "FT3;")
+        #expect(!writes.contains { $0.hasPrefix("ST") })
     }
 
     /// FT-891 has neither ST nor FT per Hamlib newcat.c:516,578.
@@ -274,11 +274,11 @@ import Testing
 
     // MARK: - FT-891 capability flag
 
-    @Test func ft891HasSplitIsFalse() {
-        // Pre-fix code advertised hasSplit=true even though the radio
-        // has no CAT path to establish split (no ST, no FT).
-        // Capability flag must be honest so callers don't attempt it.
-        #expect(RadioDefinition.Yaesu.ft891.capabilities.hasSplit == false)
+    @Test func ft891HasSplitThroughST() {
+        // v1.1.2 set this false from the shared newcat table (no ST, no
+        // FT), but Hamlib's FT-891 backend overrides split with
+        // `ST1;` / `ST0;` (ft891.c:377-466).
+        #expect(RadioDefinition.Yaesu.ft891.capabilities.hasSplit == true)
     }
 
     // MARK: - Kenwood mode code 9 (FSK-R / RTTY-R)

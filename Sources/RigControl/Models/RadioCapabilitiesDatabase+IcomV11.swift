@@ -21,7 +21,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 200,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN,
                          .dataLSB, .dataUSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 54_000_000),
         detailedFrequencyRanges: [
@@ -62,13 +62,14 @@ extension RadioCapabilitiesDatabase.Icom {
         supportsSendCW: true,
         supportsVFOScan: true,
         supportsMemoryScan: true,
-        supportsPriorityScan: true,
         supportsProgrammedScan: true,
         supportsDeltaFScan: true,
         // VFO ops — IC-7760 is in the IC-7300/IC-7610 family.
         supportedVFOOperations: .icomStandard,
-        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .scope, .tuner, .voiceSquelch, .vox],
-        preampLevels: [10, 20]
+        supportedFunctions: [.audioPeakFilter, .autoNotch, .compressor, .ctcssSquelch, .ctcssTone, .lock, .manualNotch, .monitor, .tuner, .voiceSquelch, .vox],
+        // P.AMP 1 is 12 dB (Hamlib dae8f61); no priority scan
+        // (Hamlib 4197119).
+        preampLevels: [12, 20]
     )
 
     // MARK: - Icom IC-7300MK2
@@ -96,7 +97,7 @@ extension RadioCapabilitiesDatabase.Icom {
         hasSplit: true,
         powerControl: true,
         maxPower: 100,
-        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .fm, .fmN,
+        supportedModes: [.lsb, .usb, .cw, .cwR, .rtty, .rttyR, .am, .dataAM, .fm, .fmN,
                          .dataLSB, .dataUSB, .dataFM],
         frequencyRange: FrequencyRange(min: 30_000, max: 74_800_000),
         detailedFrequencyRanges: [
@@ -211,6 +212,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -257,6 +260,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -302,6 +307,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: false,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -346,6 +353,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: false,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         supportsCTCSS: true,
         supportsDCS: true,
         supportsDuplex: true,
@@ -392,6 +401,8 @@ extension RadioCapabilitiesDatabase.Icom {
         requiresVFOSelection: true,
         requiresModeFilter: true,
         powerUnits: .percentage,
+        supportsRIT: false,
+        supportsXIT: false,
         // 2 antenna ports per Hamlib icr30.c:122 (.ant_count = 2).
         antennaCount: 2,
         // Hamlib icr30.c:43 — FROM_VFO/TO_VFO/MCL.

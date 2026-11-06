@@ -25,16 +25,25 @@ extension ElecraftProtocol {
         }
 
         let (code, dataSubMode) = try Self.k3ModeCommand(for: mode)
-        try await sendSetCommand("MD\(code)")
+        // VFO B is `MD$` on the whole K3 family, and its data sub-mode
+        // `DT$` on the K4 (k3_set_mode, k3.c:1219-1224, 1285-1291).
+        // Through v1.3.1 the `vfo` argument was ignored, so rigctld `X`
+        // (split mode) changed VFO A.
+        let isB = vfo == .b || vfo == .sub
+        try await sendSetCommand((isB ? "MD$" : "MD") + "\(code)")
         // `DT` only works once the radio is in a DATA mode, so it goes
         // after `MD` (k3.c:1352-1365).
         if let dataSubMode {
-            try await sendSetCommand("DT\(dataSubMode)")
+            try await sendSetCommand((isB && isK4 ? "DT$" : "DT") + "\(dataSubMode)")
         }
     }
 
     public func getMode(vfo: VFO) async throws -> Mode {
-        let code = try await readSingleDigit(query: "MD")
+        // Hamlib reads VFO B with `MD$` on the K3, K3S and K4, and the
+        // K4's data sub-mode with `DT$` (kenwood.c:2945-2948,
+        // k3.c:1036-1046). It reads `MD` on the KX2 / KX3, so we do too.
+        let isB = (vfo == .b || vfo == .sub) && !usesK2ModeTable && family == .k3
+        let code = try await readSingleDigit(query: isB ? "MD$" : "MD")
 
         if usesK2ModeTable {
             return try Self.k2Mode(forCode: code)
@@ -44,9 +53,13 @@ extension ElecraftProtocol {
         }
         // DATA / DATA-REV: the sub-mode decides what the mode is
         // (k3_get_mode, k3.c:1053-1120).
-        let dataSubMode = try await readSingleDigit(query: "DT")
+        let dataSubMode = try await readSingleDigit(query: isB && isK4 ? "DT$" : "DT")
         return try Self.k3Mode(forCode: code, dataSubMode: dataSubMode)
     }
+
+    /// The K4, the one radio built with the `KY @` CW stop
+    /// (`ElecraftModels.k4`). Only it takes `DT$` for VFO B.
+    var isK4: Bool { cwMessageForm == .k4 }
 
     // MARK: - Wire helpers
 

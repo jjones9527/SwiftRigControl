@@ -144,6 +144,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hamlib's units (IC-7600 `[10, 16]`, IC-7300 `[1, 2]`), set for every
   Icom and Xiegu radio from Hamlib. `RigCapabilities` encoded before
   this still decodes.
+- **`Mode.dataAM`** (`"DATA-AM"`): AM with the DATA input, Hamlib
+  `RIG_MODE_PKTAM`. On Icom it is AM plus the DATA flag, in the `0x26`
+  frame or as `0x06` then `0x1A 0x06` (`icom.c:2508-2511`). On the
+  TS-590S/SG it is `MD5;` + `DA1;`. rigctld parses `PKTAM` / `AM-D` and
+  prints `PKTAM` (`misc.c:463`, `490`). Advertised on the radios whose
+  Hamlib caps list PKTAM: IC-705, IC-7100, IC-7300, IC-7300MK2, IC-7600,
+  IC-7610, IC-7700, IC-7760, IC-7800, IC-7850, IC-7851, IC-905 and
+  TS-590S/SG. Hamlib only reads AM + `DA1` on the TS-590
+  (`kenwood.c:3012`), and its set path doesn't map PKTAM there
+  (`kenwood.c:2537-2558`); we write the pair we read. **Migration:** the
+  new case breaks exhaustive `switch`es over `Mode`. Mock-tested only.
+- **`SupportsNoiseReductionLevel`** and
+  `RigController.setNoiseReductionLevel(_:)` / `noiseReductionLevel()`
+  set and read the NR level without switching NR on or off, as Hamlib
+  `RIG_LEVEL_NR` does. The level is Hamlib's 0.0–1.0 fraction, so each
+  protocol scales it exactly as Hamlib does. Implemented by
+  `IcomCIVProtocol` (`14 06`), `YaesuCATProtocol` (`RL0`) and
+  `KenwoodProtocol` (`RL`, on radios with an NR level).
 - **Developer tooling:** `Scripts/hamlib-coverage.py` measures, per
   radio, how much of Hamlib's capability list we implement.
   `Scripts/hamlib-caps-sync.py` compares capability records with Hamlib
@@ -153,6 +171,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Split on Yaesu newcat radios without `ST`.** `setSplit` threw on
+  the FT-991/991A, FT-950, FT-450/450D, FT-2000 and FTDX-1200/3000/5000/
+  9000, so rigctld `S 1 VFOB` (WSJT-X "Split Operation: Rig") failed.
+  Hamlib does split there by choosing the TX VFO
+  (`newcat_set_split_vfo` / `newcat_set_tx_vfo`, `newcat.c:2770-2950`,
+  `8248-8370`): on is `FT` to VFO B, off is VFO A, using the family's
+  `FT2` / `FT3` or `FT0` / `FT1` digits; `getSplit` reads `FT;`. The
+  FT-891 has its own `ST1;` / `ST0;` split in Hamlib (`ft891.c:377-466`),
+  so `hasSplit` is now `true` there and `ST2` (split + 5 kHz) reads as
+  on. The FTDX-9000 is not in Hamlib's `FT2` / `FT3` list
+  (`newcat.c:8301-8307`), so its `selectVFO` now sends `FT0` / `FT1`
+  (it sent `FT2` / `FT3`). New `Quirks.withFT23VFOSelection(_:)`.
+- **Icom AGC on the IC-746, IC-746PRO, IC-7400, IC-756, IC-756PRO/II/III,
+  IC-R8600 and IC-7850** threw `unsupportedOperation`: they had no AGC
+  table. They now use their Hamlib `agc_levels` (`ic746.c`, `ic756.c`,
+  `icr8600.c`, `ic785x.c`). The IC-746 family is reversed (SLOW 1,
+  FAST 3). Radios without a Hamlib table (IC-703, IC-706MKIIG, IC-905,
+  IC-9100, IC-R75, IC-R9500, X6100, X6200) stay unsupported: Hamlib
+  falls back to generic bytes (`icom_defs.h:235-241`) that don't match
+  their CI-V manuals.
+- **rigctld integer levels** (`CWPITCH`, `KEYSPD`, `PREAMP`, `ATT`) are
+  read like Hamlib's `sscanf("%d")` (`rigctl_parse.c:4317-4324`), so
+  `L CWPITCH 600.000000` works. It used to return `RPRT -1`.
+- **rigctld `L NR` sent NR-on, then a rounded level.** Hamlib writes
+  the level alone, scaled per protocol: Icom truncates `f × 255`
+  (`icom.c:3555-3557`, so `0.5` is `14 06 01 27`, not `01 28`), Kenwood
+  truncates `f × 9` (`ts590.c:649-653`), and Yaesu newcat rounds
+  `f × 15` (`newcat.c:4555`). `L NR 0` used to switch NR off and now
+  sets level 0. `l NR` reads the level whether or not NR is on. Radios
+  without `SupportsNoiseReductionLevel` keep the old behavior. The
+  IC-R75's NR level is 0–240 (`icom.c:3566-3572`, `4778-4784`); we sent
+  0–255.
+- **FTX-1 power** is `PC1nnn;` on the field head and `PC2nnn;` with the
+  Optima / SPA-1 (`ftx1_audio.c:310-455`). We sent `PCnnn;` and read the
+  head digit as part of the watts, so `PC1005` (5 W) read as 100 W.
+  `setPower` reads `PC;` first to find the head, clamps to 5–100 W
+  (SPA-1) or 0.5–10 W (field head; `0` sends `PC10.5;`), and `getPower`
+  parses `PC10.5`. Hamlib's open also tells battery from 12 V by setting
+  8 W; we don't change the power on connect, so a field head on battery
+  rejects anything above 6 W. rigctld `L RFPOWER` still scales by the
+  catalog's 100 W, not the head's maximum.
+- **FTDX-3000 / FTDX-5000 SWR with the tuner on** reads `RM2`, after
+  checking the tuner (`AC;`) and that the meter is set to SWR (`MS;`).
+  With the tuner on and another meter selected it throws
+  `unsupportedOperation`, as Hamlib returns `-RIG_ENAVAIL`
+  (`newcat.c:5327-5345`). It always read `RM6`.
+- **Elecraft `getPower` reads K22 extended replies.** A radio left in
+  K22 mode by another program replies `PCnnnx`, where `x = 0` means
+  tenths of a watt (`k3.c:2333-2352`): `PC0500` is 5 W, and we read it
+  as 50 W. We still don't send `K22;`, so our sets stay in whole watts
+  (`PCnnn`). Hamlib turns K22 on at open (`elecraft.c:190-197`) and
+  sends `PCnnnx`.
+- **Capabilities Hamlib doesn't list, removed** with
+  `Scripts/hamlib-caps-sync.py --allow-removals` (hardware-verified
+  radios excluded):
+  - **RIT** on 40 and **XIT** on 41 Icom / Xiegu records. Among them were
+    receivers advertising XIT and HTs with no `0x21` clarifier.
+  - **`scope`** on the IC-7760.
+
+  The IC-7100's RIT, XIT and `scope` and the IC-9700's XIT are also
+  missing from Hamlib's caps, but stay until they are checked on the
+  hardware.
+- **Icom AM with the DATA flag read as plain AM.** `getMode` now
+  returns `.dataAM`, as Hamlib returns PKTAM (`icom.c:2976`).
+
+  Mock-tested only. Test count 1135 → 1178. Hamlib capability coverage
+  70.9% after the over-claim removals, 71.3% with the split and AGC
+  fixes.
 - **Yaesu newcat function bytes that differed from Hamlib**,
   compared on the Hamlib simulators:
   - **Manual notch** is `BP00` + 3 digits, `BP00001` (`newcat.c:6148`);
@@ -348,6 +434,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     instead.
 
   Mock-tested only. These commits took the test count from 1040 to 1082.
+
+### Hamlib upstream review (2026-11-05, `91e7b97` → `9199f8a`)
+
+68 new commits, most of them an IC-7760 cleanup series checked on real
+hardware. Ported:
+
+- **`bba61a9` select memory scan:** `.selectedMemory` sends `0E 23`
+  (`S_SCAN_SLCTN`), not `0E 01`, which scans every channel. Applies to
+  every Icom / Xiegu radio with `supportsSelectedMemoryScan`.
+- **IC-7760:** no AGC OFF (`04f897d`), no priority scan (`4197119`),
+  P.AMP 1 is 12 dB (`dae8f61`, `preampLevels` `[12, 20]`), VOX delay is
+  `1A 05 03 65` (`720268f`).
+- **Elecraft VFO B mode** (`0b58218` / `1246091` led here): `setMode`
+  and `getMode` ignored `vfo`, so rigctld `X` (split mode) changed VFO A.
+  VFO B is now `MD$` on the K3 family and `DT$` on the K4
+  (`k3.c:1219-1291`); reads use `MD$` on the K3, K3S and K4 and `MD` on
+  the KX2 / KX3, as `kenwood.c:2945-2948` does.
+- **Icom VOX delay sent VOX gain.** While checking `720268f`: our
+  `setVOXDelay` sent `14 16`, the VOX *gain* command. It now writes each
+  model's `1A 05` menu item (from the Hamlib backends' `extcmds`; IC-7200
+  `1A 03 55`), 0.0–2.0 s in tenths. Models without a known item throw
+  `unsupportedOperation`.
+
+- **Already matched:** `0e3c8d9` (IC-7760 power state by reading a
+  frequency; we do this on every Icom since v1.2.10), `45390a1` (antenna
+  selection sent once; ours always was), `eb4f48f` / `ea260ab` (IC-7760
+  Main/Sub in `25` / `26`; we don't send those to the IC-7760).
+- **Not applicable:** scope and spectrum (`3150a92`, `f27ddc8`,
+  `c2c6053`, `21f27ea`, `986585b`), Morse queue threading (`547ab82`,
+  `c75e0dc`, `96331d9`), rigctld stream and clock (`67e01ff`, `93b9061`),
+  `rig_open` settling (`316d514`), `get_vfo` gating (`5fb1ef9`), PRM80
+  (not in the catalog), CI and tests.
+- **Not ported:** IC-7760 tuning step, attenuator list, CI-V baud range,
+  OVF / backlight / extra switches; we have no API for them.
 
 ### Hamlib upstream review (2026-10-30, `075b78c` → `91e7b97`)
 
