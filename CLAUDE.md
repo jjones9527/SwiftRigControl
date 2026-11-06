@@ -51,8 +51,32 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.3.1** (git tag, 2026-10-22), DATA-mode
-wire fixes from a MacWinlink FT-710 field report:
+The shipped version is **v1.4.0** (git tag, 2026-11-06), the Hamlib
+parity release, jjones9527/SwiftRigControl#53, #55, #56, #59–#61, #63:
+
+- **Tooling that found most of it:** `Scripts/hamlib-diff-audit.py`
+  (our bytes against Hamlib's on its simulators),
+  `hamlib-set-matrix.py`, `hamlib-coverage.py` (capability coverage,
+  49% → 71.3%) and `hamlib-caps-sync.py` (records from Hamlib caps; it
+  never removes on hardware-verified radios).
+- **Wire fixes:** RF power in each radio's units (CI-V fraction × 255,
+  watts elsewhere), Yaesu newcat split via `FT` TX VFO on radios
+  without `ST`, `L NR` level-only (`SupportsNoiseReductionLevel`),
+  FTX-1 `PC1`/`PC2` power, Icom VOX delay was VOX gain (now the
+  per-model `1A 05` item), Icom select scan `0E 23`, Elecraft VFO B
+  `MD$` / `DT$`, per-model Kenwood / Yaesu / Elecraft level scales.
+- **New:** CW keyer and CW text on Yaesu / Kenwood / Elecraft, Yaesu TX
+  meters, `Mode.dataAM`, FTX-1 Main/Sub clarifier,
+  `FlexRadioDiscovery`, rigctld `J/j/Z/z` and `STRENGTH` / `RAWSTR`.
+- **hamlib-watch** keeps its watermark in the digest issue: `main` is
+  protected, so the workflow can't push.
+
+**Mock-tested only.** Test count 1001 → 1178. New `Mode` and
+`RigctldCommand` cases (CHANGELOG Migration). Remaining work: ROADMAP
+5.10.4 hardware checks and the v1.5 "no API" list.
+
+The previously-shipped version was **v1.3.1** (git tag, 2026-10-22),
+DATA-mode wire fixes from a MacWinlink FT-710 field report:
 
 - **Yaesu newcat `MD` table** is Hamlib `newcat_mode_conv[]`
   (`YaesuCATProtocol.newcatModeCodeTable`, `newcat.c:10963-10980`).

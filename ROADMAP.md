@@ -1,6 +1,13 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.3.1 (cut 2026-10-22 — DATA-mode wire fixes
+**Current version:** v1.4.0 (cut 2026-11-06 — Hamlib parity release:
+differential audit and capability-coverage tooling, RF power units,
+Yaesu newcat split without `ST`, CW keyer / CW text and Yaesu TX meters,
+`Mode.dataAM`, FTX-1 Main/Sub clarifier, `FlexRadioDiscovery`, Icom VOX
+delay and select-scan fixes, Elecraft VFO B modes; Hamlib reviews
+through `9199f8a`.  Coverage 49% → 71.3%.  Mock-tested only.  Test
+count 1001 → 1178.)
+Previous release **v1.3.1** (cut 2026-10-22 — DATA-mode wire fixes
 from a MacWinlink FT-710 field report: Yaesu newcat `.dataUSB` is `MD0C;`
 (was `MD09;`, RTTY-U) and `getMode` reads `A`–`F`; Elecraft K3-family
 DATA modes add `DT`; K2 DATA-USB / DATA-LSB were swapped.  Mock-tested
@@ -1535,7 +1542,7 @@ jjones9527/SwiftRigControl#46–#51.
       and KX3. Replaced by an explicit `ElecraftProtocol.Family`; the
       K3-family AGC (`GT000/002/004`), S-meter (`SM`), attenuator
       readback (`RA01` = 10 dB) and power (watts) now follow Hamlib
-      `k3.c` (CHANGELOG `[Unreleased]`).
+      `k3.c` (CHANGELOG `[1.4.0]`).
 - [ ] Hardware: KX2 / KX3 / K3 AGC, S-meter and attenuator after the
       family fix.
 - [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
@@ -1546,7 +1553,7 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter (k3.c:2066-2095)
       and the K3 `SM` 0–21 bar scale in `getSignalStrength`.
 
-### 5.10.4 Next minor (unreleased, mock-tested)
+### 5.10.4 Shipped in v1.4.0 (mock-tested)
 
 - [x] FTX-1 VFO-qualified clarifier: `setRIT/getRIT/setXIT/getXIT(vfo:)`
       on `YaesuCATProtocol` drive Main (`CF0`) and Sub (`CF1`)
@@ -1555,7 +1562,7 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] Hamlib review `06335264` → `075b78c` (2026-10-26): rigctld client
       cap (`2870074`, `RigControlServer.maxClients`, default 32) and
       SmartSDR empty status values (`780da9c`) ported; the rest already
-      matched or don't apply (CHANGELOG `[Unreleased]`).
+      matched or don't apply (CHANGELOG `[1.4.0]`).
 - [x] SmartSDR UDP discovery (`FlexRadioDiscovery`), see 6.4.
 - [ ] Field check of `FlexRadioDiscovery` against a real FLEX-6000 /
       8000 / Aurora.
@@ -1566,11 +1573,11 @@ jjones9527/SwiftRigControl#46–#51.
       radios. Fixes from it: Icom level-reply crash, rigctld level units
       and RIT/XIT, Yaesu newcat AGC / ATT / NB / NR / squelch / S-meter,
       FT-710 `CF` clarifier, Elecraft per-family level scales, Kenwood
-      per-model `KenwoodLevelProfile` (CHANGELOG `[Unreleased]`).
+      per-model `KenwoodLevelProfile` (CHANGELOG `[1.4.0]`).
 - [ ] Hardware: Yaesu newcat S-meter (`SM0` + calibration) and NB/NR off
       on an FT-991A / FT-710; Kenwood AGC on a TS-590SG / TS-890S.
 - [x] Hamlib review `075b78c` → `91e7b97` (2026-10-30): nothing to port
-      (CHANGELOG `[Unreleased]`).
+      (CHANGELOG `[1.4.0]`).
 - [x] RF power units: CI-V `L RFPOWER` is `fraction × 255` on every
       Icom / Xiegu (200 W Icoms used to key full power at 0.5);
       `powerUnits` follows the protocol; Kenwood / Yaesu newcat `PC` in
