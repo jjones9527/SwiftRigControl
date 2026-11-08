@@ -153,6 +153,82 @@ import Testing
         #expect(try await consumer.value == "C")
     }
 
+    @Test(arguments: [false, true])
+    func listenerClosesSocketAfterCancellationOrEarlyExit(earlyExit: Bool) async throws {
+        let port = UInt16.random(in: 40_000...60_000)
+        try #require(try Self.canBindExclusively(port))
+        let consumer = Task {
+            for try await _ in FlexRadioDiscovery(port: port).announcements() {
+                if earlyExit { return }
+            }
+        }
+        defer { consumer.cancel() }
+
+        var listening = false
+        for _ in 0..<100 {
+            if try !Self.canBindExclusively(port) {
+                listening = true
+                break
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        try #require(listening)
+
+        if earlyExit {
+            try Self.sendLoopback(Self.packet("model=FLEX-6600 serial=A ip=127.0.0.1"), port: port)
+        } else {
+            consumer.cancel()
+        }
+
+        // Exclusive binding proves the old socket was closed, not merely
+        // that another SO_REUSEPORT listener could share its address.
+        var released = false
+        for _ in 0..<100 {
+            if try Self.canBindExclusively(port) {
+                released = true
+                break
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(released)
+        consumer.cancel()
+        do { try await consumer.value } catch is CancellationError {}
+    }
+
+    @Test func concurrentIdleScansMeetTheirDeadlines() async throws {
+        let clock = ContinuousClock()
+        let start = clock.now
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for _ in 0..<32 {
+                group.addTask {
+                    let radios = try await FlexRadioDiscovery(port: 0).discover(timeout: .milliseconds(100))
+                    #expect(radios.isEmpty)
+                }
+            }
+            try await group.waitForAll()
+        }
+        #expect(start.duration(to: clock.now) < .seconds(2))
+    }
+
+    private static func canBindExclusively(_ port: UInt16) throws -> Bool {
+        let fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+        guard fd >= 0 else { throw FlexRadioDiscoveryError.socketFailed(errno: errno) }
+        defer { close(fd) }
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr = in_addr(s_addr: INADDR_ANY)
+        let result = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        if result == 0 { return true }
+        if errno == EADDRINUSE { return false }
+        throw FlexRadioDiscoveryError.cannotBind(port: port, errno: errno)
+    }
+
     static func sendLoopback(_ data: Data, port: UInt16) throws {
         let fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         guard fd >= 0 else { throw FlexRadioDiscoveryError.socketFailed(errno: errno) }

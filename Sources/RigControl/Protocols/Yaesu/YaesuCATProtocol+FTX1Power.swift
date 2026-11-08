@@ -7,9 +7,9 @@ import Foundation
 // the plain newcat `PCnnn;` and read the head digit as part of the watts
 // (`PC1005` read as 100 W).
 //
-// Known divergence: rigctld `L RFPOWER` scales by the catalog's 100 W, so
-// on a field head `0.5` asks for 50 W (clamped to 10 W) where Hamlib sends
-// 5 W (fraction of the head's own maximum).
+// rigctld fractions use the detected head's maximum (10 W or 100 W).
+// Battery versus 12 V cannot be determined from PC alone; we retain the
+// non-invasive 12 V assumption instead of probing by changing power.
 
 extension YaesuCATProtocol {
 
@@ -38,6 +38,37 @@ extension YaesuCATProtocol {
         try await sendSetCommand(Self.ftx1PowerCommand(watts: watts, head: head))
     }
 
+    /// Internal rigctld path; nil means this radio uses the catalog scale.
+    func setDynamicPowerFraction(_ fraction: Double) async throws -> Int? {
+        guard quirks.usesFTX1PowerCommands else { return nil }
+        guard fraction.isFinite, (0...1).contains(fraction) else {
+            throw RigError.invalidParameter("Power fraction must be between 0 and 1")
+        }
+        try await sendCommand("PC")
+        let head = try Self.parseFTX1PowerReading(try await receiveResponse()).head
+        let watts = head == .field ? max(0.5, fraction * 10) : max(5, fraction * 100)
+        let command: String
+        if head == .field {
+            // Hamlib ftx1_audio.c:386-395 preserves tenths on the field head.
+            let rounded = (watts * 10).rounded() / 10
+            command = rounded == rounded.rounded()
+                ? Self.ftx1PowerCommand(watts: Int(rounded), head: head)
+                : String(format: "PC1%.1f", locale: Locale(identifier: "en_US_POSIX"), rounded)
+        } else {
+            command = Self.ftx1PowerCommand(watts: Int(watts), head: head)
+        }
+        try await sendSetCommand(command)
+        return head == .field ? Int(watts.rounded()) : Int(watts)
+    }
+
+    /// Reads the head and fractional watts together to avoid stale scaling.
+    func dynamicPowerFraction() async throws -> Double? {
+        guard quirks.usesFTX1PowerCommands else { return nil }
+        try await sendCommand("PC")
+        let reading = try Self.parseFTX1PowerReading(try await receiveResponse())
+        return reading.watts / (reading.head == .field ? 10 : 100)
+    }
+
     /// The `PC` set command for `watts` on `head` (`ftx1_audio.c:352-395`).
     static func ftx1PowerCommand(watts: Int, head: FTX1PowerHead) -> String {
         switch head {
@@ -55,6 +86,11 @@ extension YaesuCATProtocol {
     /// - Throws: `RigError.invalidResponse` if the reply isn't one of
     ///   those forms
     static func parseFTX1Power(_ response: String) throws -> (head: FTX1PowerHead, watts: Int) {
+        let reading = try parseFTX1PowerReading(response)
+        return (reading.head, Int(reading.watts.rounded()))
+    }
+
+    private static func parseFTX1PowerReading(_ response: String) throws -> (head: FTX1PowerHead, watts: Double) {
         guard response.hasPrefix("PC"), response.count >= 4 else {
             throw RigError.invalidResponse
         }
@@ -65,9 +101,20 @@ extension YaesuCATProtocol {
         case "2": head = .spa1
         default: throw RigError.invalidResponse
         }
-        guard let watts = Double(body.dropFirst()), watts.isFinite, watts >= 0 else {
+        let value = body.dropFirst()
+        // Field heads also report fractional watts (ftx1_audio.c:410-415).
+        // Reject exponent notation, signs and oversized values before any
+        // conversion to the public API's integer watts.
+        let parts = value.split(separator: ".", omittingEmptySubsequences: false)
+        let whole = value.count == 3 && value.allSatisfy { $0.isASCII && $0.isNumber }
+        let decimal = head == .field && parts.count == 2
+            && (1...2).contains(parts[0].count) && parts[1].count == 1
+            && parts.allSatisfy { $0.allSatisfy { $0.isASCII && $0.isNumber } }
+        guard whole || decimal,
+              let watts = Double(value),
+              (head == .field ? 0.5...10.0 : 5.0...100.0).contains(watts) else {
             throw RigError.invalidResponse
         }
-        return (head, Int(watts.rounded()))
+        return (head, watts)
     }
 }

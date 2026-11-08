@@ -19,6 +19,7 @@ extension YaesuCATProtocol {
             throw RigError.unsupportedOperation("CW text send not supported by this radio")
         }
 
+        try validateCATCWText(text)
         let message = String(text.uppercased().unicodeScalars
             .filter(\.isASCII)
             .map(Character.init)

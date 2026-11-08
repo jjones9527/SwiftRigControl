@@ -76,6 +76,9 @@ extension RigctldCommandHandler {
             let caps = await rigController.capabilities
             // Hamlib enforces a 0.05 minimum — radios reject 0W
             let normalized = max(0.05, min(1.0, floatVal))
+            if try await rigController.setDynamicPowerFraction(normalized) {
+                return .ok(command: command)
+            }
             // Convert to the radio's own unit. Through v1.3.1 this always
             // sent watts, which CI-V radios read as a percentage: 0.5 on a
             // 200 W IC-7851 asked for "100%", full power, and 1.0 on a
@@ -248,6 +251,9 @@ extension RigctldCommandHandler {
 
         case "RFPOWER":
             // RF output power: return 0.0-1.0 normalized float, minimum 0.05
+            if let fraction = try await rigController.dynamicPowerFraction() {
+                return RigctldResponse(value: String(format: "%.6f", fraction), command: command)
+            }
             let level = try await rigController.power()
             let caps = await rigController.capabilities
             let fullScale: Int

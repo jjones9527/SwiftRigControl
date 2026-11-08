@@ -113,6 +113,19 @@ import Testing
         #expect(try await writes(.Elecraft.k4) { try await self.sender($0).stopCW() } == ["KY @;"])
     }
 
+    @Test(arguments: ["CQ;TX;", "CQ\n", "CQ\r", "CQ\t", "CQ\u{00}", "CQ\u{04}", "CQ\u{7F}", String(repeating: "A", count: 60) + ";"])
+    func rejectsUnsafeTextBeforeWriting(text: String) async throws {
+        for radio in [RadioDefinition.Kenwood.ts590SG, .Elecraft.k3, .Yaesu.ft991A, .Yaesu.ftx1] {
+            let mock = MockTransport()
+            let proto = radio.createProtocol(transport: mock)
+            try await proto.connect()
+            await mock.reset()
+            let sender = try #require(proto as? any SupportsSendCW)
+            await #expect(throws: RigError.self) { try await sender.sendCW(text) }
+            #expect(await mock.recordedWrites.isEmpty, "\(radio.fullName)")
+        }
+    }
+
     // MARK: - Related
 
     @Test func powerSDRModeReplyMayHaveOneDigit() async throws {
