@@ -1,6 +1,11 @@
 # SwiftRigControl — Roadmap
 
-**Current version:** v1.4.0 (cut 2026-11-06 — Hamlib parity release:
+**Current version:** v1.4.1 (cut 2026-11-07 — CW input validation,
+nonblocking Flex discovery, FTX-1 reply validation and head-specific
+rigctld power scaling. Xcode: 1,346 passed, 57 hardware tests skipped.
+Hardware verification and battery-specific scaling remain pending.)
+
+Previous release **v1.4.0** (cut 2026-11-06 — Hamlib parity release:
 differential audit and capability-coverage tooling, RF power units,
 Yaesu newcat split without `ST`, CW keyer / CW text and Yaesu TX meters,
 `Mode.dataAM`, FTX-1 Main/Sub clarifier, `FlexRadioDiscovery`, Icom VOX
@@ -1610,9 +1615,12 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] FTX-1 power uses `PC1nnn` / `PC2nnn` by head type in Hamlib
       (`ftx1_audio.c:332-393`); ours sent `PCnnn`. Fixed; head read from
       `PC;` before each set.
-- [ ] FTX-1 rigctld `L RFPOWER` scales by the catalog's 100 W, not the
-      head's maximum (10 W field head). Hardware: FTX-1 `setPower` on a
-      field head and with the SPA-1.
+- [x] FTX-1 rigctld RFPOWER reads and writes use the attached head's
+      maximum (10 W field, 100 W SPA-1), including fractional field-head
+      watts. Shipped in v1.4.1; mock-tested.
+- [ ] Hardware: FTX-1 power on a field head and with the SPA-1.
+      Battery operation still uses the 12 V field-head scale; no
+      power-changing probe is performed to detect the 6 W battery limit.
 - [ ] Candidate radio: truSDX (Hamlib `trusdx.c`, `14c618f`).
 - [x] Hamlib capability coverage measured for all 129 serial radios
       (`Documentation/HAMLIB_COVERAGE_2026-10-30.md`): 49% at first.

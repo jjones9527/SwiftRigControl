@@ -51,7 +51,13 @@ quote the file and line (e.g. "matches `ic7600.c:842`"), not just
 
 ## Current release
 
-The shipped version is **v1.4.0** (git tag, 2026-11-06), the Hamlib
+The shipped version is **v1.4.1** (git tag, 2026-11-07): CW input
+validation, nonblocking Flex discovery, validated FTX-1 power replies
+and head-specific rigctld power scaling. Xcode: 1,346 passed, 57 hardware
+tests skipped. No public API changes. Hardware verification and
+battery-specific field-head scaling remain pending.
+
+The previously-shipped version was **v1.4.0** (git tag, 2026-11-06), the Hamlib
 parity release, jjones9527/SwiftRigControl#53, #55, #56, #59–#61, #63:
 
 - **Tooling that found most of it:** `Scripts/hamlib-diff-audit.py`

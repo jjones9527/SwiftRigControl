@@ -19,6 +19,7 @@ extension KYMorseSending {
     ///   - text: The message; upper-cased, ASCII only.
     ///   - format: Builds the command for one chunk of up to 24 characters.
     func sendKYMorse(_ text: String, format: (String) -> String) async throws {
+        try validateCATCWText(text)
         let message = String(text.uppercased().unicodeScalars.filter(\.isASCII).map(Character.init))
         guard !message.isEmpty else {
             throw RigError.invalidParameter("CW message must contain ASCII text")
@@ -42,6 +43,16 @@ extension KYMorseSending {
             try await Task.sleep(nanoseconds: 50_000_000)
         }
         throw RigError.timeout
+    }
+}
+
+/// Reject framing and control bytes before any chunk is transmitted.
+/// Non-ASCII text retains the existing filtering behavior.
+func validateCATCWText(_ text: String) throws {
+    guard !text.unicodeScalars.contains(where: {
+        $0.value == 0x3B || $0.value < 0x20 || $0.value == 0x7F
+    }) else {
+        throw RigError.invalidParameter("CW text cannot contain semicolons or control characters")
     }
 }
 

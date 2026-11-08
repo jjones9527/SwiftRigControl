@@ -5,7 +5,17 @@
 
 A native Swift library for controlling amateur radio transceivers on macOS.
 
-**Current release:** v1.4.0
+**Current release:** v1.4.1
+
+## What's new in v1.4.1
+
+- CW text rejects CAT delimiters and control characters before sending.
+- Flex discovery uses nonblocking reads and asynchronous waits.
+- FTX-1 power replies are validated safely; rigctld power fractions use
+  the attached head's scale and retain fractional field-head watts.
+- Xcode validation: 1,346 tests passed, 57 hardware tests skipped.
+  Field-head scaling assumes external power (10 W); battery detection
+  and hardware verification remain pending. See [CHANGELOG](CHANGELOG.md).
 
 ## What's new in v1.4.0
 

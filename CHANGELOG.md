@@ -21,6 +21,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-07
+
+### Fixed
+
+- Reject semicolons and ASCII control characters in Kenwood, Elecraft and
+  Yaesu CW text before sending any commands, including invalid characters
+  beyond the first chunk or Yaesu's truncation limit.
+- Flex discovery now uses nonblocking UDP reads and asynchronous idle
+  waits. Concurrent scans no longer occupy concurrency workers while idle;
+  cancellation and early stream exit close the socket.
+- Validate FTX-1 power reply grammar and physical range before integer
+  conversion, rejecting malformed replies without trapping and preserving
+  valid fractional-watt field-head replies.
+- Scale FTX-1 rigctld RFPOWER reads and writes against the attached head:
+  10 W field head or 100 W SPA-1. Field-head fractional watts are retained.
+  Battery versus external power is not detected; the field-head scale
+  assumes 12 V operation (10 W). Hardware verification remains pending.
+
+Validation: Xcode test run: 1,346 passed, 0 failed, 57 hardware tests
+skipped. New regression coverage includes CW framing, malformed power
+replies, head-specific scaling, concurrent discovery and socket cleanup.
+
 ## [1.4.0] - 2026-11-06
 
 Hamlib parity release. A differential audit harness compared our wire

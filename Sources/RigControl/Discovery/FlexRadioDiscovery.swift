@@ -299,7 +299,7 @@ public struct FlexRadioDiscovery: Sendable {
         return AsyncThrowingStream { continuation in
             let task = Task.detached {
                 do {
-                    try Self.listen(port: port, until: deadline) { continuation.yield($0) }
+                    try await Self.listen(port: port, until: deadline) { continuation.yield($0) }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -309,36 +309,23 @@ public struct FlexRadioDiscovery: Sendable {
         }
     }
 
-    /// Receives datagrams until `deadline` or task cancellation. `poll`
-    /// waits at most `pollInterval` per turn so cancellation is noticed
-    /// promptly without blocking a thread indefinitely.
+    /// Nonblocking reads preserve UDP broadcast/reuse semantics. Idle waits
+    /// suspend the task instead of occupying a cooperative executor thread.
     private static func listen(
         port: UInt16,
         until deadline: ContinuousClock.Instant?,
         onAnnouncement: (FlexRadioAnnouncement) -> Void
-    ) throws {
+    ) async throws {
         let fd = try openSocket(port: port)
         defer { close(fd) }
 
-        let pollIntervalMs: Int32 = 100
         var buffer = [UInt8](repeating: 0, count: 65_536)
         while !Task.isCancelled {
-            var timeoutMs = pollIntervalMs
-            if let deadline {
-                let remaining = ContinuousClock.now.duration(to: deadline)
-                guard remaining > .zero else { return }
-                let remainingMs = remaining.components.seconds * 1000
-                    + remaining.components.attoseconds / 1_000_000_000_000_000
-                timeoutMs = Int32(clamping: max(1, min(Int64(pollIntervalMs), remainingMs)))
-            }
-
-            var descriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
-            let ready = poll(&descriptor, 1, timeoutMs)
-            if ready < 0 {
-                if errno == EINTR { continue }
-                throw FlexRadioDiscoveryError.socketFailed(errno: errno)
-            }
-            guard ready > 0 else { continue }
+            if let deadline, ContinuousClock.now >= deadline { return }
+            // Yield even under continuous traffic so cancellation and other
+            // tasks can progress while the socket remains readable.
+            await Task.yield()
+            try Task.checkCancellation()
 
             var source = sockaddr_in()
             var sourceLength = socklen_t(MemoryLayout<sockaddr_in>.size)
@@ -348,6 +335,16 @@ public struct FlexRadioDiscovery: Sendable {
                         recvfrom(fd, raw.baseAddress, raw.count, 0, $0, &sourceLength)
                     }
                 }
+            }
+            if count < 0 {
+                let code = errno
+                if code == EINTR { continue }
+                guard code == EAGAIN || code == EWOULDBLOCK else {
+                    throw FlexRadioDiscoveryError.socketFailed(errno: code)
+                }
+                let wake = min(deadline ?? .now + .milliseconds(100), .now + .milliseconds(100))
+                try await Task.sleep(until: wake, clock: .continuous)
+                continue
             }
             guard count > 0 else { continue }
 
@@ -361,6 +358,13 @@ public struct FlexRadioDiscovery: Sendable {
     private static func openSocket(port: UInt16) throws -> Int32 {
         let fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         guard fd >= 0 else { throw FlexRadioDiscoveryError.socketFailed(errno: errno) }
+
+        // recvfrom must never wait on a Swift concurrency worker.
+        guard fcntl(fd, F_SETFL, O_NONBLOCK) == 0 else {
+            let code = errno
+            close(fd)
+            throw FlexRadioDiscoveryError.socketFailed(errno: code)
+        }
 
         var yes: Int32 = 1
         let size = socklen_t(MemoryLayout<Int32>.size)

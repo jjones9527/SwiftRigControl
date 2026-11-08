@@ -59,6 +59,22 @@ extension RigController {
         emit(.powerChanged(level))
     }
 
+    // rigctld uses this optional path when a radio's attached hardware
+    // determines its power scale. The public integer-watt API is unchanged.
+    func setDynamicPowerFraction(_ fraction: Double) async throws -> Bool {
+        guard connected else { throw RigError.notConnected }
+        guard let yaesu = proto as? YaesuCATProtocol,
+              let level = try await yaesu.setDynamicPowerFraction(fraction) else { return false }
+        emit(.powerChanged(level))
+        return true
+    }
+
+    func dynamicPowerFraction() async throws -> Double? {
+        guard connected else { throw RigError.notConnected }
+        guard let yaesu = proto as? YaesuCATProtocol else { return nil }
+        return try await yaesu.dynamicPowerFraction()
+    }
+
     /// Deprecated. Use ``setPower(_:)`` with the new `level`
     /// argument label.
     ///
