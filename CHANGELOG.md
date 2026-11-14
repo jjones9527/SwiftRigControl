@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 attenuation now uses Elecraft's documented RAnnm format: exact
+  3 dB steps from 0 through 21, plus an enable digit. Disabled readings
+  return zero; unsupported settings and malformed replies are rejected.
+  This deliberately differs from Hamlib's conflicting 5/10/15 dB table
+  and shared K3 code. Main receiver only, matching the existing API.
+  Source: [K4 Programmer's Reference D5, RA](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,617 tests passed, 57 skipped. Hardware checks pending.
+
 - Elecraft K3/K3S/K4/KX2/KX3 standard SM readings now use Hamlib's
   K3_SM_CAL table instead of treating bar counts as decibels. For
   example, SM0006 is S9 and SM0012 is S9+40; rigctld STRENGTH reports

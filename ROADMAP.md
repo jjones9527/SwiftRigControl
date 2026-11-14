@@ -1553,8 +1553,11 @@ jjones9527/SwiftRigControl#46–#51.
 - [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
       (`kx3_set_level`, k3.c:2386-2414: `RG` 190–250, `AG` 0–60,
       `MG` 0–80); ours use the K3 scales.
-- [ ] K4 attenuator steps 5/10/15 dB (`k3.c` K4 caps `.attenuator`);
-      ours treat it like the K3 (one 10 dB step).
+- [x] K4 attenuation corrected against Elecraft Programmer's Reference
+      D5: RAnnm, 0–21 dB in 3 dB steps plus enable. Hamlib's 5/10/15 dB
+      table and K3 parser conflict with this documented native format.
+      Main receiver only; 1,617 tests passed, 57 skipped.
+- [ ] Hardware: K4 attenuation read/write and disabled-state behavior.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

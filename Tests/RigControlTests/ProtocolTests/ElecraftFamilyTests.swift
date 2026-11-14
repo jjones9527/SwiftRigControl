@@ -251,6 +251,32 @@ import Testing
         #expect(try await k2.getAttenuator() == 20)
     }
 
+    @Test(arguments: [0, 3, 6, 9, 12, 15, 18, 21])
+    func k4AttenuationUsesDBAndEnable(dB: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        try await proto.setAttenuator(dB)
+        let frame = String(format: "RA%02d%d;", dB, dB == 0 ? 0 : 1)
+        #expect(await sent(mock) == [frame, "ID;"])
+        await mock.setResponse(for: Self.ascii("RA;"), response: Self.ascii(frame))
+        #expect(try await proto.getAttenuator() == dB)
+        await mock.setResponse(for: Self.ascii("RA;"), response: Self.ascii(String(format: "RA%02d0;", dB)))
+        #expect(try await proto.getAttenuator() == 0)
+    }
+
+    @Test(arguments: [-1, 1, 5, 10, 20, 22, 24])
+    func k4RejectsUnsupportedAttenuation(dB: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await #expect(throws: RigError.self) { try await proto.setAttenuator(dB) }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test(arguments: ["RA01;", "RA0151;", "RA151x;", "RA152;", "RA241;", "RA101;", "RA-31;", "RB151;"])
+    func k4RejectsMalformedAttenuation(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("RA;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getAttenuator() }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {

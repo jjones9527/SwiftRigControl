@@ -175,16 +175,25 @@ extension ElecraftProtocol {
     ///
     /// Command: `RAnn;` — Elecraft attenuator step codes:
     /// - 00 = off
-    /// - 01 = 10 dB (K2, and the K3 family per Hamlib `k3.c:1964-1972`)
+    /// - 01 = 10 dB (K2, K3/K3S/KX per Hamlib `k3.c:1964-1972`)
     /// - 02 = 20 dB (K2 only)
     ///
     /// This method accepts values in dB and maps them to the closest available step.
     /// Pass 0 to disable, 1–10 for the first step, 11–20 for the K2's
     /// second step (K3 family: the first step).
     ///
-    /// - Parameter dB: Attenuation in dB, 0–20
+    /// K4 uses exact 3 dB steps from 0 through 21 (RA followed by dB and on/off).
+    ///
+    /// - Parameter dB: Attenuation in dB, 0–20 (K4: 0–21 in steps of 3)
     /// - Throws: `RigError.invalidParameter` for unsupported values
     public func setAttenuator(_ dB: Int) async throws {
+        if isK4 {
+            guard (0...21).contains(dB), dB.isMultiple(of: 3) else {
+                throw RigError.invalidParameter("K4 attenuation must be 0...21 dB in steps of 3")
+            }
+            try await sendSetCommand(String(format: "RA%02d%d", dB, dB == 0 ? 0 : 1))
+            return
+        }
         let code: Int
         switch dB {
         case 0:
@@ -204,7 +213,8 @@ extension ElecraftProtocol {
     ///
     /// Command: `RA;` — Response: `RAnn;`
     ///
-    /// `RA01` is 10 dB on every Elecraft (Hamlib `k3_get_level`,
+    /// K4 returns RAnnm (dB plus enable); disabled attenuation reads as zero.
+    /// `RA01` is 10 dB on K2/K3/K3S/KX (Hamlib `k3_get_level`,
     /// k3.c:2209-2226). Through v1.3.1 the K3 family reported 6 dB.
     ///
     /// - Returns: Attenuation in dB (0, 10, or 20 on the K2)
@@ -212,6 +222,17 @@ extension ElecraftProtocol {
     public func getAttenuator() async throws -> Int {
         try await sendCommand("RA")
         let response = try await receiveResponse()
+        if isK4 {
+            // Elecraft K4 Programmer's Reference: RAnnm, nn in dB, m on/off.
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("RA"), fields.count == 3,
+                  fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+                throw RigError.invalidResponse
+            }
+            let dB = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+            guard dB <= 21, dB.isMultiple(of: 3) else { throw RigError.invalidResponse }
+            return fields[2] == 49 ? dB : 0
+        }
         // Response: RAnn
         guard response.hasPrefix("RA"), response.count >= 4 else {
             throw RigError.invalidResponse
