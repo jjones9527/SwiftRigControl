@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- G90 SWR queries reject non-BCD digits and mismatched replies instead of
+  displaying a false reading (Hamlib `f78a899fe`). A NAK remains a command
+  rejection. The separate G90 RFPOWER full-scale workaround is preserved.
+
+### Added
+
+- K4 RF power, SWR and ALC meters through the library and rigctld. Power
+  uses one `PO;` query with tenths-of-a-watt scaling (Hamlib `b7a9bfab7`).
+- TS-590S/SG RF power, SWR, compression and ALC meters. All three `RM;`
+  replies are consumed; power checks TX status before reading `SM0;`.
+  Normalized power and calibrated watts retain their distinct Hamlib
+  scales. These additions are mock-tested, not hardware-verified.
+
 ## [1.4.1] - 2026-11-07
 
 ### Fixed

@@ -76,8 +76,21 @@ extension IcomCIVProtocol {
         )
         try await sendFrame(frame)
         let response = try await receiveFrame()
+        if radioModel == .xieguG90, response.isNak {
+            throw RigError.commandFailed("SWR meter query rejected")
+        }
         guard response.command.count >= 2, response.data.count == 2 else {
             throw RigError.invalidResponse
+        }
+        if radioModel == .xieguG90 {
+            // Hamlib f78a899fe: G90 firmware can return non-BCD SWR
+            // digits (for example 02 2C). Do not turn them into a reading.
+            guard response.command == [0x15, 0x12],
+                  response.data[0] <= 0x09,
+                  response.data[1] >> 4 <= 9,
+                  response.data[1] & 0x0F <= 9 else {
+                throw RigError.invalidResponse
+            }
         }
         return BCDEncoding.decodeLevel(response.data)
     }

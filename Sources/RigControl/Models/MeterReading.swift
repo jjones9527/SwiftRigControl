@@ -38,14 +38,16 @@ public struct MeterReading: Sendable, Equatable {
     /// Which meter this reading is from.
     public let kind: Kind
 
-    /// The raw byte value the radio sent (0…255).
+    /// The raw meter value the radio sent. Icom uses 0…255; text protocols
+    /// may use wider decimal fields (for example K4 power in tenths of a watt).
     public let raw: Int
 
     /// Normalized 0.0…1.0+ representation, suitable for a progress
     /// bar with no further math. See per-meter notes:
     ///
-    /// - `.rfPower`: `0.0` = 0 W, `1.0` = the radio's calibrated max
-    ///   output (≈ 120 W on the default Icom curve).
+    /// - `.rfPower`: follows the backend's Hamlib RFPOWER_METER scale.
+    ///   This can differ from watts divided by maximum power (TS-590),
+    ///   or exceed 1.0 (K4 above 100 W).
     /// - `.swr`: `0.0` = 1:1 (perfect match), `1.0` = ~10:1 or
     ///   worse. The actual SWR ratio is on ``swrRatio``.
     /// - `.alc`: `0.0` = no ALC action, `1.0` = full ALC limiting.

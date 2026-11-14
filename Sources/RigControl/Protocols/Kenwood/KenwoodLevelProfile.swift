@@ -26,6 +26,15 @@ import Foundation
 /// ```
 public struct KenwoodLevelProfile: Sendable, Equatable {
 
+    /// Implemented transmit-meter wire formats.
+    public enum TXMeterStyle: Sendable, Equatable {
+        case none
+        /// TS-590S/SG: RM triple, SM0 power, and the TS-590 calibration.
+        case ts590
+    }
+
+    public internal(set) var txMeterStyle: TXMeterStyle = .none
+
     /// How AGC is set and read.
     public enum AGCEncoding: Sendable, Equatable {
         /// `GT` with a `width`-digit code per speed. A read is mapped
@@ -173,6 +182,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         compressorMax: 100,
         noiseReductionLevelMax: 9
     ).with {
+        $0.txMeterStyle = .ts590
         $0.lockForm = .trailingZero
         $0.tunerForm = .receiveAndTransmit
         $0.cwPitch = .exMenu(number: 40, minHz: 300, stepHz: 50)
@@ -188,6 +198,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-2000 and SDR-Console (Hamlib `ts2000.c`): `GT` 3 digits.
     public static let ts2000 = ts590S.with {
+        $0.txMeterStyle = .none
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 5, .medium: 10, .slow: 20])
         $0.lockForm = .doubled
         $0.tunerForm = .standard
@@ -201,6 +212,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.
     public static let ts480 = ts590S.with {
+        $0.txMeterStyle = .none
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 1, .slow: 2])
         $0.rfGainMax = 100
         $0.lockForm = .doubled

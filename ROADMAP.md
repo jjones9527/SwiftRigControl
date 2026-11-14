@@ -1645,9 +1645,15 @@ jjones9527/SwiftRigControl#46–#51.
       keyer and CW text on all three, Yaesu TX meters; wrong-byte fixes
       (Yaesu MN / COMP / LOCK / tune / CPY, Kenwood tuner and lock,
       PowerSDR ZZ VOX and tuner). Catalog 63.8% → 71.9%.
-- [ ] Kenwood and Elecraft TX meters (TS-590 `RM;` triple + `SM0` power,
-      TS-480, TS-2000, TS-890S, TS-990S, K3 / K4 / KX, Flex), per model
-      from Hamlib.
+- [x] K4 and TS-590S/SG TX meters (2026-11-13): K4 `PO` power and
+      `TM` SWR / ALC; TS-590 `RM;` triple and `SM0` power with an IF
+      TX-status check. Library and rigctld, mock-tested only.
+- [ ] Remaining Kenwood and Elecraft TX meters: TS-480, TS-2000,
+      TS-890S, TS-990S, K3 / K3S / KX, Flex, per model from Hamlib.
+- [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
+      validation ported; K4 power uses the corrected single-query PO
+      path. Yaesu NA and C daemon descriptor fixes have no direct port.
+- [ ] Hardware: G90 SWR validation; K4 and TS-590S/SG TX meters.
 - [x] FTDX-3000/5000 SWR on `RM2` when the tuner is on (Hamlib reads the
       tuner and meter selection first).
 - [ ] Hardware: Kenwood tuner on/off (`AC110` / `AC100`) on a TS-590SG or
