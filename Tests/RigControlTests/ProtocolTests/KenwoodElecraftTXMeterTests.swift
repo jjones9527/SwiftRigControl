@@ -116,7 +116,7 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
     }
 
-    @Test(arguments: [RadioDefinition.Elecraft.k2, .Elecraft.kx3, .Kenwood.ts890S, .Kenwood.ts990S])
+    @Test(arguments: [RadioDefinition.Elecraft.k2, .Elecraft.kx3, .Kenwood.ts570D, .Kenwood.ts870S])
     func unimplementedModelsSendNoMeterCommands(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio)
         await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }
@@ -328,6 +328,121 @@ import Testing
         let watts = await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS"))
         #expect(watts.returnCode.rawValue == -11)
         #expect(watts.data.isEmpty)
+    }
+
+    @Test(arguments: [RadioDefinition.Kenwood.ts890S, .Kenwood.ts990S])
+    func selectedMetersDrainThroughID(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await makeProtocol(radio)
+        await mock.setChunkedResponse(
+            ["ID024;", "RM10035;", "RM20007;", "RM30020;", "ID024;",
+             "ID024;", "RM20035;", "ID024;"].map { Data($0.utf8) }
+        )
+        let first = try await proto.getSWR()
+        if radio.model == "TS-990S" { #expect(first.swrRatio == 1.5) }
+        else { #expect(abs((first.swrRatio ?? 0) - (1 + 7.0 / 22)) < 1e-9) }
+        let second = try await proto.getSWR()
+        #expect(second.swrRatio == (radio.model == "TS-990S" ? 2.9 : 3))
+        #expect(await mock.recordedWrites == ["RM21;", "ID;", "RM;", "ID;", "RM21;", "ID;", "RM;", "ID;"].map { Data($0.utf8) })
+    }
+
+    @Test(arguments: [("RM10035;", 1), ("RM10070;", 2)])
+    func ts890ALCUsesHalfScale(reply: String, expected: Int) async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S)
+        await mock.setChunkedResponse(["ID024;", reply, "ID024;"].map { Data($0.utf8) })
+        #expect(try await proto.getALC().normalized == Double(expected))
+    }
+
+    @Test(arguments: [(20, 10.0), (35, 15.0), (50, 20.0), (70, 25.0)])
+    func ts890CompressionPiecewiseScale(raw: Int, expected: Double) async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S)
+        await mock.setChunkedResponse(["ID024;", String(format: "RM3%04d;", raw), "ID024;"].map { Data($0.utf8) })
+        #expect(try await proto.getComp().dB == expected)
+    }
+
+    @Test func ts890VoltageAndCurrent() async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S)
+        await mock.setChunkedResponse(["ID024;", "RM5065;", "ID024;", "ID024;", "RM4070;", "ID024;"].map { Data($0.utf8) })
+        #expect(try await proto.getVoltage().volts == 15)
+        #expect(try await proto.getCurrent().amps == 20)
+    }
+
+    @Test(arguments: [(5, 5.0), (19, 25.0), (35, 50.0), (59, 100.0), (70, 150.0)])
+    func ts890PowerCalibration(raw: Int, watts: Double) async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S, replies: [
+            "IF;": ifReply(transmitting: true), "EX00011;": "EX00011 001;",
+            "SM;": String(format: "SM%04d;", raw)
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.watts == watts)
+        #expect(power.normalized == watts / 100)
+        #expect(!power.supportsNormalizedRFPower)
+        #expect(await mock.recordedWrites == ["IF;", "EX00011;", "SM;"].map { Data($0.utf8) })
+    }
+
+    @Test func ts890ReceiveSkipsMeterQueries() async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S, replies: ["IF;": ifReply(transmitting: false)])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.watts == 0)
+        #expect(!power.supportsNormalizedRFPower)
+        #expect(await mock.recordedWrites == [Data("IF;".utf8)])
+    }
+
+    @Test(arguments: ["EX00011 002;", "EX00011 01;", "XX00011 001;"])
+    func ts890RejectsInvalidMeterType(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Kenwood.ts890S, replies: [
+            "IF;": ifReply(transmitting: true), "EX00011;": reply
+        ])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["SM0071;", "SM0x35;", "SM035;", "SM00035;"])
+    func ts890RejectsInvalidPower(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Kenwood.ts890S, replies: [
+            "IF;": ifReply(transmitting: true), "EX00011;": "EX000110000;", "SM;": reply
+        ])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["RM2071;", "RM20x1;", "RM20001x;", "RM200;", "RM70001;", "FA00000000;"])
+    func selectedMeterRejectsAndDrainsMalformedReplies(reply: String) async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts890S)
+        await mock.setChunkedResponse(["ID024;", reply, "RM20011;", "ID024;", "ID024;", "RM20023;", "ID024;"].map { Data($0.utf8) })
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSWR() }
+        #expect(try await proto.getSWR().swrRatio == 2)
+    }
+
+    @Test func selectedMeterBoundsAndMissingSelection() async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts990S)
+        await mock.setChunkedResponse(["ID024;", "RM10001;", "ID024;"].map { Data($0.utf8) })
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSWR() }
+        await mock.setChunkedResponse((["ID024;"] + Array(repeating: "RM10001;", count: 7)).map { Data($0.utf8) })
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSWR() }
+    }
+
+    @Test func ts990AdvertisesOnlyImplementedSWR() async throws {
+        let (proto, mock) = try await makeProtocol(.Kenwood.ts990S)
+        await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }
+        await #expect(throws: RigError.self) { _ = try await proto.getALC() }
+        await #expect(throws: RigError.self) { _ = try await proto.getComp() }
+        await #expect(throws: RigError.self) { _ = try await proto.getVoltage() }
+        await #expect(throws: RigError.self) { _ = try await proto.getCurrent() }
+        #expect(await mock.recordedWrites.isEmpty)
+        #expect(RadioDefinition.Kenwood.ts990S.capabilities.supportsSWRMeter)
+        #expect(!RadioDefinition.Kenwood.ts990S.capabilities.supportsRFPowerMeter)
+    }
+
+    @Test func rigctldTS890PowerLevels() async throws {
+        let rig = try RigController(radio: .Kenwood.ts890S, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        for (command, reply) in ["IF;": ifReply(transmitting: true), "EX00011;": "EX00011 000;", "SM;": "SM0059;"] {
+            await mock.setResponse(for: Data(command.utf8), response: Data(reply.utf8))
+        }
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS")).data == ["100.000000"])
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).returnCode.rawValue == -11)
+        await mock.setChunkedResponse(["ID024;", "RM5065;", "ID024;"].map { Data($0.utf8) })
+        #expect(await handler.handle(.getLevel(name: "VD_METER")).data == ["15.000000"])
     }
 
     @Test func rigctldTS590ReportsHamlibUnits() async throws {

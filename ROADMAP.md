@@ -1659,8 +1659,14 @@ jjones9527/SwiftRigControl#46–#51.
       TS-2000 power targets the main receiver; VFO-C metering is not
       exposed by the current meter API. 1,467 tests passed, 57 skipped.
 - [ ] Hardware: TS-480HX/SAT and TS-2000 TX meters.
-- [ ] Remaining Kenwood and Elecraft TX meters: TS-890S, TS-990S, KX,
-      Flex, per model from Hamlib.
+- [x] TS-890S / TS-990S meters (2026-11-14): TS-890S watts, SWR, ALC,
+      compression, voltage and current; TS-990S SWR only, as Hamlib
+      advertises. RM enables the requested meter and drains through an ID
+      boundary. TS-890S power checks IF / EX00011 / SM and exposes only
+      watts through rigctld. 1,498 tests passed, 57 skipped.
+- [ ] Hardware: TS-890S / TS-990S meter reads and RM enable behavior.
+- [ ] Remaining Elecraft / Flex TX meters: KX2 / KX3 and Flex, per model
+      from Hamlib.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.

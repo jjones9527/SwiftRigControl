@@ -13,7 +13,23 @@ extension KenwoodProtocol: SupportsTXMeters {
         }
         guard status[28] == 49 else {
             return MeterReading(kind: .rfPower, raw: 0, normalized: 0, physicalValue: 0,
-                                rfPowerIsCalibrated: levelProfile.txMeterStyle == .ts590)
+                                rfPowerIsCalibrated: levelProfile.txMeterStyle == .ts590 || levelProfile.txMeterStyle == .ts890,
+                                supportsNormalizedRFPower: levelProfile.txMeterStyle != .ts890)
+        }
+        if levelProfile.txMeterStyle == .ts890 {
+            // Hamlib checks EX00011 even for power, then reads SM (no receiver digit).
+            try await sendCommand("EX00011")
+            let meterType = try await receiveResponse()
+            guard meterType.utf8.count == 11, meterType.hasPrefix("EX00011"),
+                  meterType.suffix(3) == "000" || meterType.suffix(3) == "001" else {
+                throw RigError.invalidResponse
+            }
+            try await sendCommand("SM")
+            let raw = try meterDigits(try await receiveResponse(), prefix: "SM")
+            guard raw <= 70 else { throw RigError.invalidResponse }
+            let watts = Self.ts890PowerCalibration.value(forRaw: raw).rounded()
+            return MeterReading(kind: .rfPower, raw: raw, normalized: watts / 100,
+                                physicalValue: watts, supportsNormalizedRFPower: false)
         }
         try await sendCommand("SM0")
         let raw = try meterDigits(try await receiveResponse(), prefix: "SM0")
@@ -35,15 +51,31 @@ extension KenwoodProtocol: SupportsTXMeters {
 
     public func getSWR() async throws -> MeterReading {
         try requireMeter(capabilities.supportsSWRMeter)
-        let raw = try await readMeter(number: 1)
-        let calibration = levelProfile.txMeterStyle == .ts590 ? Self.ts590SWRCalibration : Self.ts480SWRCalibration
-        let ratio = calibration.value(forRaw: raw)
+        let raw: Int
+        let calibration: FloatCalibrationTable
+        switch levelProfile.txMeterStyle {
+        case .ts890:
+            raw = try await readSelectedMeter(number: 2)
+            calibration = Self.ts890SWRCalibration
+        case .ts990:
+            raw = try await readSelectedMeter(number: 2)
+            calibration = Self.ts990SWRCalibration
+        default:
+            raw = try await readMeter(number: 1)
+            calibration = levelProfile.txMeterStyle == .ts590 ? Self.ts590SWRCalibration : Self.ts480SWRCalibration
+        }
+        let value = calibration.value(forRaw: raw)
+        let ratio = levelProfile.txMeterStyle == .ts990 ? (value * 10).rounded() / 10 : value
         return MeterReading(kind: .swr, raw: raw,
                             normalized: min(max((ratio - 1) / 9, 0), 1), physicalValue: ratio)
     }
 
     public func getALC() async throws -> MeterReading {
         try requireMeter(capabilities.supportsALCMeter)
+        if levelProfile.txMeterStyle == .ts890 {
+            let raw = try await readSelectedMeter(number: 1)
+            return MeterReading(kind: .alc, raw: raw, normalized: Double(raw) / 35)
+        }
         let raw = try await readMeter(number: 3)
         // Hamlib allows up to 5: TS-590 uses 30/6; TS-480/2000 use 20/4.
         let divisor = levelProfile.txMeterStyle == .ts590 ? 6.0 : 4.0
@@ -52,6 +84,14 @@ extension KenwoodProtocol: SupportsTXMeters {
 
     public func getComp() async throws -> MeterReading {
         try requireMeter(capabilities.supportsCompMeter)
+        if levelProfile.txMeterStyle == .ts890 {
+            let raw = try await readSelectedMeter(number: 3)
+            let dB: Double
+            if raw < 21 { dB = Double(raw) / 2 }
+            else if raw < 51 { dB = 10 + Double(raw - 20) / 3 }
+            else { dB = 20 + Double(raw - 50) / 4 }
+            return MeterReading(kind: .comp, raw: raw, normalized: dB / 30, physicalValue: dB)
+        }
         let raw = try await readMeter(number: 2)
         let fullScale = levelProfile.txMeterStyle == .ts590 ? 30.0 : 20.0
         return MeterReading(kind: .comp, raw: raw, normalized: Double(raw) / fullScale,
@@ -59,17 +99,59 @@ extension KenwoodProtocol: SupportsTXMeters {
     }
 
     public func getVoltage() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("Voltage meter is not implemented for this Kenwood")
+        try requireMeter(capabilities.supportsVoltageMeter)
+        guard levelProfile.txMeterStyle == .ts890 else { throw RigError.unsupportedOperation("Voltage meter") }
+        let raw = try await readSelectedMeter(number: 5)
+        let volts = Double(raw) * 15 / 65
+        return MeterReading(kind: .voltage, raw: raw, normalized: volts / 16, physicalValue: volts)
     }
 
     public func getCurrent() async throws -> MeterReading {
-        throw RigError.unsupportedOperation("Current meter is not implemented for this Kenwood")
+        try requireMeter(capabilities.supportsCurrentMeter)
+        guard levelProfile.txMeterStyle == .ts890 else { throw RigError.unsupportedOperation("Current meter") }
+        let raw = try await readSelectedMeter(number: 4)
+        let amps = Double(raw) * 20 / 70
+        return MeterReading(kind: .current, raw: raw, normalized: amps / 25, physicalValue: amps)
     }
 
     private func requireMeter(_ supported: Bool) throws {
         guard levelProfile.txMeterStyle != .none, supported else {
             throw RigError.unsupportedOperation("TX meter is not implemented for this Kenwood")
         }
+    }
+
+    /// Hamlib enables RMn1, then reads RM. Follow RM with ID as a
+    /// synchronization boundary: up to six enabled meters can reply, including
+    /// meters after the requested one. Consume them before another transaction.
+    private func readSelectedMeter(number: Int) async throws -> Int {
+        try await sendSetCommand("RM" + String(number) + "1")
+        try await sendCommand("RM")
+        try await sendCommand("ID")
+        var selectedValue: Int?
+        var invalidReply = false
+        for _ in 0..<7 {
+            let response = try await receiveResponse()
+            if response.hasPrefix("ID") {
+                let id = response.dropFirst(2)
+                guard !id.isEmpty, id.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),
+                      !invalidReply, let selectedValue else {
+                    throw RigError.invalidResponse
+                }
+                return selectedValue
+            }
+            // Hamlib accepts up to four digits; its TS-890 simulator uses three.
+            let digits = response.dropFirst(3)
+            guard (6...7).contains(response.utf8.count), response.hasPrefix("RM"),
+                  let selection = response.dropFirst(2).first,
+                  let selected = Int(String(selection)), (1...6).contains(selected),
+                  digits.utf8.allSatisfy({ $0 >= 48 && $0 <= 57 }),
+                  let raw = Int(digits), raw <= 70 else {
+                invalidReply = true
+                continue
+            }
+            if selected == number { selectedValue = raw }
+        }
+        throw RigError.invalidResponse
     }
 
     private func readMeter(number: Int) async throws -> Int {
@@ -119,6 +201,16 @@ extension KenwoodProtocol: SupportsTXMeters {
         }
         return value
     }
+
+    private static let ts890SWRCalibration = FloatCalibrationTable([
+        (0, 1), (11, 1.5), (23, 2), (35, 3), (70, 15)
+    ])
+    private static let ts990SWRCalibration = FloatCalibrationTable([
+        (0, 1), (7, 1.5), (36, 3), (43, 6), (70, 10)
+    ])
+    private static let ts890PowerCalibration = FloatCalibrationTable([
+        (0, 0), (5, 5), (10, 10), (19, 25), (35, 50), (59, 100), (70, 150)
+    ])
 
     // TS480_SWR_CAL and TS2000_SWR_CAL are identical.
     private static let ts480SWRCalibration = FloatCalibrationTable([

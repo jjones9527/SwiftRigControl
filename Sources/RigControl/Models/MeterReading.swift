@@ -65,6 +65,10 @@ public struct MeterReading: Sendable, Equatable {
     /// watts calibration. Prevents applying the Icom curve to unrelated scales.
     public let rfPowerIsCalibrated: Bool
 
+    /// Whether normalized RF power is a supported Hamlib level. The library's
+    /// normalized display value still exists for watts-only backends.
+    public let supportsNormalizedRFPower: Bool
+
     /// Which transmit-side meter a reading is from. Discriminates
     /// the typed-accessor branch on ``MeterReading``.
     public enum Kind: String, Sendable, Equatable, CaseIterable {
@@ -88,13 +92,16 @@ public struct MeterReading: Sendable, Equatable {
     /// that build readings outside the standard Icom curve. Set
     /// `rfPowerIsCalibrated` to false for normalized-only RF power to avoid
     /// implying a watts calibration that the backend does not provide.
+    /// Set `supportsNormalizedRFPower` to false for a watts-only Hamlib
+    /// backend; `normalized` can still hold a library display value.
     public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil,
-                rfPowerIsCalibrated: Bool = true) {
+                rfPowerIsCalibrated: Bool = true, supportsNormalizedRFPower: Bool = true) {
         self.kind = kind
         self.raw = raw
         self.normalized = normalized
         self.physicalValue = physicalValue
         self.rfPowerIsCalibrated = rfPowerIsCalibrated
+        self.supportsNormalizedRFPower = supportsNormalizedRFPower
     }
 
     /// RF power output in watts, if this is an `.rfPower` reading.

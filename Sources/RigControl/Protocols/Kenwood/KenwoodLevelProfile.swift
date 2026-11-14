@@ -35,6 +35,10 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         case ts480
         /// TS-2000: only the selected RM meter, main-receiver SM0 power.
         case ts2000
+        /// TS-890S: selected RM reads and calibrated SM power.
+        case ts890
+        /// TS-990S: selected RM SWR only.
+        case ts990
     }
 
     public internal(set) var txMeterStyle: TXMeterStyle = .none
@@ -230,6 +234,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-890S (Hamlib `ts890s.c`): `GC`, 1-digit `RA`, `SQnnn`, `NB1n`.
     public static let ts890S = generic.with {
+        $0.txMeterStyle = .ts890
         $0.agc = .gc(codes: [.off: 0, .slow: 1, .medium: 2, .fast: 3])
         $0.attenuatorDigits = 1
         $0.squelchHasReceiverDigit = false
@@ -240,6 +245,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-990S: 6 / 12 / 18 dB, `PL` two values on a 0–255 scale.
     public static let ts990S = generic.with {
+        $0.txMeterStyle = .ts990
         $0.compressorHasTwoValues = true
         $0.compressorMax = 255
         $0.cwPitch = .pt(minHz: 300, stepHz: 10, digits: 3)

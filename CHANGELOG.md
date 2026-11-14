@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- TS-890S calibrated RF power, SWR, ALC, compression, voltage and current
+  meters, and TS-990S SWR with its model-specific table and one-decimal
+  rounding. RM reads enable the requested meter, as Hamlib does, and use
+  an ID boundary to consume other enabled meter replies.
+- TS-890S power preserves Hamlib's watts-only level availability:
+  rigctld RFPOWER_METER_WATTS returns calibrated watts, while RFPOWER_METER
+  returns unavailable. The library still provides watts / 100 as a display
+  value, marked by `supportsNormalizedRFPower == false`.
 - TS-480HX/SAT and TS-2000 SWR, ALC, compression and normalized power
   meters through the library and rigctld. TS-480 consumes the RM triple;
   TS-2000 reads only the selected meter and follows Hamlib's zero fallback
