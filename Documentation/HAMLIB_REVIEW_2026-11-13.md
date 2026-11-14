@@ -72,3 +72,23 @@ No hardware validation was performed.
 
 The watermark remains at the previous baseline until this work is landed;
 this document records the disposition through `1b3fb4a6a`.
+
+## Follow-up: Flex TX meter capability audit (2026-11-14)
+
+Checked the registered capability masks and get-level callbacks in the
+reviewed Hamlib tree; the relevant source files are unchanged between
+`9199f8a239` and `1b3fb4a6a3`.
+
+| Definition | Hamlib registration | TX meters |
+| --- | --- | --- |
+| Flex 6000 CAT | `F6K_LEVEL_ALL`, `flex6k_get_level` | None |
+| PowerSDR / Thetis | `POWERSDR_LEVEL_ALL`, `powersdr_get_level` | Normalized power, watts, SWR |
+| SDR-Console | `TS2000_LEVEL_GET`, `ts2000_get_level` | Normalized power, SWR, ALC, compression |
+| PiHPSDR | `PIHPSDR_LEVEL_ALL`, `pihpsdr_get_level` | None; RFPOWER and COMP are controls |
+| Native SmartSDR A–H | `SMARTSDR_LEVEL` | None |
+
+The unused `SDRCONSOLE_LEVEL_GET` macro does not describe the registered
+SDR-Console model. Enabled the existing TS-2000 meter path for this
+model and removed PiHPSDR's unsupported power/compression meter flags.
+Other control capability differences are outside this TX meter audit.
+Verified with Xcode: 1,550 tests passed, 57 skipped; hardware checks remain.

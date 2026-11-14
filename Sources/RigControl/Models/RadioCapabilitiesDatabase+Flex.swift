@@ -217,13 +217,9 @@ extension RadioCapabilitiesDatabase.Flex {
     /// Hamlib backend registers SDR-Console as a distinct model
     /// even though the wire protocol is a TS-2000 subset.
     ///
-    /// The exposed CAT surface is intentionally narrow: get/set
-    /// frequency, mode, AGC, S-meter, slope-high/low IF filter,
-    /// meter switching. SDR-Console does not expose PTT-off-air
-    /// through CAT — RIG_LEVEL_SET is NONE per Hamlib. RF power
-    /// depends on the underlying hardware; we advertise 100 W as
-    /// a conservative upper bound and let the operator constrain
-    /// via the SDR-Console UI.
+    /// Hamlib registers this model with TS2000_LEVEL_GET and
+    /// ts2000_get_level, including normalized power, SWR, ALC and
+    /// compression meters. Its SDRCONSOLE_LEVEL_GET macro is unused.
     public static let sdrConsole = RigCapabilities(
         hasVFOB: true,
         hasSplit: false,
@@ -234,9 +230,11 @@ extension RadioCapabilitiesDatabase.Flex {
         detailedFrequencyRanges: flexFrequencyRanges,
         hasATU: false,
         supportsSignalStrength: true,
+        supportsRFPowerMeter: true,
+        supportsSWRMeter: true,
+        supportsALCMeter: true,
+        supportsCompMeter: true,
         supportsCWKeyer: true,
-        // SDRCONSOLE_LEVEL_GET includes AGC, STRENGTH, METER,
-        // SLOPE_HIGH, SLOPE_LOW; SET is NONE per Hamlib ts2000.c.
         antennaCount: 1,
         preampLevels: [12]
     )
@@ -266,8 +264,7 @@ extension RadioCapabilitiesDatabase.Flex {
         supportsSignalStrength: true,
         supportsCTCSS: true,   // PIHPSDR_FUNC_ALL: TONE + TSQL
         supportsDCS: false,
-        supportsRFPowerMeter: true,
-        supportsCompMeter: true,
+        // Hamlib RFPOWER and COMP are controls, not TX meter levels.
         supportsCWKeyer: true,
         supportsSendCW: true,
         antennaCount: 2,       // PIHPSDR_ANTS = ANT_1 | ANT_2

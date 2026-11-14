@@ -1672,8 +1672,12 @@ jjones9527/SwiftRigControl#46–#51.
       watts / 100), ZZRM8 SWR retained in RX or on meter timeout.
       Invalid replies remain errors. 1,545 tests passed, 57 skipped.
 - [ ] Hardware: PowerSDR / Thetis TX meters and SWR retention.
-- [ ] Audit remaining Flex capability flags against per-model Hamlib
-      support, including PiHPSDR's advertised power/compression meters.
+- [x] Flex TX meter capability audit: removed PiHPSDR power/compression
+      meter flags (control levels only); enabled SDR-Console's registered
+      TS-2000 meter implementation. Flex 6000 CAT and native SmartSDR
+      have no TX meter levels in their Hamlib capability masks.
+      1,550 tests passed, 57 skipped.
+- [ ] Hardware: SDR-Console selected RM meter and normalized SM0 power.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.

@@ -220,7 +220,6 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// break-in delay (Hamlib `sdrconsole` returns ENAVAIL for FBKIN).
     public static let sdrConsole = ts2000.with {
         $0.breakInViaDelay = false
-        $0.txMeterStyle = .none
     }
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.

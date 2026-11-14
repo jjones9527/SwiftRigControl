@@ -77,6 +77,21 @@ import Testing
         #expect(await handler.handle(.getLevel(name: "ALC")).returnCode.rawValue == -11)
     }
 
+    @Test func rigctldPiHPSDRRejectsTXMetersWithoutCommands() async throws {
+        let rig = try RigController(radio: .Flex.pihpsdr, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.reset()
+        let handler = RigctldCommandHandler(rigController: rig)
+        for name in ["RFPOWER_METER", "RFPOWER_METER_WATTS", "SWR", "ALC", "COMP_METER"] {
+            #expect(await handler.handle(.getLevel(name: name)).returnCode.rawValue == -11)
+        }
+        #expect(await mock.recordedWrites.isEmpty)
+        #expect(RadioDefinition.Flex.pihpsdr.capabilities.powerControl)
+        #expect(RadioDefinition.Flex.pihpsdr.capabilities.supportedFunctions.contains(.compressor))
+        #expect(!RadioDefinition.Flex.pihpsdr.capabilities.supportsCompMeter)
+    }
+
     @Test(arguments: [RadioDefinition.Elecraft.kx2, .Elecraft.kx3])
     func kxPowerAndSWR(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio, replies: [
@@ -233,11 +248,12 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
     }
 
-    @Test(arguments: [RadioDefinition.Elecraft.k2, .Kenwood.ts570D, .Kenwood.ts870S, .Flex.flex6000, .Flex.sdrConsole])
+    @Test(arguments: [RadioDefinition.Elecraft.k2, .Kenwood.ts570D, .Kenwood.ts870S, .Flex.flex6000, .Flex.pihpsdr])
     func unimplementedModelsSendNoMeterCommands(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio)
         await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }
         await #expect(throws: RigError.self) { _ = try await proto.getSWR() }
+        await #expect(throws: RigError.self) { _ = try await proto.getComp() }
         #expect(await mock.recordedWrites.isEmpty)
         #expect(!radio.capabilities.supportsRFPowerMeter)
     }
@@ -364,8 +380,9 @@ import Testing
         #expect(try await proto.getSWR().swrRatio == ratio)
     }
 
-    @Test func ts2000ReadsOnlySelectedMeter() async throws {
-        let (proto, mock) = try await makeProtocol(.Kenwood.ts2000, replies: ["RM;": "RM20010;"])
+    @Test(arguments: [RadioDefinition.Kenwood.ts2000, .Flex.sdrConsole])
+    func ts2000ReadsOnlySelectedMeter(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await makeProtocol(radio, replies: ["RM;": "RM20010;"])
         #expect(try await proto.getComp().dB == 10)
         #expect(try await proto.getALC().normalized == 0)
         #expect(try await proto.getSWR().swrRatio == 1) // zero raw SWR calibrates to 1:1
@@ -391,9 +408,9 @@ import Testing
         #expect(try await proto.getSWR().swrRatio == 2)
     }
 
-    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000])
+    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000, .Flex.sdrConsole])
     func normalizedPowerDoesNotInventWatts(radio: RadioDefinition) async throws {
-        let fullScale = radio.model == "TS-2000" ? 30 : 20
+        let fullScale = (radio.model == "TS-2000" || radio.model == "SDR-Console") ? 30 : 20
         let (proto, mock) = try await makeProtocol(radio, replies: [
             "IF;": ifReply(transmitting: true), "SM0;": String(format: "SM0%04d;", fullScale / 2)
         ])
@@ -411,7 +428,7 @@ import Testing
         #expect(await mock.recordedWrites == [Data("IF;".utf8)])
     }
 
-    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000])
+    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000, .Flex.sdrConsole])
     func newKenwoodMetersRejectInvalidPowerAndStatus(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio, replies: ["IF;": "IF;"])
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
@@ -420,26 +437,26 @@ import Testing
             await mock.setResponse(for: Data("SM0;".utf8), response: Data(reply.utf8))
             await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
         }
-        if radio.model != "TS-2000" {
+        if (radio.model != "TS-2000" && radio.model != "SDR-Console") {
             await mock.setResponse(for: Data("SM0;".utf8), response: Data("SM00021;".utf8))
             await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
         }
     }
 
-    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000])
+    @Test(arguments: [RadioDefinition.Kenwood.ts480HX, .Kenwood.ts480SAT, .Kenwood.ts2000, .Flex.sdrConsole])
     func rigctldNewKenwoodMeters(radio: RadioDefinition) async throws {
         let rig = try RigController(radio: radio, connection: .mock)
         try await rig.connect()
         let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
         let handler = RigctldCommandHandler(rigController: rig)
-        if radio.model == "TS-2000" {
+        if (radio.model == "TS-2000" || radio.model == "SDR-Console") {
             await mock.setResponse(for: Data("RM;".utf8), response: Data("RM10004;".utf8))
         } else {
             await mock.setChunkedResponse(["RM10004;", "RM20010;", "RM30020;"].map { Data($0.utf8) })
         }
         #expect(await handler.handle(.getLevel(name: "SWR")).data == ["1.500000"])
         await mock.setResponse(for: Data("IF;".utf8), response: Data(ifReply(transmitting: true).utf8))
-        let powerReply = radio.model == "TS-2000" ? "SM00015;" : "SM00010;"
+        let powerReply = (radio.model == "TS-2000" || radio.model == "SDR-Console") ? "SM00015;" : "SM00010;"
         await mock.setResponse(for: Data("SM0;".utf8), response: Data(powerReply.utf8))
         #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).data == ["0.500000"])
         let watts = await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS"))

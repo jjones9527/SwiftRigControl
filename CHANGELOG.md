@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Flex TX meter capability audit: PiHPSDR no longer advertises RF power
+  or compression meters. Hamlib's RFPOWER and COMP levels are controls,
+  not meter readings; those controls remain available.
+- SDR-Console now exposes TS-2000 normalized power, SWR, ALC and
+  compression meters through the library and rigctld. Hamlib registers
+  TS2000_LEVEL_GET and ts2000_get_level for this model; its narrower
+  SDRCONSOLE_LEVEL_GET macro is unused. Watts remain unavailable.
+  Validation: 1,550 tests passed, 57 skipped; hardware testing pending.
+
 - G90 SWR queries reject non-BCD digits and mismatched replies instead of
   displaying a false reading (Hamlib `f78a899fe`). A NAK remains a command
   rejection. The separate G90 RFPOWER full-scale workaround is preserved.
