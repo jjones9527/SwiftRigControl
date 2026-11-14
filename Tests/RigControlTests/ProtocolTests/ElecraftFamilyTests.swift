@@ -123,6 +123,35 @@ import Testing
         #expect(strength.raw == 12)
     }
 
+    @Test(arguments: [(0, -54), (1, -42), (2, -36), (3, -24), (4, -12), (5, -6),
+                      (6, 0), (7, 10), (8, 15), (9, 20), (10, 30), (11, 35),
+                      (12, 40), (13, 50), (14, 55), (15, 60), (21, 60)])
+    func standardSMCalibration(raw: Int, dB: Int) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii(String(format: "SM%04d;", raw)))
+            let strength = try await proto.getSignalStrength()
+            #expect(strength.calibratedDBRelativeToS9 == dB)
+            #expect(strength.raw == raw)
+        }
+    }
+
+    @Test(arguments: ["SM012;", "SM00012;", "SM-012;", "SM 012;", "SM00x2;", "SMH012;"])
+    func standardSMRejectsMalformedReplies(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k3)
+        await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSignalStrength() }
+    }
+
+    @Test func rigctldK3StrengthUsesCalibratedDB() async throws {
+        let rig = try RigController(radio: .Elecraft.k3, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii("SM0004;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "STRENGTH")).data == ["-12"])
+    }
+
     // MARK: - AGC (Hamlib k3.c:1939-1962, 2180-2207)
 
     @Test func k3FamilyAGCCodes() async throws {

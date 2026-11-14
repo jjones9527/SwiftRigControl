@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Elecraft K3/K3S/K4/KX2/KX3 standard SM readings now use Hamlib's
+  K3_SM_CAL table instead of treating bar counts as decibels. For
+  example, SM0006 is S9 and SM0012 is S9+40; rigctld STRENGTH reports
+  calibrated dB relative to S9. Malformed SM replies are rejected.
+  Xcode build passed; 1,574 tests passed, 57 skipped. Hardware checks
+  and firmware-gated high-resolution SMH support remain pending.
+
 - Flex TX meter capability audit: PiHPSDR no longer advertises RF power
   or compression meters. Hamlib's RFPOWER and COMP levels are controls,
   not meter readings; those controls remain available.

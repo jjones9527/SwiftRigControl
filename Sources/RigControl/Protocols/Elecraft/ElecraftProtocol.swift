@@ -378,17 +378,18 @@ public actor ElecraftProtocol:
         try await sendCommand(cmd)
         let response = try await receiveResponse()
 
-        guard response.hasPrefix(cmd),
-              response.count >= cmd.count + 4 else {
+        let digits = response.dropFirst(cmd.count)
+        guard response.hasPrefix(cmd), digits.utf8.count == 4,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let rawValue = Int(digits) else {
             throw RigError.invalidResponse
         }
 
-        let startIndex = response.index(response.startIndex, offsetBy: cmd.count)
-        let endIndex = response.index(startIndex, offsetBy: 4)
-        let valueString = String(response[startIndex..<endIndex])
-
-        guard let rawValue = Int(valueString) else {
-            throw RigError.invalidResponse
+        if family != .k2 {
+            // Hamlib K3_SM_CAL (also used by K3S/K4/KX2/KX3).
+            // Values above the final calibration point clamp to S9+60.
+            let dB = Self.standardSMCalibration.value(forRaw: rawValue)
+            return SignalStrength(dBRelativeToS9: Int(dB), raw: rawValue)
         }
 
         // Elecraft: 0-30 represents dB over S0
@@ -399,4 +400,10 @@ public actor ElecraftProtocol:
 
         return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
     }
+    private static let standardSMCalibration = FloatCalibrationTable([
+        (0, -54), (1, -42), (2, -36), (3, -24), (4, -12), (5, -6),
+        (6, 0), (7, 10), (8, 15), (9, 20), (10, 30), (11, 35),
+        (12, 40), (13, 50), (14, 55), (15, 60)
+    ])
+
 }

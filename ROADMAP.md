@@ -1555,8 +1555,12 @@ jjones9527/SwiftRigControl#46–#51.
       `MG` 0–80); ours use the K3 scales.
 - [ ] K4 attenuator steps 5/10/15 dB (`k3.c` K4 caps `.attenuator`);
       ours treat it like the K3 (one 10 dB step).
-- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter (k3.c:2066-2095)
-      and the K3 `SM` 0–21 bar scale in `getSignalStrength`.
+- [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
+      including endpoint clamping, and calibrated rigctld STRENGTH.
+      1,574 tests passed, 57 skipped.
+- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter, with firmware
+      detection and the separate K3_SMH_CAL table.
+- [ ] Hardware: K3 / K3S / K4 / KX2 / KX3 standard SM calibration.
 
 ### 5.10.4 Shipped in v1.4.0 (mock-tested)
 
