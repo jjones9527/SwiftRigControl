@@ -400,6 +400,45 @@ import Testing
         }
     }
 
+    @Test(arguments: [(0, 0, 0), (33, 19, 32), (50, 30, 50), (100, 60, 100)])
+    func monitorGainUsesCurrentModeScale(level: Int, raw: Int, readback: Int) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            let frame = String(format: "ML%03d;", raw)
+            try await proto.setMonitorGain(level)
+            #expect(await sent(mock) == [frame, "ID;"])
+            await mock.setResponse(for: Self.ascii("ML;"), response: Self.ascii(frame))
+            #expect(try await proto.getMonitorGain() == readback)
+        }
+    }
+
+    @Test(arguments: ["ML061;", "ML999;", "ML60;", "ML0060;", "ML-01;", "ML0x1;", "MG060;"])
+    func monitorGainRejectsInvalidReplies(reply: String) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            await mock.setResponse(for: Self.ascii("ML;"), response: Self.ascii(reply))
+            await #expect(throws: RigError.invalidResponse) { _ = try await proto.getMonitorGain() }
+        }
+    }
+
+    @Test func k2MonitorGainSendsNoCommands() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k2)
+        await #expect(throws: RigError.self) { try await proto.setMonitorGain(50) }
+        await #expect(throws: RigError.self) { _ = try await proto.getMonitorGain() }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test func rigctldElecraftMonitorGain() async throws {
+        for definition in Self.k3Family {
+            let rig = try RigController(radio: definition, connection: .mock)
+            try await rig.connect()
+            let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+            await mock.setResponse(for: Self.ascii("ML;"), response: Self.ascii("ML030;"))
+            let handler = RigctldCommandHandler(rigController: rig)
+            #expect(await handler.handle(.getLevel(name: "MONITOR_GAIN")).data == ["0.500000"])
+        }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {

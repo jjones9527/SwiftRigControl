@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Elecraft monitor gain through SupportsMonitorGain, RigController and
+  rigctld MONITOR_GAIN for K3/K3S/KX2/KX3/K4. Public 0–100 maps to
+  ML 0–60 for the current operating mode. K4 uses the K3-compatible
+  form documented in [Elecraft's reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Invalid readbacks are rejected; K2 remains unsupported.
+  Build passed; 1,685 tests passed, 57 skipped. Hardware checks pending.
+
 - Elecraft speech-compressor level through SupportsCompressorLevel,
   RigController and rigctld COMP. Public levels 0–100 map to CP 0–40
   for K3/K3S/KX2/KX3 (Hamlib), or 0–30 for K4 per

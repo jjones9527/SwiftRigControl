@@ -170,6 +170,29 @@ extension ElecraftProtocol {
         return isK4 ? 30 : 40
     }
 
+    // MARK: - Monitor gain
+
+    /// Sets monitor gain on the public 0–100 scale.
+    /// ML 0–60 applies to the current mode, including K4's K3-compatible form.
+    public func setMonitorGain(_ level: Int) async throws {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 monitor gain") }
+        let raw = min(max(level, 0), 100) * 60 / 100
+        try await sendSetCommand(String(format: "ML%03d", raw))
+    }
+
+    public func getMonitorGain() async throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 monitor gain") }
+        try await sendCommand("ML")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("ML"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= 60 else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + 30) / 60
+    }
+
     // MARK: - Squelch
 
     /// Sets the squelch level.

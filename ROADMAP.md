@@ -1559,6 +1559,10 @@ jjones9527/SwiftRigControl#46–#51.
       exposed as public 0–100 and rigctld COMP. 1,672 tests passed,
       57 skipped.
 - [ ] Hardware: Elecraft compressor level and readback.
+- [x] K3/K3S/KX2/KX3/K4 monitor gain via ML 0–60 for the current
+      mode, exposed as public 0–100 and rigctld MONITOR_GAIN.
+      1,685 tests passed, 57 skipped.
+- [ ] Hardware: Elecraft monitor gain, including K4 compatibility form.
 - [x] K4 attenuation corrected against Elecraft Programmer's Reference
       D5: RAnnm, 0–21 dB in 3 dB steps plus enable. Hamlib's 5/10/15 dB
       table and K3 parser conflict with this documented native format.
