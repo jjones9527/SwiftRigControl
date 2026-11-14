@@ -1575,6 +1575,11 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K4 squelch uses documented SQ 0–40 range with strict reply
       validation. 1,644 tests passed, 57 skipped.
 - [ ] Hardware: K4 squelch scale and readback.
+- [x] K4 NR level/state format, preserving stored level when disabling
+      and enable state during independent level changes. Rigctld NR
+      reads the stored fraction even while off. 1,697 tests passed,
+      57 skipped.
+- [ ] Hardware: K4 NR commands, state preservation and readback.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

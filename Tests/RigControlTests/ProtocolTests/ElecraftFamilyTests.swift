@@ -439,6 +439,51 @@ import Testing
         }
     }
 
+    @Test(arguments: [0, 5, 10])
+    func k4NoiseReductionLevelAndState(level: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        let on = String(format: "NR%02d1;", level)
+        let off = String(format: "NR%02d0;", level)
+        try await proto.setNoiseReduction(.enabled(level: level))
+        #expect(await sent(mock) == [on, "ID;"])
+        await mock.setResponse(for: Self.ascii("NR;"), response: Self.ascii(on))
+        #expect(try await proto.getNoiseReduction() == .enabled(level: level))
+        try await proto.setNoiseReduction(.off)
+        #expect(await sent(mock).suffix(3) == ["NR;", off, "ID;"])
+        await mock.setResponse(for: Self.ascii("NR;"), response: Self.ascii(off))
+        #expect(try await proto.getNoiseReduction() == .off)
+        #expect(try await proto.getNoiseReductionLevel() == Double(level) / 10)
+        try await proto.setNoiseReductionLevel(0.7)
+        #expect(await sent(mock).suffix(3) == ["NR;", "NR070;", "ID;"])
+    }
+
+    @Test(arguments: ["NR1;", "NR111;", "NR052;", "NR-11;", "NR05x;", "NR0051;", "NB051;"])
+    func k4RejectsMalformedNoiseReduction(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("NR;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getNoiseReduction() }
+    }
+
+    @Test func k4RejectsInvalidNRBeforeWriting() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        for level in [-1, 11] {
+            await #expect(throws: RigError.self) { try await proto.setNoiseReduction(.enabled(level: level)) }
+        }
+        for fraction in [-0.1, 1.1, Double.nan, Double.infinity] {
+            await #expect(throws: RigError.self) { try await proto.setNoiseReductionLevel(fraction) }
+        }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test func rigctldK4ReadsNRLevelWhileOff() async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("NR;"), response: Self.ascii("NR070;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "NR")).data == ["0.700000"])
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {

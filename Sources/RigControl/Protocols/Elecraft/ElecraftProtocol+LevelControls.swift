@@ -470,11 +470,24 @@ extension ElecraftProtocol {
     ///
     /// Command: `NRn;` — 0 = off, 1 = on.
     ///
-    /// The K2 and K3/K4 support a single NR stage. Level values are treated as on/off.
+    /// K4 uses NRnnm: level 0–10 plus enable. Other families use on/off.
     ///
     /// - Parameter config: Noise reduction configuration
     /// - Throws: `RigError` if the command fails
     public func setNoiseReduction(_ config: NoiseReduction) async throws {
+        if isK4 {
+            switch config {
+            case .off:
+                let state = try await readK4NoiseReduction()
+                try await writeK4NoiseReduction(level: state.level, enabled: false)
+            case .enabled(let level):
+                guard (0...10).contains(level) else {
+                    throw RigError.invalidParameter("K4 NR level must be 0...10")
+                }
+                try await writeK4NoiseReduction(level: level, enabled: true)
+            }
+            return
+        }
         switch config {
         case .off:
             try await sendSetCommand("NR0")
@@ -490,6 +503,10 @@ extension ElecraftProtocol {
     /// - Returns: Current noise reduction configuration
     /// - Throws: `RigError` if the command fails
     public func getNoiseReduction() async throws -> NoiseReduction {
+        if isK4 {
+            let state = try await readK4NoiseReduction()
+            return state.enabled ? .enabled(level: state.level) : .off
+        }
         try await sendCommand("NR")
         let response = try await receiveResponse()
         // Response: NRn
@@ -498,6 +515,37 @@ extension ElecraftProtocol {
         }
         let idx = response.index(response.startIndex, offsetBy: 2)
         return response[idx] == "1" ? .enabled(level: 5) : .off
+    }
+
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
+        guard fraction.isFinite, (0...1).contains(fraction) else {
+            throw RigError.invalidParameter("NR level must be 0...1")
+        }
+        let state = try await readK4NoiseReduction()
+        try await writeK4NoiseReduction(level: Int(fraction * 10), enabled: state.enabled)
+    }
+
+    public func getNoiseReductionLevel() async throws -> Double {
+        guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
+        return Double(try await readK4NoiseReduction().level) / 10
+    }
+
+    private func writeK4NoiseReduction(level: Int, enabled: Bool) async throws {
+        try await sendSetCommand(String(format: "NR%02d%d", level, enabled ? 1 : 0))
+    }
+
+    private func readK4NoiseReduction() async throws -> (level: Int, enabled: Bool) {
+        try await sendCommand("NR")
+        let response = try await receiveResponse()
+        let fields = Array(response.dropFirst(2).utf8)
+        guard response.hasPrefix("NR"), fields.count == 3,
+              fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+            throw RigError.invalidResponse
+        }
+        let level = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+        guard level <= 10 else { throw RigError.invalidResponse }
+        return (level, fields[2] == 49)
     }
 
     // MARK: - IF Filter

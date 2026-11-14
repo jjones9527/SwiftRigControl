@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 noise reduction uses NRnnm (level 0–10 plus enable), honoring
+  requested levels and correctly parsing state. Disabling preserves
+  the stored level. Independent NR level control preserves enable state,
+  and rigctld NR reports the stored fraction even while disabled.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,697 tests passed, 57 skipped. Hardware checks pending.
+
 - K4 squelch now scales the public 0–255 level to native SQ000–SQ040,
   instead of the inherited K3 0–29 range. K4 replies require three
   decimal digits within range. Library and rigctld regression coverage

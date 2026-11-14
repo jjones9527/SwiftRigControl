@@ -28,6 +28,7 @@ public actor ElecraftProtocol:
     SupportsAGC,
     SupportsNoiseBlanker,
     SupportsNoiseReduction,
+    SupportsNoiseReductionLevel,
     SupportsIFFilter,
     SupportsAFGain,
     SupportsMicGain,
