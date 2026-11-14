@@ -1558,8 +1558,12 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.
-- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter, with firmware
-      detection and the separate K3_SMH_CAL table.
+- [x] K3/K3S MCU firmware 4.37+ high-resolution `SMH`: lazy RVM
+      detection, per-connection cache and K3_SMH_CAL calibration.
+      1,594 tests passed, 57 skipped.
+- [ ] Hardware: K3/K3S RVM detection and SMH calibration.
+- [ ] Validate high-resolution meter availability and firmware thresholds
+      separately for K4 / KX2 / KX3 before extending SMH selection.
 - [ ] Hardware: K3 / K3S / K4 / KX2 / KX3 standard SM calibration.
 
 ### 5.10.4 Shipped in v1.4.0 (mock-tested)

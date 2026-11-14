@@ -156,7 +156,10 @@ public actor ElecraftProtocol:
 
     // MARK: - Connection
 
+    private var useHighResolutionSM: Bool?
+
     public func connect() async throws {
+        useHighResolutionSM = nil
         try await transport.open()
         try await transport.flush()
 
@@ -368,18 +371,13 @@ public actor ElecraftProtocol:
     // MARK: - Signal Strength
 
     public func getSignalStrength() async throws -> SignalStrength {
-        // Every Elecraft reads the main S-meter with `SM;` and answers
-        // `SMnnnn;`: the K2 through `kenwood_get_level` (only the
-        // TS-590/480/2000 use `SM0`), the K3 family through
-        // `k3_get_level` RIG_LEVEL_STRENGTH (k3.c:2059-2080). Through
-        // v1.3.1 the K3 family sent `SM0;`. Hamlib uses the higher-
-        // resolution `SMH;` on K3 firmware 4.37+; not adopted here.
-        let cmd = "SM"
+        let highResolution = try await usesHighResolutionSignalMeter()
+        let cmd = highResolution ? "SMH" : "SM"
         try await sendCommand(cmd)
         let response = try await receiveResponse()
 
         let digits = response.dropFirst(cmd.count)
-        guard response.hasPrefix(cmd), digits.utf8.count == 4,
+        guard response.hasPrefix(cmd), digits.utf8.count == (highResolution ? 3 : 4),
               digits.utf8.allSatisfy({ (48...57).contains($0) }),
               let rawValue = Int(digits) else {
             throw RigError.invalidResponse
@@ -388,7 +386,8 @@ public actor ElecraftProtocol:
         if family != .k2 {
             // Hamlib K3_SM_CAL (also used by K3S/K4/KX2/KX3).
             // Values above the final calibration point clamp to S9+60.
-            let dB = Self.standardSMCalibration.value(forRaw: rawValue)
+            let table = highResolution ? Self.highResolutionSMCalibration : Self.standardSMCalibration
+            let dB = table.value(forRaw: rawValue)
             return SignalStrength(dBRelativeToS9: Int(dB), raw: rawValue)
         }
 
@@ -400,6 +399,35 @@ public actor ElecraftProtocol:
 
         return SignalStrength(sUnits: sUnits, overS9: overS9, raw: rawValue)
     }
+    private func usesHighResolutionSignalMeter() async throws -> Bool {
+        // The 4.37 threshold is for K3/K3S MCU firmware, not K4/KX versions.
+        guard family == .k3, !isK4 else { return false }
+        if let useHighResolutionSM { return useHighResolutionSM }
+        try await sendCommand("RVM")
+        let reply = try await receiveResponse()
+        if reply == "?" {
+            useHighResolutionSM = false
+            return false
+        }
+        let version = Array(reply.dropFirst(3).utf8)
+        guard reply.hasPrefix("RVM"), version.count == 5, version[2] == 46,
+              [version[0], version[1], version[3], version[4]].allSatisfy({ (48...57).contains($0) }) else {
+            throw RigError.invalidResponse
+        }
+        let major = Int(version[0] - 48) * 10 + Int(version[1] - 48)
+        let minor = Int(version[3] - 48) * 10 + Int(version[4] - 48)
+        let enabled = major > 4 || (major == 4 && minor >= 37)
+        useHighResolutionSM = enabled
+        return enabled
+    }
+
+    private static let highResolutionSMCalibration = FloatCalibrationTable([
+        (0, -54), (5, -48), (9, -42), (14, -36), (22, -30), (24, -24),
+        (28, -18), (33, -12), (38, -6), (42, 0), (47, 5), (53, 10),
+        (58, 15), (63, 20), (68, 25), (73, 30), (78, 35), (83, 40),
+        (88, 45), (93, 50), (98, 55), (103, 60)
+    ])
+
     private static let standardSMCalibration = FloatCalibrationTable([
         (0, -54), (1, -42), (2, -36), (3, -24), (4, -12), (5, -6),
         (6, 0), (7, 10), (8, 15), (9, 20), (10, 30), (11, 35),

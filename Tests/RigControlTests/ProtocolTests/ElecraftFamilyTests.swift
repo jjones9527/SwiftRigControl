@@ -17,6 +17,7 @@ import Testing
         try await proto.connect()
         await mock.reset()
         await mock.setResponse(for: Self.idQuery, response: Self.idReply)
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("RVM04.36;"))
         return (mock, proto)
     }
 
@@ -119,7 +120,7 @@ import Testing
         let (mock, proto) = try await connect(definition)
         await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii("SM0012;"))
         let strength = try await proto.getSignalStrength()
-        #expect(await sent(mock) == ["SM;"])
+        #expect(await sent(mock) == ((model == "K3" || model == "K3S") ? ["RVM;", "SM;"] : ["SM;"]))
         #expect(strength.raw == 12)
     }
 
@@ -147,9 +148,57 @@ import Testing
         let rig = try RigController(radio: .Elecraft.k3, connection: .mock)
         try await rig.connect()
         let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("RVM04.36;"))
         await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii("SM0004;"))
         let handler = RigctldCommandHandler(rigController: rig)
         #expect(await handler.handle(.getLevel(name: "STRENGTH")).data == ["-12"])
+    }
+
+    @Test(arguments: ["RVM04.37;", "RVM04.67;", "RVM05.00;"])
+    func highResolutionFirmwareAndCache(reply: String) async throws {
+        for radio in [RadioDefinition.Elecraft.k3, .Elecraft.k3S] {
+            let (mock, proto) = try await connect(radio)
+            await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii(reply))
+            await mock.setResponse(for: Self.ascii("SMH;"), response: Self.ascii("SMH042;"))
+            #expect(try await proto.getSignalStrength().calibratedDBRelativeToS9 == 0)
+            #expect(try await proto.getSignalStrength().sUnits == 9)
+            #expect(await sent(mock) == ["RVM;", "SMH;", "SMH;"])
+            await proto.disconnect()
+            try await proto.connect()
+            await mock.reset()
+            await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("RVM04.36;"))
+            await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii("SM0006;"))
+            #expect(try await proto.getSignalStrength().sUnits == 9)
+            #expect(await sent(mock) == ["RVM;", "SM;"])
+        }
+    }
+
+    @Test(arguments: [(0, -54), (5, -48), (14, -36), (42, 0), (50, 7), (83, 40), (103, 60), (106, 60)])
+    func highResolutionCalibration(raw: Int, dB: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k3)
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("RVM04.37;"))
+        await mock.setResponse(for: Self.ascii("SMH;"), response: Self.ascii(String(format: "SMH%03d;", raw)))
+        let strength = try await proto.getSignalStrength()
+        #expect(strength.raw == raw)
+        #expect(strength.calibratedDBRelativeToS9 == dB)
+    }
+
+    @Test(arguments: ["RVM4.37;", "RVD04.37;", "RVM04.x7;", "RVM04.370;"])
+    func rejectsInvalidFirmwareAndRetries(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k3)
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSignalStrength() }
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("?;"))
+        await mock.setResponse(for: Self.ascii("SM;"), response: Self.ascii("SM0006;"))
+        #expect(try await proto.getSignalStrength().sUnits == 9)
+    }
+
+    @Test(arguments: ["SMH42;", "SMH0042;", "SMH-42;", "SMH0x2;", "SM0042;"])
+    func rejectsInvalidHighResolutionMeter(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k3)
+        await mock.setResponse(for: Self.ascii("RVM;"), response: Self.ascii("RVM04.37;"))
+        await mock.setResponse(for: Self.ascii("SMH;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSignalStrength() }
     }
 
     // MARK: - AGC (Hamlib k3.c:1939-1962, 2180-2207)

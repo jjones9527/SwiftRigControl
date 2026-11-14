@@ -45,6 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- K3/K3S high-resolution S-meter readings: query MCU firmware with RVM
+  on the first signal read, then use SMH for 4.37+ and Hamlib's
+  K3_SMH_CAL table. Cache the selection until reconnect. Older firmware
+  or an explicit RVM rejection uses standard SM; malformed replies and
+  transport errors remain errors. K4/KX keep standard SM pending
+  validation of their separate firmware versions.
+  Xcode build passed; 1,594 tests passed, 57 skipped. Hardware checks pending.
+
 - PowerSDR/Thetis RF power and SWR meter implementations through the
   library and rigctld. ZZRM5 reports watts and watts / 100; ZZTX checks
   return zero power in receive, including when TX ends during a read.
