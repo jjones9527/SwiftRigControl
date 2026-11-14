@@ -439,6 +439,14 @@ extension ElecraftProtocol {
     /// - Parameter config: Noise blanker configuration
     /// - Throws: `RigError` if the command fails
     public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
+        if isK4, case .enabled(let requestedLevel) = config, let level = requestedLevel {
+            guard (0...15).contains(level) else {
+                throw RigError.invalidParameter("K4 NB level must be 0...15")
+            }
+            try await sendSetCommand(String(format: "NB%02d1", level))
+            return
+        }
+        // K4's short NB0/NB1 form preserves its stored level.
         switch config {
         case .off:
             try await sendSetCommand("NB0")
@@ -456,6 +464,19 @@ extension ElecraftProtocol {
     public func getNoiseBlanker() async throws -> NoiseBlanker {
         try await sendCommand("NB")
         let response = try await receiveResponse()
+        if isK4 {
+            // Accept legacy state-only replies without inventing a level.
+            if response == "NB0" { return .off }
+            if response == "NB1" { return .enabled() }
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("NB"), fields.count == 3,
+                  fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+                throw RigError.invalidResponse
+            }
+            let level = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+            guard level <= 15 else { throw RigError.invalidResponse }
+            return fields[2] == 49 ? .enabled(level: level) : .off
+        }
         // Response: NBn
         guard response.hasPrefix("NB"), response.count >= 3 else {
             throw RigError.invalidResponse

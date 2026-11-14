@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 noise blanker honors explicit levels 0–15 using NBnnm and reads
+  the enable digit correctly. On/off-only requests preserve the stored
+  level via NB0/NB1. Legacy state-only replies return an unspecified
+  level rather than a fabricated value; invalid replies are rejected.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,710 tests passed, 57 skipped. Hardware checks pending.
+
 - K4 noise reduction uses NRnnm (level 0–10 plus enable), honoring
   requested levels and correctly parsing state. Disabling preserves
   the stored level. Independent NR level control preserves enable state,

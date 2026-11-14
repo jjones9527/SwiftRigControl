@@ -484,6 +484,44 @@ import Testing
         #expect(await handler.handle(.getLevel(name: "NR")).data == ["0.700000"])
     }
 
+    @Test(arguments: [0, 5, 10, 15])
+    func k4NoiseBlankerLevelAndState(level: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        let frame = String(format: "NB%02d1;", level)
+        try await proto.setNoiseBlanker(.enabled(level: level))
+        #expect(await sent(mock) == [frame, "ID;"])
+        await mock.setResponse(for: Self.ascii("NB;"), response: Self.ascii(frame))
+        #expect(try await proto.getNoiseBlanker() == .enabled(level: level))
+        await mock.setResponse(for: Self.ascii("NB;"), response: Self.ascii(String(format: "NB%02d0;", level)))
+        #expect(try await proto.getNoiseBlanker() == .off)
+    }
+
+    @Test func k4NoiseBlankerTogglePreservesStoredLevel() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        try await proto.setNoiseBlanker(.off)
+        try await proto.setNoiseBlanker(.enabled())
+        #expect(await sent(mock) == ["NB0;", "ID;", "NB1;", "ID;"])
+        await mock.setResponse(for: Self.ascii("NB;"), response: Self.ascii("NB1;"))
+        #expect(try await proto.getNoiseBlanker() == .enabled())
+        await mock.setResponse(for: Self.ascii("NB;"), response: Self.ascii("NB0;"))
+        #expect(try await proto.getNoiseBlanker() == .off)
+    }
+
+    @Test(arguments: ["NB2;", "NB161;", "NB152;", "NB-11;", "NB05x;", "NB0051;", "NR051;"])
+    func k4RejectsMalformedNoiseBlanker(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("NB;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getNoiseBlanker() }
+    }
+
+    @Test func k4RejectsInvalidNBLevelBeforeWriting() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        for level in [-1, 16] {
+            await #expect(throws: RigError.self) { try await proto.setNoiseBlanker(.enabled(level: level)) }
+        }
+        #expect(await sent(mock).isEmpty)
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {
