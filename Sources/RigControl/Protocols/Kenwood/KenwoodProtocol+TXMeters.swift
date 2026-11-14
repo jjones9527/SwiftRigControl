@@ -3,6 +3,7 @@ import Foundation
 extension KenwoodProtocol: SupportsTXMeters {
     public func getRFPowerOut() async throws -> MeterReading {
         try requireMeter(capabilities.supportsRFPowerMeter)
+        if levelProfile.txMeterStyle == .powerSDR { return try await readPowerSDRPower() }
         // SM0 is an S-meter in receive. Unlike Hamlib's cached PTT check,
         // read IF here because this backend has no coherent PTT cache.
         try await sendCommand("IF")
@@ -51,6 +52,7 @@ extension KenwoodProtocol: SupportsTXMeters {
 
     public func getSWR() async throws -> MeterReading {
         try requireMeter(capabilities.supportsSWRMeter)
+        if levelProfile.txMeterStyle == .powerSDR { return try await readPowerSDRSWR() }
         let raw: Int
         let calibration: FloatCalibrationTable
         switch levelProfile.txMeterStyle {
@@ -112,6 +114,57 @@ extension KenwoodProtocol: SupportsTXMeters {
         let raw = try await readSelectedMeter(number: 4)
         let amps = Double(raw) * 20 / 70
         return MeterReading(kind: .current, raw: raw, normalized: amps / 25, physicalValue: amps)
+    }
+
+    private func powerSDRTransmitting() async throws -> Bool {
+        try await sendCommand("ZZTX")
+        let reply = try await receiveResponse()
+        guard reply == "ZZTX0" || reply == "ZZTX1" else { throw RigError.invalidResponse }
+        return reply == "ZZTX1"
+    }
+
+    private func readPowerSDRPower() async throws -> MeterReading {
+        guard try await powerSDRTransmitting() else {
+            return MeterReading(kind: .rfPower, raw: 0, normalized: 0, physicalValue: 0)
+        }
+        try await sendCommand("ZZRM5")
+        let reply = try await receiveResponse()
+        guard reply.utf8.count == 8 else { throw RigError.invalidResponse }
+        let watts = try powerSDRDecimal(reply, prefix: "ZZRM5")
+        // Hamlib rechecks PTT after the meter transaction to catch a TX ending.
+        guard try await powerSDRTransmitting() else {
+            return MeterReading(kind: .rfPower, raw: 0, normalized: 0, physicalValue: 0)
+        }
+        return MeterReading(kind: .rfPower, raw: Int(watts), normalized: watts / 100, physicalValue: watts)
+    }
+
+    private func readPowerSDRSWR() async throws -> MeterReading {
+        if try await powerSDRTransmitting() {
+            let reply: String
+            do {
+                try await sendCommand("ZZRM8")
+                reply = try await receiveResponse()
+            } catch RigError.timeout {
+                return powerSDRSWRReading()
+            }
+            powerSDRSWR = try powerSDRDecimal(reply, prefix: "ZZRM8")
+        }
+        return powerSDRSWRReading()
+    }
+
+    private func powerSDRSWRReading() -> MeterReading {
+        MeterReading(kind: .swr, raw: Int(powerSDRSWR),
+                     normalized: min(max((powerSDRSWR - 1) / 9, 0), 1), physicalValue: powerSDRSWR)
+    }
+
+    private func powerSDRDecimal(_ reply: String, prefix: String) throws -> Double {
+        let digits = reply.dropFirst(prefix.count)
+        guard reply.hasPrefix(prefix), !digits.isEmpty,
+              digits.utf8.allSatisfy({ (48...57).contains($0) || $0 == 46 }),
+              let value = Double(digits), value.isFinite, value >= 0, value < Double(Int.max) else {
+            throw RigError.invalidResponse
+        }
+        return value
     }
 
     private func requireMeter(_ supported: Bool) throws {

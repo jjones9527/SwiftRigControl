@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- PowerSDR/Thetis RF power and SWR meter implementations through the
+  library and rigctld. ZZRM5 reports watts and watts / 100; ZZTX checks
+  return zero power in receive, including when TX ends during a read.
+  ZZRM8 retains the last SWR in receive or on a meter timeout (initially
+  zero). Malformed replies and other transport errors are surfaced.
+  Mock-tested: 1,545 passed, 57 skipped; hardware verification pending.
+
 - KX2/KX3 RF power and SWR meters through the library and rigctld.
   Normalized power uses TQ/BG; watts use PO with OM amplifier detection
   (whole watts with KXPA100, tenths otherwise). The combined library

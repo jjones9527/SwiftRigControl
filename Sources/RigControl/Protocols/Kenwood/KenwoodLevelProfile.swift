@@ -39,6 +39,8 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         case ts890
         /// TS-990S: selected RM SWR only.
         case ts990
+        /// PowerSDR/Thetis: ZZTX status and ZZRM5/8 meters.
+        case powerSDR
     }
 
     public internal(set) var txMeterStyle: TXMeterStyle = .none
@@ -274,6 +276,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// PowerSDR and Thetis: no attenuator; VOX and tuner on the `ZZ`
     /// command set (Hamlib `flex6xxx.c:1162-1170`).
     public static let powerSDR = noAttenuator.with {
+        $0.txMeterStyle = .powerSDR
         $0.voxPrefix = "ZZVE"
         $0.tunerForm = .powerSDR
     }

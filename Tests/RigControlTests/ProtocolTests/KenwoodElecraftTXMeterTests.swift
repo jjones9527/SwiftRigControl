@@ -16,6 +16,67 @@ import Testing
         return (proto, mock)
     }
 
+    @Test(arguments: [RadioDefinition.Flex.powerSDR, .Flex.thetis])
+    func powerSDRMeters(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await makeProtocol(radio, replies: [
+            "ZZTX;": "ZZTX1;", "ZZRM5;": "ZZRM5075;", "ZZRM8;": "ZZRM81.75;"
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.watts == 75)
+        #expect(power.normalized == 0.75)
+        #expect(try await proto.getSWR().swrRatio == 1.75)
+        await mock.setResponse(for: Data("ZZTX;".utf8), response: Data("ZZTX0;".utf8))
+        #expect(try await proto.getSWR().swrRatio == 1.75)
+        #expect(try await proto.getRFPowerOut().watts == 0)
+        #expect(await mock.recordedWrites == ["ZZTX;", "ZZRM5;", "ZZTX;", "ZZTX;", "ZZRM8;", "ZZTX;", "ZZTX;"].map { Data($0.utf8) })
+    }
+
+    @Test func powerSDRReceiveStartsAtZero() async throws {
+        let (proto, mock) = try await makeProtocol(.Flex.powerSDR, replies: ["ZZTX;": "ZZTX0;"])
+        #expect(try await proto.getSWR().swrRatio == 0)
+        #expect(try await proto.getRFPowerOut().watts == 0)
+        #expect(await mock.recordedWrites == [Data("ZZTX;".utf8), Data("ZZTX;".utf8)])
+    }
+
+    @Test func powerSDRPowerChecksEndOfTransmit() async throws {
+        let (proto, mock) = try await makeProtocol(.Flex.thetis)
+        await mock.setChunkedResponse(["ZZTX1;", "ZZRM5050;", "ZZTX0;"].map { Data($0.utf8) })
+        #expect(try await proto.getRFPowerOut().watts == 0)
+    }
+
+    @Test(arguments: ["ZZRM5nan;", "ZZRM5-10;", "ZZRM5abc;", "ZZRM51000;", "ZZRM6075;"])
+    func powerSDRRejectsInvalidPower(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Flex.powerSDR, replies: ["ZZTX;": "ZZTX1;", "ZZRM5;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["ZZRM8nan;", "ZZRM8inf;", "ZZRM8-1;", "ZZRM81.2x;", "ZZRM8;", "ZZRM71.5;"])
+    func powerSDRRejectsInvalidSWR(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Flex.powerSDR, replies: ["ZZTX;": "ZZTX1;", "ZZRM8;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSWR() }
+    }
+
+    @Test(arguments: ["ZZTX2;", "ZZTX;", "TX1;", "ZZTX01;"])
+    func powerSDRRejectsInvalidTXStatus(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Flex.powerSDR, replies: ["ZZTX;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: [RadioDefinition.Flex.powerSDR, .Flex.thetis])
+    func rigctldPowerSDRMeters(radio: RadioDefinition) async throws {
+        let rig = try RigController(radio: radio, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        for (command, reply) in ["ZZTX;": "ZZTX1;", "ZZRM5;": "ZZRM5120;", "ZZRM8;": "ZZRM82.5;"] {
+            await mock.setResponse(for: Data(command.utf8), response: Data(reply.utf8))
+        }
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).data == ["1.200000"])
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS")).data == ["120.000000"])
+        #expect(await handler.handle(.getLevel(name: "SWR")).data == ["2.500000"])
+        #expect(await handler.handle(.getLevel(name: "ALC")).returnCode.rawValue == -11)
+    }
+
     @Test(arguments: [RadioDefinition.Elecraft.kx2, .Elecraft.kx3])
     func kxPowerAndSWR(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio, replies: [
@@ -172,7 +233,7 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
     }
 
-    @Test(arguments: [RadioDefinition.Elecraft.k2, .Kenwood.ts570D, .Kenwood.ts870S])
+    @Test(arguments: [RadioDefinition.Elecraft.k2, .Kenwood.ts570D, .Kenwood.ts870S, .Flex.flex6000, .Flex.sdrConsole])
     func unimplementedModelsSendNoMeterCommands(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio)
         await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }

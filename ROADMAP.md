@@ -1668,7 +1668,12 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] KX2 / KX3 RF power and SWR: TQ/BG normalized power, PO watts
       with OM amplifier scaling, and SW ratio. ALC remains unavailable.
 - [ ] Hardware: KX2 / KX3 meter reads, including KXPA100 scaling.
-- [ ] Remaining Flex TX meters, per model from Hamlib.
+- [x] PowerSDR / Thetis TX meters: ZZTX-gated ZZRM5 power (watts and
+      watts / 100), ZZRM8 SWR retained in RX or on meter timeout.
+      Invalid replies remain errors. 1,545 tests passed, 57 skipped.
+- [ ] Hardware: PowerSDR / Thetis TX meters and SWR retention.
+- [ ] Audit remaining Flex capability flags against per-model Hamlib
+      support, including PiHPSDR's advertised power/compression meters.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.
