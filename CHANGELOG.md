@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 squelch now scales the public 0–255 level to native SQ000–SQ040,
+  instead of the inherited K3 0–29 range. K4 replies require three
+  decimal digits within range. Library and rigctld regression coverage
+  passes: 1,644 tests passed, 57 skipped; hardware verification pending.
+  Source: [K4 Programmer's Reference D5, SQ](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+
 - K4 AF/RF gain now uses its native command scales: AG000–AG060
   for audio and RG-60–RG-00 for RF gain. The public 0–255 scale is
   preserved; malformed and out-of-range K4 readbacks are rejected.

@@ -34,6 +34,7 @@ extension ElecraftProtocol {
 
     /// `SQ` wire range: 0–29 on the K3 family and KX2/KX3 (`k3.c:2004`).
     var squelchRange: ClosedRange<Int> {
+        if isK4 { return 0...40 }
         switch family {
         case .k2: return 0...255
         case .k3, .kx: return 0...29

@@ -1562,6 +1562,9 @@ jjones9527/SwiftRigControl#46–#51.
       public 0–255 scale. Strict readback validation; 1,632 tests passed,
       57 skipped. Source: Elecraft K4 Programmer's Reference D5.
 - [ ] Hardware: K4 native AF/RF gain commands and readback.
+- [x] K4 squelch uses documented SQ 0–40 range with strict reply
+      validation. 1,644 tests passed, 57 skipped.
+- [ ] Hardware: K4 squelch scale and readback.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

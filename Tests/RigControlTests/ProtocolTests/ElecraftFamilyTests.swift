@@ -340,13 +340,39 @@ import Testing
     }
 
     @Test func k3FamilySquelchIsZeroToTwentyNine() async throws {
-        for definition in Self.k3Family {
+        for definition in Self.k3Family where definition.model != "K4" {
             let (mock, proto) = try await connect(definition)
             try await proto.setSquelch(77)          // rigctl L SQL 0.3
             #expect(await sent(mock) == ["SQ009;", "ID;"], "\(definition.model)")
             await mock.setResponse(for: Self.ascii("SQ;"), response: Self.ascii("SQ029;"))
             #expect(try await proto.getSquelch() == 255)
         }
+    }
+
+    @Test(arguments: [(0, 0, 0), (77, 12, 77), (127, 20, 128), (255, 40, 255)])
+    func k4SquelchUsesFortySteps(level: Int, wire: Int, readback: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        try await proto.setSquelch(level)
+        let frame = String(format: "SQ%03d;", wire)
+        #expect(await sent(mock) == [frame, "ID;"])
+        await mock.setResponse(for: Self.ascii("SQ;"), response: Self.ascii(frame))
+        #expect(try await proto.getSquelch() == readback)
+    }
+
+    @Test(arguments: ["SQ041;", "SQ255;", "SQ40;", "SQ0040;", "SQ-01;", "SQ0x1;", "AG040;"])
+    func k4RejectsInvalidSquelch(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("SQ;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSquelch() }
+    }
+
+    @Test func rigctldK4SquelchUsesNativeScale() async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("SQ;"), response: Self.ascii("SQ040;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "SQL")).data == ["1.000000"])
     }
 
     @Test func k2LevelsStayUnscaled() async throws {

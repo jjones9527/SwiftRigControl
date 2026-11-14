@@ -122,6 +122,7 @@ extension ElecraftProtocol {
     /// Command: `SQnnn;`. The 0–255 API level is scaled to
     /// `squelchRange`: 0–29 on the K3 family and KX2/KX3 (Hamlib
     /// `k3_set_level` / `k3_get_level` RIG_LEVEL_SQL, `k3.c:2004`, `2274`).
+    /// K4 uses its native 0–40 range.
     /// Through v1.3.1 it was sent unscaled, so 30% squelch went out as
     /// `SQ076`, past the radio's maximum.
     ///
@@ -141,6 +142,15 @@ extension ElecraftProtocol {
     public func getSquelch() async throws -> Int {
         try await sendCommand("SQ")
         let response = try await receiveResponse()
+        if isK4 {
+            let digits = response.dropFirst(2)
+            guard response.hasPrefix("SQ"), digits.utf8.count == 3,
+                  digits.utf8.allSatisfy({ (48...57).contains($0) }),
+                  let value = Int(digits), value <= 40 else {
+                throw RigError.invalidResponse
+            }
+            return Self.fromWire(value, squelchRange)
+        }
         // Response: SQnnn
         guard response.hasPrefix("SQ"), response.count >= 5 else {
             throw RigError.invalidResponse
