@@ -16,6 +16,62 @@ import Testing
         return (proto, mock)
     }
 
+    @Test(arguments: [RadioDefinition.Elecraft.kx2, .Elecraft.kx3])
+    func kxPowerAndSWR(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await makeProtocol(radio, replies: [
+            "TQ;": "TQ1;", "BG;": "BG17;", "OM;": "OM           02;",
+            "PO;": "PO075;", "SW;": "SW025;"
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.normalized == 0.5)
+        #expect(power.watts == 7.5)
+        #expect(try await proto.getSWR().swrRatio == 2.5)
+        await mock.reset()
+        await #expect(throws: (any Error).self) { _ = try await proto.getALC() }
+        #expect(await mock.recordedWrites.isEmpty)
+    }
+
+    @Test(arguments: [0, 5, 10, 12, 17, 22])
+    func kxAmplifierPower(bars: Int) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.kx3, replies: [
+            "TQ;": "TQ1;", "BG;": String(format: "BG%02d;", bars),
+            "OM;": "OMP          02;", "PO;": "PO075;"
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.normalized == Double(bars > 10 ? bars - 12 : bars) / 10)
+        #expect(power.watts == 75)
+    }
+
+    @Test func kxReceiveSkipsBarGraphButReadsWatts() async throws {
+        let (proto, mock) = try await makeProtocol(.Elecraft.kx2, replies: [
+            "TQ;": "TQ0;", "OM;": "OM           01;", "PO;": "PO001;"
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.normalized == 0)
+        #expect(power.watts == 0.1)
+        #expect(await mock.recordedWrites == ["TQ;", "OM;", "PO;"].map { Data($0.utf8) })
+    }
+
+    @Test(arguments: ["BG11;", "BG23;", "BG99;", "BG05T;", "BG-1;", "BGx5;"])
+    func kxRejectsInvalidBars(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.kx3, replies: ["TQ;": "TQ1;", "BG;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["PO12;", "PO1234;", "PO-12;", "PO1x2;", "PC123;"])
+    func kxRejectsInvalidWatts(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.kx3, replies: [
+            "TQ;": "TQ0;", "OM;": "OM           02;", "PO;": reply
+        ])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["OM;", "OM           020;", "XX           02;"])
+    func kxRejectsInvalidOptions(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.kx3, replies: ["TQ;": "TQ0;", "OM;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
     @Test(arguments: [(0, 0.0), (5, 0.5), (125, 12.5), (1000, 100.0), (1200, 120.0)])
     func k4PowerUsesOneQuery(raw: Int, watts: Double) async throws {
         let (proto, mock) = try await makeProtocol(.Elecraft.k4, replies: [
@@ -116,7 +172,7 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
     }
 
-    @Test(arguments: [RadioDefinition.Elecraft.k2, .Elecraft.kx3, .Kenwood.ts570D, .Kenwood.ts870S])
+    @Test(arguments: [RadioDefinition.Elecraft.k2, .Kenwood.ts570D, .Kenwood.ts870S])
     func unimplementedModelsSendNoMeterCommands(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio)
         await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }
@@ -443,6 +499,22 @@ import Testing
         #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).returnCode.rawValue == -11)
         await mock.setChunkedResponse(["ID024;", "RM5065;", "ID024;"].map { Data($0.utf8) })
         #expect(await handler.handle(.getLevel(name: "VD_METER")).data == ["15.000000"])
+    }
+
+    @Test(arguments: [RadioDefinition.Elecraft.kx2, .Elecraft.kx3])
+    func rigctldKXReportsBothPowerScales(radio: RadioDefinition) async throws {
+        let rig = try RigController(radio: radio, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        for (command, reply) in ["TQ;": "TQ1;", "BG;": "BG05;",
+                                 "OM;": "OM           02;", "PO;": "PO075;", "SW;": "SW015;"] {
+            await mock.setResponse(for: Data(command.utf8), response: Data(reply.utf8))
+        }
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).data == ["0.500000"])
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS")).data == ["7.500000"])
+        #expect(await handler.handle(.getLevel(name: "SWR")).data == ["1.500000"])
+        #expect(await handler.handle(.getLevel(name: "ALC")).returnCode.rawValue == -11)
     }
 
     @Test func rigctldTS590ReportsHamlibUnits() async throws {

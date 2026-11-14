@@ -1665,8 +1665,10 @@ jjones9527/SwiftRigControl#46–#51.
       boundary. TS-890S power checks IF / EX00011 / SM and exposes only
       watts through rigctld. 1,498 tests passed, 57 skipped.
 - [ ] Hardware: TS-890S / TS-990S meter reads and RM enable behavior.
-- [ ] Remaining Elecraft / Flex TX meters: KX2 / KX3 and Flex, per model
-      from Hamlib.
+- [x] KX2 / KX3 RF power and SWR: TQ/BG normalized power, PO watts
+      with OM amplifier scaling, and SW ratio. ALC remains unavailable.
+- [ ] Hardware: KX2 / KX3 meter reads, including KXPA100 scaling.
+- [ ] Remaining Flex TX meters, per model from Hamlib.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.

@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- KX2/KX3 RF power and SWR meters through the library and rigctld.
+  Normalized power uses TQ/BG; watts use PO with OM amplifier detection
+  (whole watts with KXPA100, tenths otherwise). The combined library
+  reading queries both sources; RX skips BG but still reads PO.
+  ALC remains unavailable, matching Hamlib. Mock-tested only.
+
 - TS-890S calibrated RF power, SWR, ALC, compression, voltage and current
   meters, and TS-990S SWR with its model-specific table and one-decimal
   rounding. RM reads enable the requested meter, as Hamlib does, and use

@@ -5,6 +5,7 @@ extension ElecraftProtocol: SupportsTXMeters {
     /// and PC's range flag (Hamlib k3_get_bar_graph_level).
     public func getRFPowerOut() async throws -> MeterReading {
         try requireMeter(capabilities.supportsRFPowerMeter)
+        if family == .kx { return try await readKXPower() }
         guard isK4 else { return try await readK3Power() }
         try await sendCommand("PO")
         let response = try await receiveResponse()
@@ -58,9 +59,36 @@ extension ElecraftProtocol: SupportsTXMeters {
     }
 
     private func requireMeter(_ supported: Bool) throws {
-        guard family == .k3, supported else {
+        guard family != .k2, supported else {
             throw RigError.unsupportedOperation("TX meter is not implemented for this Elecraft")
         }
+    }
+
+    private func readKXPower() async throws -> MeterReading {
+        // Hamlib kx3_get_level uses TQ/BG for normalized power and PO for watts.
+        // These are separate measurements, not a single full-scale conversion.
+        var normalized = 0.0
+        if try await getTXStatus() {
+            try await sendCommand("BG")
+            let bars = try meterDigits(try await receiveResponse(), prefix: "BG", count: 2)
+            switch bars {
+            case 0...10: normalized = Double(bars) / 10
+            case 12...22: normalized = Double(bars - 12) / 10
+            default: throw RigError.invalidResponse
+            }
+        }
+        // OM's P option indicates the KXPA100: PO is whole watts with it,
+        // tenths of a watt without it. Read options here to avoid stale scaling.
+        try await sendCommand("OM")
+        let options = try await receiveResponse()
+        guard options.hasPrefix("OM"), options.utf8.count == 15,
+              options.utf8.allSatisfy({ $0 >= 32 && $0 <= 126 }) else {
+            throw RigError.invalidResponse
+        }
+        try await sendCommand("PO")
+        let raw = try meterDigits(try await receiveResponse(), prefix: "PO", count: 3)
+        let watts = Double(raw) / (options.dropFirst(2).contains("P") ? 1 : 10)
+        return MeterReading(kind: .rfPower, raw: raw, normalized: normalized, physicalValue: watts)
     }
 
     private func readK3Power() async throws -> MeterReading {
