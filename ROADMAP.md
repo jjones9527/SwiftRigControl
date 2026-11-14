@@ -1558,6 +1558,10 @@ jjones9527/SwiftRigControl#46–#51.
       table and K3 parser conflict with this documented native format.
       Main receiver only; 1,617 tests passed, 57 skipped.
 - [ ] Hardware: K4 attenuation read/write and disabled-state behavior.
+- [x] K4 native AF/RF gain: AG 0–60 and RG -60–0 dB, retaining the
+      public 0–255 scale. Strict readback validation; 1,632 tests passed,
+      57 skipped. Source: Elecraft K4 Programmer's Reference D5.
+- [ ] Hardware: K4 native AF/RF gain commands and readback.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

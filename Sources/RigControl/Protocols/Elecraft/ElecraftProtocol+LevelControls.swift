@@ -28,10 +28,12 @@ extension ElecraftProtocol {
     /// Sets the AF (audio) output gain.
     ///
     /// Command: `AGnnn;`. The 0–255 API level is scaled to the family's
-    /// wire range (`afGainRange`): 0–250 on the K3/K4 (Hamlib
+    /// wire range (`afGainRange`): 0–250 on the K3/K3S (Hamlib
     /// `k3_set_level`, `k3.c:2008`), 0–60 on the KX2/KX3 (`kx3_set_level`,
     /// `k3.c:2402`). Through v1.3.1 it was sent unscaled, so half volume
     /// on a KX3 (`AG127`) was over twice the radio's maximum.
+    ///
+    /// K4 uses AG000–AG060 per its native programmer reference.
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
@@ -49,6 +51,9 @@ extension ElecraftProtocol {
     public func getAFGain() async throws -> Int {
         try await sendCommand("AG")
         let response = try await receiveResponse()
+        if isK4 {
+            return Self.fromWire(try k4GainValue(response, prefix: "AG", count: 3), afGainRange)
+        }
         // Response: AGnnn
         guard response.hasPrefix("AG"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -64,13 +69,16 @@ extension ElecraftProtocol {
     /// Sets the RF gain.
     ///
     /// Command: `RGnnn;`. The 0–255 API level is scaled to
-    /// `rfGainRange`: 0–250 on the K3/K4 (`k3.c:2012`), 190–250 on the
+    /// `rfGainRange`: 0–250 on the K3/K3S (`k3.c:2012`), 190–250 on the
     /// KX2/KX3 (`kx3_set_level`, `k3.c:2397`).
+    /// K4 instead uses RG-60 through RG-00 (minimum to maximum gain).
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
-        let command = String(format: "RG%03d", Self.toWire(level, rfGainRange))
+        let value = Self.toWire(level, rfGainRange)
+        // K4 requires the minus sign even at maximum gain (RG-00).
+        let command = isK4 ? String(format: "RG-%02d", -value) : String(format: "RG%03d", value)
         try await sendSetCommand(command)
     }
 
@@ -83,6 +91,10 @@ extension ElecraftProtocol {
     public func getRFGain() async throws -> Int {
         try await sendCommand("RG")
         let response = try await receiveResponse()
+        if isK4 {
+            let reduction = try k4GainValue(response, prefix: "RG-", count: 2)
+            return Self.fromWire(-reduction, rfGainRange)
+        }
         // Response: RGnnn
         guard response.hasPrefix("RG"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -91,6 +103,16 @@ extension ElecraftProtocol {
         let end = response.index(start, offsetBy: 3)
         guard let value = Int(response[start..<end]) else { throw RigError.invalidResponse }
         return Self.fromWire(value, rfGainRange)
+    }
+
+    private func k4GainValue(_ response: String, prefix: String, count: Int) throws -> Int {
+        let digits = response.dropFirst(prefix.count)
+        guard response.hasPrefix(prefix), digits.utf8.count == count,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let value = Int(digits), value <= 60 else {
+            throw RigError.invalidResponse
+        }
+        return value
     }
 
     // MARK: - Squelch

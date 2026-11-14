@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 AF/RF gain now uses its native command scales: AG000–AG060
+  for audio and RG-60–RG-00 for RF gain. The public 0–255 scale is
+  preserved; malformed and out-of-range K4 readbacks are rejected.
+  Main receiver only. This corrects inherited K3 formats rather than
+  copying Hamlib's shared K3 gain implementation.
+  Source: [K4 Programmer's Reference D5, AG/RG](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,632 tests passed, 57 skipped. Hardware checks pending.
+
 - K4 attenuation now uses Elecraft's documented RAnnm format: exact
   3 dB steps from 0 through 21, plus an enable digit. Disabled readings
   return zero; unsupported settings and malformed replies are rejected.

@@ -277,6 +277,35 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getAttenuator() }
     }
 
+    @Test(arguments: [(0, 0, 60), (127, 30, 30), (255, 60, 0)])
+    func k4GainUsesNativeScales(level: Int, audio: Int, reduction: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        try await proto.setAFGain(level)
+        try await proto.setRFGain(level)
+        let af = String(format: "AG%03d;", audio)
+        let rf = String(format: "RG-%02d;", reduction)
+        #expect(await sent(mock) == [af, "ID;", rf, "ID;"])
+        await mock.setResponse(for: Self.ascii("AG;"), response: Self.ascii(af))
+        await mock.setResponse(for: Self.ascii("RG;"), response: Self.ascii(rf))
+        let expected = level == 127 ? 128 : level
+        #expect(try await proto.getAFGain() == expected)
+        #expect(try await proto.getRFGain() == expected)
+    }
+
+    @Test(arguments: ["AG061;", "AG250;", "AG60;", "AG0060;", "AG-01;", "AG0x1;"])
+    func k4RejectsInvalidAFGain(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("AG;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getAFGain() }
+    }
+
+    @Test(arguments: ["RG-61;", "RG250;", "RG+00;", "RG-0;", "RG-000;", "RG-x0;"])
+    func k4RejectsInvalidRFGain(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("RG;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFGain() }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {
