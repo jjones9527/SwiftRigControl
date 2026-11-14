@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Elecraft speech-compressor level through SupportsCompressorLevel,
+  RigController and rigctld COMP. Public levels 0–100 map to CP 0–40
+  for K3/K3S/KX2/KX3 (Hamlib), or 0–30 for K4 per
+  [Elecraft's reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Strict readback validation; K2 rejects the operation without commands.
+  Build passed; 1,672 tests passed, 57 skipped. Hardware checks pending.
+
 - Elecraft microphone gain through SupportsMicGain, RigController and
   rigctld MICGAIN. The public 0–100 scale maps to MG 0–60 on K3/K3S
   and 0–80 on KX2/KX3/K4, with strict readback validation. K2 returns

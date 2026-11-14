@@ -1555,6 +1555,10 @@ jjones9527/SwiftRigControl#46–#51.
       the library and rigctld. K4 MG 0–80 follows its native reference.
       1,658 tests passed, 57 skipped.
 - [ ] Hardware: K3/K3S/K4/KX2/KX3 microphone gain and readback.
+- [x] Elecraft compressor level via CP: K3/K3S/KX 0–40, K4 0–30,
+      exposed as public 0–100 and rigctld COMP. 1,672 tests passed,
+      57 skipped.
+- [ ] Hardware: Elecraft compressor level and readback.
 - [x] K4 attenuation corrected against Elecraft Programmer's Reference
       D5: RAnnm, 0–21 dB in 3 dB steps plus enable. Hamlib's 5/10/15 dB
       table and K3 parser conflict with this documented native format.

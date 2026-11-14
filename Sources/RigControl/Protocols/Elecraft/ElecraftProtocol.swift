@@ -31,6 +31,7 @@ public actor ElecraftProtocol:
     SupportsIFFilter,
     SupportsAFGain,
     SupportsMicGain,
+    SupportsCompressorLevel,
     SupportsRFGain,
     SupportsSquelch,
     SupportsPreamp,

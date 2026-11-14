@@ -143,6 +143,33 @@ extension ElecraftProtocol {
         return family == .kx || isK4 ? 80 : 60
     }
 
+    // MARK: - Speech compressor level
+
+    /// Sets the public 0–100 compression level (CP 0–40; K4: 0–30).
+    public func setCompressorLevel(_ level: Int) async throws {
+        let maximum = try compressorMaximum()
+        let raw = min(max(level, 0), 100) * maximum / 100
+        try await sendSetCommand(String(format: "CP%03d", raw))
+    }
+
+    public func getCompressorLevel() async throws -> Int {
+        let maximum = try compressorMaximum()
+        try await sendCommand("CP")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("CP"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= maximum else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + maximum / 2) / maximum
+    }
+
+    private func compressorMaximum() throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 compressor level") }
+        return isK4 ? 30 : 40
+    }
+
     // MARK: - Squelch
 
     /// Sets the squelch level.

@@ -352,6 +352,54 @@ import Testing
         }
     }
 
+    @Test(arguments: [0, 33, 50, 100])
+    func compressorLevelUsesModelScale(level: Int) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            let maximum = definition.model == "K4" ? 30 : 40
+            let raw = level * maximum / 100
+            let frame = String(format: "CP%03d;", raw)
+            try await proto.setCompressorLevel(level)
+            #expect(await sent(mock) == [frame, "ID;"])
+            await mock.setResponse(for: Self.ascii("CP;"), response: Self.ascii(frame))
+            #expect(try await proto.getCompressorLevel() == (raw * 100 + maximum / 2) / maximum)
+        }
+    }
+
+    @Test(arguments: ["CP041;", "CP999;", "CP30;", "CP0030;", "CP-01;", "CP0x1;", "MG030;"])
+    func compressorRejectsInvalidReplies(reply: String) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            await mock.setResponse(for: Self.ascii("CP;"), response: Self.ascii(reply))
+            await #expect(throws: RigError.invalidResponse) { _ = try await proto.getCompressorLevel() }
+        }
+    }
+
+    @Test func k4CompressorRejectsK3Maximum() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("CP;"), response: Self.ascii("CP040;"))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getCompressorLevel() }
+    }
+
+    @Test func k2CompressorLevelSendsNoCommands() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k2)
+        await #expect(throws: RigError.self) { try await proto.setCompressorLevel(50) }
+        await #expect(throws: RigError.self) { _ = try await proto.getCompressorLevel() }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test func rigctldElecraftCompressorLevel() async throws {
+        for definition in Self.k3Family {
+            let rig = try RigController(radio: definition, connection: .mock)
+            try await rig.connect()
+            let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+            let raw = definition.model == "K4" ? 15 : 20
+            await mock.setResponse(for: Self.ascii("CP;"), response: Self.ascii(String(format: "CP%03d;", raw)))
+            let handler = RigctldCommandHandler(rigController: rig)
+            #expect(await handler.handle(.getLevel(name: "COMP")).data == ["0.500000"])
+        }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {
