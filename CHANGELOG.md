@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 preamp commands now include stage and enable (PAnm). Readback
+  honors the enable digit, so a stored stage with the preamp disabled
+  reports zero. Legacy single-stage replies remain accepted; malformed
+  replies and invalid stages are rejected. Stage availability remains
+  band-dependent on the radio.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,724 tests passed, 57 skipped. Hardware checks pending.
+
 - K4 noise blanker honors explicit levels 0–15 using NBnnm and reads
   the enable digit correctly. On/off-only requests preserve the stored
   level via NB0/NB1. Legacy state-only replies return an unspecified

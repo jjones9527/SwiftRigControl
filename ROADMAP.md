@@ -1583,6 +1583,9 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K4 NB explicit levels 0–15 and full state readback; short on/off
       commands preserve stored level. 1,710 tests passed, 57 skipped.
 - [ ] Hardware: K4 NB level/state and legacy reply compatibility.
+- [x] K4 preamp stage/enable commands and readback, including disabled
+      stored stages and legacy replies. 1,724 tests passed, 57 skipped.
+- [ ] Hardware: K4 preamp formats and band-dependent stage availability.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

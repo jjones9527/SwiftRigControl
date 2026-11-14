@@ -522,6 +522,44 @@ import Testing
         #expect(await sent(mock).isEmpty)
     }
 
+    @Test(arguments: [0, 1, 2, 3])
+    func k4PreampUsesStageAndEnable(stage: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        let frame = "PA" + String(stage) + (stage == 0 ? "0;" : "1;")
+        try await proto.setPreamp(stage)
+        #expect(await sent(mock) == [frame, "ID;"])
+        await mock.setResponse(for: Self.ascii("PA;"), response: Self.ascii(frame))
+        #expect(try await proto.getPreamp() == stage)
+        await mock.setResponse(for: Self.ascii("PA;"), response: Self.ascii("PA" + String(stage) + "0;"))
+        #expect(try await proto.getPreamp() == 0)
+        await mock.setResponse(for: Self.ascii("PA;"), response: Self.ascii("PA" + String(stage) + ";"))
+        #expect(try await proto.getPreamp() == stage)
+    }
+
+    @Test(arguments: ["PA;", "PA4;", "PA41;", "PA12;", "PA111;", "PA-1;", "PAx1;", "RA11;"])
+    func k4RejectsMalformedPreamp(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("PA;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getPreamp() }
+    }
+
+    @Test func k4RejectsInvalidPreampBeforeWriting() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        for stage in [-1, 4] {
+            await #expect(throws: RigError.self) { try await proto.setPreamp(stage) }
+        }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test func rigctldK4DisabledPreampReportsZero() async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("PA;"), response: Self.ascii("PA30;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "PREAMP")).data == ["0"])
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {

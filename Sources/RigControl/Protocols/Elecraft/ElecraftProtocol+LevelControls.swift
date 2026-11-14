@@ -251,8 +251,14 @@ extension ElecraftProtocol {
     /// - Parameter level: 0 = off, 1 = Preamp 1, 2 = Preamp 2 (K3/K4 only)
     /// - Throws: `RigError.invalidParameter` for out-of-range values
     public func setPreamp(_ level: Int) async throws {
-        // The K4 has three stages (10/20/30 dB, PA1-PA3; Hamlib K4 caps),
-        // so the limit follows the radio's preamp list.
+        if isK4 {
+            guard (0...3).contains(level) else {
+                throw RigError.invalidParameter("K4 preamp stage must be 0...3")
+            }
+            try await sendSetCommand("PA" + String(level) + (level == 0 ? "0" : "1"))
+            return
+        }
+        // Legacy families retain their existing stage selection.
         let stages = max(2, capabilities.preampLevels.count)
         guard (0...stages).contains(level) else {
             throw RigError.invalidParameter("Preamp level must be 0 (off) through \(stages)")
@@ -270,6 +276,15 @@ extension ElecraftProtocol {
     public func getPreamp() async throws -> Int {
         try await sendCommand("PA")
         let response = try await receiveResponse()
+        if isK4 {
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("PA"), (1...2).contains(fields.count),
+                  (48...51).contains(fields[0]) else { throw RigError.invalidResponse }
+            let stage = Int(fields[0] - 48)
+            if fields.count == 1 { return stage }
+            guard fields[1] == 48 || fields[1] == 49 else { throw RigError.invalidResponse }
+            return fields[1] == 49 ? stage : 0
+        }
         // Response: PAn
         guard response.hasPrefix("PA"), response.count >= 3 else {
             throw RigError.invalidResponse
