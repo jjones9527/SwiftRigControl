@@ -30,6 +30,7 @@ public actor ElecraftProtocol:
     SupportsNoiseReduction,
     SupportsIFFilter,
     SupportsAFGain,
+    SupportsMicGain,
     SupportsRFGain,
     SupportsSquelch,
     SupportsPreamp,

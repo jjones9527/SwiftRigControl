@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Elecraft microphone gain through SupportsMicGain, RigController and
+  rigctld MICGAIN. The public 0–100 scale maps to MG 0–60 on K3/K3S
+  and 0–80 on KX2/KX3/K4, with strict readback validation. K2 returns
+  unsupported without sending commands. Hamlib supplies the K3/KX
+  scales; K4 follows [Elecraft's D5 reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,658 tests passed, 57 skipped. Hardware checks pending.
+
 - K3/K3S high-resolution S-meter readings: query MCU firmware with RVM
   on the first signal read, then use SMH for 4.37+ and Hamlib's
   K3_SMH_CAL table. Cache the selection until reconnect. Older firmware

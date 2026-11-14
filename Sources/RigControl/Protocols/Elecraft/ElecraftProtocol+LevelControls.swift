@@ -115,6 +115,34 @@ extension ElecraftProtocol {
         return value
     }
 
+    // MARK: - Microphone gain
+
+    /// Sets microphone gain on the public 0–100 scale.
+    /// Hamlib uses 0–60 on K3/K3S and 0–80 on KX; K4's reference specifies 0–80.
+    public func setMicGain(_ level: Int) async throws {
+        let maximum = try micGainMaximum()
+        let raw = min(max(level, 0), 100) * maximum / 100
+        try await sendSetCommand(String(format: "MG%03d", raw))
+    }
+
+    public func getMicGain() async throws -> Int {
+        let maximum = try micGainMaximum()
+        try await sendCommand("MG")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("MG"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= maximum else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + maximum / 2) / maximum
+    }
+
+    private func micGainMaximum() throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 microphone gain") }
+        return family == .kx || isK4 ? 80 : 60
+    }
+
     // MARK: - Squelch
 
     /// Sets the squelch level.

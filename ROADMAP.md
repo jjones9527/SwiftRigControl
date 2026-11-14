@@ -1550,9 +1550,11 @@ jjones9527/SwiftRigControl#46–#51.
       `k3.c` (CHANGELOG `[1.4.0]`).
 - [ ] Hardware: KX2 / KX3 / K3 AGC, S-meter and attenuator after the
       family fix.
-- [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
-      (`kx3_set_level`, k3.c:2386-2414: `RG` 190–250, `AG` 0–60,
-      `MG` 0–80); ours use the K3 scales.
+- [x] KX2/KX3 AF/RF scales use RG 190–250 and AG 0–60.
+      Microphone gain now exposes MG 0–80 (K3/K3S: 0–60) through
+      the library and rigctld. K4 MG 0–80 follows its native reference.
+      1,658 tests passed, 57 skipped.
+- [ ] Hardware: K3/K3S/K4/KX2/KX3 microphone gain and readback.
 - [x] K4 attenuation corrected against Elecraft Programmer's Reference
       D5: RAnnm, 0–21 dB in 3 dB steps plus enable. Hamlib's 5/10/15 dB
       table and K3 parser conflict with this documented native format.

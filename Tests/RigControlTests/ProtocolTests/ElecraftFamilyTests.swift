@@ -306,6 +306,52 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFGain() }
     }
 
+    @Test(arguments: [0, 33, 50, 100])
+    func microphoneGainUsesModelScale(level: Int) async throws {
+        for definition in Self.k3Family {
+            let (mock, proto) = try await connect(definition)
+            let maximum = ["K3", "K3S"].contains(definition.model) ? 60 : 80
+            let raw = level * maximum / 100
+            let frame = String(format: "MG%03d;", raw)
+            try await proto.setMicGain(level)
+            #expect(await sent(mock) == [frame, "ID;"])
+            await mock.setResponse(for: Self.ascii("MG;"), response: Self.ascii(frame))
+            #expect(try await proto.getMicGain() == (raw * 100 + maximum / 2) / maximum)
+        }
+    }
+
+    @Test(arguments: ["MG081;", "MG999;", "MG80;", "MG0080;", "MG-01;", "MG0x1;", "AG080;"])
+    func microphoneGainRejectsMalformedReplies(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("MG;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getMicGain() }
+    }
+
+    @Test func k3MicrophoneGainRejectsKXRange() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k3)
+        await mock.setResponse(for: Self.ascii("MG;"), response: Self.ascii("MG061;"))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getMicGain() }
+    }
+
+    @Test func k2MicrophoneGainIsUnavailableWithoutCommands() async throws {
+        let (mock, proto) = try await connect(.Elecraft.k2)
+        await #expect(throws: RigError.self) { try await proto.setMicGain(50) }
+        await #expect(throws: RigError.self) { _ = try await proto.getMicGain() }
+        #expect(await sent(mock).isEmpty)
+    }
+
+    @Test func rigctldElecraftMicrophoneGain() async throws {
+        for definition in Self.k3Family {
+            let rig = try RigController(radio: definition, connection: .mock)
+            try await rig.connect()
+            let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+            let raw = ["K3", "K3S"].contains(definition.model) ? 30 : 40
+            await mock.setResponse(for: Self.ascii("MG;"), response: Self.ascii(String(format: "MG%03d;", raw)))
+            let handler = RigctldCommandHandler(rigController: rig)
+            #expect(await handler.handle(.getLevel(name: "MICGAIN")).data == ["0.500000"])
+        }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {
