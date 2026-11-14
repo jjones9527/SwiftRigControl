@@ -61,6 +61,10 @@ public struct MeterReading: Sendable, Equatable {
     /// QMX that report watts and SWR directly.
     public let physicalValue: Double?
 
+    /// False when the backend supplies only normalized RF power, with no
+    /// watts calibration. Prevents applying the Icom curve to unrelated scales.
+    public let rfPowerIsCalibrated: Bool
+
     /// Which transmit-side meter a reading is from. Discriminates
     /// the typed-accessor branch on ``MeterReading``.
     public enum Kind: String, Sendable, Equatable, CaseIterable {
@@ -81,21 +85,26 @@ public struct MeterReading: Sendable, Equatable {
     /// Constructs a reading from its three components. Use the
     /// convenience ``decode(kind:raw:)`` factory in most cases;
     /// this initializer is exposed for tests and for protocols
-    /// that build readings outside the standard Icom curve.
-    public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil) {
+    /// that build readings outside the standard Icom curve. Set
+    /// `rfPowerIsCalibrated` to false for normalized-only RF power to avoid
+    /// implying a watts calibration that the backend does not provide.
+    public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil,
+                rfPowerIsCalibrated: Bool = true) {
         self.kind = kind
         self.raw = raw
         self.normalized = normalized
         self.physicalValue = physicalValue
+        self.rfPowerIsCalibrated = rfPowerIsCalibrated
     }
 
     /// RF power output in watts, if this is an `.rfPower` reading.
-    /// Returns `nil` for any other meter kind.
+    /// Returns `nil` for any other meter kind or a normalized-only power
+    /// reading where ``rfPowerIsCalibrated`` is false.
     ///
     /// Uses a protocol-supplied physical value when available, otherwise the
     /// Icom default RF-power meter calibration curve.
     public var watts: Double? {
-        kind == .rfPower ? (physicalValue ?? Self.rfPowerCurve.interpolate(rawDouble)) : nil
+        kind == .rfPower && rfPowerIsCalibrated ? (physicalValue ?? Self.rfPowerCurve.interpolate(rawDouble)) : nil
     }
 
     /// SWR as an X:1 ratio, if this is a `.swr` reading. Returns
@@ -135,7 +144,8 @@ public struct MeterReading: Sendable, Equatable {
     public var description: String {
         switch kind {
         case .rfPower:
-            return String(format: "%.1f W", watts ?? 0)
+            guard let watts else { return String(format: "RF power %.0f%%", normalized * 100) }
+            return String(format: "%.1f W", watts)
         case .swr:
             return String(format: "%.1f:1", swrRatio ?? 1)
         case .alc:

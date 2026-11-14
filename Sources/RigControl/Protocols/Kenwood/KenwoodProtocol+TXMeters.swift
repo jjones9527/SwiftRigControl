@@ -2,7 +2,7 @@ import Foundation
 
 extension KenwoodProtocol: SupportsTXMeters {
     public func getRFPowerOut() async throws -> MeterReading {
-        try requireTS590Meter(capabilities.supportsRFPowerMeter)
+        try requireMeter(capabilities.supportsRFPowerMeter)
         // SM0 is an S-meter in receive. Unlike Hamlib's cached PTT check,
         // read IF here because this backend has no coherent PTT cache.
         try await sendCommand("IF")
@@ -12,11 +12,19 @@ extension KenwoodProtocol: SupportsTXMeters {
             throw RigError.invalidResponse
         }
         guard status[28] == 49 else {
-            return MeterReading(kind: .rfPower, raw: 0, normalized: 0, physicalValue: 0)
+            return MeterReading(kind: .rfPower, raw: 0, normalized: 0, physicalValue: 0,
+                                rfPowerIsCalibrated: levelProfile.txMeterStyle == .ts590)
         }
         try await sendCommand("SM0")
         let raw = try meterDigits(try await receiveResponse(), prefix: "SM0")
-        guard raw <= 30 else { throw RigError.invalidResponse }
+        let fullScale = levelProfile.txMeterStyle == .ts480 ? 20 : 30
+        guard raw <= fullScale else { throw RigError.invalidResponse }
+        if levelProfile.txMeterStyle != .ts590 {
+            // Hamlib has no watts calibration for TS-480 or TS-2000.
+            // The meter API targets the main receiver (SM0); it has no VFO-C selector.
+            return MeterReading(kind: .rfPower, raw: raw, normalized: Double(raw) / Double(fullScale),
+                                rfPowerIsCalibrated: false)
+        }
         // Hamlib ts590_get_level uses distinct scales for the normalized
         // value and watts; do not derive one from the other.
         let watts = Self.ts590PowerCalibration.value(forRaw: raw)
@@ -26,24 +34,27 @@ extension KenwoodProtocol: SupportsTXMeters {
     }
 
     public func getSWR() async throws -> MeterReading {
-        try requireTS590Meter(capabilities.supportsSWRMeter)
-        let raw = try await readTS590Meters().swr
-        let ratio = Self.ts590SWRCalibration.value(forRaw: raw)
+        try requireMeter(capabilities.supportsSWRMeter)
+        let raw = try await readMeter(number: 1)
+        let calibration = levelProfile.txMeterStyle == .ts590 ? Self.ts590SWRCalibration : Self.ts480SWRCalibration
+        let ratio = calibration.value(forRaw: raw)
         return MeterReading(kind: .swr, raw: raw,
                             normalized: min(max((ratio - 1) / 9, 0), 1), physicalValue: ratio)
     }
 
     public func getALC() async throws -> MeterReading {
-        try requireTS590Meter(capabilities.supportsALCMeter)
-        let raw = try await readTS590Meters().alc
-        // Hamlib allows up to 5 here (30 / 6), rather than clamping to 1.
-        return MeterReading(kind: .alc, raw: raw, normalized: Double(raw) / 6)
+        try requireMeter(capabilities.supportsALCMeter)
+        let raw = try await readMeter(number: 3)
+        // Hamlib allows up to 5: TS-590 uses 30/6; TS-480/2000 use 20/4.
+        let divisor = levelProfile.txMeterStyle == .ts590 ? 6.0 : 4.0
+        return MeterReading(kind: .alc, raw: raw, normalized: Double(raw) / divisor)
     }
 
     public func getComp() async throws -> MeterReading {
-        try requireTS590Meter(capabilities.supportsCompMeter)
-        let raw = try await readTS590Meters().comp
-        return MeterReading(kind: .comp, raw: raw, normalized: Double(raw) / 30,
+        try requireMeter(capabilities.supportsCompMeter)
+        let raw = try await readMeter(number: 2)
+        let fullScale = levelProfile.txMeterStyle == .ts590 ? 30.0 : 20.0
+        return MeterReading(kind: .comp, raw: raw, normalized: Double(raw) / fullScale,
                             physicalValue: Double(raw))
     }
 
@@ -55,13 +66,36 @@ extension KenwoodProtocol: SupportsTXMeters {
         throw RigError.unsupportedOperation("Current meter is not implemented for this Kenwood")
     }
 
-    private func requireTS590Meter(_ supported: Bool) throws {
-        guard levelProfile.txMeterStyle == .ts590, supported else {
+    private func requireMeter(_ supported: Bool) throws {
+        guard levelProfile.txMeterStyle != .none, supported else {
             throw RigError.unsupportedOperation("TX meter is not implemented for this Kenwood")
         }
     }
 
-    private func readTS590Meters() async throws -> (swr: Int, comp: Int, alc: Int) {
+    private func readMeter(number: Int) async throws -> Int {
+        if levelProfile.txMeterStyle == .ts2000 {
+            try await sendCommand("RM")
+            let response = try await receiveResponse()
+            guard response.utf8.count == 7, response.hasPrefix("RM"),
+                  let selection = response.dropFirst(2).first,
+                  let selectedMeter = Int(String(selection)), (1...3).contains(selectedMeter) else {
+                throw RigError.invalidResponse
+            }
+            let raw = try meterDigits(response, prefix: "RM" + String(selection))
+            guard raw <= 20 else { throw RigError.invalidResponse }
+            // ts2000_read_meter returns zero for an unselected meter;
+            // do not change the front-panel selection as a side effect of reading.
+            return selectedMeter == number ? raw : 0
+        }
+        let values = try await readTripleMeters()
+        switch number {
+        case 1: return values.swr
+        case 2: return values.comp
+        default: return values.alc
+        }
+    }
+
+    private func readTripleMeters() async throws -> (swr: Int, comp: Int, alc: Int) {
         try await sendCommand("RM")
         // Consume all three frames before validating any field so a bad
         // field does not leave two replies queued for the next command.
@@ -71,7 +105,8 @@ extension KenwoodProtocol: SupportsTXMeters {
         let swr = try meterDigits(swrReply, prefix: "RM1")
         let comp = try meterDigits(compReply, prefix: "RM2")
         let alc = try meterDigits(alcReply, prefix: "RM3")
-        guard swr <= 30, comp <= 30, alc <= 30 else { throw RigError.invalidResponse }
+        let fullScale = levelProfile.txMeterStyle == .ts590 ? 30 : 20
+        guard swr <= fullScale, comp <= fullScale, alc <= fullScale else { throw RigError.invalidResponse }
         return (swr, comp, alc)
     }
 
@@ -85,6 +120,10 @@ extension KenwoodProtocol: SupportsTXMeters {
         return value
     }
 
+    // TS480_SWR_CAL and TS2000_SWR_CAL are identical.
+    private static let ts480SWRCalibration = FloatCalibrationTable([
+        (0, 1), (4, 1.5), (8, 2), (12, 3), (20, 10)
+    ])
     private static let ts590SWRCalibration = FloatCalibrationTable([
         (0, 1), (6, 1.5), (12, 2), (18, 3), (30, 10)
     ])

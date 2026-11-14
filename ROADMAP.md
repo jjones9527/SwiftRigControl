@@ -1652,8 +1652,15 @@ jjones9527/SwiftRigControl#46–#51.
       RX/TX and selected-meter validation, PC power-range scaling, and
       SW SWR. Library and rigctld; 1,438 tests passed, 57 hardware tests
       skipped. Hardware validation pending.
-- [ ] Remaining Kenwood and Elecraft TX meters: TS-480, TS-2000,
-      TS-890S, TS-990S, KX, Flex, per model from Hamlib.
+- [x] TS-480HX/SAT and TS-2000 TX meters (2026-11-14): per-model RM
+      replies, SWR tables, ALC / compression scales and normalized SM0
+      power gated by IF TX status. No watts calibration is claimed:
+      library watts is nil; rigctld RFPOWER_METER_WATTS returns ENAVAIL.
+      TS-2000 power targets the main receiver; VFO-C metering is not
+      exposed by the current meter API. 1,467 tests passed, 57 skipped.
+- [ ] Hardware: TS-480HX/SAT and TS-2000 TX meters.
+- [ ] Remaining Kenwood and Elecraft TX meters: TS-890S, TS-990S, KX,
+      Flex, per model from Hamlib.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.

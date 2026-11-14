@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- TS-480HX/SAT and TS-2000 SWR, ALC, compression and normalized power
+  meters through the library and rigctld. TS-480 consumes the RM triple;
+  TS-2000 reads only the selected meter and follows Hamlib's zero fallback
+  for unselected meters. Main-receiver power checks TX status before SM0.
+- Normalized-only power readings expose no watts calibration
+  (`MeterReading.watts == nil`); rigctld returns unavailable for
+  `RFPOWER_METER_WATTS` on TS-480/2000 instead of applying an unrelated
+  calibration. Existing calibrated meters retain their behavior.
 - K3/K3S RF power, SWR and ALC meters through the library and rigctld.
   Power/ALC follow the front-panel meter selection, return zero in RX,
   and reject unavailable readings without changing that selection. Power

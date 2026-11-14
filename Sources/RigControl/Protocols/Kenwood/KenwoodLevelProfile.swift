@@ -31,6 +31,10 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         case none
         /// TS-590S/SG: RM triple, SM0 power, and the TS-590 calibration.
         case ts590
+        /// TS-480: RM triple with a 0...20 meter scale.
+        case ts480
+        /// TS-2000: only the selected RM meter, main-receiver SM0 power.
+        case ts2000
     }
 
     public internal(set) var txMeterStyle: TXMeterStyle = .none
@@ -198,7 +202,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-2000 and SDR-Console (Hamlib `ts2000.c`): `GT` 3 digits.
     public static let ts2000 = ts590S.with {
-        $0.txMeterStyle = .none
+        $0.txMeterStyle = .ts2000
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 5, .medium: 10, .slow: 20])
         $0.lockForm = .doubled
         $0.tunerForm = .standard
@@ -208,11 +212,14 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// SDR-Console's TS-2000 emulation: as ``ts2000``, without the
     /// break-in delay (Hamlib `sdrconsole` returns ENAVAIL for FBKIN).
-    public static let sdrConsole = ts2000.with { $0.breakInViaDelay = false }
+    public static let sdrConsole = ts2000.with {
+        $0.breakInViaDelay = false
+        $0.txMeterStyle = .none
+    }
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.
     public static let ts480 = ts590S.with {
-        $0.txMeterStyle = .none
+        $0.txMeterStyle = .ts480
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 1, .slow: 2])
         $0.rfGainMax = 100
         $0.lockForm = .doubled
