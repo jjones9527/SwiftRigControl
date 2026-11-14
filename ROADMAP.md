@@ -1648,8 +1648,12 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K4 and TS-590S/SG TX meters (2026-11-13): K4 `PO` power and
       `TM` SWR / ALC; TS-590 `RM;` triple and `SM0` power with an IF
       TX-status check. Library and rigctld, mock-tested only.
+- [x] K3/K3S TX meters (2026-11-14): TM / BG power and ALC with
+      RX/TX and selected-meter validation, PC power-range scaling, and
+      SW SWR. Library and rigctld; 1,438 tests passed, 57 hardware tests
+      skipped. Hardware validation pending.
 - [ ] Remaining Kenwood and Elecraft TX meters: TS-480, TS-2000,
-      TS-890S, TS-990S, K3 / K3S / KX, Flex, per model from Hamlib.
+      TS-890S, TS-990S, KX, Flex, per model from Hamlib.
 - [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
       validation ported; K4 power uses the corrected single-query PO
       path. Yaesu NA and C daemon descriptor fixes have no direct port.

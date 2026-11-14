@@ -116,13 +116,112 @@ import Testing
         await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
     }
 
-    @Test(arguments: [RadioDefinition.Elecraft.k3, .Elecraft.kx3, .Kenwood.ts2000, .Kenwood.ts480SAT])
+    @Test(arguments: [RadioDefinition.Elecraft.k2, .Elecraft.kx3, .Kenwood.ts2000, .Kenwood.ts480SAT])
     func unimplementedModelsSendNoMeterCommands(radio: RadioDefinition) async throws {
         let (proto, mock) = try await makeProtocol(radio)
         await #expect(throws: RigError.self) { _ = try await proto.getRFPowerOut() }
         await #expect(throws: RigError.self) { _ = try await proto.getSWR() }
         #expect(await mock.recordedWrites.isEmpty)
         #expect(!radio.capabilities.supportsRFPowerMeter)
+    }
+
+    @Test(arguments: [RadioDefinition.Elecraft.k3, .Elecraft.k3S])
+    func k3ReadsPowerALCAndSWR(radio: RadioDefinition) async throws {
+        let (proto, mock) = try await makeProtocol(radio, replies: [
+            "TM;": "TM0;", "BG;": "BG12T;", "PC;": "PC1001;", "SW;": "SW025;"
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.watts == 120)
+        #expect(power.normalized == 1.2)
+        #expect(await mock.recordedWrites == ["TM;", "BG;", "PC;"].map { Data($0.utf8) })
+        #expect(try await proto.getSWR().swrRatio == 2.5)
+        await mock.setResponse(for: Data("TM;".utf8), response: Data("TM1;".utf8))
+        await mock.setResponse(for: Data("BG;".utf8), response: Data("BG07T;".utf8))
+        #expect(try await proto.getALC().normalized == 1)
+        #expect(radio.capabilities.supportsRFPowerMeter)
+        #expect(radio.capabilities.supportsSWRMeter)
+        #expect(radio.capabilities.supportsALCMeter)
+    }
+
+    @Test(arguments: [("PC0500;", 5.0), ("PC0501;", 50.0), ("PC050;", 50.0)])
+    func k3PowerUsesPCRange(reply: String, watts: Double) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.k3, replies: [
+            "TM;": "TM0;", "BG;": "BG05T;", "PC;": reply
+        ])
+        let power = try await proto.getRFPowerOut()
+        #expect(power.watts == watts)
+        #expect(power.normalized == watts / 100)
+    }
+
+    @Test(arguments: ["TM0;", "TM1;"])
+    func k3ReceiveReturnsZeroWithoutPC(selection: String) async throws {
+        let (proto, mock) = try await makeProtocol(.Elecraft.k3, replies: [
+            "TM;": selection, "BG;": "BG21R;"
+        ])
+        #expect(try await proto.getRFPowerOut().watts == 0)
+        #expect(try await proto.getALC().normalized == 0)
+        #expect(await mock.recordedWrites == ["TM;", "BG;", "TM;", "BG;"].map { Data($0.utf8) })
+    }
+
+    @Test func k3WrongMeterDoesNotChangeSelection() async throws {
+        let (proto, mock) = try await makeProtocol(.Elecraft.k3, replies: [
+            "TM;": "TM1;", "BG;": "BG05T;"
+        ])
+        await #expect(throws: RigError.invalidParameter("Select the power meter to read K3 RF power")) {
+            _ = try await proto.getRFPowerOut()
+        }
+        await mock.setResponse(for: Data("TM;".utf8), response: Data("TM0;".utf8))
+        await #expect(throws: RigError.invalidParameter("Select the ALC meter to read K3 ALC")) {
+            _ = try await proto.getALC()
+        }
+        #expect(await mock.recordedWrites == ["TM;", "BG;", "TM;", "BG;"].map { Data($0.utf8) })
+    }
+
+    @Test(arguments: ["TM2;", "TM00;", "TM;", "TX0;", "TMx;"])
+    func k3RejectsMalformedSelection(reply: String) async throws {
+        let (proto, mock) = try await makeProtocol(.Elecraft.k3, replies: ["TM;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getALC() }
+        #expect(await mock.recordedWrites == [Data("TM;".utf8)])
+    }
+
+    @Test(arguments: ["BG13T;", "BG22R;", "BG05X;", "BG5T;", "BG005T;", "BG-1T;", "BG0xT;", "SM05T;"])
+    func k3RejectsMalformedGraph(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.k3, replies: ["TM;": "TM0;", "BG;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test func k3RejectsALCAboveSeven() async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.k3, replies: ["TM;": "TM1;", "BG;": "BG08T;"])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getALC() }
+    }
+
+    @Test(arguments: ["PC0502;", "PC05;", "PC05000;", "PC0x0;", "PC-50;", "PO050;"])
+    func k3RejectsMalformedPowerRange(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.k3, replies: [
+            "TM;": "TM0;", "BG;": "BG05T;", "PC;": reply
+        ])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getRFPowerOut() }
+    }
+
+    @Test(arguments: ["SW25;", "SW0250;", "SW-25;", "SW02x;", "SM025;"])
+    func k3RejectsMalformedSWR(reply: String) async throws {
+        let (proto, _) = try await makeProtocol(.Elecraft.k3, replies: ["SW;": reply])
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getSWR() }
+    }
+
+    @Test func rigctldK3MetersAndWrongSelection() async throws {
+        let rig = try RigController(radio: .Elecraft.k3S, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        for (command, reply) in ["TM;": "TM0;", "BG;": "BG05T;", "PC;": "PC0500;", "SW;": "SW015;"] {
+            await mock.setResponse(for: Data(command.utf8), response: Data(reply.utf8))
+        }
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER")).data == ["0.050000"])
+        #expect(await handler.handle(.getLevel(name: "RFPOWER_METER_WATTS")).data == ["5.000000"])
+        #expect(await handler.handle(.getLevel(name: "SWR")).data == ["1.500000"])
+        let wrongMeter = await handler.handle(.getLevel(name: "ALC"))
+        #expect(wrongMeter.returnCode.rawValue == -1)
     }
 
     @Test func rigctldTS590ReportsHamlibUnits() async throws {

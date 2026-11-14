@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- K3/K3S RF power, SWR and ALC meters through the library and rigctld.
+  Power/ALC follow the front-panel meter selection, return zero in RX,
+  and reject unavailable readings without changing that selection. Power
+  honors the standard and extended PC range formats; SWR uses SW.
+  Mock-tested only.
 - K4 RF power, SWR and ALC meters through the library and rigctld. Power
   uses one `PO;` query with tenths-of-a-watt scaling (Hamlib `b7a9bfab7`).
 - TS-590S/SG RF power, SWR, compression and ALC meters. All three `RM;`
