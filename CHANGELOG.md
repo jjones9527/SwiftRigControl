@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 VOX toggles now include the mode group returned by VX (CW/direct
+  data, voice, or AF data), following Elecraft's VXmn format. Strict
+  readback validation rejects malformed replies before any setting write.
+  Other Elecraft models retain their existing commands. Protocol and
+  rigctld coverage added; build passed, 1,773 tests passed, 57 skipped.
+  Source: [Elecraft K4 Programmer's Reference, VX](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Hardware checks pending.
+
 - K4 audio peak filter reads the enable field rather than bandwidth.
   On/off changes preserve the selected bandwidth by reading AP first.
   Malformed responses prevent the write. Follows Elecraft's APmb format.

@@ -26,6 +26,11 @@ extension ElecraftProtocol {
             try await sendSetCommand("AP" + (enabled ? "1" : "0") + String(state.bandwidth))
             return
         }
+        if isK4, function == .vox {
+            let state = try await readK4VOX()
+            try await sendSetCommand("VX" + state.mode + (enabled ? "1" : "0"))
+            return
+        }
         let command = try elecraftCommand(for: function, set: true, enabled: enabled)
         try await sendSetCommand(command)
     }
@@ -34,6 +39,9 @@ extension ElecraftProtocol {
         if isK4, function == .audioPeakFilter {
             return try await readK4AudioPeakFilter().enabled
         }
+        if isK4, function == .vox {
+            return try await readK4VOX().enabled
+        }
         let query = try elecraftCommand(for: function, set: false, enabled: false)
         try await sendCommand(query)
         let response = try await receiveResponse()
@@ -41,6 +49,20 @@ extension ElecraftProtocol {
             throw RigError.invalidResponse
         }
         return last != "0"
+    }
+
+    // K4 VX includes the mode group: CW/direct data, voice, or AF data.
+    // Read it before setting so the change targets the radio's current group.
+    private func readK4VOX() async throws -> (mode: String, enabled: Bool) {
+        try await sendCommand("VX")
+        let response = try await receiveResponse()
+        let fields = Array(response.dropFirst(2))
+        guard response.hasPrefix("VX"), fields.count == 2,
+              ["C", "V", "D"].contains(String(fields[0])),
+              fields[1] == "0" || fields[1] == "1" else {
+            throw RigError.invalidResponse
+        }
+        return (String(fields[0]), fields[1] == "1")
     }
 
     private func readK4AudioPeakFilter() async throws -> (enabled: Bool, bandwidth: Int) {

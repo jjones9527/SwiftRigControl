@@ -1592,6 +1592,10 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K4 APF state and bandwidth preservation using APmb.
       1,759 tests passed, 57 skipped.
 - [ ] Hardware: K4 APF state and bandwidth retention in CW mode.
+- [x] K4 VOX mode-group commands and strict readback, with protocol
+      and rigctld coverage. 1,773 tests passed, 57 skipped.
+- [ ] Hardware: K4 VOX query and toggles in CW/direct data, voice,
+      and AF data modes.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

@@ -628,6 +628,50 @@ import Testing
         }
     }
 
+    @Test(arguments: ["C", "V", "D"])
+    func k4VOXPreservesModeGroup(mode: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        for enabled in [false, true] {
+            await mock.setResponse(for: Self.ascii("VX;"), response: Self.ascii("VX" + mode + (enabled ? "1;" : "0;")))
+            #expect(try await proto.getFunction(.vox) == enabled)
+            try await proto.setFunction(.vox, enabled: !enabled)
+            #expect(await sent(mock).suffix(3) == ["VX;", "VX" + mode + (enabled ? "0;" : "1;"), "ID;"])
+        }
+    }
+
+    @Test(arguments: ["VX;", "VX1;", "VXQ1;", "VXV2;", "VXV10;", "VXv1;", "VGC1;"])
+    func k4VOXRejectsMalformedRepliesBeforeWriting(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("VX;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getFunction(.vox) }
+        await #expect(throws: RigError.invalidResponse) { try await proto.setFunction(.vox, enabled: true) }
+        #expect(await sent(mock) == ["VX;", "VX;"])
+    }
+
+    @Test func otherElecraftVOXCommandsAreUnchanged() async throws {
+        for definition in [RadioDefinition.Elecraft.k2, .Elecraft.k3, .Elecraft.k3S, .Elecraft.kx2, .Elecraft.kx3] {
+            let (mock, proto) = try await connect(definition)
+            try await proto.setFunction(.vox, enabled: true)
+            try await proto.setFunction(.vox, enabled: false)
+            let writes = await sent(mock).filter { $0 != "ID;" }
+            #expect(writes == ["VX1;", "VX0;"])
+        }
+    }
+
+    @Test(arguments: ["C", "V", "D"])
+    func rigctldK4VOXUsesModeGroup(mode: String) async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("ID;"), response: Self.ascii("ID017;"))
+        await mock.setResponse(for: Self.ascii("VX;"), response: Self.ascii("VX" + mode + "0;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getFunc(name: "VOX")).data == ["0"])
+        #expect(await handler.handle(.setFunc(name: "VOX", enabled: true)).returnCode == .ok)
+        let writes = await mock.recordedWrites.map { String(data: $0, encoding: .ascii) ?? "" }
+        #expect(writes.suffix(3) == ["VX;", "VX" + mode + "1;", "ID;"])
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {
