@@ -560,6 +560,74 @@ import Testing
         #expect(await handler.handle(.getLevel(name: "PREAMP")).data == ["0"])
     }
 
+    @Test(arguments: [("GT0;", AGCSpeed.off), ("GT1;", .slow), ("GT2;", .fast),
+                      ("GT000;", .off), ("GT002;", .fast), ("GT004;", .slow),
+                      ("GT0000;", .off), ("GT0020;", .off), ("GT0040;", .off),
+                      ("GT0021;", .fast), ("GT0041;", .slow)])
+    func k4AGCReadsProtocolVariants(reply: String, expected: AGCSpeed) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("GT;"), response: Self.ascii(reply))
+        #expect(try await proto.getAGC() == expected)
+        #expect(await sent(mock) == ["GT;"])
+    }
+
+    @Test(arguments: ["GT;", "GT3;", "GT001;", "GT02;", "GT0022;", "GT0021x;", "GT-02;", "GC002;"])
+    func k4AGCRejectsInvalidReplies(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("GT;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { _ = try await proto.getAGC() }
+    }
+
+    @Test(arguments: [0, 1, 2])
+    func k4APFPreservesBandwidth(bandwidth: Int) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("AP;"), response: Self.ascii("AP0" + String(bandwidth) + ";"))
+        #expect(try await proto.getFunction(.audioPeakFilter) == false)
+        try await proto.setFunction(.audioPeakFilter, enabled: true)
+        #expect(await sent(mock).suffix(3) == ["AP;", "AP1" + String(bandwidth) + ";", "ID;"])
+        await mock.setResponse(for: Self.ascii("AP;"), response: Self.ascii("AP1" + String(bandwidth) + ";"))
+        #expect(try await proto.getFunction(.audioPeakFilter))
+        try await proto.setFunction(.audioPeakFilter, enabled: false)
+        #expect(await sent(mock).suffix(3) == ["AP;", "AP0" + String(bandwidth) + ";", "ID;"])
+    }
+
+    @Test(arguments: ["AP;", "AP1;", "AP13;", "AP20;", "AP-1;", "AP10x;", "NP10;"])
+    func k4APFRejectsMalformedReplyBeforeSetting(reply: String) async throws {
+        let (mock, proto) = try await connect(.Elecraft.k4)
+        await mock.setResponse(for: Self.ascii("AP;"), response: Self.ascii(reply))
+        await #expect(throws: RigError.invalidResponse) { try await proto.setFunction(.audioPeakFilter, enabled: true) }
+        #expect(await sent(mock) == ["AP;"])
+    }
+
+    @Test(arguments: [("GT0040;", "0"), ("GT2;", "2"), ("GT1;", "3")])
+    func rigctldK4AGCUsesHamlibCodes(reply: String, expected: String) async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("GT;"), response: Self.ascii(reply))
+        let handler = RigctldCommandHandler(rigController: rig)
+        #expect(await handler.handle(.getLevel(name: "AGC")).data == [expected])
+    }
+
+    @Test(arguments: [0, 1, 2])
+    func rigctldK4APFUsesEnableFieldAndPreservesBandwidth(bandwidth: Int) async throws {
+        let rig = try RigController(radio: .Elecraft.k4, connection: .mock)
+        try await rig.connect()
+        let mock = try #require(await rig.rawProtocol.transport as? MockSerialTransport)
+        await mock.setResponse(for: Self.ascii("ID;"), response: Self.ascii("ID017;"))
+        let handler = RigctldCommandHandler(rigController: rig)
+        for enabled in [false, true] {
+            let state = enabled ? "1" : "0"
+            let targetState = enabled ? "0" : "1"
+            await mock.setResponse(for: Self.ascii("AP;"), response: Self.ascii("AP" + state + String(bandwidth) + ";"))
+            #expect(await handler.handle(.getFunc(name: "APF")).data == [state])
+            let result = await handler.handle(.setFunc(name: "APF", enabled: !enabled))
+            #expect(result.returnCode == .ok)
+            let writes = await mock.recordedWrites.map { String(data: $0, encoding: .ascii) ?? "" }
+            #expect(writes.suffix(3) == ["AP;", "AP" + targetState + String(bandwidth) + ";", "ID;"])
+        }
+    }
+
     // MARK: - Filter width and memory
 
     @Test func kx3UsesBWFilterWidthAndHundredMemories() async throws {

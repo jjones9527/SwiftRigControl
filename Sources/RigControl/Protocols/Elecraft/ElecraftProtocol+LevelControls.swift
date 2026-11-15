@@ -426,6 +426,14 @@ extension ElecraftProtocol {
     public func getAGC() async throws -> AGCSpeed {
         try await sendCommand("GT")
         let response = try await receiveResponse()
+        if isK4 {
+            switch response {
+            case "GT0", "GT000", "GT0000", "GT0020", "GT0040": return .off
+            case "GT1", "GT004", "GT0041": return .slow
+            case "GT2", "GT002", "GT0021": return .fast
+            default: throw RigError.invalidResponse
+            }
+        }
         // Response: GTnnn
         guard response.hasPrefix("GT"), response.count >= 5 else {
             throw RigError.invalidResponse

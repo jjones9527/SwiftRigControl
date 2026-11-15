@@ -21,11 +21,19 @@ import Foundation
 extension ElecraftProtocol {
 
     public func setFunction(_ function: RigFunction, enabled: Bool) async throws {
+        if isK4, function == .audioPeakFilter {
+            let state = try await readK4AudioPeakFilter()
+            try await sendSetCommand("AP" + (enabled ? "1" : "0") + String(state.bandwidth))
+            return
+        }
         let command = try elecraftCommand(for: function, set: true, enabled: enabled)
         try await sendSetCommand(command)
     }
 
     public func getFunction(_ function: RigFunction) async throws -> Bool {
+        if isK4, function == .audioPeakFilter {
+            return try await readK4AudioPeakFilter().enabled
+        }
         let query = try elecraftCommand(for: function, set: false, enabled: false)
         try await sendCommand(query)
         let response = try await receiveResponse()
@@ -33,6 +41,17 @@ extension ElecraftProtocol {
             throw RigError.invalidResponse
         }
         return last != "0"
+    }
+
+    private func readK4AudioPeakFilter() async throws -> (enabled: Bool, bandwidth: Int) {
+        try await sendCommand("AP")
+        let response = try await receiveResponse()
+        let fields = Array(response.dropFirst(2).utf8)
+        guard response.hasPrefix("AP"), fields.count == 2,
+              (48...49).contains(fields[0]), (48...50).contains(fields[1]) else {
+            throw RigError.invalidResponse
+        }
+        return (fields[0] == 49, Int(fields[1] - 48))
     }
 
     private func elecraftCommand(

@@ -1586,6 +1586,12 @@ jjones9527/SwiftRigControl#46–#51.
 - [x] K4 preamp stage/enable commands and readback, including disabled
       stored stages and legacy replies. 1,724 tests passed, 57 skipped.
 - [ ] Hardware: K4 preamp formats and band-dependent stage availability.
+- [x] K4 AGC readback handles native, K3-compatible and K2-extended
+      formats, including the enable digit. 1,743 tests passed, 57 skipped.
+- [ ] Hardware: K4 AGC readback across protocol modes.
+- [x] K4 APF state and bandwidth preservation using APmb.
+      1,759 tests passed, 57 skipped.
+- [ ] Hardware: K4 APF state and bandwidth retention in CW mode.
 - [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
       including endpoint clamping, and calibrated rigctld STRENGTH.
       1,574 tests passed, 57 skipped.

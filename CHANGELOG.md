@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- K4 audio peak filter reads the enable field rather than bandwidth.
+  On/off changes preserve the selected bandwidth by reading AP first.
+  Malformed responses prevent the write. Follows Elecraft's APmb format.
+  Build passed; 1,759 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 AGC readback accepts native GT0/1/2, K3-compatible GTnnn,
+  and K2-extended GTnnnx replies. Extended replies with the enable
+  digit cleared now report AGC off instead of the stored speed.
+  Invalid formats are rejected; existing compatible setters remain.
+  Source: [Elecraft K4 Programmer's Reference, GT](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,743 tests passed, 57 skipped. Hardware checks pending.
+
 - K4 preamp commands now include stage and enable (PAnm). Readback
   honors the enable digit, so a stored stage with the preamp disabled
   reports zero. Legacy single-stage replies remain accepted; malformed
