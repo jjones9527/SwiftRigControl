@@ -553,6 +553,8 @@ extension ElecraftProtocol {
         return response[idx] == "1" ? .enabled(level: 5) : .off
     }
 
+    /// Sets the K4 noise reduction level from 0...1, preserving its enabled state.
+    /// Other Elecraft models do not support independent noise reduction levels.
     public func setNoiseReductionLevel(_ fraction: Double) async throws {
         guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
         guard fraction.isFinite, (0...1).contains(fraction) else {
@@ -562,6 +564,8 @@ extension ElecraftProtocol {
         try await writeK4NoiseReduction(level: Int(fraction * 10), enabled: state.enabled)
     }
 
+    /// Returns the K4 stored noise reduction level from 0...1, including when disabled.
+    /// Other Elecraft models do not support independent noise reduction levels.
     public func getNoiseReductionLevel() async throws -> Double {
         guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
         return Double(try await readK4NoiseReduction().level) / 10
