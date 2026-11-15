@@ -58,6 +58,7 @@ import Testing
         let smCommand = "SM;".data(using: .ascii)!
         let smReply   = "SM0010;".data(using: .ascii)!
         await k3Mock.setResponse(for: smCommand, response: smReply)
+        await k3Mock.setResponse(for: Data("RVM;".utf8), response: Data("RVM04.36;".utf8))
 
         try await k3.connect()
         let strength = try await k3.getSignalStrength()

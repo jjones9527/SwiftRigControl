@@ -342,12 +342,17 @@ extension RigctldCommandHandler {
         case "RFPOWER_METER":
             // Fraction of max output, 0.0…1.0.
             let reading = try await rigController.rfPowerOut()
+            guard reading.supportsNormalizedRFPower else {
+                throw RigError.unsupportedOperation("Normalized RF power is not available")
+            }
             return RigctldResponse(value: String(format: "%.6f", reading.normalized), command: command)
 
         case "RFPOWER_METER_WATTS":
             // Actual watts (Hamlib's RFPOWER_METER_WATTS).
             let reading = try await rigController.rfPowerOut()
-            let watts = reading.watts ?? 0
+            guard let watts = reading.watts else {
+                throw RigError.unsupportedOperation("Calibrated RF power in watts is not available")
+            }
             return RigctldResponse(value: String(format: "%.6f", watts), command: command)
 
         case "COMP_METER":

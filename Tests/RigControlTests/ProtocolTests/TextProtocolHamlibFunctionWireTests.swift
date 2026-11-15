@@ -120,6 +120,6 @@ import Testing
         #expect(RadioDefinition.Elecraft.k4.capabilities.preampLevels == [10, 20, 30])
         #expect(try await firstWrite(.Elecraft.k4) {
             try await ($0 as! any SupportsPreamp).setPreamp(3)
-        } == "PA3;")
+        } == "PA31;")
     }
 }

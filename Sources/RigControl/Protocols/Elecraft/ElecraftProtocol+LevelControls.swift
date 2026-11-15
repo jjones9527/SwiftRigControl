@@ -28,10 +28,12 @@ extension ElecraftProtocol {
     /// Sets the AF (audio) output gain.
     ///
     /// Command: `AGnnn;`. The 0–255 API level is scaled to the family's
-    /// wire range (`afGainRange`): 0–250 on the K3/K4 (Hamlib
+    /// wire range (`afGainRange`): 0–250 on the K3/K3S (Hamlib
     /// `k3_set_level`, `k3.c:2008`), 0–60 on the KX2/KX3 (`kx3_set_level`,
     /// `k3.c:2402`). Through v1.3.1 it was sent unscaled, so half volume
     /// on a KX3 (`AG127`) was over twice the radio's maximum.
+    ///
+    /// K4 uses AG000–AG060 per its native programmer reference.
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
@@ -49,6 +51,9 @@ extension ElecraftProtocol {
     public func getAFGain() async throws -> Int {
         try await sendCommand("AG")
         let response = try await receiveResponse()
+        if isK4 {
+            return Self.fromWire(try k4GainValue(response, prefix: "AG", count: 3), afGainRange)
+        }
         // Response: AGnnn
         guard response.hasPrefix("AG"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -64,13 +69,16 @@ extension ElecraftProtocol {
     /// Sets the RF gain.
     ///
     /// Command: `RGnnn;`. The 0–255 API level is scaled to
-    /// `rfGainRange`: 0–250 on the K3/K4 (`k3.c:2012`), 190–250 on the
+    /// `rfGainRange`: 0–250 on the K3/K3S (`k3.c:2012`), 190–250 on the
     /// KX2/KX3 (`kx3_set_level`, `k3.c:2397`).
+    /// K4 instead uses RG-60 through RG-00 (minimum to maximum gain).
     ///
     /// - Parameter level: Gain level 0–255
     /// - Throws: `RigError` if the command fails
     public func setRFGain(_ level: Int) async throws {
-        let command = String(format: "RG%03d", Self.toWire(level, rfGainRange))
+        let value = Self.toWire(level, rfGainRange)
+        // K4 requires the minus sign even at maximum gain (RG-00).
+        let command = isK4 ? String(format: "RG-%02d", -value) : String(format: "RG%03d", value)
         try await sendSetCommand(command)
     }
 
@@ -83,6 +91,10 @@ extension ElecraftProtocol {
     public func getRFGain() async throws -> Int {
         try await sendCommand("RG")
         let response = try await receiveResponse()
+        if isK4 {
+            let reduction = try k4GainValue(response, prefix: "RG-", count: 2)
+            return Self.fromWire(-reduction, rfGainRange)
+        }
         // Response: RGnnn
         guard response.hasPrefix("RG"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -93,6 +105,94 @@ extension ElecraftProtocol {
         return Self.fromWire(value, rfGainRange)
     }
 
+    private func k4GainValue(_ response: String, prefix: String, count: Int) throws -> Int {
+        let digits = response.dropFirst(prefix.count)
+        guard response.hasPrefix(prefix), digits.utf8.count == count,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let value = Int(digits), value <= 60 else {
+            throw RigError.invalidResponse
+        }
+        return value
+    }
+
+    // MARK: - Microphone gain
+
+    /// Sets microphone gain on the public 0–100 scale.
+    /// Hamlib uses 0–60 on K3/K3S and 0–80 on KX; K4's reference specifies 0–80.
+    public func setMicGain(_ level: Int) async throws {
+        let maximum = try micGainMaximum()
+        let raw = min(max(level, 0), 100) * maximum / 100
+        try await sendSetCommand(String(format: "MG%03d", raw))
+    }
+
+    public func getMicGain() async throws -> Int {
+        let maximum = try micGainMaximum()
+        try await sendCommand("MG")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("MG"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= maximum else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + maximum / 2) / maximum
+    }
+
+    private func micGainMaximum() throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 microphone gain") }
+        return family == .kx || isK4 ? 80 : 60
+    }
+
+    // MARK: - Speech compressor level
+
+    /// Sets the public 0–100 compression level (CP 0–40; K4: 0–30).
+    public func setCompressorLevel(_ level: Int) async throws {
+        let maximum = try compressorMaximum()
+        let raw = min(max(level, 0), 100) * maximum / 100
+        try await sendSetCommand(String(format: "CP%03d", raw))
+    }
+
+    public func getCompressorLevel() async throws -> Int {
+        let maximum = try compressorMaximum()
+        try await sendCommand("CP")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("CP"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= maximum else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + maximum / 2) / maximum
+    }
+
+    private func compressorMaximum() throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 compressor level") }
+        return isK4 ? 30 : 40
+    }
+
+    // MARK: - Monitor gain
+
+    /// Sets monitor gain on the public 0–100 scale.
+    /// ML 0–60 applies to the current mode, including K4's K3-compatible form.
+    public func setMonitorGain(_ level: Int) async throws {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 monitor gain") }
+        let raw = min(max(level, 0), 100) * 60 / 100
+        try await sendSetCommand(String(format: "ML%03d", raw))
+    }
+
+    public func getMonitorGain() async throws -> Int {
+        guard !isK2 else { throw RigError.unsupportedOperation("K2 monitor gain") }
+        try await sendCommand("ML")
+        let response = try await receiveResponse()
+        let digits = response.dropFirst(2)
+        guard response.hasPrefix("ML"), digits.utf8.count == 3,
+              digits.utf8.allSatisfy({ (48...57).contains($0) }),
+              let raw = Int(digits), raw <= 60 else {
+            throw RigError.invalidResponse
+        }
+        return (raw * 100 + 30) / 60
+    }
+
     // MARK: - Squelch
 
     /// Sets the squelch level.
@@ -100,6 +200,7 @@ extension ElecraftProtocol {
     /// Command: `SQnnn;`. The 0–255 API level is scaled to
     /// `squelchRange`: 0–29 on the K3 family and KX2/KX3 (Hamlib
     /// `k3_set_level` / `k3_get_level` RIG_LEVEL_SQL, `k3.c:2004`, `2274`).
+    /// K4 uses its native 0–40 range.
     /// Through v1.3.1 it was sent unscaled, so 30% squelch went out as
     /// `SQ076`, past the radio's maximum.
     ///
@@ -119,6 +220,15 @@ extension ElecraftProtocol {
     public func getSquelch() async throws -> Int {
         try await sendCommand("SQ")
         let response = try await receiveResponse()
+        if isK4 {
+            let digits = response.dropFirst(2)
+            guard response.hasPrefix("SQ"), digits.utf8.count == 3,
+                  digits.utf8.allSatisfy({ (48...57).contains($0) }),
+                  let value = Int(digits), value <= 40 else {
+                throw RigError.invalidResponse
+            }
+            return Self.fromWire(value, squelchRange)
+        }
         // Response: SQnnn
         guard response.hasPrefix("SQ"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -141,8 +251,14 @@ extension ElecraftProtocol {
     /// - Parameter level: 0 = off, 1 = Preamp 1, 2 = Preamp 2 (K3/K4 only)
     /// - Throws: `RigError.invalidParameter` for out-of-range values
     public func setPreamp(_ level: Int) async throws {
-        // The K4 has three stages (10/20/30 dB, PA1-PA3; Hamlib K4 caps),
-        // so the limit follows the radio's preamp list.
+        if isK4 {
+            guard (0...3).contains(level) else {
+                throw RigError.invalidParameter("K4 preamp stage must be 0...3")
+            }
+            try await sendSetCommand("PA" + String(level) + (level == 0 ? "0" : "1"))
+            return
+        }
+        // Legacy families retain their existing stage selection.
         let stages = max(2, capabilities.preampLevels.count)
         guard (0...stages).contains(level) else {
             throw RigError.invalidParameter("Preamp level must be 0 (off) through \(stages)")
@@ -160,6 +276,15 @@ extension ElecraftProtocol {
     public func getPreamp() async throws -> Int {
         try await sendCommand("PA")
         let response = try await receiveResponse()
+        if isK4 {
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("PA"), (1...2).contains(fields.count),
+                  (48...51).contains(fields[0]) else { throw RigError.invalidResponse }
+            let stage = Int(fields[0] - 48)
+            if fields.count == 1 { return stage }
+            guard fields[1] == 48 || fields[1] == 49 else { throw RigError.invalidResponse }
+            return fields[1] == 49 ? stage : 0
+        }
         // Response: PAn
         guard response.hasPrefix("PA"), response.count >= 3 else {
             throw RigError.invalidResponse
@@ -175,16 +300,25 @@ extension ElecraftProtocol {
     ///
     /// Command: `RAnn;` — Elecraft attenuator step codes:
     /// - 00 = off
-    /// - 01 = 10 dB (K2, and the K3 family per Hamlib `k3.c:1964-1972`)
+    /// - 01 = 10 dB (K2, K3/K3S/KX per Hamlib `k3.c:1964-1972`)
     /// - 02 = 20 dB (K2 only)
     ///
     /// This method accepts values in dB and maps them to the closest available step.
     /// Pass 0 to disable, 1–10 for the first step, 11–20 for the K2's
     /// second step (K3 family: the first step).
     ///
-    /// - Parameter dB: Attenuation in dB, 0–20
+    /// K4 uses exact 3 dB steps from 0 through 21 (RA followed by dB and on/off).
+    ///
+    /// - Parameter dB: Attenuation in dB, 0–20 (K4: 0–21 in steps of 3)
     /// - Throws: `RigError.invalidParameter` for unsupported values
     public func setAttenuator(_ dB: Int) async throws {
+        if isK4 {
+            guard (0...21).contains(dB), dB.isMultiple(of: 3) else {
+                throw RigError.invalidParameter("K4 attenuation must be 0...21 dB in steps of 3")
+            }
+            try await sendSetCommand(String(format: "RA%02d%d", dB, dB == 0 ? 0 : 1))
+            return
+        }
         let code: Int
         switch dB {
         case 0:
@@ -204,7 +338,8 @@ extension ElecraftProtocol {
     ///
     /// Command: `RA;` — Response: `RAnn;`
     ///
-    /// `RA01` is 10 dB on every Elecraft (Hamlib `k3_get_level`,
+    /// K4 returns RAnnm (dB plus enable); disabled attenuation reads as zero.
+    /// `RA01` is 10 dB on K2/K3/K3S/KX (Hamlib `k3_get_level`,
     /// k3.c:2209-2226). Through v1.3.1 the K3 family reported 6 dB.
     ///
     /// - Returns: Attenuation in dB (0, 10, or 20 on the K2)
@@ -212,6 +347,17 @@ extension ElecraftProtocol {
     public func getAttenuator() async throws -> Int {
         try await sendCommand("RA")
         let response = try await receiveResponse()
+        if isK4 {
+            // Elecraft K4 Programmer's Reference: RAnnm, nn in dB, m on/off.
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("RA"), fields.count == 3,
+                  fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+                throw RigError.invalidResponse
+            }
+            let dB = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+            guard dB <= 21, dB.isMultiple(of: 3) else { throw RigError.invalidResponse }
+            return fields[2] == 49 ? dB : 0
+        }
         // Response: RAnn
         guard response.hasPrefix("RA"), response.count >= 4 else {
             throw RigError.invalidResponse
@@ -280,6 +426,14 @@ extension ElecraftProtocol {
     public func getAGC() async throws -> AGCSpeed {
         try await sendCommand("GT")
         let response = try await receiveResponse()
+        if isK4 {
+            switch response {
+            case "GT0", "GT000", "GT0000", "GT0020", "GT0040": return .off
+            case "GT1", "GT004", "GT0041": return .slow
+            case "GT2", "GT002", "GT0021": return .fast
+            default: throw RigError.invalidResponse
+            }
+        }
         // Response: GTnnn
         guard response.hasPrefix("GT"), response.count >= 5 else {
             throw RigError.invalidResponse
@@ -308,6 +462,14 @@ extension ElecraftProtocol {
     /// - Parameter config: Noise blanker configuration
     /// - Throws: `RigError` if the command fails
     public func setNoiseBlanker(_ config: NoiseBlanker) async throws {
+        if isK4, case .enabled(let requestedLevel) = config, let level = requestedLevel {
+            guard (0...15).contains(level) else {
+                throw RigError.invalidParameter("K4 NB level must be 0...15")
+            }
+            try await sendSetCommand(String(format: "NB%02d1", level))
+            return
+        }
+        // K4's short NB0/NB1 form preserves its stored level.
         switch config {
         case .off:
             try await sendSetCommand("NB0")
@@ -325,6 +487,19 @@ extension ElecraftProtocol {
     public func getNoiseBlanker() async throws -> NoiseBlanker {
         try await sendCommand("NB")
         let response = try await receiveResponse()
+        if isK4 {
+            // Accept legacy state-only replies without inventing a level.
+            if response == "NB0" { return .off }
+            if response == "NB1" { return .enabled() }
+            let fields = Array(response.dropFirst(2).utf8)
+            guard response.hasPrefix("NB"), fields.count == 3,
+                  fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+                throw RigError.invalidResponse
+            }
+            let level = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+            guard level <= 15 else { throw RigError.invalidResponse }
+            return fields[2] == 49 ? .enabled(level: level) : .off
+        }
         // Response: NBn
         guard response.hasPrefix("NB"), response.count >= 3 else {
             throw RigError.invalidResponse
@@ -339,11 +514,24 @@ extension ElecraftProtocol {
     ///
     /// Command: `NRn;` — 0 = off, 1 = on.
     ///
-    /// The K2 and K3/K4 support a single NR stage. Level values are treated as on/off.
+    /// K4 uses NRnnm: level 0–10 plus enable. Other families use on/off.
     ///
     /// - Parameter config: Noise reduction configuration
     /// - Throws: `RigError` if the command fails
     public func setNoiseReduction(_ config: NoiseReduction) async throws {
+        if isK4 {
+            switch config {
+            case .off:
+                let state = try await readK4NoiseReduction()
+                try await writeK4NoiseReduction(level: state.level, enabled: false)
+            case .enabled(let level):
+                guard (0...10).contains(level) else {
+                    throw RigError.invalidParameter("K4 NR level must be 0...10")
+                }
+                try await writeK4NoiseReduction(level: level, enabled: true)
+            }
+            return
+        }
         switch config {
         case .off:
             try await sendSetCommand("NR0")
@@ -359,6 +547,10 @@ extension ElecraftProtocol {
     /// - Returns: Current noise reduction configuration
     /// - Throws: `RigError` if the command fails
     public func getNoiseReduction() async throws -> NoiseReduction {
+        if isK4 {
+            let state = try await readK4NoiseReduction()
+            return state.enabled ? .enabled(level: state.level) : .off
+        }
         try await sendCommand("NR")
         let response = try await receiveResponse()
         // Response: NRn
@@ -367,6 +559,41 @@ extension ElecraftProtocol {
         }
         let idx = response.index(response.startIndex, offsetBy: 2)
         return response[idx] == "1" ? .enabled(level: 5) : .off
+    }
+
+    /// Sets the K4 noise reduction level from 0...1, preserving its enabled state.
+    /// Other Elecraft models do not support independent noise reduction levels.
+    public func setNoiseReductionLevel(_ fraction: Double) async throws {
+        guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
+        guard fraction.isFinite, (0...1).contains(fraction) else {
+            throw RigError.invalidParameter("NR level must be 0...1")
+        }
+        let state = try await readK4NoiseReduction()
+        try await writeK4NoiseReduction(level: Int(fraction * 10), enabled: state.enabled)
+    }
+
+    /// Returns the K4 stored noise reduction level from 0...1, including when disabled.
+    /// Other Elecraft models do not support independent noise reduction levels.
+    public func getNoiseReductionLevel() async throws -> Double {
+        guard isK4 else { throw RigError.unsupportedOperation("Independent NR level") }
+        return Double(try await readK4NoiseReduction().level) / 10
+    }
+
+    private func writeK4NoiseReduction(level: Int, enabled: Bool) async throws {
+        try await sendSetCommand(String(format: "NR%02d%d", level, enabled ? 1 : 0))
+    }
+
+    private func readK4NoiseReduction() async throws -> (level: Int, enabled: Bool) {
+        try await sendCommand("NR")
+        let response = try await receiveResponse()
+        let fields = Array(response.dropFirst(2).utf8)
+        guard response.hasPrefix("NR"), fields.count == 3,
+              fields.allSatisfy({ (48...57).contains($0) }), fields[2] <= 49 else {
+            throw RigError.invalidResponse
+        }
+        let level = Int(fields[0] - 48) * 10 + Int(fields[1] - 48)
+        guard level <= 10 else { throw RigError.invalidResponse }
+        return (level, fields[2] == 49)
     }
 
     // MARK: - IF Filter

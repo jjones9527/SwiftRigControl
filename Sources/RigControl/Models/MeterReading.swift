@@ -38,14 +38,16 @@ public struct MeterReading: Sendable, Equatable {
     /// Which meter this reading is from.
     public let kind: Kind
 
-    /// The raw byte value the radio sent (0…255).
+    /// The raw meter value the radio sent. Icom uses 0…255; text protocols
+    /// may use wider decimal fields (for example K4 power in tenths of a watt).
     public let raw: Int
 
     /// Normalized 0.0…1.0+ representation, suitable for a progress
     /// bar with no further math. See per-meter notes:
     ///
-    /// - `.rfPower`: `0.0` = 0 W, `1.0` = the radio's calibrated max
-    ///   output (≈ 120 W on the default Icom curve).
+    /// - `.rfPower`: follows the backend's Hamlib RFPOWER_METER scale.
+    ///   This can differ from watts divided by maximum power (TS-590),
+    ///   or exceed 1.0 (K4 above 100 W).
     /// - `.swr`: `0.0` = 1:1 (perfect match), `1.0` = ~10:1 or
     ///   worse. The actual SWR ratio is on ``swrRatio``.
     /// - `.alc`: `0.0` = no ALC action, `1.0` = full ALC limiting.
@@ -58,6 +60,14 @@ public struct MeterReading: Sendable, Equatable {
     /// This bypasses the default Icom calibration curves for radios such as
     /// QMX that report watts and SWR directly.
     public let physicalValue: Double?
+
+    /// False when the backend supplies only normalized RF power, with no
+    /// watts calibration. Prevents applying the Icom curve to unrelated scales.
+    public let rfPowerIsCalibrated: Bool
+
+    /// Whether normalized RF power is a supported Hamlib level. The library's
+    /// normalized display value still exists for watts-only backends.
+    public let supportsNormalizedRFPower: Bool
 
     /// Which transmit-side meter a reading is from. Discriminates
     /// the typed-accessor branch on ``MeterReading``.
@@ -79,21 +89,29 @@ public struct MeterReading: Sendable, Equatable {
     /// Constructs a reading from its three components. Use the
     /// convenience ``decode(kind:raw:)`` factory in most cases;
     /// this initializer is exposed for tests and for protocols
-    /// that build readings outside the standard Icom curve.
-    public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil) {
+    /// that build readings outside the standard Icom curve. Set
+    /// `rfPowerIsCalibrated` to false for normalized-only RF power to avoid
+    /// implying a watts calibration that the backend does not provide.
+    /// Set `supportsNormalizedRFPower` to false for a watts-only Hamlib
+    /// backend; `normalized` can still hold a library display value.
+    public init(kind: Kind, raw: Int, normalized: Double, physicalValue: Double? = nil,
+                rfPowerIsCalibrated: Bool = true, supportsNormalizedRFPower: Bool = true) {
         self.kind = kind
         self.raw = raw
         self.normalized = normalized
         self.physicalValue = physicalValue
+        self.rfPowerIsCalibrated = rfPowerIsCalibrated
+        self.supportsNormalizedRFPower = supportsNormalizedRFPower
     }
 
     /// RF power output in watts, if this is an `.rfPower` reading.
-    /// Returns `nil` for any other meter kind.
+    /// Returns `nil` for any other meter kind or a normalized-only power
+    /// reading where ``rfPowerIsCalibrated`` is false.
     ///
     /// Uses a protocol-supplied physical value when available, otherwise the
     /// Icom default RF-power meter calibration curve.
     public var watts: Double? {
-        kind == .rfPower ? (physicalValue ?? Self.rfPowerCurve.interpolate(rawDouble)) : nil
+        kind == .rfPower && rfPowerIsCalibrated ? (physicalValue ?? Self.rfPowerCurve.interpolate(rawDouble)) : nil
     }
 
     /// SWR as an X:1 ratio, if this is a `.swr` reading. Returns
@@ -133,7 +151,8 @@ public struct MeterReading: Sendable, Equatable {
     public var description: String {
         switch kind {
         case .rfPower:
-            return String(format: "%.1f W", watts ?? 0)
+            guard let watts else { return String(format: "RF power %.0f%%", normalized * 100) }
+            return String(format: "%.1f W", watts)
         case .swr:
             return String(format: "%.1f:1", swrRatio ?? 1)
         case .alc:
