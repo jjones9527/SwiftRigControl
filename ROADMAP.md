@@ -317,6 +317,8 @@ safer, and more ergonomic API.
 
 ## Current state — honest assessment
 
+> **Snapshot from May 2026, kept for the record.** Several gaps below have since closed (CI exists, the test count is 1,346, a DocC catalog and mock transport shipped). The header of this file and `CHANGELOG.md` are current.
+
 ### What exists and works
 
 - Actor-based public facade (`RigController`) over the `CATProtocol`
