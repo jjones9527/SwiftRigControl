@@ -1,0 +1,532 @@
+# Release history notes (moved from CLAUDE.md)
+
+Per-release narrative that used to sit in CLAUDE.md, moved here on 2026-11-27 so it is no longer loaded into every Claude Code session. `CHANGELOG.md` remains the release record; this file keeps the extra context. Search it (or ask the `scout` agent) rather than reading it whole.
+
+The shipped version is **v1.4.1** (git tag, 2026-11-07): CW input
+validation, nonblocking Flex discovery, validated FTX-1 power replies
+and head-specific rigctld power scaling. Xcode: 1,346 passed, 57 hardware
+tests skipped. No public API changes. Hardware verification and
+battery-specific field-head scaling remain pending.
+
+The previously-shipped version was **v1.4.0** (git tag, 2026-11-06), the Hamlib
+parity release, jjones9527/SwiftRigControl#53, #55, #56, #59–#61, #63:
+
+- **Tooling that found most of it:** `Scripts/hamlib-diff-audit.py`
+  (our bytes against Hamlib's on its simulators),
+  `hamlib-set-matrix.py`, `hamlib-coverage.py` (capability coverage,
+  49% → 71.3%) and `hamlib-caps-sync.py` (records from Hamlib caps; it
+  never removes on hardware-verified radios).
+- **Wire fixes:** RF power in each radio's units (CI-V fraction × 255,
+  watts elsewhere), Yaesu newcat split via `FT` TX VFO on radios
+  without `ST`, `L NR` level-only (`SupportsNoiseReductionLevel`),
+  FTX-1 `PC1`/`PC2` power, Icom VOX delay was VOX gain (now the
+  per-model `1A 05` item), Icom select scan `0E 23`, Elecraft VFO B
+  `MD$` / `DT$`, per-model Kenwood / Yaesu / Elecraft level scales.
+- **New:** CW keyer and CW text on Yaesu / Kenwood / Elecraft, Yaesu TX
+  meters, `Mode.dataAM`, FTX-1 Main/Sub clarifier,
+  `FlexRadioDiscovery`, rigctld `J/j/Z/z` and `STRENGTH` / `RAWSTR`.
+- **hamlib-watch** keeps its watermark in the digest issue: `main` is
+  protected, so the workflow can't push.
+
+**Mock-tested only.** Test count 1001 → 1178. New `Mode` and
+`RigctldCommand` cases (CHANGELOG Migration). Remaining work: ROADMAP
+5.10.4 hardware checks and the v1.5 "no API" list.
+
+The previously-shipped version was **v1.3.1** (git tag, 2026-10-22),
+DATA-mode wire fixes from a MacWinlink FT-710 field report:
+
+- **Yaesu newcat `MD` table** is Hamlib `newcat_mode_conv[]`
+  (`YaesuCATProtocol.newcatModeCodeTable`, `newcat.c:10963-10980`).
+  `.dataUSB` used to send `9`, which is RTTY-U; DATA-U is `C`.
+  `getMode` parses a character, so `A`–`F` no longer throw.
+- **Elecraft modes** (`ElecraftProtocol+Mode.swift`): K3-family DATA
+  and RTTY are `MD6` / `MD9` + `DT` (`k3.c:1217-1251`). The K2 has its
+  own table, `MD9` = DATA-USB (`k2.c:46-58`), chosen by
+  `usesK2ModeTable` because `isK2` also matches the KX2 and KX3.
+
+**Mock-tested only.** Test count 985 → 1001.
+
+The previously-shipped version was **v1.3.0** (git tag, 2026-10-21),
+jjones9527/SwiftRigControl#46–#51 and the release PR:
+
+- **New radios** (catalog 126 → 137): native Flex SmartSDR slices
+  A–H (`FlexSmartSDRProtocol`, port 4992, Hamlib `smartsdr.c`),
+  QRP Labs QMX, Hamgeek uSDX (`hamgeek.c`), Icom ID-52A/E PLUS.
+- **New `Mode` cases** `.amN`, `.dataFMN`, `.c4fm`, `.dstar`, plus
+  `RadioDefinition.preferredDataMode`. New cases on public enums
+  break exhaustive `switch`es downstream (no library evolution), so
+  they go in minor releases only, with a CHANGELOG Migration note.
+- **Hamlib audit** of all mapped radios against `06335264`
+  (`Documentation/HAMLIB_AUDIT_2026-10-19.md`): G90 RIT, FTX-1 `CF`
+  clarifier, FT-1000MP/MARK-V/FT-920, FT-847 satellite, TH-D74/D75.
+
+**Mock-tested only.** Test count 911 → 985 (`swift test` count;
+Xcode reports more because it counts parameterized cases). Remaining
+work: ROADMAP Phase 5.10.2 hardware checks.
+
+The previously-shipped version was **v1.2.20** (git tag, 2026-10-19),
+jjones9527/SwiftRigControl#41, #42, #44:
+
+- **Elecraft on/off replies** (`ElecraftProtocol+ReplyParsing.swift`):
+  `FT` / `TQ` / `RT` / `XT` must be exactly `<cmd>0` or `<cmd>1`
+  (Hamlib `parse_binary_response`, `elecraft.c:594-608`).
+- **Icom power readback** is clamped to the 0–255 scale in
+  `parsePowerResponse` (G90 sends `02 5F` at full power, Hamlib
+  `b61dd14d`).
+- **rigctld `LineBuffer`** drops lines over 4096 bytes
+  (`LineBuffer.maxLineLength`); it used to grow without bound.
+- **Yaesu newcat monitor**: gain is `ML1` + level, on/off is `ML0` +
+  3 digits (`newcat.c:4873-4880`, `6254`).
+- **CI**: the Pages deploy is a separate `deploy-docs` job after the
+  build-and-test job. `IcomReleaseValidator` +
+  `Documentation/HARDWARE_CHECK_v1.2.19.md` check v1.2.16–v1.2.19 on
+  the verified radios (not run yet).
+
+**Mock-tested only.** Test count 894 → 911. Remaining work: hardware
+checks (triage section B) and v1.3.0 features (ROADMAP 5.7, 5.8).
+
+The previously-shipped version was **v1.2.19** (git tag, 2026-10-08),
+jjones9527/SwiftRigControl#34–#37:
+
+- **Icom DATA modes** (`IcomCIVProtocol+Mode.swift`): `0x26` is opt-in
+  per radio (`acceptsSelectedVFOModeCommand`, IC-7300 / MK2 only) and
+  carries `[vfo, mode, data, filter]` for every mode, with a NAK
+  fallback to `0x06` + `0x1A 0x06`. `getMode` reads the DATA flag from
+  `0x26` or `0x1A 0x06`. `supportsDataMode` follows Hamlib
+  `data_mode_supported` for every command set. The MK2 has
+  `StandardIcomCommandSet.ic7300MK2` and a `1A 05` menu table
+  (`IcomRadioModel.menuSettingParameter`).
+- **Set-command verification** for Yaesu newcat
+  (`YaesuCATProtocol+SetCommand.swift`: `FA/FB/TX/MD/ST` write-only,
+  `AC` drained, the rest verified with `ID;` / `AI;` on FTDX-9000) and
+  Elecraft K3/K4/KX (`ElecraftProtocol+SetCommand.swift`, `ID;`;
+  K2 path unchanged pending hardware re-check). Same pattern as the
+  v1.2.18 Kenwood fix: none of these radios echo set commands.
+- **IC-F8101** uses `ICF8101CommandSet` (`1A 35/36/34/37`); D-STAR
+  radios no longer list DATA modes as a DV stand-in; Yaesu
+  `setPowerState` follows `newcat_set_powerstat`.
+
+**Mock-tested only.** Test count 851 → 894. Remaining work, ranked:
+`Documentation/HAMLIB_TRIAGE_2026-10.md` "Remaining work" and ROADMAP
+Phase 5.9.
+
+The previously-shipped version was **v1.2.18** (git tag, 2026-10-07), the
+P0/P1 follow-ups from the 2026-10 Hamlib review
+(jjones9527/SwiftRigControl#30, #31, #32):
+
+- **Kenwood set commands** go through `sendSetCommand`, which follows
+  the command with `ID;` and checks for `?;` / `N;` / `E;` / `O;`
+  (`kenwood.c:427-443`, `518-600`). Real Kenwoods don't reply to
+  set commands; most of ours used to wait for a reply and time out.
+- **Kenwood DATA modes** follow a per-radio
+  `KenwoodModeCommandStyle`: `MD`+`DA` (TS-590S/SG), `OM0<hex>`
+  (TS-990S), `SF` (TS-890S), `MD6`/`MD9` (Flex), `ZZMD`
+  (PowerSDR / Thetis). Everything else throws for DATA modes.
+  Pre-fix code sent `MD12;` / `MD13;`, which no Kenwood accepts.
+- **FT-100 / FT-920** use the legacy Yaesu layout (`YaesuFT100CAT`,
+  `YaesuFT1000MPCAT(family: .ft920)`) at 4800 baud.
+- **`IOKitSerialPort.open()` sets `TIOCEXCL`** (Hamlib `4b39d3cd`).
+
+**Mock-tested only.** Test count 817 → 851.
+
+The previously-shipped version was **v1.2.17** (git tag, 2026-10-07), the
+outcome of the Hamlib upstream review covering `0839c031` →
+`7a556db` (jjones9527/SwiftRigControl#27, #28). Four fixes:
+
+- **rigctld decimal parsing.** Hamlib's netrigctl client formats
+  frequencies as `%lf` (`rig.h:505-514`, `netrigctl.c:1091-1095`),
+  so `F 14074000.000000` used to get `RPRT -1`. `RigctldDecimal`
+  mirrors `rigctl_protocol.c:25-90` (dot or comma, finite only) and
+  stops `nan` / `inf` level values from trapping `Int(Double)`.
+- **FT-817 family DATA-USB/LSB → DIG `0x0A`** (was PKT `0x0C`, FM
+  packet), per `ft817.c:1547-1598` / `ft857.c:1205-1250`.
+- **Icom AGC wire bytes** come from each model's Hamlib
+  `agc_levels` table, not the `RIG_AGC_*` enum.
+- **Xiegu G90 default CI-V `0x88`** (Hamlib `5ac54e5b`).
+
+Also unblocked `main` CI: `Scripts/check-public-docs.py` had been
+failing on every `main` push since v1.2.0 (2026-07-25) on 16
+undocumented public symbols, so build, DocC and tests never ran in
+CI for v1.2.0–v1.2.16; four pre-existing broken
+DocC links surfaced and were fixed. **Mock-tested only** — no
+hardware was available; shipped to gather field feedback. Triage
+and the prioritized plan (Kenwood DATA-mode wire bug is P0):
+`Documentation/HAMLIB_TRIAGE_2026-10.md`, ROADMAP Phase 5.9.
+Test count 793 → 817.
+
+The previously-shipped version was **v1.2.16** (git tag,
+2026-08-21), the final piece of the macwinlink-releases#66 fix arc.
+
+v1.2.15 realigned the RPRT wire encoding (`.rejected` now maps
+to Hamlib canonical `-9 RIG_ERJCTED`), but field-test on
+IC-7100 with MacWinlink beta40 rc1 confirmed the underlying
+`.rejected` throw itself was untouched.  Root cause: the
+IC-7100 (and any Icom with transceive mode enabled) sends
+unsolicited async broadcasts on the same CI-V bus used for
+CAT command replies — frequency change, mode change,
+spectrum-scope data.  When one of those frames arrived
+between our `sendFrame` and the ACK read,
+`IcomCIVProtocol.receiveFrame` returned it to the caller;
+`setPTT` saw `isAck == false` and threw
+`RigError.commandFailed` even though the CAT write itself
+succeeded and the radio keyed correctly.
+
+Hamlib solves this exact bug two ways, both cited in the fix:
+
+1. **IC-7100-specific pre-transaction flush**
+   (`rigs/icom/frame.c:158-165`) — Hamlib flushes the input
+   buffer before every command on the IC-7100 with a comment
+   noting "The IC7100 cannot separate the CI-V port from the
+   USB CI-V".  v1.2.16 adds `requiresPreTransactionFlush` on
+   `CIVCommandSet` (defaults `false`; IC7100CommandSet — used
+   by both IC-7100 and IC-705 — sets `true`).
+   `IcomCIVProtocol.sendFrame` honors the flag before every
+   write.
+2. **General async-frame skip in the receive loop**
+   (`rigs/icom/frame.c:216-236`) — Hamlib checks
+   `icom_is_async_frame` (`icom.c:9253-9265`) and does
+   `goto again1` — read another frame.
+   `IcomCIVProtocol.receiveFrame` now loops (bounded by
+   `asyncFrameSkipBudget = 8`), skipping any frame that is an
+   echo of our own command OR a broadcast (`to = 0x00`) OR
+   spectrum-scope data (`to = 0xE0` + `cmd = 0x27` +
+   `sub = 0x00`).
+
+Silently fixes the same class of race for `setMode`,
+`setFrequency`, `selectVFO`, `setPower`, and every other
+set-then-ACK CAT dispatch — they share the same
+`receiveFrame` code path.  Applies Icom-family-wide (the
+async-skip is universal; the flush is IC-7100-specific per
+Hamlib's own scoping).
+
+Pre-release testing surfaced a Swift protocol-dispatch bug:
+a pure protocol-extension default on `CIVCommandSet` does
+not dispatch dynamically through the `any CIVCommandSet`
+existential — the extension default's value is baked in at
+compile time.  Fixed by declaring
+`requiresPreTransactionFlush` as an explicit protocol
+requirement on both `CIVCommandSet` and its
+`IcomRadioCommandSet` sub-protocol so the concrete's stored
+`true` on `IC7100CommandSet` actually reaches
+`IcomCIVProtocol.sendFrame`.  Test count 782 → 793.
+
+The previously-shipped version was **v1.2.15** (git tag, 2026-08-20), a
+two-topic patch release: Hamlib return-code parity + Icom
+catalog correctness (IC-7300 mk2 + IC-7760).
+
+**Topic 1 — rigctld return codes** (fixes macwinlink-releases#66,
+MacWinlink beta38 candidate field report).
+`RigctldProtocol.ReturnCode` raw values were off by one
+relative to Hamlib's canonical `rig_errcode_e`
+(`hamlib/include/hamlib/rig.h`): a SwiftRigControl-invented
+`.communicationError = -5` had been wedged between
+`.notImplemented = -4` and `.timeout`, shifting every
+subsequent value.  Our `.rejected = -10` was being decoded
+by Hamlib's client-side `netrigctl_transaction` as
+`RIG_ETRUNC` "Command performed, but arg truncated" — the
+exact wording every PTT toggle produced in Direwolf's log
+during Winlink Packet sessions on Jeremy's IC-7100 — instead
+of the intended `RIG_ERJCTED` "Command rejected by the rig"
+(`-9`).  The v1.2.14 `LineBuffer` fix eliminated the
+transport-layer reasons `setPTT` was throwing, but any
+residual `.rejected` path still emitted the wrong wire code.
+Fix re-aligns seven case raw values with Hamlib symbols
+(`.timeout` -6→-5, `.ioError` -7→-6, `.internalError` -8→-7,
+`.protocolError` -9→-8, `.rejected` -10→-9, `.notSupported`
+-12→-11, `.vfoNotTargetable` -13→-12), removes
+`.communicationError` (callers → `.ioError` = `RIG_EIO`), and
+adds `.argTruncated`, `.busError`, `.busBusy` cases for wire
+decoding coverage.  20 new tests in
+`RigctldReturnCodeHamlibParityTests` lock every value to its
+Hamlib counterpart.
+
+**Topic 2 — IC-7300 mk2 catalog correctness.**  Icom shipped
+the IC-7300 mk2 with a NEW CI-V default address `0xB6`
+(Hamlib `icom.c:585`), not `0x94` as SwiftRigControl
+v1.1.3–v1.2.14 assumed.  On a factory-default mk2 those
+releases addressed nothing and enumeration silently failed —
+this is the class of bug historically painful in other
+amateur-radio rig-control apps due to the IC-7300 → mk2 CI-V
+divergence.  Frequency coverage also corrected from
+30 kHz–54 MHz to 30 kHz–74.8 MHz with 4m TX band (70–70.5 MHz)
+added, matching Hamlib `ic7300.c:1309-1322` (byte-identical to
+the base IC-7300 caps; pre-v1.2.15 mk2 caps had been cloned
+from the IC-7760 flagship, which is HF+6m only).  Writing the
+new drift test also surfaced an IC-7760 address mismatch —
+Hamlib `icom.c:588` / `ic7760.c:126` say `0xB2`,
+SwiftRigControl had `0xB0`, same enumeration-fails-silently
+symptom on a factory-default IC-7760.  Fixed.  58 new tests
+in `IcomCIVAddressHamlibParityTests` lock every Icom model's
+default CI-V address against Hamlib's canonical
+`icom_addr_list[]` table + per-model `priv_caps` defaults,
+plus a completeness check that fails if a new
+`IcomRadioModel` case is added without a corresponding parity
+entry.
+
+Test count 759 → 782, zero regressions.
+
+The previously-shipped version was **v1.2.14** (git tag,
+2026-08-14), the second followup to macwinlink-releases#54.
+`ClientSession.receiveLine()` no longer drops bytes across
+TCP receive boundaries.  Introduced `LineBuffer` value type
+that holds unconsumed bytes across `receive()` calls to fix
+TCP coalescing (`T VFOA 1\nT VFOA 0\n` in one recv, tail
+discarded) and fragmentation (`T VFOA` then ` 1\n`, first
+chunk dropped) under Direwolf's rapid PTT toggle pattern.
+Test count 740 → 759.
+
+The previously-shipped version was **v1.2.10** (git tag, 2026-08-12), an
+Icom power-state probe fix for MacWinlink beta35-rc1
+(jjones9527/SwiftRigControl#14).
+
+`IcomCIVProtocol.getPowerState()` previously sent a bare
+`0x03 0xFD` frame directly, bypassing the per-radio
+VFO-selection dance that every other read goes through.  On
+`.currentOnly` / `.mainSub*` radios that set
+`requiresVFOSelection: true` (IC-9700, IC-7600, IC-7610,
+IC-7100, IC-705, IC-7300), the probe could silently mis-fire
+before the radio was in the expected VFO state — a real
+IC-9700 wired via `RigctldCommandHandler.\get_powerstat`
+returned `RPRT -1` during MacWinlink beta35-rc1 Air testing.
+Fix routes the probe through the full `getFrequency(vfo: .a)`
+code path so the same VFO logic that governs every other read
+also governs the power-state check.  Matches Hamlib
+`icom_get_powerstat` (`icom.c:8271`) which invokes
+`rig_get_freq(rig, RIG_VFO_A, &freq)` for the same radio
+family.  Six new tests in `RigctldPowerStatTests` lock the
+end-to-end `\get_powerstat` / `\set_powerstat` wire matrix
+through the rigctld bridge.  Test count 689 → 695.
+
+The previously-shipped version was **v1.2.9** (git tag,
+2026-08-12), a rigctld wire-format fix from MacWinlink
+beta35-rc4 (jjones9527/SwiftRigControl#15).
+
+`RigctldResponse.formatDefault()` previously omitted the
+`RPRT <n>\n` trailer for successful (`ok`) responses.  Real
+Hamlib `rigctld` always terminates default-protocol responses
+with `RPRT <n>\n`; the missing trailer caused Hamlib's
+client-side `netrigctl` parser to report `-5 Communication
+timed out` when Direwolf 1.8.1's `PTT RIG 2` mode issued `T 0`
+/ `T 1` PTT commands.  The radio still keyed correctly
+(SwiftRigControl executes `setPTT` before formatting the
+response), but every PTT event added ~1 s of stall and
+cluttered Direwolf's log with false failures.  Fix: always
+append `RPRT <n>\n` after any data lines.  10 new tests in
+`RigctldResponseRPRTTests` lock the wire matrix.  Test count
+679 → 689.
+
+The previously-shipped version was **v1.2.8** (git tag,
+2026-08-01), a targeted Yaesu portable CAT bug fix from a
+MacWinlink beta31 field report
+(jjones9527/macwinlink-releases#27).
+
+`YaesuPortableCAT.modeSelector(for:)` previously covered
+`.dataUSB` and `.dataLSB` but not `.dataFM`. FT-857 users
+attempting to connect to VARA-FM gateways got
+`RigError.unsupportedOperation` on the tuning path. Per
+Hamlib `ft817.c:1624-1625`, `RIG_MODE_PKTFM` shares the PKT
+selector byte (`0x0C`) with `PKTUSB` / `PKTLSB` — the FT-817
+family's CAT protocol has exactly one PKT selector; the
+radio's current RF band + data-jack routing determines whether
+PKT means data-over-USB, data-over-LSB, or data-over-FM. Fix
+extends the existing switch case to `.dataUSB, .dataLSB,
+.dataFM`.
+
+Scope covers FT-817/818/857/857D/897/897D/100/920 and mcHF QRP
+uniformly. Test count 681 → 683.
+
+The previously-shipped version was **v1.2.7** (git tag,
+2026-08-01), the final cleanup of the VFO-model audit
+surfaced back in v1.2.5.
+Two audit items closed in one release:
+
+- **Category D reclassification** — IC-R8600, IC-R75,
+  IC-R9500, IC-R20, IC-92AD, ID-1 moved from `.targetable`
+  to `.currentOnly` for Hamlib parity. Cosmetic, not a
+  user-visible bug fix (the diverging code paths are
+  unreachable on these radios). Three new drift tests lock
+  the classification.
+- **Flagship investigation closed** — deep-dive against the
+  IC-7600 CI-V manual and Hamlib established that IC-7610 /
+  IC-7600 / IC-7800 / IC-7851 shipped as `.mainSub` is
+  wire-correct; the "Category B mismatch" label was a
+  misdiagnosis. No code change; audit doc updated.
+
+Test count 678 → 681. Zero regressions.
+
+The previously-shipped version was **v1.2.6** (git tag,
+2026-08-01), an IC-7000 wire-format triple fix surfaced by
+the audit doc that landed on `main` just before v1.2.6.
+
+Byte-level Hamlib audit of `rigs/icom/ic7000.c` and
+`rigs/icom/icom.c:2199` surfaced three separate wire-format
+issues, all of which broke every `setMode` call on the IC-7000:
+
+- Wrong VFO model (`.targetable` → `.currentOnly`).
+- Mode filter byte forbidden (`requiresModeFilter: true → false`)
+  per `icom.c:2199` explicit exclusion.
+- DATA-mode dispatch entirely skipped per
+  `.data_mode_supported = 0`; introduced new
+  `IcomRadioCommandSet.supportsDataMode` field (default `true`)
+  to model this.
+
+IC-7000 users can now `setMode` (voice and DATA) for the first
+time. Four new unit tests in `CIVCommandSetTests` lock the
+correct behavior.
+
+Also bundles the doc reconciliation from yesterday:
+`Documentation/VFO_MODEL_AUDIT.md` and rewrites of the `VFO` /
+`VFOOperationModel` / `IcomRadioCommandSet` docstrings so they
+match the shipped catalog honestly.
+
+Test count 674 → 678. Zero regressions.
+
+The previously-shipped version was **v1.2.5** (git tag,
+2026-07-31), a test-coverage buildout. Two new drift-test
+suites plug gaps that would otherwise let silent regressions
+ship:
+
+- `StandardIcomCommandSetVariantsTests` locks every `civAddress`
+  and `echoesCommands` flag on the 30 named
+  `StandardIcomCommandSet` factory variants against Hamlib.
+- `YaesuQuirksPresetsTests` locks every field of every named
+  `YaesuCATProtocol.Quirks` preset.
+
+Also verified: universal command-shape parity across every Icom
+variant (5-byte BCD frequency, standard PTT frame, percentage
+power units) and the `withTargetableMode(_:)` helper's copy
+semantics.
+
+Full Hamlib audit found **zero mismatches** in the shipped
+catalog — the tests are a regression net for future edits, not
+bug fixes. Deferred: the VFO-model parity question on IC-7610 /
+IC-7600 / IC-7000 (where Hamlib flags targetable-VFO but our
+code uses `.mainSub`) is deeper than a drift test can answer and
+awaits an architecture review.
+
+Test count 655 → 674. Zero regressions.
+
+The previously-shipped version was **v1.2.4** (git tag,
+2026-07-31), combining a Kenwood TH-family (TH-F6A / TH-F7E)
+wire-format fix and a zero-behavior structural refactor of the
+four largest source files.
+
+**Bug fix:** `THFamilyCAT.setFrequency` now computes the step
+field from the frequency per Hamlib `rigs/kenwood/th.c:209-241`
+instead of snapshotting it from the last `getFrequency` call.
+Fixes above-470-MHz UHF sets on a fresh actor (previously
+defaulted to step `0` = 5-kHz grid; UHF needs step `4` =
+10-kHz grid) and eliminates the stale-cache race between
+front-panel step changes and app-initiated sets.
+
+**Refactor:** Four files split under the 500-line
+CLAUDE.md soft cap:
+- `RadioCapabilitiesDatabase+Icom.swift` 1049 → 544 (+ two
+  sibling extension files)
+- `YaesuCATProtocol.swift` 977 → 663 (+ `+Quirks.swift`)
+- `RigctldCommandHandler.swift` 900 → 548 (+
+  `+LevelControl.swift`)
+- `RadioCapabilitiesDatabase+Kenwood.swift` 874 → 426 (+
+  `+KenwoodLegacy.swift`)
+
+No public API changes. Test count 651 → 655. Zero regressions.
+
+The previously-shipped version was **v1.2.3** (git tag,
+2026-07-30), a Yaesu newcat mode-command qualifier byte fix.
+Prior to that, **v1.2.2** (2026-07-30) fixed Yaesu newcat SH
+per-family dispatch, and **v1.2.1** (2026-07-29) fixed a
+low-baud-rate serial-framing bug in `YaesuPortableCAT` and
+`YaesuFT847CAT` (MacWinlink beta30 field report). Added
+`SerialTransport.readExact(count:timeout:)`.
+
+Prior to that, **v1.2.0** (git tag, 2026-07-25) was the largest
+single release in project history. Catalog grew 103 →
+126 radios (23 additions: 6 Icom receivers + specialty, 2 Flex
+family, 5 Kenwood legacy HF, 4 Yaesu classic variants, FTX-1,
+Ten-Tec RX-320, 4 Kenwood TH/TM family). Adds **5 new protocol
+adapters** — `YaesuPortableCAT` (FT-817 family), `YaesuFT847CAT`,
+`YaesuFT1000MPCAT`, `TMFamilyCAT`, `THFamilyCAT` — plus a
+`Family` enum on the existing `THD72Protocol` (drives TH-D72
+and TH-D74/D75 variants correctly for the first time).
+
+**25 latent protocol bugs fixed** via a byte-level Hamlib audit
+that gated the ship decision:
+- FT-817 family shipping wrong protocol adapter (8 radios)
+- FT-847 and FT-1000MP shipping wrong adapter
+- 15 modern Yaesu newcat radios shipping 11-digit FA/FB
+  frequency format (correct is 9-digit)
+- TH-D74 / TH-D75 wired to KenwoodProtocol instead of the
+  CR-terminated THD72Protocol
+- Kenwood mode codes 8 and 9 swapped across every Kenwood HF +
+  Elecraft + Lab599 + Flex family radio (27 radios)
+- FT-847 getPTT bit polarity inverted
+- Yaesu newcat GT (AGC), RG (RF gain), SH (IF filter), RU/RD
+  (RIT/XIT) commands emitting wire formats no real newcat radio
+  accepts (24 radios each)
+
+Also ships **new infrastructure**:
+- `Vendor.allRadios` static arrays + `withCivAddress(_:)` helper
+- `HostRequirement` enum flagging Flex definitions that require
+  a Windows/Linux companion machine
+- Weekly `hamlib-watch` GitHub Action surfacing new Hamlib
+  additions, security advisories, and fix-vs-refactor bucketed
+  commits
+- 6 new `Manufacturer` enum cases (Guohetec, Anytone, Elad,
+  CommRadio, Alinco, AOR) — additive scaffolding for v1.3.0+
+  vendor adapters
+- `Documentation/RADIO_PARITY_v1.2.md` — audit table plus
+  release-batch planning
+
+Test count 542 → 635. Zero regressions. **11 follow-up items
+deferred to v1.2.1 patch**, tracked in the [1.2.0] section of
+CHANGELOG.
+
+The previously-shipped release is **v1.1.3** (git tag,
+2026-07-24), an additive catalog release that added
+`Vendor.allRadios` static arrays, a top-level
+`RadioDefinition.allSupportedRadios` / `allRadios(for:)`
+aggregate, and a `withCivAddress(_:)` helper on
+`RadioDefinition` so downstream apps can drop the parallel
+hand-maintained radio-catalog lists that currently drift
+against the library. Shipped every then-known radio (45 Icom,
+25 Yaesu, 15 Kenwood, 6 Elecraft, 5 Ten-Tec, 3 Xiegu, 3
+FlexRadio-family, 1 Lab599 = 103 total). Also shipped the
+weekly `.github/workflows/hamlib-watch.yml` digest workflow +
+`Scripts/hamlib-diff.sh` + `HAMLIB_WATCH.md` for tracking
+upstream Hamlib changes.
+
+The previously-shipped release is **v1.1.2** (git tag, 2026-07-15), a
+safety-focused patch release. Started as a fix for the Yaesu HF
+serial-framing bug (issue #12) but expanded into a full
+seven-vendor Hamlib parity audit that surfaced a Kenwood
+`setPTT(false)` bug (it was sending `TX0;` which means "PTT on
+via mic port"), a Kenwood `getPTT()` bug (it was sending the
+`TX;` set command, keying the radio on every poll), a Yaesu
+`setSplit()` command collision (`FT` is TX-VFO selection, not
+split — should be `ST`), and a Yaesu `selectVFO()` FT-encoding
+bug on FT-950/2000/DX-series (`FT2;`/`FT3;` select VFO A/B,
+`FT0;`/`FT1;` toggle TX function). Also corrected serial framing
+for TS-570D/S, TH-D72(A), TS-850S, K2; Lab599 TX-500 baud rate;
+Ten-Tec Legacy frequency encoding; the FT-891 `hasSplit`
+capability flag; and the Elecraft K2 response timeout (bumped
+to 2s per Hamlib to avoid spurious timeouts on band changes).
+Also exposed the previously-unreachable Ten-Tec radio factories
+(`RadioDefinition.TenTec.orion` / `.orionII` / `.eagle` /
+`.jupiter` / `.pegasus`) — all definition-only, needing
+hardware verification before promotion. Deferred v1.2 items
+(K2 hardware re-verify, K2 extended-power probing, baud-rate
+range API, Kenwood mic/data PTT variants, Ten-Tec hardware
+validators) tracked in ROADMAP Phase 5.8.
+The prior release was **v1.1.1** (2026-07-10), a patch fixing the
+Yaesu PTT-on-connect bug tracked as issue #11. Before that,
+**v1.1.0** (2026-05-29) was the first true feature release after
+the v1.0.6 baseline (vendor namespaces, TCP transport, FlexRadio
+family, targeted auto-detection). The earlier CHANGELOG entries
+labeled `[1.1.0]`, `[1.2.0]`, and `[1.3.0]` that appear *below*
+the real v1.1.0 heading were *not* separate releases — that work
+all shipped under the `v1.0.6` tag. The top-of-file note in
+`CHANGELOG.md` explains the reconciliation.
+
+Going forward: **`CHANGELOG.md` heading versions must match the git
+tag they ship under.** No more aspirational labels.
+

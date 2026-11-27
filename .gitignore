@@ -41,3 +41,6 @@ DerivedData/
 
 # Claude Code per-user settings (shared project settings go in .claude/settings.json)
 .claude/settings.local.json
+
+# Claude Code: per-session handoff notes and personal settings
+.claude/handoff/
