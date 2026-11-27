@@ -86,9 +86,13 @@ public actor KenwoodProtocol:
         self.levelProfile = levelProfile
     }
 
+    /// Last PowerSDR SWR value, retained while receiving (Hamlib starts at zero).
+    var powerSDRSWR = 0.0
+
     // MARK: - Connection
 
     public func connect() async throws {
+        powerSDRSWR = 0
         try await transport.open()
         try await transport.flush()
 

@@ -10,9 +10,10 @@ import Foundation
 
 extension ElecraftProtocol {
 
-    /// `AG` wire range: K3/K4 0–250 (`k3.c:2008`), KX2/KX3 0–60
+    /// `AG` wire range: K3/K3S 0–250 (`k3.c:2008`), KX2/KX3 0–60
     /// (`kx3_set_level`, `k3.c:2402`).
     var afGainRange: ClosedRange<Int> {
+        if isK4 { return 0...60 }
         switch family {
         case .k2: return 0...255
         case .k3: return 0...250
@@ -20,9 +21,10 @@ extension ElecraftProtocol {
         }
     }
 
-    /// `RG` wire range: K3/K4 0–250 (`k3.c:2012`), KX2/KX3 190–250
+    /// `RG` wire range: K3/K3S 0–250 (`k3.c:2012`), KX2/KX3 190–250
     /// (`kx3_set_level`, `k3.c:2397`).
     var rfGainRange: ClosedRange<Int> {
+        if isK4 { return -60...0 }
         switch family {
         case .k2: return 0...255
         case .k3: return 0...250
@@ -32,6 +34,7 @@ extension ElecraftProtocol {
 
     /// `SQ` wire range: 0–29 on the K3 family and KX2/KX3 (`k3.c:2004`).
     var squelchRange: ClosedRange<Int> {
+        if isK4 { return 0...40 }
         switch family {
         case .k2: return 0...255
         case .k3, .kx: return 0...29

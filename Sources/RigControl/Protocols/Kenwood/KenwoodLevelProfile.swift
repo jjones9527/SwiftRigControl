@@ -26,6 +26,25 @@ import Foundation
 /// ```
 public struct KenwoodLevelProfile: Sendable, Equatable {
 
+    /// Implemented transmit-meter wire formats.
+    public enum TXMeterStyle: Sendable, Equatable {
+        case none
+        /// TS-590S/SG: RM triple, SM0 power, and the TS-590 calibration.
+        case ts590
+        /// TS-480: RM triple with a 0...20 meter scale.
+        case ts480
+        /// TS-2000: only the selected RM meter, main-receiver SM0 power.
+        case ts2000
+        /// TS-890S: selected RM reads and calibrated SM power.
+        case ts890
+        /// TS-990S: selected RM SWR only.
+        case ts990
+        /// PowerSDR/Thetis: ZZTX status and ZZRM5/8 meters.
+        case powerSDR
+    }
+
+    public internal(set) var txMeterStyle: TXMeterStyle = .none
+
     /// How AGC is set and read.
     public enum AGCEncoding: Sendable, Equatable {
         /// `GT` with a `width`-digit code per speed. A read is mapped
@@ -173,6 +192,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
         compressorMax: 100,
         noiseReductionLevelMax: 9
     ).with {
+        $0.txMeterStyle = .ts590
         $0.lockForm = .trailingZero
         $0.tunerForm = .receiveAndTransmit
         $0.cwPitch = .exMenu(number: 40, minHz: 300, stepHz: 50)
@@ -188,6 +208,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-2000 and SDR-Console (Hamlib `ts2000.c`): `GT` 3 digits.
     public static let ts2000 = ts590S.with {
+        $0.txMeterStyle = .ts2000
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 5, .medium: 10, .slow: 20])
         $0.lockForm = .doubled
         $0.tunerForm = .standard
@@ -197,10 +218,13 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// SDR-Console's TS-2000 emulation: as ``ts2000``, without the
     /// break-in delay (Hamlib `sdrconsole` returns ENAVAIL for FBKIN).
-    public static let sdrConsole = ts2000.with { $0.breakInViaDelay = false }
+    public static let sdrConsole = ts2000.with {
+        $0.breakInViaDelay = false
+    }
 
     /// TS-480HX / TS-480SAT (Hamlib `ts480.c`): fast / slow only, RF 0–100.
     public static let ts480 = ts590S.with {
+        $0.txMeterStyle = .ts480
         $0.agc = .gt(width: 3, codes: [.off: 0, .fast: 1, .slow: 2])
         $0.rfGainMax = 100
         $0.lockForm = .doubled
@@ -211,6 +235,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-890S (Hamlib `ts890s.c`): `GC`, 1-digit `RA`, `SQnnn`, `NB1n`.
     public static let ts890S = generic.with {
+        $0.txMeterStyle = .ts890
         $0.agc = .gc(codes: [.off: 0, .slow: 1, .medium: 2, .fast: 3])
         $0.attenuatorDigits = 1
         $0.squelchHasReceiverDigit = false
@@ -221,6 +246,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
 
     /// TS-990S: 6 / 12 / 18 dB, `PL` two values on a 0–255 scale.
     public static let ts990S = generic.with {
+        $0.txMeterStyle = .ts990
         $0.compressorHasTwoValues = true
         $0.compressorMax = 255
         $0.cwPitch = .pt(minHz: 300, stepHz: 10, digits: 3)
@@ -249,6 +275,7 @@ public struct KenwoodLevelProfile: Sendable, Equatable {
     /// PowerSDR and Thetis: no attenuator; VOX and tuner on the `ZZ`
     /// command set (Hamlib `flex6xxx.c:1162-1170`).
     public static let powerSDR = noAttenuator.with {
+        $0.txMeterStyle = .powerSDR
         $0.voxPrefix = "ZZVE"
         $0.tunerForm = .powerSDR
     }

@@ -21,6 +21,164 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- K4 VOX toggles now include the mode group returned by VX (CW/direct
+  data, voice, or AF data), following Elecraft's VXmn format. Strict
+  readback validation rejects malformed replies before any setting write.
+  Other Elecraft models retain their existing commands. Protocol and
+  rigctld coverage added; build passed, 1,773 tests passed, 57 skipped.
+  Source: [Elecraft K4 Programmer's Reference, VX](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Hardware checks pending.
+
+- K4 audio peak filter reads the enable field rather than bandwidth.
+  On/off changes preserve the selected bandwidth by reading AP first.
+  Malformed responses prevent the write. Follows Elecraft's APmb format.
+  Build passed; 1,759 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 AGC readback accepts native GT0/1/2, K3-compatible GTnnn,
+  and K2-extended GTnnnx replies. Extended replies with the enable
+  digit cleared now report AGC off instead of the stored speed.
+  Invalid formats are rejected; existing compatible setters remain.
+  Source: [Elecraft K4 Programmer's Reference, GT](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,743 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 preamp commands now include stage and enable (PAnm). Readback
+  honors the enable digit, so a stored stage with the preamp disabled
+  reports zero. Legacy single-stage replies remain accepted; malformed
+  replies and invalid stages are rejected. Stage availability remains
+  band-dependent on the radio.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,724 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 noise blanker honors explicit levels 0–15 using NBnnm and reads
+  the enable digit correctly. On/off-only requests preserve the stored
+  level via NB0/NB1. Legacy state-only replies return an unspecified
+  level rather than a fabricated value; invalid replies are rejected.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,710 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 noise reduction uses NRnnm (level 0–10 plus enable), honoring
+  requested levels and correctly parsing state. Disabling preserves
+  the stored level. Independent NR level control preserves enable state,
+  and rigctld NR reports the stored fraction even while disabled.
+  Source: [Elecraft K4 Programmer's Reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,697 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 squelch now scales the public 0–255 level to native SQ000–SQ040,
+  instead of the inherited K3 0–29 range. K4 replies require three
+  decimal digits within range. Library and rigctld regression coverage
+  passes: 1,644 tests passed, 57 skipped; hardware verification pending.
+  Source: [K4 Programmer's Reference D5, SQ](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+
+- K4 AF/RF gain now uses its native command scales: AG000–AG060
+  for audio and RG-60–RG-00 for RF gain. The public 0–255 scale is
+  preserved; malformed and out-of-range K4 readbacks are rejected.
+  Main receiver only. This corrects inherited K3 formats rather than
+  copying Hamlib's shared K3 gain implementation.
+  Source: [K4 Programmer's Reference D5, AG/RG](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,632 tests passed, 57 skipped. Hardware checks pending.
+
+- K4 attenuation now uses Elecraft's documented RAnnm format: exact
+  3 dB steps from 0 through 21, plus an enable digit. Disabled readings
+  return zero; unsupported settings and malformed replies are rejected.
+  This deliberately differs from Hamlib's conflicting 5/10/15 dB table
+  and shared K3 code. Main receiver only, matching the existing API.
+  Source: [K4 Programmer's Reference D5, RA](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,617 tests passed, 57 skipped. Hardware checks pending.
+
+- Elecraft K3/K3S/K4/KX2/KX3 standard SM readings now use Hamlib's
+  K3_SM_CAL table instead of treating bar counts as decibels. For
+  example, SM0006 is S9 and SM0012 is S9+40; rigctld STRENGTH reports
+  calibrated dB relative to S9. Malformed SM replies are rejected.
+  Xcode build passed; 1,574 tests passed, 57 skipped. Hardware checks
+  and firmware-gated high-resolution SMH support remain pending.
+
+- Flex TX meter capability audit: PiHPSDR no longer advertises RF power
+  or compression meters. Hamlib's RFPOWER and COMP levels are controls,
+  not meter readings; those controls remain available.
+- SDR-Console now exposes TS-2000 normalized power, SWR, ALC and
+  compression meters through the library and rigctld. Hamlib registers
+  TS2000_LEVEL_GET and ts2000_get_level for this model; its narrower
+  SDRCONSOLE_LEVEL_GET macro is unused. Watts remain unavailable.
+  Validation: 1,550 tests passed, 57 skipped; hardware testing pending.
+
+- G90 SWR queries reject non-BCD digits and mismatched replies instead of
+  displaying a false reading (Hamlib `f78a899fe`). A NAK remains a command
+  rejection. The separate G90 RFPOWER full-scale workaround is preserved.
+
+### Added
+
+- Elecraft monitor gain through SupportsMonitorGain, RigController and
+  rigctld MONITOR_GAIN for K3/K3S/KX2/KX3/K4. Public 0–100 maps to
+  ML 0–60 for the current operating mode. K4 uses the K3-compatible
+  form documented in [Elecraft's reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Invalid readbacks are rejected; K2 remains unsupported.
+  Build passed; 1,685 tests passed, 57 skipped. Hardware checks pending.
+
+- Elecraft speech-compressor level through SupportsCompressorLevel,
+  RigController and rigctld COMP. Public levels 0–100 map to CP 0–40
+  for K3/K3S/KX2/KX3 (Hamlib), or 0–30 for K4 per
+  [Elecraft's reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Strict readback validation; K2 rejects the operation without commands.
+  Build passed; 1,672 tests passed, 57 skipped. Hardware checks pending.
+
+- Elecraft microphone gain through SupportsMicGain, RigController and
+  rigctld MICGAIN. The public 0–100 scale maps to MG 0–60 on K3/K3S
+  and 0–80 on KX2/KX3/K4, with strict readback validation. K2 returns
+  unsupported without sending commands. Hamlib supplies the K3/KX
+  scales; K4 follows [Elecraft's D5 reference](https://ftp.elecraft.com/K4/Manuals%20Downloads/K4ProgrammersReferencerev.D5.html).
+  Build passed; 1,658 tests passed, 57 skipped. Hardware checks pending.
+
+- K3/K3S high-resolution S-meter readings: query MCU firmware with RVM
+  on the first signal read, then use SMH for 4.37+ and Hamlib's
+  K3_SMH_CAL table. Cache the selection until reconnect. Older firmware
+  or an explicit RVM rejection uses standard SM; malformed replies and
+  transport errors remain errors. K4/KX keep standard SM pending
+  validation of their separate firmware versions.
+  Xcode build passed; 1,594 tests passed, 57 skipped. Hardware checks pending.
+
+- PowerSDR/Thetis RF power and SWR meter implementations through the
+  library and rigctld. ZZRM5 reports watts and watts / 100; ZZTX checks
+  return zero power in receive, including when TX ends during a read.
+  ZZRM8 retains the last SWR in receive or on a meter timeout (initially
+  zero). Malformed replies and other transport errors are surfaced.
+  Mock-tested: 1,545 passed, 57 skipped; hardware verification pending.
+
+- KX2/KX3 RF power and SWR meters through the library and rigctld.
+  Normalized power uses TQ/BG; watts use PO with OM amplifier detection
+  (whole watts with KXPA100, tenths otherwise). The combined library
+  reading queries both sources; RX skips BG but still reads PO.
+  ALC remains unavailable, matching Hamlib. Mock-tested only.
+
+- TS-890S calibrated RF power, SWR, ALC, compression, voltage and current
+  meters, and TS-990S SWR with its model-specific table and one-decimal
+  rounding. RM reads enable the requested meter, as Hamlib does, and use
+  an ID boundary to consume other enabled meter replies.
+- TS-890S power preserves Hamlib's watts-only level availability:
+  rigctld RFPOWER_METER_WATTS returns calibrated watts, while RFPOWER_METER
+  returns unavailable. The library still provides watts / 100 as a display
+  value, marked by `supportsNormalizedRFPower == false`.
+- TS-480HX/SAT and TS-2000 SWR, ALC, compression and normalized power
+  meters through the library and rigctld. TS-480 consumes the RM triple;
+  TS-2000 reads only the selected meter and follows Hamlib's zero fallback
+  for unselected meters. Main-receiver power checks TX status before SM0.
+- Normalized-only power readings expose no watts calibration
+  (`MeterReading.watts == nil`); rigctld returns unavailable for
+  `RFPOWER_METER_WATTS` on TS-480/2000 instead of applying an unrelated
+  calibration. Existing calibrated meters retain their behavior.
+- K3/K3S RF power, SWR and ALC meters through the library and rigctld.
+  Power/ALC follow the front-panel meter selection, return zero in RX,
+  and reject unavailable readings without changing that selection. Power
+  honors the standard and extended PC range formats; SWR uses SW.
+  Mock-tested only.
+- K4 RF power, SWR and ALC meters through the library and rigctld. Power
+  uses one `PO;` query with tenths-of-a-watt scaling (Hamlib `b7a9bfab7`).
+- TS-590S/SG RF power, SWR, compression and ALC meters. All three `RM;`
+  replies are consumed; power checks TX status before reading `SM0;`.
+  Normalized power and calibrated watts retain their distinct Hamlib
+  scales. These additions are mock-tested, not hardware-verified.
+
 ## [1.4.1] - 2026-11-07
 
 ### Fixed

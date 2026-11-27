@@ -1552,13 +1552,62 @@ jjones9527/SwiftRigControl#46–#51.
       `k3.c` (CHANGELOG `[1.4.0]`).
 - [ ] Hardware: KX2 / KX3 / K3 AGC, S-meter and attenuator after the
       family fix.
-- [ ] KX2/KX3 AF, RF and mic gain scales differ from the K3
-      (`kx3_set_level`, k3.c:2386-2414: `RG` 190–250, `AG` 0–60,
-      `MG` 0–80); ours use the K3 scales.
-- [ ] K4 attenuator steps 5/10/15 dB (`k3.c` K4 caps `.attenuator`);
-      ours treat it like the K3 (one 10 dB step).
-- [ ] K3 firmware 4.37+ high-resolution `SMH` S-meter (k3.c:2066-2095)
-      and the K3 `SM` 0–21 bar scale in `getSignalStrength`.
+- [x] KX2/KX3 AF/RF scales use RG 190–250 and AG 0–60.
+      Microphone gain now exposes MG 0–80 (K3/K3S: 0–60) through
+      the library and rigctld. K4 MG 0–80 follows its native reference.
+      1,658 tests passed, 57 skipped.
+- [ ] Hardware: K3/K3S/K4/KX2/KX3 microphone gain and readback.
+- [x] Elecraft compressor level via CP: K3/K3S/KX 0–40, K4 0–30,
+      exposed as public 0–100 and rigctld COMP. 1,672 tests passed,
+      57 skipped.
+- [ ] Hardware: Elecraft compressor level and readback.
+- [x] K3/K3S/KX2/KX3/K4 monitor gain via ML 0–60 for the current
+      mode, exposed as public 0–100 and rigctld MONITOR_GAIN.
+      1,685 tests passed, 57 skipped.
+- [ ] Hardware: Elecraft monitor gain, including K4 compatibility form.
+- [x] K4 attenuation corrected against Elecraft Programmer's Reference
+      D5: RAnnm, 0–21 dB in 3 dB steps plus enable. Hamlib's 5/10/15 dB
+      table and K3 parser conflict with this documented native format.
+      Main receiver only; 1,617 tests passed, 57 skipped.
+- [ ] Hardware: K4 attenuation read/write and disabled-state behavior.
+- [x] K4 native AF/RF gain: AG 0–60 and RG -60–0 dB, retaining the
+      public 0–255 scale. Strict readback validation; 1,632 tests passed,
+      57 skipped. Source: Elecraft K4 Programmer's Reference D5.
+- [ ] Hardware: K4 native AF/RF gain commands and readback.
+- [x] K4 squelch uses documented SQ 0–40 range with strict reply
+      validation. 1,644 tests passed, 57 skipped.
+- [ ] Hardware: K4 squelch scale and readback.
+- [x] K4 NR level/state format, preserving stored level when disabling
+      and enable state during independent level changes. Rigctld NR
+      reads the stored fraction even while off. 1,697 tests passed,
+      57 skipped.
+- [ ] Hardware: K4 NR commands, state preservation and readback.
+- [x] K4 NB explicit levels 0–15 and full state readback; short on/off
+      commands preserve stored level. 1,710 tests passed, 57 skipped.
+- [ ] Hardware: K4 NB level/state and legacy reply compatibility.
+- [x] K4 preamp stage/enable commands and readback, including disabled
+      stored stages and legacy replies. 1,724 tests passed, 57 skipped.
+- [ ] Hardware: K4 preamp formats and band-dependent stage availability.
+- [x] K4 AGC readback handles native, K3-compatible and K2-extended
+      formats, including the enable digit. 1,743 tests passed, 57 skipped.
+- [ ] Hardware: K4 AGC readback across protocol modes.
+- [x] K4 APF state and bandwidth preservation using APmb.
+      1,759 tests passed, 57 skipped.
+- [ ] Hardware: K4 APF state and bandwidth retention in CW mode.
+- [x] K4 VOX mode-group commands and strict readback, with protocol
+      and rigctld coverage. 1,773 tests passed, 57 skipped.
+- [ ] Hardware: K4 VOX query and toggles in CW/direct data, voice,
+      and AF data modes.
+- [x] K3-family standard `SM` calibration uses Hamlib K3_SM_CAL,
+      including endpoint clamping, and calibrated rigctld STRENGTH.
+      1,574 tests passed, 57 skipped.
+- [x] K3/K3S MCU firmware 4.37+ high-resolution `SMH`: lazy RVM
+      detection, per-connection cache and K3_SMH_CAL calibration.
+      1,594 tests passed, 57 skipped.
+- [ ] Hardware: K3/K3S RVM detection and SMH calibration.
+- [ ] Validate high-resolution meter availability and firmware thresholds
+      separately for K4 / KX2 / KX3 before extending SMH selection.
+- [ ] Hardware: K3 / K3S / K4 / KX2 / KX3 standard SM calibration.
 
 ### 5.10.4 Shipped in v1.4.0 (mock-tested)
 
@@ -1647,9 +1696,43 @@ jjones9527/SwiftRigControl#46–#51.
       keyer and CW text on all three, Yaesu TX meters; wrong-byte fixes
       (Yaesu MN / COMP / LOCK / tune / CPY, Kenwood tuner and lock,
       PowerSDR ZZ VOX and tuner). Catalog 63.8% → 71.9%.
-- [ ] Kenwood and Elecraft TX meters (TS-590 `RM;` triple + `SM0` power,
-      TS-480, TS-2000, TS-890S, TS-990S, K3 / K4 / KX, Flex), per model
-      from Hamlib.
+- [x] K4 and TS-590S/SG TX meters (2026-11-13): K4 `PO` power and
+      `TM` SWR / ALC; TS-590 `RM;` triple and `SM0` power with an IF
+      TX-status check. Library and rigctld, mock-tested only.
+- [x] K3/K3S TX meters (2026-11-14): TM / BG power and ALC with
+      RX/TX and selected-meter validation, PC power-range scaling, and
+      SW SWR. Library and rigctld; 1,438 tests passed, 57 hardware tests
+      skipped. Hardware validation pending.
+- [x] TS-480HX/SAT and TS-2000 TX meters (2026-11-14): per-model RM
+      replies, SWR tables, ALC / compression scales and normalized SM0
+      power gated by IF TX status. No watts calibration is claimed:
+      library watts is nil; rigctld RFPOWER_METER_WATTS returns ENAVAIL.
+      TS-2000 power targets the main receiver; VFO-C metering is not
+      exposed by the current meter API. 1,467 tests passed, 57 skipped.
+- [ ] Hardware: TS-480HX/SAT and TS-2000 TX meters.
+- [x] TS-890S / TS-990S meters (2026-11-14): TS-890S watts, SWR, ALC,
+      compression, voltage and current; TS-990S SWR only, as Hamlib
+      advertises. RM enables the requested meter and drains through an ID
+      boundary. TS-890S power checks IF / EX00011 / SM and exposes only
+      watts through rigctld. 1,498 tests passed, 57 skipped.
+- [ ] Hardware: TS-890S / TS-990S meter reads and RM enable behavior.
+- [x] KX2 / KX3 RF power and SWR: TQ/BG normalized power, PO watts
+      with OM amplifier scaling, and SW ratio. ALC remains unavailable.
+- [ ] Hardware: KX2 / KX3 meter reads, including KXPA100 scaling.
+- [x] PowerSDR / Thetis TX meters: ZZTX-gated ZZRM5 power (watts and
+      watts / 100), ZZRM8 SWR retained in RX or on meter timeout.
+      Invalid replies remain errors. 1,545 tests passed, 57 skipped.
+- [ ] Hardware: PowerSDR / Thetis TX meters and SWR retention.
+- [x] Flex TX meter capability audit: removed PiHPSDR power/compression
+      meter flags (control levels only); enabled SDR-Console's registered
+      TS-2000 meter implementation. Flex 6000 CAT and native SmartSDR
+      have no TX meter levels in their Hamlib capability masks.
+      1,550 tests passed, 57 skipped.
+- [ ] Hardware: SDR-Console selected RM meter and normalized SM0 power.
+- [x] Hamlib review through `1b3fb4a6a` (2026-11-13): G90 SWR BCD
+      validation ported; K4 power uses the corrected single-query PO
+      path. Yaesu NA and C daemon descriptor fixes have no direct port.
+- [ ] Hardware: G90 SWR validation; K4 and TS-590S/SG TX meters.
 - [x] FTDX-3000/5000 SWR on `RM2` when the tuner is on (Hamlib reads the
       tuner and meter selection first).
 - [ ] Hardware: Kenwood tuner on/off (`AC110` / `AC100`) on a TS-590SG or
